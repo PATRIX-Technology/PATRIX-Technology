@@ -55,6 +55,7 @@ export interface Tenant {
   brand_primary_color: string | null;
   default_locale: AppLocale;
   data_retention_days: number;
+  photo_personalization_opt_in: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -91,6 +92,7 @@ export interface Child {
   preferred_language: AppLocale;
   avatar_config: AvatarConfig;
   consent_status: ConsentStatus;
+  photo_asset_path: string | null;
   created_by: string | null;
   created_at: string;
   updated_at: string;

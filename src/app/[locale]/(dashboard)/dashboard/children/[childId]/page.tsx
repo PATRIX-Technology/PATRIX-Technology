@@ -6,8 +6,11 @@ import { getCurrentTenantContext } from '@/lib/domain/session';
 import { Card, CardTitle } from '@/components/ui/Card';
 import { AvatarPreview } from '@/components/children/AvatarPreview';
 import { ConsentPanel } from '@/components/children/ConsentPanel';
+import { PhotoUpload } from '@/components/children/PhotoUpload';
 import { CreateStoryForm } from '@/components/stories/CreateStoryForm';
 import { parseAvatarConfig } from '@/lib/domain/avatar';
+import { getSignedAssetUrl } from '@/lib/domain/storage';
+import { flags } from '@/lib/flags';
 import { Badge } from '@/components/ui/Badge';
 
 export default async function ChildDetailPage({
@@ -40,6 +43,34 @@ export default async function ChildDetailPage({
     .eq('child_id', child.id)
     .order('created_at', { ascending: false });
 
+  const { data: tenant } = await supabase
+    .from('tenants')
+    .select('photo_personalization_opt_in')
+    .eq('id', context.tenantId)
+    .maybeSingle();
+
+  // Whether the "also ask for photo consent" checkbox should even be
+  // offered — feature flag + legal review + tenant opt-in. Actually
+  // uploading a photo needs a fourth condition (granted consent covering
+  // photo) checked below and again, authoritatively, in
+  // uploadChildPhotoAction — see docs/DECISIONS.md "Photo personalisation
+  // wiring".
+  const photoOptionAvailable =
+    flags.photoPersonalization &&
+    flags.photoPersonalizationLegalReviewComplete &&
+    Boolean(tenant?.photo_personalization_opt_in) &&
+    context.tenantType !== 'family';
+
+  let photoUploadAvailable = false;
+  if (photoOptionAvailable) {
+    const { data: hasPhotoConsent } = await supabase.rpc('has_granted_photo_consent', {
+      target_child_id: child.id,
+    });
+    photoUploadAvailable = Boolean(hasPhotoConsent);
+  }
+
+  const photoUrl = child.photo_asset_path ? await getSignedAssetUrl(supabase, child.photo_asset_path) : null;
+
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
@@ -62,7 +93,30 @@ export default async function ChildDetailPage({
         <Card>
           <CardTitle>{t('consent.requestTitle')}</CardTitle>
           <div className="mt-4">
-            <ConsentPanel locale={params.locale} childId={child.id} consentStatus={child.consent_status} />
+            <ConsentPanel
+              locale={params.locale}
+              childId={child.id}
+              consentStatus={child.consent_status}
+              photoOptionAvailable={photoOptionAvailable}
+            />
+          </div>
+        </Card>
+      )}
+
+      {photoUploadAvailable && (
+        <Card>
+          <CardTitle>Reference photo</CardTitle>
+          <p className="mt-2 text-sm text-ink-600">
+            Upload a clear photo of {child.first_name} so their illustrated character looks like them
+            across every page. Only used for image generation — never shown to other families.
+          </p>
+          <div className="mt-4">
+            <PhotoUpload
+              locale={params.locale}
+              childId={child.id}
+              hasPhoto={Boolean(child.photo_asset_path)}
+              photoUrl={photoUrl}
+            />
           </div>
         </Card>
       )}

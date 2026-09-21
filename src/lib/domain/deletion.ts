@@ -36,9 +36,16 @@ export async function deleteChildCascade(
     : { data: [], error: null };
   if (pagesError) throw pagesError;
 
+  const { data: child } = await supabase
+    .from('children')
+    .select('photo_asset_path')
+    .eq('id', childId)
+    .maybeSingle();
+
   const assetPaths = [
     ...(stories ?? []).map((s) => s.pdf_asset_path).filter((p): p is string => Boolean(p)),
     ...(pages ?? []).map((p) => p.image_asset_path).filter((p): p is string => Boolean(p)),
+    ...(child?.photo_asset_path ? [child.photo_asset_path] : []),
   ];
 
   let storageObjectsDeleted = 0;
@@ -66,6 +73,38 @@ export async function deleteChildCascade(
   });
 
   return { childId, storiesDeleted: storyIds.length, storageObjectsDeleted };
+}
+
+/**
+ * Removes a child's uploaded reference photo (and clears the column
+ * pointing to it). Called when photo consent is withdrawn, or on demand
+ * from the child's page — separate from deleteStoryAssetsForChild since a
+ * story-consent withdrawal and a photo-consent withdrawal are distinct
+ * actions today (see docs/DECISIONS.md "Photo personalisation wiring").
+ */
+export async function deleteChildPhoto(
+  supabase: SupabaseClient,
+  tenantId: string,
+  childId: string,
+): Promise<void> {
+  const { data: child } = await supabase
+    .from('children')
+    .select('photo_asset_path')
+    .eq('tenant_id', tenantId)
+    .eq('id', childId)
+    .maybeSingle();
+  if (!child?.photo_asset_path) return;
+
+  await supabase.storage.from('story-assets').remove([child.photo_asset_path]);
+  await supabase.from('children').update({ photo_asset_path: null }).eq('id', childId);
+
+  await supabase.from('audit_logs').insert({
+    tenant_id: tenantId,
+    action: 'child_photo_deleted',
+    target_type: 'child',
+    target_id: childId,
+    metadata: {},
+  });
 }
 
 /**

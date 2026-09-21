@@ -6,8 +6,10 @@ import { createSupabaseServiceRoleClient } from '@/lib/supabase/service-role';
 import { getCurrentTenantContext } from '@/lib/domain/session';
 import { ChildFormSchema, parseChildrenCsv } from '@/lib/domain/children';
 import { DEFAULT_AVATAR_CONFIG } from '@/lib/domain/avatar';
-import { generateConsentToken } from '@/lib/domain/consent';
-import { deleteChildCascade, deleteStoryAssetsForChild } from '@/lib/domain/deletion';
+import { buildConsentScope, generateConsentToken } from '@/lib/domain/consent';
+import { deleteChildCascade, deleteStoryAssetsForChild, deleteChildPhoto } from '@/lib/domain/deletion';
+import { flags } from '@/lib/flags';
+import { STORY_ASSETS_BUCKET } from '@/lib/domain/storage';
 import type { ActionResult } from './auth';
 
 export async function addChildAction(locale: string, formData: FormData): Promise<ActionResult> {
@@ -96,10 +98,26 @@ export interface RequestConsentResult extends ActionResult {
   consentUrl?: string;
 }
 
-export async function requestConsentAction(locale: string, childId: string): Promise<RequestConsentResult> {
+export async function requestConsentAction(
+  locale: string,
+  childId: string,
+  includePhotoRequest = false,
+): Promise<RequestConsentResult> {
   const supabase = await createSupabaseServerClient();
   const context = await getCurrentTenantContext(supabase);
   if (!context) return { error: 'Not signed in.' };
+
+  const { data: tenant } = await supabase
+    .from('tenants')
+    .select('photo_personalization_opt_in')
+    .eq('id', context.tenantId)
+    .maybeSingle();
+
+  const scope = buildConsentScope({
+    requestPhoto: includePhotoRequest,
+    tenantOptedIntoPhoto: tenant?.photo_personalization_opt_in ?? false,
+    legalReviewCompleted: flags.photoPersonalizationLegalReviewComplete,
+  });
 
   const { token, tokenHash } = generateConsentToken();
   const { error } = await supabase.from('consent_requests').insert({
@@ -107,6 +125,7 @@ export async function requestConsentAction(locale: string, childId: string): Pro
     child_id: childId,
     token_hash: tokenHash,
     requested_by: context.userId,
+    scope,
   });
   if (error) return { error: error.message };
 
@@ -122,13 +141,16 @@ export async function withdrawConsentAction(locale: string, childId: string): Pr
   const { error } = await supabase.rpc('withdraw_consent', { target_child_id: childId });
   if (error) return { error: error.message };
 
-  // Withdrawal removes any generated story assets for this child — this
-  // needs the service-role client because it deletes Storage objects,
-  // which RLS alone cannot cascade (see src/lib/domain/deletion.ts).
+  // Withdrawal removes any generated story assets for this child, AND any
+  // uploaded reference photo (photo consent is part of what was just
+  // withdrawn) — needs the service-role client because it deletes
+  // Storage objects, which RLS alone cannot cascade (see
+  // src/lib/domain/deletion.ts).
   const context = await getCurrentTenantContext(supabase);
   if (context) {
     const serviceClient = createSupabaseServiceRoleClient();
     await deleteStoryAssetsForChild(serviceClient, context.tenantId, childId);
+    await deleteChildPhoto(serviceClient, context.tenantId, childId);
   }
 
   revalidatePath(`/${locale}/dashboard/children/${childId}`);
@@ -151,5 +173,98 @@ export async function deleteChildAction(locale: string, childId: string): Promis
   }
 
   revalidatePath(`/${locale}/dashboard/children`);
+  return {};
+}
+
+const MAX_PHOTO_BYTES = 8 * 1024 * 1024; // 8MB
+const ALLOWED_PHOTO_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
+
+/**
+ * Uploads a reference photo for photo-based story personalisation.
+ * Refuses unless ALL FIVE conditions from the product brief hold:
+ * feature flag on, legal-review flag on, tenant opted in, a consent
+ * request for this child is granted, and that consent's scope actually
+ * covers photo use. See docs/DECISIONS.md "Photo personalisation wiring".
+ */
+export async function uploadChildPhotoAction(locale: string, formData: FormData): Promise<ActionResult> {
+  if (!flags.photoPersonalization) {
+    return { error: 'Photo personalisation is not enabled on this deployment.' };
+  }
+  if (!flags.photoPersonalizationLegalReviewComplete) {
+    return { error: 'Photo personalisation cannot be used until legal review is complete.' };
+  }
+
+  const supabase = await createSupabaseServerClient();
+  const context = await getCurrentTenantContext(supabase);
+  if (!context) return { error: 'Not signed in.' };
+
+  const childId = String(formData.get('childId') ?? '');
+  const file = formData.get('photo');
+  if (!childId || !(file instanceof File)) return { error: 'No photo provided.' };
+  if (!ALLOWED_PHOTO_TYPES.has(file.type)) {
+    return { error: 'Please upload a JPEG, PNG, or WEBP image.' };
+  }
+  if (file.size > MAX_PHOTO_BYTES) {
+    return { error: 'Photo must be smaller than 8MB.' };
+  }
+
+  const { data: tenant } = await supabase
+    .from('tenants')
+    .select('photo_personalization_opt_in')
+    .eq('id', context.tenantId)
+    .maybeSingle();
+  if (!tenant?.photo_personalization_opt_in) {
+    return { error: 'This organisation has not opted in to photo personalisation — see Settings.' };
+  }
+
+  const { data: hasConsent, error: consentError } = await supabase.rpc('has_granted_photo_consent', {
+    target_child_id: childId,
+  });
+  if (consentError) return { error: consentError.message };
+  if (!hasConsent) {
+    return {
+      error:
+        "This child's parent has not granted consent for photo use yet — request photo consent first.",
+    };
+  }
+
+  const extension = file.type === 'image/png' ? 'png' : file.type === 'image/webp' ? 'webp' : 'jpg';
+  const assetPath = `${context.tenantId}/children/${childId}/photo.${extension}`;
+  const bytes = new Uint8Array(await file.arrayBuffer());
+
+  const serviceClient = createSupabaseServiceRoleClient();
+  const { error: uploadError } = await serviceClient.storage
+    .from(STORY_ASSETS_BUCKET)
+    .upload(assetPath, bytes, { contentType: file.type, upsert: true });
+  if (uploadError) return { error: uploadError.message };
+
+  const { error: updateError } = await supabase
+    .from('children')
+    .update({ photo_asset_path: assetPath })
+    .eq('id', childId);
+  if (updateError) return { error: updateError.message };
+
+  await serviceClient.from('audit_logs').insert({
+    tenant_id: context.tenantId,
+    actor_user_id: context.userId,
+    action: 'child_photo_uploaded',
+    target_type: 'child',
+    target_id: childId,
+    metadata: {},
+  });
+
+  revalidatePath(`/${locale}/dashboard/children/${childId}`);
+  return {};
+}
+
+export async function removeChildPhotoAction(locale: string, childId: string): Promise<ActionResult> {
+  const supabase = await createSupabaseServerClient();
+  const context = await getCurrentTenantContext(supabase);
+  if (!context) return { error: 'Not signed in.' };
+
+  const serviceClient = createSupabaseServiceRoleClient();
+  await deleteChildPhoto(serviceClient, context.tenantId, childId);
+
+  revalidatePath(`/${locale}/dashboard/children/${childId}`);
   return {};
 }

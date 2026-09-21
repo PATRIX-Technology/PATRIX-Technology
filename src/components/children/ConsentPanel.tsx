@@ -22,18 +22,24 @@ export function ConsentPanel({
   locale,
   childId,
   consentStatus,
+  photoOptionAvailable = false,
 }: {
   locale: string;
   childId: string;
   consentStatus: ConsentStatus;
+  /** True only when FEATURE_PHOTO_PERSONALIZATION is on AND this tenant
+   * has opted in — see the child detail page (server component) for
+   * where this is actually decided. */
+  photoOptionAvailable?: boolean;
 }) {
   const t = useTranslations('consent');
   const tChildren = useTranslations('children');
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
+  const [includePhoto, setIncludePhoto] = useState(false);
 
   const requestAction = requestConsentAction.bind(null, locale, childId);
   const [requestState, requestFormAction] = useFormState<RequestConsentResult, FormData>(
-    async () => requestAction(),
+    async () => requestAction(includePhoto),
     {},
   );
 
@@ -55,9 +61,20 @@ export function ConsentPanel({
         <Badge tone={TONE[consentStatus]}>{tChildren(`consentStatus.${consentStatus}`)}</Badge>
       </div>
 
-      <div className="flex flex-wrap gap-3">
-        <form action={requestFormAction}>
-          <Button type="submit" variant="secondary">
+      <div className="flex flex-wrap items-start gap-3">
+        <form action={requestFormAction} className="flex flex-col gap-2">
+          {photoOptionAvailable && (
+            <label className="flex items-center gap-2 text-sm text-ink-600">
+              <input
+                type="checkbox"
+                checked={includePhoto}
+                onChange={(e) => setIncludePhoto(e.target.checked)}
+                className="h-4 w-4"
+              />
+              Also ask permission to use a photo for this story
+            </label>
+          )}
+          <Button type="submit" variant="secondary" className="self-start">
             {t('sendLink')}
           </Button>
         </form>

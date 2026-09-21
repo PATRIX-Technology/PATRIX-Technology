@@ -10,11 +10,21 @@ describe('backoffSeconds', () => {
   });
 });
 
-/** Minimal fake Supabase client covering exactly the surface worker.ts uses. */
+/**
+ * Minimal fake Supabase client covering exactly the surface worker.ts uses.
+ * `story_pages`/`children` selects branch on which columns were requested,
+ * since generatePageImage now issues several differently-shaped queries
+ * against the same tables (the initial page fetch, the reference-photo
+ * lookup, the earliest-generated-page lookup, and the remaining-count
+ * check) — see fetchChildReferencePhoto / fetchEarliestGeneratedPageImage
+ * in src/lib/jobs/worker.ts.
+ */
 function createFakeSupabase(overrides: {
   jobs: unknown[];
   pageRow?: Record<string, unknown>;
   remainingCount?: number;
+  childPhotoAssetPath?: string | null;
+  earliestPageImagePath?: string | null;
 }) {
   let jobIndex = 0;
   const updates: { table: string; payload: unknown }[] = [];
@@ -29,12 +39,52 @@ function createFakeSupabase(overrides: {
       throw new Error(`Unexpected rpc ${fn}`);
     }),
     from: vi.fn((table: string) => ({
-      select: vi.fn(() => ({
-        eq: vi.fn(() => ({
-          single: async () => ({ data: overrides.pageRow, error: null }),
-          neq: vi.fn(() => ({ count: overrides.remainingCount ?? 0 })),
-        })),
-      })),
+      select: vi.fn((columns: string) => {
+        if (table === 'children') {
+          return {
+            eq: vi.fn(() => ({
+              maybeSingle: async () => ({
+                data: overrides.childPhotoAssetPath
+                  ? { photo_asset_path: overrides.childPhotoAssetPath }
+                  : null,
+                error: null,
+              }),
+            })),
+          };
+        }
+        if (table === 'story_pages' && columns === 'image_asset_path') {
+          return {
+            eq: vi.fn(() => ({
+              eq: vi.fn(() => ({
+                not: vi.fn(() => ({
+                  order: vi.fn(() => ({
+                    limit: vi.fn(() => ({
+                      maybeSingle: async () => ({
+                        data: overrides.earliestPageImagePath
+                          ? { image_asset_path: overrides.earliestPageImagePath }
+                          : null,
+                        error: null,
+                      }),
+                    })),
+                  })),
+                })),
+              })),
+            })),
+          };
+        }
+        if (table === 'story_pages' && columns === 'id') {
+          return {
+            eq: vi.fn(() => ({
+              neq: vi.fn(() => ({ count: overrides.remainingCount ?? 0 })),
+            })),
+          };
+        }
+        return {
+          eq: vi.fn(() => ({
+            single: async () => ({ data: overrides.pageRow, error: null }),
+          })),
+        };
+      }),
       update: vi.fn((payload: unknown) => {
         updates.push({ table, payload });
         return { eq: vi.fn(async () => ({ data: null, error: null })) };
@@ -43,6 +93,7 @@ function createFakeSupabase(overrides: {
     storage: {
       from: vi.fn(() => ({
         upload: vi.fn(async () => ({ error: null })),
+        download: vi.fn(async () => ({ data: null, error: null })),
       })),
     },
   };

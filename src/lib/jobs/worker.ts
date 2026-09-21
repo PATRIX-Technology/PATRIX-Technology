@@ -113,7 +113,7 @@ async function generatePageImage(supabase: SupabaseClient, job: StoryJob): Promi
 
   const { data: page, error: pageError } = await supabase
     .from('story_pages')
-    .select('*, stories!inner(tenant_id, status)')
+    .select('*, stories!inner(tenant_id, status, child_id, avatar_config_snapshot)')
     .eq('id', job.page_id)
     .single();
   if (pageError) throw pageError;
@@ -123,13 +123,24 @@ async function generatePageImage(supabase: SupabaseClient, job: StoryJob): Promi
     .update({ image_status: 'GENERATING' })
     .eq('id', job.page_id);
 
+  const [referencePhoto, referenceImage] = await Promise.all([
+    fetchChildReferencePhoto(supabase, page.stories.child_id),
+    fetchEarliestGeneratedPageImage(supabase, job.story_id),
+  ]);
+
   const provider = createImageProvider(supabase);
   const result = await provider.generate({
     tenantId: page.stories.tenant_id,
     storyId: job.story_id,
     pageId: job.page_id,
     prompt: page.image_prompt,
-    avatarConfig: {},
+    avatarConfig: page.stories.avatar_config_snapshot ?? {},
+    ...(referencePhoto
+      ? { referencePhotoBytes: referencePhoto.bytes, referencePhotoContentType: referencePhoto.contentType }
+      : {}),
+    ...(referenceImage
+      ? { referenceImageBytes: referenceImage.bytes, referenceImageContentType: referenceImage.contentType }
+      : {}),
   });
 
   const extension = result.contentType === 'image/svg+xml' ? 'svg' : 'png';
@@ -159,6 +170,60 @@ async function generatePageImage(supabase: SupabaseClient, job: StoryJob): Promi
   if ((remaining ?? 0) === 0) {
     await supabase.from('stories').update({ status: 'NEEDS_REVIEW' }).eq('id', job.story_id);
   }
+}
+
+interface ReferenceAsset {
+  bytes: Uint8Array;
+  contentType: string;
+}
+
+/**
+ * The child's uploaded photo, if photo personalisation was allowed and a
+ * photo was uploaded — gated entirely at upload time (see
+ * src/lib/actions/children.ts uploadChildPhotoAction), not re-checked
+ * here: a populated photo_asset_path already means every condition in
+ * isPhotoPersonalizationAllowed() was satisfied when it was written.
+ */
+async function fetchChildReferencePhoto(
+  supabase: SupabaseClient,
+  childId: string,
+): Promise<ReferenceAsset | null> {
+  const { data: child } = await supabase
+    .from('children')
+    .select('photo_asset_path')
+    .eq('id', childId)
+    .maybeSingle();
+  if (!child?.photo_asset_path) return null;
+
+  const { data, error } = await supabase.storage.from(STORAGE_BUCKET).download(child.photo_asset_path);
+  if (error || !data) return null;
+
+  return { bytes: new Uint8Array(await data.arrayBuffer()), contentType: data.type || 'image/jpeg' };
+}
+
+/** The earliest already-generated page in this story, used as a visual
+ * reference so later pages keep the same illustrated character. */
+async function fetchEarliestGeneratedPageImage(
+  supabase: SupabaseClient,
+  storyId: string,
+): Promise<ReferenceAsset | null> {
+  const { data: earliestPage } = await supabase
+    .from('story_pages')
+    .select('image_asset_path')
+    .eq('story_id', storyId)
+    .eq('image_status', 'GENERATED')
+    .not('image_asset_path', 'is', null)
+    .order('page_number', { ascending: true })
+    .limit(1)
+    .maybeSingle();
+  if (!earliestPage?.image_asset_path) return null;
+
+  const { data, error } = await supabase.storage
+    .from(STORAGE_BUCKET)
+    .download(earliestPage.image_asset_path);
+  if (error || !data) return null;
+
+  return { bytes: new Uint8Array(await data.arrayBuffer()), contentType: data.type || 'image/png' };
 }
 
 async function renderStoryPdf(_supabase: SupabaseClient, _job: StoryJob): Promise<void> {

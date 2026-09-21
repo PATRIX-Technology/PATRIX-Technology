@@ -8,11 +8,28 @@ export interface GenerateImageRequest {
   tenantId: string;
   storyId: string;
   pageId: string;
+  /** The rendered scene description for this page (tokens already
+   * substituted — see src/lib/domain/templates.ts). Never includes the
+   * story's on-page text itself: the illustration never has text baked
+   * into it, see docs/DECISIONS.md "Gemini illustrations, our own text
+   * overlay". */
   prompt: string;
   avatarConfig: Record<string, string>;
-  /** A previously generated page's image path, used so the character stays
-   * visually consistent across a story (a "reference sheet" approach). */
-  referenceImagePath?: string;
+  /**
+   * The child's uploaded reference photo, if photo personalisation is
+   * enabled/consented for this story (src/lib/domain/consent.ts
+   * isPhotoPersonalizationAllowed). Used so the illustrated character
+   * resembles the real child. Never persisted by the provider itself —
+   * the caller (job worker) is responsible for fetching it from Storage
+   * and discarding it after the request.
+   */
+  referencePhotoBytes?: Uint8Array;
+  referencePhotoContentType?: string;
+  /** A previously generated page's image bytes, used so the illustrated
+   * character stays visually consistent from page to page within the
+   * same story (a lightweight "reference sheet" approach). */
+  referenceImageBytes?: Uint8Array;
+  referenceImageContentType?: string;
 }
 
 export interface GenerateImageResult {

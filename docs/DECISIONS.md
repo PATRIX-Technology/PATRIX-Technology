@@ -273,6 +273,24 @@ mock, not the app) or leaving it permanently red in CI. Tracked as
 follow-up work for once a Supabase project exists (`docs/NEEDS_FROM_ME.md`
 item 1) rather than faked now.
 
+## Security review finding (fixed)
+
+A manual security review of this branch caught a real correctness bug
+before it ever reached a live project: `story_jobs` had only a SELECT
+RLS policy, but both `createStory()` and `regeneratePageAction` insert
+into it using the regular authenticated (RLS-scoped) client, not the
+service role. Against real RLS enforcement, **every story creation and
+every page regeneration would have failed outright** with a row-level
+security violation. Confirmed with a failing integration test against a
+real Postgres instance (proving the bug), then fixed by adding a
+correctly-scoped `story_jobs_insert_via_story` policy — a tenant member
+may enqueue a job for their own story, but (as intended) still cannot
+update a job directly; only the service-role worker claims/processes
+them. The regression test is now permanent:
+`tests/integration/story-jobs-rls.test.ts`. This is exactly the class of
+bug the "test against real RLS, not mocks" strategy
+(`docs/DECISIONS.md` "Test database strategy") exists to catch — and did.
+
 ## Not yet built (explicitly out of scope for this build session)
 
 - Real image provider vendor integration (`RealImageProvider.callVendorApi`

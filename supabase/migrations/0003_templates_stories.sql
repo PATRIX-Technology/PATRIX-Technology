@@ -173,9 +173,19 @@ create policy "story_jobs_via_story" on story_jobs
     )
   );
 
--- story_jobs are otherwise only written by the service-role worker, which
--- bypasses RLS by design (see src/lib/supabase/service-role.ts) — there is
--- intentionally no client-facing insert/update policy for this table.
+-- A tenant member may ENQUEUE a job for their own story (this is what
+-- createStory() and the regenerate-page action do, using the regular
+-- authenticated client) but may not update one — claiming, retrying, and
+-- marking a job SUCCEEDED/FAILED is exclusively the service-role worker's
+-- job (src/lib/jobs/worker.ts), which bypasses RLS by design. There is
+-- deliberately no client-facing UPDATE policy for this table.
+create policy "story_jobs_insert_via_story" on story_jobs
+  for insert with check (
+    exists (
+      select 1 from stories s
+      where s.id = story_jobs.story_id and is_tenant_member(s.tenant_id)
+    )
+  );
 
 -- ---------------------------------------------------------------------------
 -- approve_story / reject_story RPCs: the only way a story can transition

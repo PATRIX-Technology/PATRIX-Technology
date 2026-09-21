@@ -136,14 +136,84 @@ Storage's actual file serving, or PostgREST's HTTP layer — those need a
 real (or `supabase start` Docker-based) Supabase project before a
 production launch; see `docs/TEST_CHECKLIST.md`.
 
+## Phase 3 additions
+
+**8 story themes, not 6.** The brief's explicit list (healthy eating,
+saving money, brushing teeth, welcoming a new sibling, first day at
+school, honesty, hand-washing, National Day gratitude, financial
+literacy) is now fully covered by adding "The Piggy Bank Promise"
+(saving money / financial literacy, folded into one theme since they're
+the same underlying value) and "Colours of Gratitude" (National Day).
+Same en/ar + native-review-gating pattern as the original 6. A new
+`tests/unit/seed-templates.test.ts` validates every theme/locale/pronoun
+combination in `supabase/seed/templates.json` against the schema and
+asserts no template ever leaves an unsubstituted `{token}` in rendered
+output — this is what caught the need for several new Arabic verb-phrase
+conjugations (`saved`, `counted`, `shared`, `sang`, `waved`, `celebrated`,
+`felt_grateful` — see `src/lib/domain/pronouns.ts`).
+
+**Billing stays in Stripe test mode by default, with a real, working
+webhook pipeline.** `src/lib/billing/stripe.ts` refuses to initialise
+with a live (`sk_live_`) secret key unless `STRIPE_MODE` is explicitly
+set to something other than `"test"` — a deliberate extra gate beyond
+just "don't set live keys," since a copy-pasted live key into a
+misconfigured `.env` should not silently start charging real cards. The
+checkout/portal/webhook routes (`src/app/api/billing/*`) are fully
+implemented against the `stripe` SDK, not stubbed — they simply have no
+effect until `FEATURE_BILLING=on` and real Stripe keys + price IDs exist.
+Webhook idempotency (a Stripe requirement, since deliveries can be
+retried) is enforced at the database level: every event id is inserted
+into `stripe_webhook_events` (primary key) before any other write, so a
+duplicate delivery hits a unique-violation and is treated as a no-op —
+proven against a real Postgres unique-constraint in
+`tests/integration/stripe-webhook-idempotency.test.ts`, including that
+no RLS policy lets a client (not just the service role) write to that
+table at all. Coupons are validated against our own `coupons` table
+*before* Stripe is ever contacted, so an expired/exhausted/inactive code
+never reaches Stripe.
+
+**Stripe's newer API versions moved subscription billing-period fields
+off the Subscription object onto each SubscriptionItem.** (Confirmed by
+inspecting the installed `stripe` npm package's own type definitions,
+since API version `2026-08-26.dahlia` is what that SDK version ships
+pinned to.) `subscriptionFromStripe()` reads
+`subscription.items.data[0].current_period_start/end` accordingly. We
+only ever create single-item subscriptions (one plan per tenant), so the
+first item's period is the subscription's period.
+
+**Owner MFA is mandatory, not optional.** `checkOwnerMfaGate()`
+(`src/lib/domain/mfa.ts`) uses Supabase Auth's built-in TOTP
+factor + Authenticator Assurance Level (AAL) rather than a bespoke 2FA
+scheme. `/owner` (and every future owner-only route) must call this gate
+before rendering anything: no factor enrolled → redirect to
+`/owner/mfa-enroll`; factor enrolled but not verified this session →
+redirect to `/owner/mfa-challenge`; verified → proceed. This piggybacks
+on Supabase's own well-tested TOTP implementation rather than us storing
+or verifying secrets ourselves.
+
+**Image safety checks fail CLOSED.** `UnconfiguredSafetyChecker`
+(`src/lib/providers/image/safety.ts`) is the default safety checker for
+`RealImageProvider` and marks every image unsafe until a real moderation
+vendor is wired up via `IMAGE_SAFETY_PROVIDER=vendor`. This means real
+(paid) image generation is blocked twice over right now: once by
+`FEATURE_REAL_IMAGE_PROVIDER` being off, and independently by no safety
+checker being configured — so turning on the feature flag alone can
+never accidentally skip moderation. Spend is still recorded even when an
+image is rejected by the safety check, since the vendor charged for the
+generation attempt regardless of the outcome; the rejection is surfaced
+as a normal (non-retryable) generation failure on that page, visible to
+staff via `story_pages.last_error`.
+
 ## Not yet built (explicitly out of scope for this build session)
 
 - Real image provider vendor integration (`RealImageProvider.callVendorApi`
-  is a documented stub — needs a chosen vendor + API credentials).
-- Stripe checkout/webhook HTTP wiring (schema and quota/spend architecture
-  exist; the actual Stripe SDK calls do not — needs Stripe test-mode keys).
+  is a documented stub — needs a chosen vendor + API credentials) and its
+  matching safety checker (`VendorModerationSafetyChecker` — needs a
+  chosen moderation vendor).
+- Actual Stripe test-mode keys, price IDs, and coupon records — the
+  checkout/portal/webhook code is fully implemented (see "Phase 3
+  additions" above) but has never made a real network call to Stripe
+  since no account exists yet.
 - Owner impersonation tooling with mandatory audit trail.
-- MFA enrollment flow for platform owner accounts (schema field exists;
-  enrollment UI does not).
 - Native mobile apps, push notifications, print-fulfilment integration
   (Phase 4).

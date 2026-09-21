@@ -35,6 +35,12 @@ else has already been built and is documented in `docs/HANDOFF.md`.
    `src/lib/providers/image/RealImageProvider.ts`), but the actual vendor
    choice, contract, and API key are a commercial decision + credential
    only you can provide.
+4a. **Choose a content moderation approach** for generated images —
+   either the same vendor's built-in moderation or a separate one
+   (`VendorModerationSafetyChecker` in
+   `src/lib/providers/image/safety.ts`). Until this is configured, every
+   real-generated image is blocked by default (fails closed) — see
+   `docs/DECISIONS.md` "Image safety checks fail closed".
 
 5. **Set a real monthly AI spend cap** once you have pricing from that
    vendor. Right now the global kill switch defaults to **on** (blocked)
@@ -44,10 +50,21 @@ else has already been built and is documented in `docs/HANDOFF.md`.
 ## Before enabling billing
 
 6. **A Stripe account** (test mode to start — nothing here should ever
-   go live without your explicit say-so). I need the publishable/secret
-   test keys. The plans/pricing/quota architecture is built; the actual
-   Stripe SDK checkout + webhook calls are the next step once there's an
-   account to point them at.
+   go live without your explicit say-so). I need:
+   - Publishable + secret **test** keys → `STRIPE_PUBLISHABLE_KEY`,
+     `STRIPE_SECRET_KEY`
+   - A webhook endpoint configured in the Stripe dashboard pointing at
+     `<your-app-url>/api/billing/webhook`, and its signing secret →
+     `STRIPE_WEBHOOK_SECRET`
+   - Price objects created in Stripe for each plan (Starter/Growth/
+     Network, monthly + annual), with their IDs added to the `plans`
+     table (`stripe_price_id_monthly` / `stripe_price_id_annual`)
+
+   The checkout session creation, customer portal redirect, and webhook
+   handler (with signature verification and idempotency) are fully
+   implemented and unit/integration tested — see `docs/DECISIONS.md`
+   "Phase 3 additions". Set `FEATURE_BILLING=on` once the above exists;
+   until then the billing section on the settings page stays hidden.
 
 ## Legal / compliance (do not treat any of this as done)
 

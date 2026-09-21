@@ -166,5 +166,61 @@
       { "order": 3, "text": "عدّ {child_name} إلى العشرين وهو يدندن أغنية سعيدة، حتى اختفت آخر جرثومة في البالوعة. [NEEDS NATIVE REVIEW]", "image_prompt": "شخصيات جراثيم كرتونية صغيرة تدور نحو بالوعة المغسلة، شخصية {child_name} تبتسم بيدين نظيفتين ولامعتين، أسلوب رسوم كتاب قصص." },
       { "order": 4, "text": "بيدين نظيفتين وابتسامة كبيرة، جلس {child_name} لوقت الوجبة الخفيفة — بطل فقاعات حقيقي. [NEEDS NATIVE REVIEW]", "image_prompt": "شخصية {child_name} تجلس بسعادة على طاولة الوجبة الخفيفة بيدين نظيفتين، الثعلب الكرتوني يرتدي عباءة الفقاعات يجلس قريبًا، أسلوب رسوم كتاب قصص." }
     ]
+  },
+  {
+    "theme_key": "saving_money",
+    "locale": "en",
+    "title": "The Piggy Bank Promise",
+    "synopsis": "{child_name} learns that saving a little bit at a time can grow into something wonderful.",
+    "mascot_name": "Marya the Fox",
+    "native_review_status": "reviewed",
+    "pages": [
+      { "order": 1, "text": "{child_name} wanted a new kite, right away. \"I want it now!\" {pronoun:subject} said, looking at the empty piggy bank on the shelf.", "image_prompt": "{child_name}'s avatar looking longingly at a toy kite in a shop window, an empty piggy bank visible on a shelf at home, storybook illustration style." },
+      { "order": 2, "text": "\"A piggy bank is like a little garden,\" said {mascot}. \"Every coin you plant today grows into something bigger tomorrow.\"", "image_prompt": "Cartoon fox mascot pointing at a ceramic piggy bank shaped like a small hill, coins sprouting like tiny plants, whimsical storybook illustration style." },
+      { "order": 3, "text": "Every week, {child_name} saved a little of {pronoun:possessive} allowance. {pronoun:subject_cap} counted the coins clinking into the piggy bank — one, two, three.", "image_prompt": "{child_name}'s avatar dropping a coin into a piggy bank, counting on fingers, cosy bedroom setting, storybook illustration style." },
+      { "order": 4, "text": "Weeks later, {child_name} tipped out the piggy bank and counted enough for the kite — and felt proud that {pronoun:subject} had saved it, coin by coin.", "image_prompt": "{child_name}'s avatar flying a new kite outdoors with a big proud smile, cartoon fox mascot cheering below, sunny sky, storybook illustration style." }
+    ]
+  },
+  {
+    "theme_key": "saving_money",
+    "locale": "ar",
+    "title": "وعد صندوق التوفير",
+    "synopsis": "يتعلّم {child_name} أن ادّخار القليل شيئًا فشيئًا يمكن أن ينمو ليصبح شيئًا رائعًا.",
+    "mascot_name": "ماريا الثعلبة",
+    "native_review_status": "draft",
+    "pages": [
+      { "order": 1, "text": "{v:wanted} {child_name} طائرة ورقية جديدة، على الفور. {v:said}: «أريدها الآن!» وهو ينظر إلى صندوق التوفير الفارغ على الرف. [NEEDS NATIVE REVIEW]", "image_prompt": "شخصية {child_name} تنظر بشوق إلى طائرة ورقية في واجهة متجر، صندوق توفير فخاري فارغ على رف في المنزل، أسلوب رسوم كتاب قصص." },
+      { "order": 2, "text": "{v:said} {mascot}: «صندوق التوفير مثل حديقة صغيرة. كل عملة تزرعها اليوم تكبر لتصبح شيئًا أكبر غدًا». [NEEDS NATIVE REVIEW]", "image_prompt": "الثعلب الكرتوني يشير إلى صندوق توفير خزفي على شكل تل صغير، عملات معدنية تنبت كنباتات صغيرة، أسلوب رسوم كتاب قصص خيالي." },
+      { "order": 3, "text": "كل أسبوع، {v:saved} {child_name} جزءًا من مصروفه. {v:counted} النقود وهي تتساقط في صندوق التوفير — واحد، اثنان، ثلاثة. [NEEDS NATIVE REVIEW]", "image_prompt": "شخصية {child_name} تضع عملة معدنية في صندوق التوفير، تعدّ على أصابعها، غرفة نوم مريحة، أسلوب رسوم كتاب قصص." },
+      { "order": 4, "text": "بعد أسابيع، أفرغ {child_name} صندوق التوفير {v:counted} ما يكفي لشراء الطائرة الورقية — و{v:felt_proud} لأنه ادّخرها عملة بعملة. [NEEDS NATIVE REVIEW]", "image_prompt": "شخصية {child_name} تطير طائرة ورقية جديدة في الخارج بابتسامة فخورة كبيرة، الثعلب الكرتوني يشجّع من الأسفل، سماء مشمسة، أسلوب رسوم كتاب قصص." }
+    ]
+  },
+  {
+    "theme_key": "national_day_gratitude",
+    "locale": "en",
+    "title": "Colours of Gratitude",
+    "synopsis": "{child_name} discovers what makes {pronoun:object} proud and thankful about home on UAE National Day.",
+    "mascot_name": "Marya the Fox",
+    "native_review_status": "reviewed",
+    "pages": [
+      { "order": 1, "text": "Red, green, white, and black flags filled the streets. \"What are we celebrating?\" {child_name} asked, looking up at the flags.", "image_prompt": "{child_name}'s avatar looking up at UAE flags decorating a street, festive atmosphere, storybook illustration style." },
+      { "order": 2, "text": "\"Today we say thank you — for our home, our family, and our community,\" said {mascot}, waving a small flag.", "image_prompt": "Cartoon fox mascot waving a small UAE flag beside {child_name}'s avatar, warm community gathering in the background, storybook illustration style." },
+      { "order": 3, "text": "{child_name} thought about all the things {pronoun:subject} felt grateful for — {pronoun:possessive} family, {pronoun:possessive} friends at {organisation}, and the place {pronoun:subject} called home.", "image_prompt": "{child_name}'s avatar drawing a picture of family and friends and home, thoughtful happy expression, storybook illustration style." },
+      { "order": 4, "text": "That evening, {child_name} sang along with the fireworks lighting up the sky, feeling proud and thankful to belong.", "image_prompt": "{child_name}'s avatar watching fireworks in UAE flag colours with family, cartoon fox mascot beside them, night sky celebration, storybook illustration style." }
+    ]
+  },
+  {
+    "theme_key": "national_day_gratitude",
+    "locale": "ar",
+    "title": "ألوان الامتنان",
+    "synopsis": "يكتشف {child_name} ما يجعله فخورًا وممتنًا لوطنه في اليوم الوطني لدولة الإمارات.",
+    "mascot_name": "ماريا الثعلبة",
+    "native_review_status": "draft",
+    "pages": [
+      { "order": 1, "text": "ملأت الأعلام الحمراء والخضراء والبيضاء والسوداء الشوارع. {v:said} {child_name}: «بماذا نحتفل؟» وهو ينظر إلى الأعلام. [NEEDS NATIVE REVIEW]", "image_prompt": "شخصية {child_name} تنظر إلى أعلام دولة الإمارات تزيّن الشارع، أجواء احتفالية، أسلوب رسوم كتاب قصص." },
+      { "order": 2, "text": "{v:said} {mascot} وهي تلوّح بعلم صغير: «اليوم نقول شكرًا — لوطننا وعائلتنا ومجتمعنا». [NEEDS NATIVE REVIEW]", "image_prompt": "الثعلب الكرتوني يلوّح بعلم إماراتي صغير بجانب شخصية {child_name}، تجمّع مجتمعي دافئ في الخلفية، أسلوب رسوم كتاب قصص." },
+      { "order": 3, "text": "{v:said} {child_name} في كل ما يشعر بالامتنان له — عائلته وأصدقاؤه في {organisation}، والمكان الذي يسمّيه وطنًا. [NEEDS NATIVE REVIEW]", "image_prompt": "شخصية {child_name} ترسم لوحة لعائلتها وأصدقائها ووطنها، تعبير سعيد ومتأمل، أسلوب رسوم كتاب قصص." },
+      { "order": 4, "text": "في ذلك المساء، {v:sang} {child_name} مع الألعاب النارية التي أضاءت السماء، {v:felt_proud} و{v:felt_grateful} بالانتماء. [NEEDS NATIVE REVIEW]", "image_prompt": "شخصية {child_name} تشاهد الألعاب النارية بألوان علم الإمارات مع العائلة، الثعلب الكرتوني بجانبها، احتفال في سماء ليلية، أسلوب رسوم كتاب قصص." }
+    ]
   }
 ]

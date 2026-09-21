@@ -1,6 +1,7 @@
-# Handoff — Phase 1 + Phase 2A + Phase 2B (foundation build)
+# Handoff — Phase 1 + Phase 2A + Phase 2B + Phase 3 (billing/MFA/safety)
 
-*Last updated: this session, initial build from an empty repository.*
+*Last updated: this session. Builds on the initial foundation build from
+an empty repository.*
 
 ## What exists right now
 
@@ -24,16 +25,25 @@ level security, tested against real RLS enforcement (not mocks):
 - **Deletion**: deleting a child cascades to their stories, pages, jobs,
   consent history, and Storage files, and writes a PII-free audit log
   entry.
-- **Story themes**: 6 database-driven templates (healthy eating,
+- **Story themes**: **8** database-driven templates (healthy eating,
   brushing teeth, first day at school, welcoming a new sibling, honesty,
-  hand-washing), each with English (reviewed) and Arabic (draft, pending
-  native review) content, gendered pronoun handling in both languages.
+  hand-washing, saving money/financial literacy, National Day gratitude —
+  the full list from the product brief), each with English (reviewed) and
+  Arabic (draft, pending native review) content, gendered pronoun handling
+  in both languages, validated by an automated test that checks every
+  theme/locale/pronoun combination renders with no leftover tokens.
 - **Story generation**: `ImageProvider` abstraction with a working
   `MockImageProvider` (free, instant, deterministic placeholder
-  illustrations) and a `RealImageProvider` skeleton (not wired to a
-  vendor yet — see `docs/NEEDS_FROM_ME.md`). Postgres-backed job queue
-  with atomic claiming, retries with exponential backoff, and per-page
-  regeneration.
+  illustrations) and a `RealImageProvider` implementation that is fully
+  wired for spend caps + a mandatory, fail-closed image safety check —
+  only the actual vendor HTTP call is a documented stub (see
+  `docs/NEEDS_FROM_ME.md`). Postgres-backed job queue with atomic
+  claiming, retries with exponential backoff, and per-page regeneration.
+- **Image safety checks**: every real-generated image must pass a safety
+  checker before it can be used. With no moderation vendor configured
+  (the default), the checker **fails closed** — every image is blocked —
+  rather than defaulting to "safe". Spend is still recorded even when an
+  image is rejected, since the vendor already charged for the attempt.
 - **Approval workflow**: nothing reaches a parent or PDF until a staff
   member explicitly approves it; a story cannot be approved while any
   page is still generating.
@@ -49,13 +59,20 @@ level security, tested against real RLS enforcement (not mocks):
   (`consume_story_quota`, `record_ai_spend`/`can_spend`), including a
   global kill switch that defaults to **on** (blocked) until the
   platform owner explicitly configures it.
-- **Owner dashboard** (`/owner`, platform-owner only): tenant list,
-  which Arabic templates still need native review, global AI spend/kill
-  switch status.
-- **Billing schema**: plans, coupons, subscriptions, quota, and Stripe
-  webhook-idempotency tables exist and are ready for the actual Stripe
-  SDK integration — no live/test Stripe calls are wired yet (needs your
-  Stripe keys, see `docs/NEEDS_FROM_ME.md`).
+- **Billing**: plans, coupons, subscriptions, quotas, and a fully
+  implemented Stripe integration — checkout session creation, customer
+  portal redirect, and a webhook handler with real signature verification
+  and database-enforced idempotency (a retried Stripe delivery cannot
+  double-apply a subscription change). Coupons are validated against our
+  own table before Stripe is ever contacted. **Not yet connected to a
+  real Stripe account** — see `docs/NEEDS_FROM_ME.md`. The billing UI on
+  the settings page stays hidden until `FEATURE_BILLING=on`.
+- **Owner dashboard** (`/owner`, platform-owner only, **now requires
+  two-factor authentication**): tenant list, which Arabic templates still
+  need native review, global AI spend/kill switch status. First visit
+  walks the owner through TOTP enrollment (QR code, any authenticator
+  app); every session after that requires a fresh 6-digit code before any
+  owner data is even queried, let alone rendered.
 - **PWA basics**: manifest, installable, RTL/LTR + light/dark design
   tokens.
 
@@ -83,19 +100,26 @@ supabase/migrations/0006_job_queue_functions.sql
 supabase/migrations/0007_storage.sql
 supabase/migrations/0008_consent_lookup.sql
 
-npm run db:seed   # seeds the 6 story themes + plans
+npm run db:seed   # seeds the 8 story themes + plans
 npm run db:reset  # optional: seeds a full demo tenant with sample data
 ```
 
+To turn on billing once you have a Stripe test account (see
+`docs/NEEDS_FROM_ME.md`): set `FEATURE_BILLING=on`,
+`STRIPE_SECRET_KEY`/`STRIPE_PUBLISHABLE_KEY`/`STRIPE_WEBHOOK_SECRET`, and
+add `stripe_price_id_monthly`/`stripe_price_id_annual` to each row in the
+`plans` table.
+
 ## What was tested, and the results
 
-**85 automated tests, all passing** (`npm test`):
+**125 automated tests, all passing** (`npm test`):
 
-- 13 test files: 5 unit (pure logic — templates, avatar config, CSV
-  parsing, consent tokens, job retry/backoff math) and 8 integration
-  (against a real, throwaway PostgreSQL database with our actual
-  migrations and RLS policies applied — see
-  `tests/integration/db/setup.ts`).
+- 18 test files: 10 unit (pure logic — templates, seed-template
+  validation, avatar config, CSV parsing, consent tokens, job
+  retry/backoff math, coupon validation, Stripe event mapping, the
+  RealImageProvider spend/safety pipeline) and 8 integration (against a
+  real, throwaway PostgreSQL database with our actual migrations and RLS
+  policies applied — see `tests/integration/db/setup.ts`).
 - **Tenant isolation** (9 tests): proven at the database level — a
   second tenant's owner cannot read, insert into, update, or delete
   another tenant's children, even via a direct SQL statement, and gets 0
@@ -117,9 +141,29 @@ npm run db:reset  # optional: seeds a full demo tenant with sample data
   preflight; preflight correctly fails on a missing asset, an
   English/Arabic character mismatch, a wrong page count, and a corrupt
   file.
+- **Stripe webhook idempotency** (4 tests): a duplicate event id hits a
+  real Postgres unique-violation on retry; different event ids are
+  recorded independently; no client role (only the service role) can
+  write to the idempotency table at all.
+- **Coupon validation & Stripe event mapping** (25 tests): every
+  active/inactive/expired/exhausted coupon combination; every Stripe
+  subscription status maps to exactly one of our own statuses and an
+  unrecognised one throws rather than guessing; subscription period
+  fields are read from the correct (current, non-deprecated) location in
+  Stripe's object shape.
+- **RealImageProvider pipeline** (5 tests): blocks before ever calling
+  the vendor when the spend cap is hit; records spend and returns the
+  image when the safety checker approves; blocks the image (spend still
+  recorded) when the safety checker rejects it; **fails closed** with no
+  safety provider configured; wraps a vendor failure as retryable.
+- **Seed template integrity** (6 tests): all 8 themes have both locales;
+  every row validates against the runtime schema; English is always
+  "reviewed" and Arabic always "draft"; every theme renders for every
+  pronoun (she/he/they) in both languages with zero leftover
+  `{unsubstituted}` tokens.
 
 Also verified manually this session: `npm run build` completes
-successfully (22 routes, no errors), `npm run typecheck` is clean, and
+successfully (29 routes, no errors), `npm run typecheck` is clean, and
 `npm run lint` passes (3 non-blocking warnings about using `<img>`
 instead of `next/image` for Supabase-signed URLs — intentional, since
 those URLs are per-request and short-lived).
@@ -134,27 +178,36 @@ push/PR.
   schema and RLS are proven against a real Postgres instance with a
   minimal stand-in for Supabase's `auth`/`storage` schemas (see
   `docs/DECISIONS.md` "Test database strategy"), but Supabase Auth's own
-  token issuance and Storage's HTTP file-serving layer have not been
-  exercised end-to-end. Do that once a project exists, before go-live.
-- `RealImageProvider` and Stripe checkout/webhooks are architected but
-  not implemented against a real vendor — both need credentials only you
-  can provide (`docs/NEEDS_FROM_ME.md`).
-- Every Arabic string in the product (UI + all 6 story templates) needs
+  token issuance, MFA/TOTP enrollment flow, and Storage's HTTP
+  file-serving layer have not been exercised end-to-end against a real
+  Supabase project yet. Do that once a project exists, before go-live.
+- `RealImageProvider.callVendorApi` and `VendorModerationSafetyChecker`
+  are documented stubs — both need a chosen vendor + credentials
+  (`docs/NEEDS_FROM_ME.md`). Everything around them (spend caps,
+  idempotent recording, fail-closed safety gating) is real and tested.
+- The Stripe billing routes have never made a real network call to
+  Stripe — no test account exists yet. The code is fully implemented and
+  the parts that don't need Stripe itself (coupon validation, event
+  mapping, webhook idempotency) are tested against real logic/DB
+  behaviour, not mocks.
+- Every Arabic string in the product (UI + all 8 story templates) needs
   native review before real families see it — the system technically
   blocks this already (see `docs/DECISIONS.md` "Arabic content gating"),
   but the wording itself hasn't been checked by a native speaker.
 - Single-tenant-per-session (see `docs/DECISIONS.md`).
 - No automated E2E (Playwright) tests yet — `@playwright/test` is
   installed and `npm run test:e2e` is wired up, but no test files exist
-  yet. Next priority for Phase 2B hardening.
+  yet. Next priority for hardening.
 - PDF bold text currently renders at the same weight as regular (variable
   font default instance) — see `docs/DECISIONS.md` "PDF font weights".
+- Owner impersonation tooling (with mandatory audit trail) is not built.
 
 ## Decisions made along the way
 
 See `docs/DECISIONS.md` for the full, itemized log (brand name, palette,
 Arabic gating, job queue design, storage security, retention default,
-spend caps, and more).
+spend caps, Stripe test-mode safety gate, owner MFA, image-safety
+fail-closed default, and more).
 
 ## Unresolved issues
 
@@ -164,6 +217,8 @@ spend caps, and more).
 ## Exact next step
 
 Create the Supabase project (`docs/NEEDS_FROM_ME.md` item 1) so the
-schema can be applied for real, Supabase Auth can be exercised
-end-to-end, and Phase 3 (Stripe test-mode wiring, real image provider
-integration behind its feature flag, owner MFA) can begin.
+schema, Auth (including the MFA flow just built), and Storage can be
+exercised end-to-end against the real thing — that unblocks a genuine
+pilot with a real nursery using the mock image provider (zero cost)
+while the vendor/legal items in `docs/NEEDS_FROM_ME.md` are worked
+through in parallel.

@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { getCurrentTenantContext } from '@/lib/domain/session';
+import { checkOwnerMfaGate } from '@/lib/domain/mfa';
 import { Card, CardTitle } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 
@@ -15,6 +16,16 @@ export default async function OwnerDashboardPage({ params }: { params: { locale:
 
   if (!userData.user || !profile?.is_platform_owner) {
     redirect(`/${params.locale}/dashboard`);
+  }
+
+  // Mandatory MFA gate — see docs/DECISIONS.md "Owner MFA is mandatory".
+  // No owner-dashboard data is fetched or rendered below this check.
+  const mfaGate = await checkOwnerMfaGate(supabase);
+  if (mfaGate.status === 'needs_enrollment') {
+    redirect(`/${params.locale}/owner/mfa-enroll`);
+  }
+  if (mfaGate.status === 'needs_challenge') {
+    redirect(`/${params.locale}/owner/mfa-challenge`);
   }
 
   const [{ data: tenants }, { data: templates }, { data: globalCap }] = await Promise.all([
@@ -34,7 +45,7 @@ export default async function OwnerDashboardPage({ params }: { params: { locale:
     <div className="mx-auto max-w-5xl space-y-6 p-6 md:p-10">
       <div className="flex items-center justify-between">
         <h1 className="font-display text-2xl text-ink-900">Platform owner dashboard</h1>
-        {!profile.mfa_enrolled && <Badge tone="danger">MFA not enrolled — see docs/NEEDS_FROM_ME.md</Badge>}
+        <Badge tone="success">Two-factor verified this session</Badge>
       </div>
 
       <Card>
@@ -84,8 +95,8 @@ export default async function OwnerDashboardPage({ params }: { params: { locale:
       <Card>
         <CardTitle>Your session</CardTitle>
         <p className="mt-2 text-sm text-ink-600">
-          Signed in as {context?.fullName ?? userData.user.email}. Impersonation tooling and full revenue
-          reporting are planned for Phase 3 — see docs/HANDOFF.md.
+          Signed in as {context?.fullName ?? userData.user.email}. Impersonation tooling with mandatory
+          audit logging and full revenue reporting are not yet built — see docs/HANDOFF.md.
         </p>
       </Card>
     </div>

@@ -33,6 +33,7 @@ export const ARABIC_VERB_KEYS = [
   'felt_worried',
   'felt_proud',
   'felt_scared',
+  'felt_grateful',
   'said',
   'decided',
   'smiled',
@@ -45,6 +46,12 @@ export const ARABIC_VERB_KEYS = [
   'ate',
   'wanted',
   'hugged',
+  'saved',
+  'counted',
+  'shared',
+  'sang',
+  'waved',
+  'celebrated',
   'subject_pronoun',
 ] as const;
 
@@ -56,6 +63,7 @@ export const ARABIC_CONJUGATIONS: Record<ArabicVerbKey, Record<Pronoun, string>>
   felt_worried: { she: 'شعرت بالقلق', he: 'شعر بالقلق', they: 'شعروا بالقلق' },
   felt_proud: { she: 'شعرت بالفخر', he: 'شعر بالفخر', they: 'شعروا بالفخر' },
   felt_scared: { she: 'شعرت بالخوف قليلًا', he: 'شعر بالخوف قليلًا', they: 'شعروا بالخوف قليلًا' },
+  felt_grateful: { she: 'شعرت بالامتنان', he: 'شعر بالامتنان', they: 'شعروا بالامتنان' },
   said: { she: 'قالت', he: 'قال', they: 'قالوا' },
   decided: { she: 'قررت', he: 'قرر', they: 'قرروا' },
   smiled: { she: 'ابتسمت', he: 'ابتسم', they: 'ابتسموا' },
@@ -68,6 +76,12 @@ export const ARABIC_CONJUGATIONS: Record<ArabicVerbKey, Record<Pronoun, string>>
   ate: { she: 'أكلت', he: 'أكل', they: 'أكلوا' },
   wanted: { she: 'أرادت', he: 'أراد', they: 'أرادوا' },
   hugged: { she: 'عانقت', he: 'عانق', they: 'عانقوا' },
+  saved: { she: 'ادّخرت', he: 'ادّخر', they: 'ادّخروا' },
+  counted: { she: 'عدّت', he: 'عدّ', they: 'عدّوا' },
+  shared: { she: 'شاركت', he: 'شارك', they: 'شاركوا' },
+  sang: { she: 'غنّت', he: 'غنّى', they: 'غنّوا' },
+  waved: { she: 'لوّحت', he: 'لوّح', they: 'لوّحوا' },
+  celebrated: { she: 'احتفلت', he: 'احتفل', they: 'احتفلوا' },
 };
 
 export function arabicVerb(key: ArabicVerbKey, pronoun: Pronoun): string {

@@ -1,6 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { GenerateImageRequest, GenerateImageResult, ImageProvider } from './ImageProvider';
 import { ImageGenerationError, SpendCapExceededError } from './ImageProvider';
+import { createImageSafetyChecker, type ImageSafetyChecker } from './safety';
 
 export interface RealImageProviderConfig {
   apiKey: string;
@@ -22,6 +23,9 @@ export interface RealImageProviderConfig {
  *   - recording spend via record_ai_spend() in the SAME request as the
  *     generation call, so a crash between "spent" and "recorded" is not
  *     possible to exploit for unlimited free generation
+ *   - the image safety check below, which runs on EVERY generated image
+ *     and fails closed (blocks the image) if no real checker is
+ *     configured — see src/lib/providers/image/safety.ts
  */
 export class RealImageProvider implements ImageProvider {
   readonly name = 'real';
@@ -29,6 +33,7 @@ export class RealImageProvider implements ImageProvider {
   constructor(
     private readonly supabase: SupabaseClient,
     private readonly config: RealImageProviderConfig,
+    private readonly safetyChecker: ImageSafetyChecker = createImageSafetyChecker(),
   ) {}
 
   async generate(request: GenerateImageRequest): Promise<GenerateImageResult> {
@@ -50,6 +55,10 @@ export class RealImageProvider implements ImageProvider {
       );
     }
 
+    // The vendor charged for this generation attempt regardless of the
+    // moderation outcome, so spend is recorded before the safety check —
+    // an unsafe result is a failed generation from the product's
+    // perspective, not a free retry.
     const { error: spendError } = await this.supabase.rpc('record_ai_spend', {
       target_tenant_id: request.tenantId,
       target_story_id: request.storyId,
@@ -59,16 +68,31 @@ export class RealImageProvider implements ImageProvider {
     });
     if (spendError) throw spendError;
 
+    const contentType = 'image/png';
+    const safety = await this.safetyChecker.check(bytes, contentType);
+    if (!safety.safe) {
+      throw new ImageGenerationError(
+        `Image failed the safety check (${this.safetyChecker.name}): ${safety.reason ?? 'unspecified reason'}`,
+        false,
+      );
+    }
+
     return {
       bytes,
-      contentType: 'image/png',
+      contentType,
       provider: this.name,
       costUsd: this.config.costPerImageUsd,
     };
   }
 
-  /** NOT IMPLEMENTED — placeholder for the chosen vendor's API call. */
-  private async callVendorApi(_request: GenerateImageRequest): Promise<Uint8Array> {
+  /**
+   * NOT IMPLEMENTED — placeholder for the chosen vendor's API call.
+   * `protected` (not `private`) specifically so tests can exercise the
+   * rest of this class's spend/safety-check pipeline with a fake vendor
+   * response, without needing a real API key — see
+   * tests/unit/real-image-provider.test.ts.
+   */
+  protected async callVendorApi(_request: GenerateImageRequest): Promise<Uint8Array> {
     throw new Error(
       'RealImageProvider.callVendorApi is not implemented. Choose an image generation ' +
         'vendor, obtain API credentials, and implement this method before enabling ' +

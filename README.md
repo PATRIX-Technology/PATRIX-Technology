@@ -62,7 +62,9 @@ docs/                          See below
 - `docs/LICENSES.md` — every third-party asset/font/package license.
 - `docs/TEST_CHECKLIST.md` — 8 plain-language manual checks, no coding
   knowledge required.
-- `docs/en/` / `docs/ar/` — bilingual product/brand/pricing documentation.
+- `docs/en/` / `docs/ar/` — bilingual product/brand/pricing/privacy
+  documentation, plus `launch-runbook.md` (deploy steps) and
+  `pilot-plan.md` (running a first real pilot with a nursery).
 
 ## Testing
 

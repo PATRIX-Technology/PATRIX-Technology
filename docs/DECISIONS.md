@@ -291,6 +291,77 @@ them. The regression test is now permanent:
 bug the "test against real RLS, not mocks" strategy
 (`docs/DECISIONS.md` "Test database strategy") exists to catch — and did.
 
+## Phase 4: families are tenants
+
+**Decision: an individual/family account is a `tenants` row with
+`tenant_type = 'family'`, not a separate consumer data model.** A family
+reuses the exact same tenant_members/RLS/children/story/quota machinery
+a nursery uses — `create_family_tenant()` mirrors `create_tenant()`
+(`supabase/migrations/0009_family_and_gifts.sql`), and the sole member
+holds the existing `nursery_owner` role (a naming artifact of Phase 2;
+in this context it just means "account owner"). This was the strongest
+practical option because: every isolation guarantee already proven for
+nurseries (RLS, storage scoping, deletion cascade, quota enforcement)
+applies to families for free, with zero new attack surface to test from
+scratch; and it avoids a second, parallel authorization model that would
+need its own RLS policies, its own tests, and its own bugs.
+
+**Decision: a family tenant's own consent workflow is auto-granted, not
+skipped.** A `BEFORE INSERT` trigger on `children`
+(`auto_grant_family_consent`) sets `consent_status = 'granted'`
+immediately when the owning tenant is `tenant_type = 'family'` — the
+person adding the child under their own family account IS the guardian,
+so the nursery's multi-party "ask a parent, wait for a click" flow does
+not apply. This keeps the *rule* ("no story without consent") fully
+intact — `createStory()` still checks `consent_status = 'granted'`
+identically for both tenant types — while removing a workflow step that
+would be actively confusing for a parent creating a story for their own
+child. Nursery-tenant children are completely unaffected (the trigger is
+a no-op for `tenant_type = 'nursery'`) — proven in
+`tests/integration/family-tenants.test.ts`.
+
+**Decision: nav/UI adapts per tenant type rather than shipping a second
+dashboard.** `DashboardNav` hides the Staff link for family tenants
+(`nurseryOnly` link flag) and the child detail page shows a short
+explanatory note instead of the consent-request panel — small,
+targeted conditionals rather than forking the whole dashboard, since
+~95% of the UI (children, avatars, stories, reader, PDF, settings) is
+identical for both audiences.
+
+## Phase 4: gifting
+
+**Decision: a gift is a purchased pack of story credits, redeemed via a
+code, fulfilled through the existing `quotas` table.** Modelled
+deliberately like a physical gift card: the purchaser does not need the
+recipient to have an account yet, and the recipient does not need to be
+pre-invited anywhere — they just need the code. `redeem_gift()` credits
+`quotas.stories_included_this_period` for whichever tenant the redeemer
+is a member of, atomically and idempotently (a gift can only ever be
+consumed once — proven with a double-redeem test in
+`tests/integration/gift-redemption.test.ts`).
+
+**Decision: gift codes follow the exact same trust model as consent
+tokens** (`docs/DECISIONS.md` "Private storage + signed URLs" territory,
+extended here): a random code is generated once, only its SHA-256 hash
+is ever persisted (`gifts.code_hash`), and the raw code is delivered to
+the purchaser by embedding it directly in the Stripe `success_url` —
+never stored in plaintext anywhere, never emailed (no email-sending
+infrastructure exists in this build — see `docs/NEEDS_FROM_ME.md`). The
+purchaser is shown the code/link on the success page and is responsible
+for sharing it themselves for now.
+
+**Decision: gift purchases use Stripe Checkout in one-time `payment`
+mode with ad-hoc `price_data`, not a pre-created Stripe Price.** Unlike
+subscription plans (which need a real Stripe Price object per
+plan/interval, configured once a Stripe account exists), a gift's price
+is simple and fixed enough that generating the line item inline at
+checkout-creation time (`src/app/api/gifts/checkout/route.ts`) avoids a
+manual Stripe-dashboard setup step for something this simple. Reuses the
+exact same webhook route, signature verification, and idempotency
+guarantee already built for subscriptions
+(`src/app/api/billing/webhook/route.ts` now branches on
+`session.mode`/`metadata.purpose` before deciding which flow to run).
+
 ## Not yet built (explicitly out of scope for this build session)
 
 - Real image provider vendor integration (`RealImageProvider.callVendorApi`
@@ -302,5 +373,11 @@ bug the "test against real RLS, not mocks" strategy
   additions" above) but has never made a real network call to Stripe
   since no account exists yet.
 - Owner impersonation tooling with mandatory audit trail.
+- Email delivery (gift codes are shown on-screen/in-URL only, not
+  emailed — no transactional email provider is configured; see
+  "Phase 4: gifting" above and `docs/NEEDS_FROM_ME.md`).
 - Native mobile apps, push notifications, print-fulfilment integration
-  (Phase 4).
+  (still genuinely Phase 4 territory — family accounts and gifting,
+  the web-buildable parts of Phase 4, are now scaffolded; these three
+  need a native app project, push credentials (APNs/FCM), and a print
+  vendor contract respectively, none of which exist yet).

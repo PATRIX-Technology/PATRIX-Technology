@@ -64,7 +64,19 @@ else has already been built and is documented in `docs/HANDOFF.md`.
    handler (with signature verification and idempotency) are fully
    implemented and unit/integration tested — see `docs/DECISIONS.md`
    "Phase 3 additions". Set `FEATURE_BILLING=on` once the above exists;
-   until then the billing section on the settings page stays hidden.
+   until then the billing section on the settings page, and the gift
+   purchase page (`/gift`, Phase 4), both stay hidden behind the same
+   flag.
+
+## Before family accounts / gifting feel complete (Phase 4)
+
+6a. **A transactional email provider** (Resend, Postmark, SendGrid, or
+   Supabase's own SMTP integration) if you want gift codes emailed to
+   the purchaser automatically. Right now the redemption code is shown
+   on-screen and in a shareable link after payment — real and working,
+   just manual: the purchaser has to copy and send it themselves. This
+   is a contained addition once you've picked a provider and I have an
+   API key for it.
 
 ## Legal / compliance (do not treat any of this as done)
 

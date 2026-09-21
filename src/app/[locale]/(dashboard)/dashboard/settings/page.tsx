@@ -3,6 +3,7 @@ import { getCurrentTenantContext } from '@/lib/domain/session';
 import { Card, CardTitle } from '@/components/ui/Card';
 import { SettingsForm } from '@/components/dashboard/SettingsForm';
 import { BillingSection } from '@/components/dashboard/BillingSection';
+import { RedeemGiftCodeForm } from '@/components/dashboard/RedeemGiftCodeForm';
 import { flags } from '@/lib/flags';
 
 export default async function SettingsPage({ params }: { params: { locale: string } }) {
@@ -42,6 +43,15 @@ export default async function SettingsPage({ params }: { params: { locale: strin
           )}
         </Card>
       )}
+      <Card>
+        <CardTitle>Redeem a gift code</CardTitle>
+        <p className="mt-2 text-sm text-ink-600">
+          Received a gift code for personalised story credits? Redeem it here.
+        </p>
+        <div className="mt-4">
+          <RedeemGiftCodeForm />
+        </div>
+      </Card>
       <Card>
         <CardTitle>Privacy</CardTitle>
         <p className="mt-2 max-w-xl text-sm text-ink-600">

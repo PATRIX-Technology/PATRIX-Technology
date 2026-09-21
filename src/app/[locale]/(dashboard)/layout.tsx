@@ -26,6 +26,7 @@ export default async function DashboardLayout({
       <DashboardNav
         locale={params.locale}
         tenantName={context.tenantName}
+        tenantType={context.tenantType}
         fullName={context.fullName}
         role={context.role}
         labels={{

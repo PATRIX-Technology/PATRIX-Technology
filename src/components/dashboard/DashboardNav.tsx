@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { signOutAction } from '@/lib/actions/auth';
-import type { TenantRole } from '@/types/database';
+import type { TenantRole, TenantType } from '@/types/database';
 import { Badge } from '@/components/ui/Badge';
 
 interface Labels {
@@ -19,12 +19,14 @@ interface Labels {
 export function DashboardNav({
   locale,
   tenantName,
+  tenantType,
   fullName,
   role,
   labels,
 }: {
   locale: string;
   tenantName: string;
+  tenantType: TenantType;
   fullName: string;
   role: TenantRole;
   labels: Labels;
@@ -36,16 +38,22 @@ export function DashboardNav({
     { href: base, label: labels.overview },
     { href: `${base}/children`, label: labels.children },
     { href: `${base}/stories`, label: labels.stories },
-    { href: `${base}/staff`, label: labels.staff, ownerOnly: true },
+    // A family account is a single guardian by default — staff invites
+    // don't apply the way they do for a nursery. See docs/DECISIONS.md
+    // "Phase 4: families are tenants".
+    { href: `${base}/staff`, label: labels.staff, ownerOnly: true, nurseryOnly: true },
     { href: `${base}/settings`, label: labels.settings },
-  ].filter((link) => !link.ownerOnly || role === 'nursery_owner');
+  ].filter(
+    (link) =>
+      (!link.ownerOnly || role === 'nursery_owner') && (!link.nurseryOnly || tenantType === 'nursery'),
+  );
 
   return (
     <nav className="flex w-full flex-col justify-between border-b border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface-raised))] p-6 md:w-64 md:border-b-0 md:border-e">
       <div>
         <p className="font-display text-lg text-ink-900">{tenantName}</p>
         <Badge tone="info" className="mt-1">
-          {role.replace('nursery_', '')}
+          {tenantType === 'family' ? 'family account' : role.replace('nursery_', '')}
         </Badge>
         <ul className="mt-8 flex flex-col gap-1">
           {links.map((link) => (

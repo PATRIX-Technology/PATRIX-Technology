@@ -1,9 +1,42 @@
-# Handoff — Phase 1 + Phase 2A + Phase 2B + Phase 3 (billing/MFA/safety)
+# Handoff — Phase 1 through Phase 4 scaffolding
 
 *Last updated: this session. Builds on the initial foundation build from
 an empty repository.*
 
-## What exists right now
+## New this session: Phase 4 scaffolding (families + gifting)
+
+Per the product brief, Phase 4 (consumer/family expansion) only starts
+once the B2B core is complete — it now is, so this session scaffolded
+the two web-buildable parts of Phase 4:
+
+- **Family accounts**: `/family/sign-up` lets an individual parent
+  create their own account. Under the hood this is a `tenants` row with
+  `tenant_type = 'family'`, reusing every piece of nursery
+  infrastructure (RLS, children, avatars, story generation, quotas,
+  deletion) rather than a parallel system — see
+  `docs/DECISIONS.md` "Phase 4: families are tenants". Adding a child
+  under a family account auto-grants consent (the account owner IS the
+  guardian — no multi-party "ask a parent" flow needed), proven by a
+  database trigger test.
+- **Gifting**: `/gift` sells story-credit packs via Stripe Checkout
+  (one-time payment, reuses the existing webhook/idempotency
+  infrastructure); `/gift/redeem/[code]` lets the recipient — with a
+  free family account — redeem the code straight into their quota. Gift
+  codes follow the exact same hash-only trust model as consent tokens.
+- **Not built**: native mobile apps, push notifications, and print
+  fulfilment remain genuinely out of scope (need a native app project,
+  push credentials, and a print vendor contract respectively — none of
+  which exist). Email delivery of gift codes also isn't wired up yet
+  (the code is shown on-screen/in a link instead) — see
+  `docs/NEEDS_FROM_ME.md` item 6a.
+
+12 new automated tests cover family-tenant creation, the auto-consent
+trigger (and its no-op on nursery tenants), family-tenant isolation, and
+every gift-redemption edge case (double-redemption, unpaid, wrong
+tenant, forged direct writes) — all against real Postgres/RLS, not
+mocks. Total: **146 unit/integration tests + 16 E2E tests, all passing.**
+
+## What exists right now (Phase 1-3, from prior sessions)
 
 A working Next.js 14 (App Router, strict TypeScript) web app implementing
 the full B2B core loop end-to-end against a real Postgres schema with row
@@ -99,6 +132,7 @@ supabase/migrations/0005_spend_caps_audit.sql
 supabase/migrations/0006_job_queue_functions.sql
 supabase/migrations/0007_storage.sql
 supabase/migrations/0008_consent_lookup.sql
+supabase/migrations/0009_family_and_gifts.sql
 
 npm run db:seed   # seeds the 8 story themes + plans
 npm run db:reset  # optional: seeds a full demo tenant with sample data
@@ -112,14 +146,31 @@ add `stripe_price_id_monthly`/`stripe_price_id_annual` to each row in the
 
 ## What was tested, and the results
 
-**125 automated tests, all passing** (`npm test`):
+**146 unit/integration tests + 16 Playwright E2E tests, all passing**
+(`npm test` / `npm run test:e2e`):
 
-- 18 test files: 10 unit (pure logic — templates, seed-template
+- 22 test files: 10 unit (pure logic — templates, seed-template
   validation, avatar config, CSV parsing, consent tokens, job
   retry/backoff math, coupon validation, Stripe event mapping, the
-  RealImageProvider spend/safety pipeline) and 8 integration (against a
-  real, throwaway PostgreSQL database with our actual migrations and RLS
-  policies applied — see `tests/integration/db/setup.ts`).
+  RealImageProvider spend/safety pipeline, rate limiting) and 12
+  integration (against a real, throwaway PostgreSQL database with our
+  actual migrations and RLS policies applied — see
+  `tests/integration/db/setup.ts`).
+- **Family tenants & auto-consent** (4 tests): `create_family_tenant`
+  produces a correctly-typed tenant + starter quota; a child added under
+  a family tenant gets `consent_status = 'granted'` automatically; a
+  nursery tenant is completely unaffected by that trigger; family-tenant
+  isolation holds exactly like nursery isolation does.
+- **Gift redemption** (8 tests): public gift-status lookup works
+  anonymously; redemption credits the right tenant's quota exactly once
+  (a second redemption attempt is rejected); an unpaid, unknown, or
+  wrong-tenant redemption is rejected; no client role can write directly
+  to the `gifts` table.
+- **Job queue RLS** (4 tests): a real, now-fixed bug caught by manual
+  security review — `story_jobs` was missing an INSERT policy, which
+  would have made every story creation and page regeneration fail
+  outright against real RLS. See `docs/DECISIONS.md` "Security review
+  finding (fixed)".
 - **Tenant isolation** (9 tests): proven at the database level — a
   second tenant's owner cannot read, insert into, update, or delete
   another tenant's children, even via a direct SQL statement, and gets 0
@@ -163,13 +214,14 @@ add `stripe_price_id_monthly`/`stripe_price_id_annual` to each row in the
   `{unsubstituted}` tokens.
 
 Also verified manually this session: `npm run build` completes
-successfully (29 routes, no errors), `npm run typecheck` is clean, and
+successfully (36 routes, no errors), `npm run typecheck` is clean, and
 `npm run lint` passes (3 non-blocking warnings about using `<img>`
 instead of `next/image` for Supabase-signed URLs — intentional, since
 those URLs are per-request and short-lived).
 
-CI (`.github/workflows/ci.yml`) runs lint, typecheck, the full test suite
-against a Postgres service container, and a production build on every
+CI (`.github/workflows/ci.yml`) runs lint, typecheck, the full unit/
+integration suite against a Postgres service container, a production
+build, and the Playwright E2E suite (headless Chromium) on every
 push/PR.
 
 ## Known limitations
@@ -195,12 +247,18 @@ push/PR.
   blocks this already (see `docs/DECISIONS.md` "Arabic content gating"),
   but the wording itself hasn't been checked by a native speaker.
 - Single-tenant-per-session (see `docs/DECISIONS.md`).
-- No automated E2E (Playwright) tests yet — `@playwright/test` is
-  installed and `npm run test:e2e` is wired up, but no test files exist
-  yet. Next priority for hardening.
+- E2E coverage (16 Playwright tests) is deliberately limited to pages
+  that render without a live Supabase project (marketing, auth forms,
+  family sign-up, the gift page). The full authenticated user journey
+  (sign up → add a child → consent → generate → approve → PDF) needs a
+  real or `supabase start` Supabase project to test honestly — see
+  `docs/DECISIONS.md` "E2E test scope".
 - PDF bold text currently renders at the same weight as regular (variable
   font default instance) — see `docs/DECISIONS.md` "PDF font weights".
 - Owner impersonation tooling (with mandatory audit trail) is not built.
+- Gift codes are not emailed — shown on-screen/in-link only (no
+  transactional email provider configured yet; see
+  `docs/NEEDS_FROM_ME.md` item 6a).
 
 ## Decisions made along the way
 
@@ -217,8 +275,9 @@ fail-closed default, and more).
 ## Exact next step
 
 Create the Supabase project (`docs/NEEDS_FROM_ME.md` item 1) so the
-schema, Auth (including the MFA flow just built), and Storage can be
-exercised end-to-end against the real thing — that unblocks a genuine
-pilot with a real nursery using the mock image provider (zero cost)
-while the vendor/legal items in `docs/NEEDS_FROM_ME.md` are worked
-through in parallel.
+schema, Auth (including the MFA and family-sign-up flows just built),
+and Storage can be exercised end-to-end against the real thing — that
+unblocks a genuine pilot with a real nursery (or a family, via
+`/family/sign-up`) using the mock image provider (zero cost) while the
+vendor/legal items in `docs/NEEDS_FROM_ME.md` are worked through in
+parallel.

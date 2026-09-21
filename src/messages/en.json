@@ -6,6 +6,7 @@
   "nav": {
     "product": "Product",
     "forNurseries": "For Nurseries & Schools",
+    "forFamilies": "For Families",
     "pricing": "Pricing",
     "signIn": "Sign in",
     "getStarted": "Book a demo"
@@ -19,6 +20,11 @@
       "ctaSecondary": "See how it works"
     },
     "trustBar": "Built for Dubai nurseries, schools, clinics and children's brands",
+    "familyCallout": {
+      "title": "A parent yourself?",
+      "body": "Create a free family account and make a personalised story for your own child, or send one as a gift.",
+      "cta": "Create a family account"
+    },
     "useCases": {
       "title": "One platform, many occasions",
       "graduation": "Graduation keepsakes",

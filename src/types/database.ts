@@ -7,6 +7,10 @@
 
 export type TenantRole = 'nursery_owner' | 'nursery_admin' | 'nursery_staff';
 export type TenantStatus = 'active' | 'suspended' | 'closed';
+/** A "family" tenant is an individual parent/guardian account — see
+ * docs/DECISIONS.md "Phase 4: families are tenants". */
+export type TenantType = 'nursery' | 'family';
+export type GiftStatus = 'pending_payment' | 'paid' | 'redeemed' | 'expired' | 'canceled';
 export type Pronoun = 'she' | 'he' | 'they';
 export type AppLocale = 'en' | 'ar';
 export type ConsentStatus = 'not_requested' | 'pending' | 'granted' | 'declined' | 'withdrawn';
@@ -46,12 +50,29 @@ export interface Tenant {
   name: string;
   slug: string;
   status: TenantStatus;
+  tenant_type: TenantType;
   logo_asset_path: string | null;
   brand_primary_color: string | null;
   default_locale: AppLocale;
   data_retention_days: number;
   created_at: string;
   updated_at: string;
+}
+
+export interface Gift {
+  id: string;
+  purchaser_email: string;
+  story_credits: number;
+  amount_usd: number;
+  currency: string;
+  stripe_checkout_session_id: string | null;
+  stripe_payment_intent_id: string | null;
+  code_hash: string | null;
+  status: GiftStatus;
+  redeemed_by_tenant_id: string | null;
+  redeemed_at: string | null;
+  created_at: string;
+  expires_at: string;
 }
 
 export interface TenantMember {

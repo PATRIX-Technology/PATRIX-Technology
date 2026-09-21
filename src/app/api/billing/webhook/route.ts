@@ -79,6 +79,23 @@ async function handleEvent(
   switch (event.type) {
     case 'checkout.session.completed': {
       const session = event.data.object as Stripe.Checkout.Session;
+
+      if (session.mode === 'payment' && session.metadata?.purpose === 'gift') {
+        const giftId = session.metadata.gift_id;
+        if (!giftId) throw new Error('Gift checkout session is missing gift_id metadata.');
+
+        const paymentIntentId =
+          typeof session.payment_intent === 'string' ? session.payment_intent : session.payment_intent?.id;
+
+        const { error } = await serviceClient
+          .from('gifts')
+          .update({ status: 'paid', stripe_payment_intent_id: paymentIntentId ?? null })
+          .eq('id', giftId)
+          .eq('status', 'pending_payment');
+        if (error) throw error;
+        break;
+      }
+
       const { tenantId, planId } = extractCheckoutMetadata(session);
       if (!session.subscription) return;
 

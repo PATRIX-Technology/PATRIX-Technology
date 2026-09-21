@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import type { TenantRole } from '@/types/database';
+import type { TenantRole, TenantType } from '@/types/database';
 
 export interface TenantContext {
   userId: string;
@@ -8,6 +8,7 @@ export interface TenantContext {
   tenantId: string;
   tenantName: string;
   tenantSlug: string;
+  tenantType: TenantType;
   role: TenantRole;
 }
 
@@ -30,14 +31,18 @@ export async function getCurrentTenantContext(supabase: SupabaseClient): Promise
 
   const { data: membership } = await supabase
     .from('tenant_members')
-    .select('tenant_id, role, tenants(name, slug)')
+    .select('tenant_id, role, tenants(name, slug, tenant_type)')
     .eq('user_id', user.id)
     .limit(1)
     .maybeSingle();
 
   if (!membership) return null;
 
-  const tenant = membership.tenants as unknown as { name: string; slug: string } | null;
+  const tenant = membership.tenants as unknown as {
+    name: string;
+    slug: string;
+    tenant_type: TenantType;
+  } | null;
 
   return {
     userId: user.id,
@@ -46,6 +51,7 @@ export async function getCurrentTenantContext(supabase: SupabaseClient): Promise
     tenantId: membership.tenant_id,
     tenantName: tenant?.name ?? 'Organisation',
     tenantSlug: tenant?.slug ?? '',
+    tenantType: tenant?.tenant_type ?? 'nursery',
     role: membership.role,
   };
 }

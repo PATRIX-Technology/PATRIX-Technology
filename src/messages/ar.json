@@ -6,6 +6,7 @@
   "nav": {
     "product": "المنتج",
     "forNurseries": "للحضانات والمدارس",
+    "forFamilies": "للعائلات",
     "pricing": "الأسعار",
     "signIn": "تسجيل الدخول",
     "getStarted": "حجز عرض توضيحي"
@@ -19,6 +20,11 @@
       "ctaSecondary": "شاهد كيف يعمل [NEEDS NATIVE REVIEW]"
     },
     "trustBar": "مصمم لحضانات ومدارس وعيادات وعلامات تجارية للأطفال في دبي [NEEDS NATIVE REVIEW]",
+    "familyCallout": {
+      "title": "هل أنت أحد الوالدين؟ [NEEDS NATIVE REVIEW]",
+      "body": "أنشئ حساب عائلة مجانيًا واصنع قصة مخصصة لطفلك، أو أرسلها كهدية. [NEEDS NATIVE REVIEW]",
+      "cta": "إنشاء حساب عائلة"
+    },
     "useCases": {
       "title": "منصة واحدة، مناسبات متعددة [NEEDS NATIVE REVIEW]",
       "graduation": "هدايا تذكارية للتخرج",

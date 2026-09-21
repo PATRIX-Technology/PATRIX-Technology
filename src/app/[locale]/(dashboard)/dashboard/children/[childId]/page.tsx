@@ -50,12 +50,22 @@ export default async function ChildDetailPage({
         </div>
       </div>
 
-      <Card>
-        <CardTitle>{t('consent.requestTitle')}</CardTitle>
-        <div className="mt-4">
-          <ConsentPanel locale={params.locale} childId={child.id} consentStatus={child.consent_status} />
-        </div>
-      </Card>
+      {context.tenantType === 'family' ? (
+        <Card>
+          <CardTitle>Consent</CardTitle>
+          <p className="mt-2 text-sm text-ink-600">
+            As this child&apos;s parent/guardian, your consent was recorded automatically when you added
+            them to your family account — see docs/DECISIONS.md &quot;Phase 4: families are tenants&quot;.
+          </p>
+        </Card>
+      ) : (
+        <Card>
+          <CardTitle>{t('consent.requestTitle')}</CardTitle>
+          <div className="mt-4">
+            <ConsentPanel locale={params.locale} childId={child.id} consentStatus={child.consent_status} />
+          </div>
+        </Card>
+      )}
 
       <Card>
         <CardTitle>{t('stories.create')}</CardTitle>

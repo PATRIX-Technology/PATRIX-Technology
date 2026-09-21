@@ -77,11 +77,17 @@ wrapped line, which is fine for the short (1-3 sentence) captions this
 platform generates but should be verified against a physical print proof,
 not just a PDF viewer, before any real print run.
 
-**PDF font weights.** The three vendored fonts are variable fonts;
-`pdf-lib` embeds a variable font at its default named instance, so "bold"
-currently renders as the same weight as regular text. Source true static
-Bold weight files before a production print run if bold text is needed
-(see `assets/fonts/`).
+**PDF font weights.** `src/lib/providers/pdf/fonts.ts` now embeds a
+single static instance per font — `Inter-Regular-Static.ttf` (wght=400),
+`Fraunces-Display-Static.ttf` (wght=600), `NotoNaskhArabic-Regular-
+Static.ttf` (wght=400) — pre-generated from the vendored variable fonts
+with `fonttools varLib.instancer` (see docs/LICENSES.md for the exact
+commands; this was forced by a real rendering bug, not a style choice —
+see "Bug fix: Arabic (and Latin) PDF text was silently not rendering"
+below). There is currently no separate bold instance embedded, so "bold"
+still renders as the same weight as regular text; if bold text is ever
+needed, generate one more static instance at a higher `wght` value the
+same way and embed it as a fourth `EmbeddedFonts` entry.
 
 **Private storage + signed URLs.** All story/child assets live in the
 private `story-assets` Supabase Storage bucket (never public). Every URL

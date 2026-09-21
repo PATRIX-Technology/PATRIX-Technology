@@ -29,23 +29,44 @@ else has already been built and is documented in `docs/HANDOFF.md`.
 
 ## Before enabling real (paid) AI image generation
 
-4. **Choose an image generation vendor** (e.g. an AI image API) and
-   provide API credentials. The code is architected so this is a
-   contained change (`RealImageProvider.callVendorApi` in
-   `src/lib/providers/image/RealImageProvider.ts`), but the actual vendor
-   choice, contract, and API key are a commercial decision + credential
-   only you can provide.
+4. **Provide a Gemini API key.** Google Gemini is now the wired-up image
+   vendor (`GeminiImageProvider` — see `docs/DECISIONS.md` "Real image
+   generation: Google Gemini"), so the vendor choice itself is already
+   made; what's left is: get an API key from
+   https://aistudio.google.com (you mentioned you already have a Pro
+   subscription — that's what you'll use to generate it), give it to me
+   so I can set it as `GEMINI_API_KEY`, and confirm the per-image cost
+   you're seeing so I can set `GEMINI_COST_PER_IMAGE_USD` accurately
+   (defaults to $0.02/image, which is an estimate, not your actual
+   billed rate). I'll also need you to flip
+   `FEATURE_REAL_IMAGE_PROVIDER` to `on` once you're ready to stop using
+   the free mock illustrations.
 4a. **Choose a content moderation approach** for generated images —
-   either the same vendor's built-in moderation or a separate one
-   (`VendorModerationSafetyChecker` in
-   `src/lib/providers/image/safety.ts`). Until this is configured, every
-   real-generated image is blocked by default (fails closed) — see
-   `docs/DECISIONS.md` "Image safety checks fail closed".
+   Gemini has some built-in safety filtering, but
+   `VendorModerationSafetyChecker` (`src/lib/providers/image/safety.ts`)
+   is still an unconfigured stub for an independent check. Until this is
+   configured, every real-generated image is blocked by default (fails
+   closed) — see `docs/DECISIONS.md` "Image safety checks fail closed".
 
-5. **Set a real monthly AI spend cap** once you have pricing from that
-   vendor. Right now the global kill switch defaults to **on** (blocked)
-   specifically so nothing can spend money until you set
-   `global_spend_cap.monthly_cap_usd` intentionally.
+5. **Confirm your monthly AI spend cap.** You told me $500/month is fine
+   — that's a safety switch in the database, not a bill I can generate on
+   your behalf (see `docs/DECISIONS.md` for how `global_spend_cap` works).
+   Right now it defaults to **on** (blocked) specifically so nothing can
+   spend money until it's set intentionally; once I have your Supabase
+   project (item 1 above), I'll set `global_spend_cap.monthly_cap_usd` to
+   500 for you — just confirming here in writing since it's real money.
+
+## Before enabling photo-based personalisation (optional)
+
+5a. **A qualified legal review of photo-based personalisation**, covering
+   at minimum: UAE/GCC child-data and biometric-adjacent data handling,
+   what the consent flow needs to say to parents, and how long an
+   uploaded photo should be retained. The code is fully built and
+   gated behind this — `FEATURE_PHOTO_PERSONALIZATION` and
+   `PHOTO_PERSONALIZATION_LEGAL_REVIEW_COMPLETE` both default to `off`,
+   and a nursery also has to explicitly opt in per-tenant — but nobody
+   should be able to upload a child's photo until this review is done.
+   See `docs/DECISIONS.md` "Photo personalisation wiring".
 
 ## Before enabling billing
 

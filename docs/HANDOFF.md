@@ -3,7 +3,49 @@
 *Last updated: this session. Builds on the initial foundation build from
 an empty repository.*
 
-## New this session: Phase 4 scaffolding (families + gifting)
+## New this session: real Gemini image generation, photo upload, PDF redesign
+
+This session made real (paid) AI image generation and photo-based
+character consistency actually usable end-to-end, and fixed a serious
+pre-existing bug in the PDF output:
+
+- **Google Gemini is now the wired-up image vendor.**
+  `GeminiImageProvider` (`gemini-2.5-flash-image`, "nano banana")
+  plugs into the existing spend-cap/safety-check pipeline; switching
+  from the free mock illustrations to real Gemini generation is now
+  just `FEATURE_REAL_IMAGE_PROVIDER=on` + `GEMINI_API_KEY` (see
+  `docs/NEEDS_FROM_ME.md` item 4). Gemini generates illustration art
+  only — it never draws story text into the image; all text is still
+  rendered by this platform's own tested Arabic-shaping PDF pipeline.
+  See `docs/DECISIONS.md` "Real image generation: Google Gemini".
+- **Photo-based character consistency**, fully built and gated behind
+  `FEATURE_PHOTO_PERSONALIZATION` + `PHOTO_PERSONALIZATION_LEGAL_REVIEW_COMPLETE`
+  + per-tenant opt-in + granted photo-scoped consent (all four,
+  independently checked): a nursery can upload a reference photo of a
+  child once a parent has consented to it, and Gemini uses it (plus the
+  earliest already-generated page) as a visual reference so the child's
+  illustrated character looks consistent across every page. Still off
+  by default — see `docs/DECISIONS.md` "Photo personalisation wiring"
+  and `docs/NEEDS_FROM_ME.md` item 5a for the legal review this needs
+  first.
+- **PDF story pages were redesigned** to a full-bleed illustration with
+  a repeating scalloped title banner and a soft pastel caption band, to
+  match a reference sample PDF the founder provided.
+- **Found and fixed a real bug while verifying that redesign visually**
+  (something nothing in the automated suite ever did): essentially no
+  PDF text, Arabic or Latin, on any page of any story this codebase has
+  ever generated, actually rendered in a real PDF viewer — it silently
+  measured fine internally but drew almost nothing. Root cause and fix
+  are in `docs/DECISIONS.md` "Bug fix: Arabic (and Latin) PDF text was
+  silently not rendering" — this is worth reading even if you skip
+  everything else in this handoff.
+
+All 146 automated tests still pass, `npm run build` and `npm run lint`
+are clean, and the fix above was independently verified by rendering
+real output PDFs through two different PDF engines (MuPDF and
+Chromium's PDFium), not just by re-running the test suite.
+
+## Phase 4 scaffolding (families + gifting) — prior session
 
 Per the product brief, Phase 4 (consumer/family expansion) only starts
 once the B2B core is complete — it now is, so this session scaffolded
@@ -233,10 +275,15 @@ push/PR.
   token issuance, MFA/TOTP enrollment flow, and Storage's HTTP
   file-serving layer have not been exercised end-to-end against a real
   Supabase project yet. Do that once a project exists, before go-live.
-- `RealImageProvider.callVendorApi` and `VendorModerationSafetyChecker`
-  are documented stubs — both need a chosen vendor + credentials
-  (`docs/NEEDS_FROM_ME.md`). Everything around them (spend caps,
+- `GeminiImageProvider` is fully implemented, but no real
+  `GEMINI_API_KEY` has ever been used against it in this build session —
+  it's been tested against the mock provider and via unit tests only
+  (`docs/NEEDS_FROM_ME.md` item 4). `VendorModerationSafetyChecker` is
+  still a documented stub needing a chosen moderation vendor
+  (`docs/NEEDS_FROM_ME.md` item 4a). Everything around them (spend caps,
   idempotent recording, fail-closed safety gating) is real and tested.
+- Photo-based personalisation is fully implemented and gated off by
+  default, pending the legal review in `docs/NEEDS_FROM_ME.md` item 5a.
 - The Stripe billing routes have never made a real network call to
   Stripe — no test account exists yet. The code is fully implemented and
   the parts that don't need Stripe itself (coupon validation, event
@@ -253,8 +300,9 @@ push/PR.
   (sign up → add a child → consent → generate → approve → PDF) needs a
   real or `supabase start` Supabase project to test honestly — see
   `docs/DECISIONS.md` "E2E test scope".
-- PDF bold text currently renders at the same weight as regular (variable
-  font default instance) — see `docs/DECISIONS.md` "PDF font weights".
+- PDF bold text currently renders at the same weight as regular (no bold
+  static instance embedded yet) — see `docs/DECISIONS.md` "PDF font
+  weights".
 - Owner impersonation tooling (with mandatory audit trail) is not built.
 - Gift codes are not emailed — shown on-screen/in-link only (no
   transactional email provider configured yet; see
@@ -279,5 +327,9 @@ schema, Auth (including the MFA and family-sign-up flows just built),
 and Storage can be exercised end-to-end against the real thing — that
 unblocks a genuine pilot with a real nursery (or a family, via
 `/family/sign-up`) using the mock image provider (zero cost) while the
-vendor/legal items in `docs/NEEDS_FROM_ME.md` are worked through in
-parallel.
+Gemini API key and legal-review items in `docs/NEEDS_FROM_ME.md` are
+worked through in parallel. Once both the Supabase project and the
+Gemini key exist, flipping `FEATURE_REAL_IMAGE_PROVIDER` to `on` is the
+one step that moves a pilot from free mock illustrations to real
+AI-generated art — everything downstream of that flag (spend caps,
+safety gating, PDF rendering) is already built and tested.

@@ -204,6 +204,75 @@ generation attempt regardless of the outcome; the rejection is surfaced
 as a normal (non-retryable) generation failure on that page, visible to
 staff via `story_pages.last_error`.
 
+## Dependency audit (Phase 5 hardening, partial)
+
+Ran `npm audit` and applied everything fixable without a breaking change:
+**`next-intl` was bumped 3.19 → 4.14.5** (compatible with the installed
+Next.js 14.x / React 18.x per its own peer-dependency range), which
+resolved its open-redirect and prototype-pollution advisories. Verified
+with a full rebuild, the full test suite, and a runtime smoke test of
+both `/en` and `/ar` against the production build (`next start`) —
+correct `dir="ltr"`/`dir="rtl"`, correct brand strings, HTTP 200 on both.
+
+**Not fixed, and why:** `npm audit fix --force` would upgrade `next`
+14.2.15 → 16.3.5 to close the remaining Next.js advisories (several
+high/critical: cache poisoning, SSRF via Middleware/rewrites, DoS in
+Server Actions/Server Components, and others — see `npm audit` for the
+full list with advisory links). This is a major-version jump spanning
+Next 15 and 16, which changes fundamental, widely-used APIs in this
+codebase — most concretely, `params`/`searchParams` in every page and
+route handler become `Promise`-wrapped instead of plain objects, which
+every one of the ~20 page components and route handlers in this repo
+reads synchronously today (`params.locale`, `params.storyId`, etc.).
+Applying that migration correctly across every affected file, plus
+whatever else changed in two major versions, is real, substantial work
+that needs to be done deliberately and regression-tested against a live
+Supabase project (which did not exist during this build session) — not
+forced through blind in the same session as unrelated feature work.
+**This is tracked as a required Phase 5 task before a production
+launch, not silently dropped** — see `docs/NEEDS_FROM_ME.md` and
+`docs/en/launch-runbook.md`'s pre-launch checklist.
+
+A handful of the remaining advisories (`esbuild`, `@vitest/mocker`, via
+`vitest`) are **dev/test-tooling only** — `vitest` and its transitive
+`esbuild`/`vite` dependencies never ship to production, so their risk is
+scoped to a developer's local machine while running tests, not to any
+deployed environment. Upgrading to `vitest@5` would close these but
+requires Node ^22.12 (already satisfied here) and a `@types/node` major
+bump; left for the same dedicated hardening pass as the Next.js upgrade
+rather than mixed into this session's feature work.
+
+## Rate limiting
+
+**Decision: a real, working in-memory limiter by default, with a
+distributed Upstash-Redis-backed limiter that activates automatically
+once `RATE_LIMIT_REDIS_URL`/`RATE_LIMIT_REDIS_TOKEN` are configured.**
+`src/lib/rate-limit.ts`. The in-memory limiter is correct for a single
+server process (local dev, a demo, or a single-instance deployment) but
+under-counts across multiple instances (each has its own counters) —
+that's fine for now and clearly commented, with the Upstash path built
+(using Upstash's plain HTTPS REST API, no extra SDK dependency) as the
+real answer once a multi-instance deployment exists. Applied to sign-up,
+sign-in (keyed by IP+email so a shared NAT can't lock out every
+account), and the public consent lookup/response endpoints (keyed by IP;
+generous limits since a 192-bit random consent token is already
+computationally infeasible to brute force — this is defence-in-depth,
+not the primary protection there).
+
+## E2E test scope
+
+**Decision: the first Playwright E2E suite covers only pages that render
+without a live Supabase project** (marketing home, sign-in/sign-up form
+rendering, locale/RTL/LTR switching, PWA manifest, skip-link) —
+`tests/e2e/*.spec.ts`, run in CI against a real headless Chromium. Every
+flow that needs actual auth/data (sign up → create tenant → add a child →
+consent → generate → approve → PDF) requires a real or `supabase start`
+-based Supabase project to exercise honestly; building it against nothing
+would mean either mocking Supabase at the network layer (testing the
+mock, not the app) or leaving it permanently red in CI. Tracked as
+follow-up work for once a Supabase project exists (`docs/NEEDS_FROM_ME.md`
+item 1) rather than faked now.
+
 ## Not yet built (explicitly out of scope for this build session)
 
 - Real image provider vendor integration (`RealImageProvider.callVendorApi`

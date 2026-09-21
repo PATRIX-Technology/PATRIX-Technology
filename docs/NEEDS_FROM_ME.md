@@ -86,9 +86,23 @@ else has already been built and is documented in `docs/HANDOFF.md`.
    template; the owner dashboard (`/owner`) shows exactly which templates
    are still pending.
 
+## Not a decision I need from you, but you should know about it
+
+10. **A Next.js major-version upgrade (14 → 16) is required to close
+    several high/critical dependency vulnerabilities** (cache poisoning,
+    SSRF, DoS — see `docs/DECISIONS.md` "Dependency audit"). This isn't
+    something I need a decision on — it's engineering work I couldn't
+    safely rush through in the same session as feature work, since it
+    touches how almost every page in the app reads its URL parameters
+    and needs a real regression test against a live Supabase project.
+    Flagging it here so it's on your radar before you commit to a launch
+    date: budget a dedicated session for this, ideally right after a
+    Supabase project exists (item 1) so it can be tested against the
+    real thing.
+
 ## Physical / one-time actions
 
-10. **A print proof of at least one Arabic and one English PDF** from an
+11. **A print proof of at least one Arabic and one English PDF** from an
     actual print vendor before promising print-ready output to a
     customer. The PDF architecture (A5, 3mm bleed, 300 DPI target,
     embedded fonts, preflight validation) is built and automatically

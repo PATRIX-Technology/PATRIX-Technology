@@ -96,14 +96,15 @@ holds for Storage exactly as it does for the database.
 inspired by common data-minimisation practice, not a PDPL compliance
 claim — see `docs/NEEDS_FROM_ME.md` for the pending legal review.
 
-**No photo personalisation at launch.** `FEATURE_PHOTO_PERSONALIZATION`
-defaults to `off`. `isPhotoPersonalizationAllowed()`
-(`src/lib/domain/consent.ts`) requires the flag AND tenant opt-in AND
-completed legal review — all three, checked in one function, so no UI
-path can accidentally request photo consent. The avatar system
-(`src/lib/domain/avatar.ts`) is fully photo-free: hair/skin-tone/outfit
-colour/accessory, rendered as a deterministic SVG, never an uploaded
-image.
+**Photo personalisation is implemented but stays off by default.**
+`FEATURE_PHOTO_PERSONALIZATION` and
+`PHOTO_PERSONALIZATION_LEGAL_REVIEW_COMPLETE` both default to `off`. The
+avatar system (`src/lib/domain/avatar.ts`) remains fully photo-free
+(hair/skin-tone/outfit colour/accessory as a deterministic SVG) and is
+always available regardless of these flags — photo upload is an
+additional, separately-gated path on top of it, not a replacement. See
+"Photo personalisation wiring" below for the actual upload/consent/
+reference-image flow now built on top of this gate.
 
 **Hard AI spend caps are enforced in the database, not just in
 application code.** `can_spend()` / `record_ai_spend()`
@@ -362,12 +363,158 @@ guarantee already built for subscriptions
 (`src/app/api/billing/webhook/route.ts` now branches on
 `session.mode`/`metadata.purpose` before deciding which flow to run).
 
+## Real image generation: Google Gemini
+
+**Decision: Google Gemini (`gemini-2.5-flash-image`, "nano banana") is the
+chosen real image vendor**, implemented as `GeminiImageProvider extends
+RealImageProvider` (`src/lib/providers/image/GeminiImageProvider.ts`),
+selected by `createImageProvider()`
+(`src/lib/providers/image/factory.ts`) whenever
+`FEATURE_REAL_IMAGE_PROVIDER` is on and `GEMINI_API_KEY` is set — it
+throws loudly rather than silently falling back to the mock provider if
+the flag is on but the key is missing. This slots into the existing
+spend-cap / safety-checker pipeline in `RealImageProvider.generate()`
+unchanged; `GeminiImageProvider` only implements `callVendorApi()`.
+
+**Decision: Gemini generates illustration art only — it never renders
+story text into the image.** `buildIllustrationPrompt()`
+(`src/lib/providers/image/prompts.ts`) explicitly instructs "no text,
+letters, words, or writing anywhere in the image." All story text (the
+caption banners, the repeating title banner) is drawn by the platform's
+own already-tested Arabic-shaping PDF pipeline
+(`src/lib/providers/pdf/arabic-shaping.ts` +
+`src/lib/providers/pdf/render.ts`), not by the model. This was a
+deliberate trade-off against the founder's original manual workflow
+(which asked Gemini to bake Arabic text directly into the image via
+Nano Banana): an AI image model is not a reliable typesetter — it can
+mis-shape Arabic letterforms, misplace tashkeel, or misspell words, and
+none of that is checkable/fixable after the fact the way our own
+PDF-text rendering is. Illustration-only generation plus our own text
+overlay keeps every word in the final book exactly what was typed in,
+in a correctly-shaped, correctly-positioned font.
+
+**Decision: character consistency across a story's pages uses two
+reference images, not one.** `generatePageImage()`
+(`src/lib/jobs/worker.ts`) passes both the child's uploaded reference
+photo (if photo personalisation is active for that child — see below)
+and the earliest already-generated page's image bytes to Gemini as
+`inlineData` reference parts alongside the prompt. The already-generated
+page matters even when a photo exists, since it lets the *illustrated*
+character (not just the photo) stay visually consistent page to page;
+when no photo exists, it's the only reference available and is what
+keeps a child's invented storybook character looking the same
+throughout.
+
+## Photo personalisation wiring
+
+**Decision: uploading a photo requires all of feature flag + legal-review
+flag + tenant opt-in + a granted consent request whose scope explicitly
+covers photo use — enforced again at upload time, not just at
+consent-request time.** `uploadChildPhotoAction`
+(`src/lib/actions/children.ts`) checks all four independently rather
+than trusting that a UI path already gated them, since the two are
+separate requests at separate times (a nursery could request "story
+only" consent, then later the family/legal posture could change).
+`buildConsentScope()` (`src/lib/domain/consent.ts`) computes whether a
+consent request even offers the photo checkbox based on the same tenant
+opt-in + legal-review conditions, so a parent is never asked to consent
+to something the deployment isn't actually configured to use.
+
+**Decision: the photo lives on `children.photo_asset_path`, in the same
+private `story-assets` bucket as everything else**, not a separate
+table/bucket — it's just one more tenant-scoped asset path, so it
+inherits the exact same signed-URL access pattern
+(`src/lib/domain/storage.ts`) and the exact same cascade-delete handling
+(`deleteChildCascade` in `src/lib/domain/deletion.ts`) as story PDFs and
+page images. `deleteChildPhoto()` is a separate, smaller function
+(rather than folded into `deleteStoryAssetsForChild`) because photo
+consent and story consent are tracked as distinct scope flags and can be
+withdrawn independently in principle, even though `withdrawConsentAction`
+currently withdraws both together.
+
+## PDF banner-style layout
+
+**Decision: story pages moved from "image on top, caption text below" to
+full-bleed illustration with two scalloped banner overlays** — a
+repeating cream title banner at the top and a soft pastel caption band
+flush with the bottom edge — implemented in
+`src/lib/providers/pdf/render.ts` using new shape primitives in
+`src/lib/providers/pdf/banners.ts`. This was done to match a real sample
+PDF output the founder supplied and asked the platform to resemble.
+
+**Decision: the scalloped/cloud edges are drawn as rows of overlapping
+same-colour circles, not custom SVG bezier/arc paths.** `pdf-lib` does
+support arbitrary paths via `drawSvgPath`, but adjacent same-colour
+filled shapes with no border already read as one continuous wavy edge
+with no visible seams, which is far simpler to get right than hand-built
+arc geometry and produces the same visual result. See
+`drawFreeFloatingBanner` (title banner: scalloped top *and* bottom, with
+rounded end caps — a free-floating "sticker") and `drawFlatBottomBanner`
+(caption band: scalloped top only, flat sides and bottom, flush to the
+page edge) in `banners.ts`.
+
+**Decision: both banners size themselves dynamically from the actual
+wrapped line count of their text**, rather than using a fixed height.
+Story titles include the child's name and captions come from
+AI-generated content, so neither has a bounded length in practice; a
+fixed-height banner would either clip text or leave awkward empty space
+depending on what a given story happened to contain.
+
+## Bug fix: Arabic (and Latin) PDF text was silently not rendering
+
+**This was a real, previously undetected defect in code from before this
+session, not something introduced by the banner-layout work above** —
+found only because implementing the banner layout finally motivated
+actually opening a generated PDF in a real viewer and looking at it,
+which nothing in the test suite ever did (`runPreflight` only regex-
+validates the *source* strings passed in, never anything from the
+rendered PDF itself; the existing PDF integration tests only assert
+`pdfBytes.length > 0` and preflight-level structural checks). Every
+Arabic PDF the platform had ever generated — cover, dedication, and
+story pages alike — would have opened to a nearly-blank page in a real
+reader.
+
+**Root cause: embedding the raw variable fonts (`subset: true`, at
+fontkit's "default named instance") corrupted glyph rendering.**
+Confirmed by rendering output PDFs through two independent engines
+(MuPDF via PyMuPDF, and Chromium's PDFium) — both showed almost every
+glyph missing, for both the Arabic (Noto Naskh Arabic) and Latin (Inter,
+Fraunces) embedded fonts. Turning `subset` off fixed it; going further,
+pre-instantiating a single static weight/width/optical-size from each
+variable font with `fonttools varLib.instancer` (see docs/LICENSES.md
+for the exact commands and the resulting `*-Static.ttf` files now in
+`assets/fonts/`) and embedding *those*, still unsubset, is what
+`src/lib/providers/pdf/fonts.ts` does today. The ~1–1.5MB added per PDF
+from not subsetting is negligible next to the embedded illustration
+images.
+
+**Second, smaller bug found during the same verification: `PDFFont.
+widthOfTextAtSize` measures shaped Arabic text roughly 15% narrower than
+these fonts actually render**, causing wrapped lines to sit right at (and
+occasionally past) the page edge with no visible margin — while the
+identical measurement for Latin text matched the real render exactly.
+Root cause not fully pinned down; `ARABIC_ADVANCE_WIDTH_FUDGE = 1.2` in
+`src/lib/providers/pdf/render.ts` is a deliberate, documented safety
+margin applied to both line-wrapping and horizontal centering for Arabic
+text specifically, verified against both engines after the fix. If this
+ever needs revisiting (e.g. after a pdf-lib upgrade), the reproduction
+recipe is: render a known long Arabic string through `renderStoryPdf`,
+open the PDF in PDFium or MuPDF, and compare the actual glyph bounding
+box width to `font.widthOfTextAtSize()`'s reported value.
+
+**Lesson for future PDF/font changes: always visually verify output in a
+real PDF viewer, not just structurally.** Added as a note to
+`docs/TEST_CHECKLIST.md` — none of the 146 automated tests would have
+caught either bug above, and both were only found by actually opening a
+rendered PDF.
+
 ## Not yet built (explicitly out of scope for this build session)
 
-- Real image provider vendor integration (`RealImageProvider.callVendorApi`
-  is a documented stub — needs a chosen vendor + API credentials) and its
-  matching safety checker (`VendorModerationSafetyChecker` — needs a
-  chosen moderation vendor).
+- Vendor moderation integration for image safety checks
+  (`VendorModerationSafetyChecker` — needs a chosen moderation vendor;
+  `RealImageProvider`'s safety-check hook point exists and Gemini image
+  generation itself is wired up, see "Real image generation: Google
+  Gemini" above).
 - Actual Stripe test-mode keys, price IDs, and coupon records — the
   checkout/portal/webhook code is fully implemented (see "Phase 3
   additions" above) but has never made a real network call to Stripe

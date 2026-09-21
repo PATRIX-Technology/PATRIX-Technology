@@ -76,6 +76,17 @@ disconnected or reversed. **Every Arabic story is still marked
 the wording itself reads naturally** — this check is about the technical
 RTL/print rendering, not the wording.
 
+**Important: actually open the downloaded PDF and look at it — don't
+just check that a file downloaded.** A real bug shipped for a while
+where Arabic (and even Latin) PDF text measured fine internally but
+rendered as nearly blank pages in real PDF viewers, and every automated
+test still passed because none of them opened the rendered file — see
+docs/DECISIONS.md "Bug fix: Arabic (and Latin) PDF text was silently not
+rendering". If you ever touch `src/lib/providers/pdf/fonts.ts` or
+upgrade `pdf-lib`, re-run this check and eyeball the PDF, ideally in more
+than one viewer (e.g. a browser's built-in PDF viewer and Preview/Adobe
+Acrobat), not just "it opened without an error."
+
 ---
 
 For anything beyond these 8 — billing, real AI image generation, the

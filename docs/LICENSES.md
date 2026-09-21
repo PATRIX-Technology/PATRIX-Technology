@@ -9,13 +9,29 @@ generation)
 | `Fraunces-Variable.ttf` | Fraunces | SIL Open Font License 1.1 | https://github.com/google/fonts/tree/main/ofl/fraunces |
 | `NotoNaskhArabic-Variable.ttf` | Noto Naskh Arabic | SIL Open Font License 1.1 | https://github.com/google/fonts/tree/main/ofl/notonaskharabic |
 | `NotoKufiArabic-Variable.ttf` | Noto Kufi Arabic | SIL Open Font License 1.1 | https://github.com/google/fonts/tree/main/ofl/notokufiarabic |
+| `Inter-Regular-Static.ttf` | Inter (static instance, wght=400 opsz=14) | SIL Open Font License 1.1 | Generated from `Inter-Variable.ttf` above via `fonttools varLib.instancer` |
+| `Fraunces-Display-Static.ttf` | Fraunces (static instance, wght=600 opsz=72 SOFT=0 WONK=1) | SIL Open Font License 1.1 | Generated from `Fraunces-Variable.ttf` above via `fonttools varLib.instancer` |
+| `NotoNaskhArabic-Regular-Static.ttf` | Noto Naskh Arabic (static instance, wght=400) | SIL Open Font License 1.1 | Generated from `NotoNaskhArabic-Variable.ttf` above via `fonttools varLib.instancer` |
 
-All four are redistributed under the OFL, which explicitly permits
-bundling, embedding in documents (including PDFs), and modification
-(including subsetting, which `src/lib/providers/pdf/fonts.ts` does via
-`pdf-lib`'s `subset: true`). No royalty or attribution requirement beyond
+All are redistributed under the OFL, which explicitly permits bundling,
+embedding in documents (including PDFs), and modification — including the
+static instancing above and subsetting, though PDF generation currently
+embeds the static instances unsubset (`subset: false`; see
+`src/lib/providers/pdf/fonts.ts` and docs/DECISIONS.md "PDF font
+subsetting disabled"). No royalty or attribution requirement beyond
 keeping the OFL license text available, which this file + the upstream
 repository above satisfies.
+
+The three `*-Static.ttf` files are what `src/lib/providers/pdf/fonts.ts`
+actually embeds into generated PDFs — the `*-Variable.ttf` files are kept
+as the editable source to regenerate them from if a different
+weight/width/optical-size instance is ever needed:
+
+```
+python3 -m fontTools.varLib.instancer assets/fonts/Inter-Variable.ttf wght=400 opsz=14 -o assets/fonts/Inter-Regular-Static.ttf
+python3 -m fontTools.varLib.instancer assets/fonts/Fraunces-Variable.ttf wght=600 opsz=72 SOFT=0 WONK=1 -o assets/fonts/Fraunces-Display-Static.ttf
+python3 -m fontTools.varLib.instancer assets/fonts/NotoNaskhArabic-Variable.ttf wght=400 -o assets/fonts/NotoNaskhArabic-Regular-Static.ttf
+```
 
 ## Icons / illustrations
 

@@ -1,0 +1,162 @@
+{
+  "brand": {
+    "name": "Hikayti",
+    "tagline": "Every child, the hero of their own story."
+  },
+  "nav": {
+    "product": "Product",
+    "forNurseries": "For Nurseries & Schools",
+    "pricing": "Pricing",
+    "signIn": "Sign in",
+    "getStarted": "Book a demo"
+  },
+  "marketing": {
+    "hero": {
+      "eyebrow": "Personalised storybooks for nurseries, schools & brands",
+      "title": "Turn every child into the hero of a story that teaches them something real.",
+      "body": "Hikayti creates beautifully illustrated, personalised storybooks that help nurseries, schools, clinics and brands teach values like healthy eating, honesty and hand-washing — with the child's own name, avatar and language.",
+      "ctaPrimary": "Book a demo",
+      "ctaSecondary": "See how it works"
+    },
+    "trustBar": "Built for Dubai nurseries, schools, clinics and children's brands",
+    "useCases": {
+      "title": "One platform, many occasions",
+      "graduation": "Graduation keepsakes",
+      "loyalty": "Loyalty & appreciation gifts",
+      "education": "Values & habits education",
+      "campaigns": "Branded campaigns"
+    }
+  },
+  "auth": {
+    "signIn": {
+      "title": "Sign in to your organisation",
+      "email": "Email address",
+      "password": "Password",
+      "submit": "Sign in",
+      "noAccount": "Don't have an account?",
+      "createOne": "Create one"
+    },
+    "signUp": {
+      "title": "Create your organisation",
+      "orgName": "Organisation name",
+      "orgNameHint": "e.g. Little Explorers Nursery",
+      "fullName": "Your full name",
+      "email": "Work email address",
+      "password": "Password",
+      "submit": "Create organisation",
+      "haveAccount": "Already have an account?",
+      "signInInstead": "Sign in instead"
+    }
+  },
+  "dashboard": {
+    "nav": {
+      "overview": "Overview",
+      "children": "Children",
+      "stories": "Stories",
+      "templates": "Story themes",
+      "consent": "Consent",
+      "staff": "Staff",
+      "settings": "Settings",
+      "usage": "Usage & plan"
+    },
+    "overview": {
+      "welcome": "Welcome back",
+      "childrenCount": "Children enrolled",
+      "storiesGenerated": "Stories created",
+      "pendingApproval": "Awaiting your approval",
+      "consentPending": "Consent pending"
+    }
+  },
+  "children": {
+    "title": "Children",
+    "add": "Add a child",
+    "importCsv": "Import from CSV",
+    "empty": "No children yet. Add your first child or import a class list.",
+    "table": {
+      "name": "Name",
+      "class": "Class",
+      "language": "Language",
+      "consent": "Consent",
+      "avatar": "Avatar"
+    },
+    "form": {
+      "firstName": "First name",
+      "pronoun": "Pronoun",
+      "pronounOptions": {
+        "she": "She / her",
+        "he": "He / him",
+        "they": "They / them"
+      },
+      "class": "Class or group",
+      "language": "Preferred language",
+      "save": "Save child",
+      "cancel": "Cancel"
+    },
+    "consentStatus": {
+      "not_requested": "Not requested",
+      "pending": "Pending",
+      "granted": "Granted",
+      "withdrawn": "Withdrawn"
+    }
+  },
+  "avatar": {
+    "title": "Avatar",
+    "hair": "Hair",
+    "skinTone": "Skin tone",
+    "outfitColor": "Outfit colour",
+    "accessory": "Accessory",
+    "none": "None",
+    "preview": "Avatar preview"
+  },
+  "consent": {
+    "requestTitle": "Ask a parent for consent",
+    "sendLink": "Generate consent link",
+    "sendQr": "Generate QR code",
+    "parentTitle": "Consent to create {childName}'s personalised story",
+    "parentBody": "{orgName} would like to create a personalised storybook for {childName}. This uses the child's first name and a cartoon avatar you choose — never a real photo unless you separately opt in.",
+    "grant": "I consent",
+    "decline": "I do not consent",
+    "withdraw": "Withdraw consent",
+    "withdrawConfirm": "Withdrawing consent will stop new stories being created and will delete this child's existing story files.",
+    "granted": "Thank you — consent recorded.",
+    "declined": "No problem — no story will be created.",
+    "withdrawn": "Consent withdrawn. Story files are being deleted."
+  },
+  "stories": {
+    "title": "Stories",
+    "create": "Create a story",
+    "chooseTheme": "Choose a theme",
+    "chooseChild": "Choose a child",
+    "generate": "Generate story",
+    "status": {
+      "DRAFT": "Draft",
+      "QUEUED": "Queued",
+      "GENERATING": "Generating",
+      "GENERATED": "Generated",
+      "NEEDS_REVIEW": "Needs review",
+      "APPROVED": "Approved",
+      "REJECTED": "Rejected",
+      "FAILED": "Failed"
+    },
+    "approve": "Approve",
+    "reject": "Reject",
+    "regeneratePage": "Regenerate this page",
+    "downloadPdf": "Download PDF",
+    "bulkZip": "Download class ZIP"
+  },
+  "reader": {
+    "next": "Next page",
+    "previous": "Previous page",
+    "pageOf": "Page {current} of {total}",
+    "close": "Close reader"
+  },
+  "common": {
+    "loading": "Loading…",
+    "error": "Something went wrong. Please try again.",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "confirm": "Confirm",
+    "needsNativeReview": "Needs native review"
+  }
+}

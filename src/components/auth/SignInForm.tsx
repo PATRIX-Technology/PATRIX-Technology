@@ -1,0 +1,30 @@
+'use client';
+
+import { useFormState } from 'react-dom';
+import { useTranslations } from 'next-intl';
+import { signInAction, type ActionResult } from '@/lib/actions/auth';
+import { Button } from '@/components/ui/Button';
+import { TextField } from '@/components/ui/Input';
+
+export function SignInForm({ locale }: { locale: string }) {
+  const t = useTranslations('auth.signIn');
+  const action = signInAction.bind(null, locale);
+  const [state, formAction] = useFormState<ActionResult, FormData>(async (_prev, formData) => {
+    return action(formData);
+  }, {});
+
+  return (
+    <form action={formAction} className="flex flex-col gap-4">
+      <TextField name="email" type="email" label={t('email')} required />
+      <TextField name="password" type="password" label={t('password')} required />
+      {state.error && (
+        <p role="alert" className="text-sm text-coral-600">
+          {state.error}
+        </p>
+      )}
+      <Button type="submit" size="lg">
+        {t('submit')}
+      </Button>
+    </form>
+  );
+}

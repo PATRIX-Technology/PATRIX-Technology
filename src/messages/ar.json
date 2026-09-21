@@ -1,0 +1,162 @@
+{
+  "brand": {
+    "name": "حكايتي",
+    "tagline": "كل طفل بطل قصته الخاصة. [NEEDS NATIVE REVIEW]"
+  },
+  "nav": {
+    "product": "المنتج",
+    "forNurseries": "للحضانات والمدارس",
+    "pricing": "الأسعار",
+    "signIn": "تسجيل الدخول",
+    "getStarted": "حجز عرض توضيحي"
+  },
+  "marketing": {
+    "hero": {
+      "eyebrow": "قصص مصورة مخصصة للحضانات والمدارس والعلامات التجارية [NEEDS NATIVE REVIEW]",
+      "title": "اجعل كل طفل بطل قصة تعلّمه شيئًا حقيقيًا. [NEEDS NATIVE REVIEW]",
+      "body": "تصمم حكايتي قصصًا مصورة مخصصة بعناية تساعد الحضانات والمدارس والعيادات والعلامات التجارية على تعليم قيم مثل الغذاء الصحي والصدق وغسل اليدين، باسم الطفل وشخصيته الرمزية ولغته. [NEEDS NATIVE REVIEW]",
+      "ctaPrimary": "حجز عرض توضيحي",
+      "ctaSecondary": "شاهد كيف يعمل [NEEDS NATIVE REVIEW]"
+    },
+    "trustBar": "مصمم لحضانات ومدارس وعيادات وعلامات تجارية للأطفال في دبي [NEEDS NATIVE REVIEW]",
+    "useCases": {
+      "title": "منصة واحدة، مناسبات متعددة [NEEDS NATIVE REVIEW]",
+      "graduation": "هدايا تذكارية للتخرج",
+      "loyalty": "هدايا الولاء والتقدير",
+      "education": "تعليم القيم والعادات",
+      "campaigns": "حملات العلامات التجارية"
+    }
+  },
+  "auth": {
+    "signIn": {
+      "title": "تسجيل الدخول إلى مؤسستك [NEEDS NATIVE REVIEW]",
+      "email": "البريد الإلكتروني",
+      "password": "كلمة المرور",
+      "submit": "تسجيل الدخول",
+      "noAccount": "لا تملك حسابًا؟",
+      "createOne": "أنشئ حسابًا"
+    },
+    "signUp": {
+      "title": "أنشئ مؤسستك [NEEDS NATIVE REVIEW]",
+      "orgName": "اسم المؤسسة",
+      "orgNameHint": "مثال: حضانة المستكشفين الصغار",
+      "fullName": "اسمك الكامل",
+      "email": "بريد العمل الإلكتروني",
+      "password": "كلمة المرور",
+      "submit": "إنشاء المؤسسة",
+      "haveAccount": "لديك حساب بالفعل؟",
+      "signInInstead": "سجّل الدخول"
+    }
+  },
+  "dashboard": {
+    "nav": {
+      "overview": "نظرة عامة",
+      "children": "الأطفال",
+      "stories": "القصص",
+      "templates": "موضوعات القصص",
+      "consent": "الموافقة",
+      "staff": "الموظفون",
+      "settings": "الإعدادات",
+      "usage": "الاستخدام والباقة"
+    },
+    "overview": {
+      "welcome": "مرحبًا بعودتك",
+      "childrenCount": "عدد الأطفال المسجلين",
+      "storiesGenerated": "القصص المُنشأة",
+      "pendingApproval": "في انتظار موافقتك",
+      "consentPending": "موافقة معلّقة"
+    }
+  },
+  "children": {
+    "title": "الأطفال",
+    "add": "إضافة طفل",
+    "importCsv": "استيراد من ملف CSV",
+    "empty": "لا يوجد أطفال بعد. أضف طفلك الأول أو استورد قائمة الفصل. [NEEDS NATIVE REVIEW]",
+    "table": {
+      "name": "الاسم",
+      "class": "الفصل",
+      "language": "اللغة",
+      "consent": "الموافقة",
+      "avatar": "الشخصية الرمزية"
+    },
+    "form": {
+      "firstName": "الاسم الأول",
+      "pronoun": "الضمير",
+      "pronounOptions": {
+        "she": "هي",
+        "he": "هو",
+        "they": "غير محدد"
+      },
+      "class": "الفصل أو المجموعة",
+      "language": "اللغة المفضلة",
+      "save": "حفظ الطفل",
+      "cancel": "إلغاء"
+    },
+    "consentStatus": {
+      "not_requested": "لم يُطلب",
+      "pending": "قيد الانتظار",
+      "granted": "تمت الموافقة",
+      "withdrawn": "تم سحب الموافقة"
+    }
+  },
+  "avatar": {
+    "title": "الشخصية الرمزية",
+    "hair": "الشعر",
+    "skinTone": "لون البشرة",
+    "outfitColor": "لون الملابس",
+    "accessory": "إكسسوار",
+    "none": "بدون",
+    "preview": "معاينة الشخصية الرمزية"
+  },
+  "consent": {
+    "requestTitle": "طلب موافقة ولي الأمر [NEEDS NATIVE REVIEW]",
+    "sendLink": "إنشاء رابط الموافقة",
+    "sendQr": "إنشاء رمز QR",
+    "parentTitle": "الموافقة على إنشاء قصة {childName} المخصصة",
+    "parentBody": "تودّ {orgName} إنشاء كتاب قصة مخصص لـ {childName}. يُستخدم الاسم الأول للطفل وشخصية رمزية كرتونية تختارها — وليس صورة حقيقية إلا إذا وافقت على ذلك بشكل منفصل. [NEEDS NATIVE REVIEW]",
+    "grant": "أوافق",
+    "decline": "لا أوافق",
+    "withdraw": "سحب الموافقة",
+    "withdrawConfirm": "سحب الموافقة سيوقف إنشاء قصص جديدة وسيحذف ملفات قصة هذا الطفل الحالية. [NEEDS NATIVE REVIEW]",
+    "granted": "شكرًا لك — تم تسجيل الموافقة.",
+    "declined": "لا بأس — لن يتم إنشاء أي قصة.",
+    "withdrawn": "تم سحب الموافقة. يجري حذف ملفات القصة."
+  },
+  "stories": {
+    "title": "القصص",
+    "create": "إنشاء قصة",
+    "chooseTheme": "اختر موضوعًا",
+    "chooseChild": "اختر طفلًا",
+    "generate": "إنشاء القصة",
+    "status": {
+      "DRAFT": "مسودة",
+      "QUEUED": "في قائمة الانتظار",
+      "GENERATING": "قيد الإنشاء",
+      "GENERATED": "تم الإنشاء",
+      "NEEDS_REVIEW": "تحتاج مراجعة",
+      "APPROVED": "معتمدة",
+      "REJECTED": "مرفوضة",
+      "FAILED": "فشلت"
+    },
+    "approve": "اعتماد",
+    "reject": "رفض",
+    "regeneratePage": "إعادة إنشاء هذه الصفحة",
+    "downloadPdf": "تحميل PDF",
+    "bulkZip": "تحميل ملف ZIP للفصل"
+  },
+  "reader": {
+    "next": "الصفحة التالية",
+    "previous": "الصفحة السابقة",
+    "pageOf": "صفحة {current} من {total}",
+    "close": "إغلاق القارئ"
+  },
+  "common": {
+    "loading": "جارٍ التحميل…",
+    "error": "حدث خطأ ما. يرجى المحاولة مرة أخرى.",
+    "save": "حفظ",
+    "cancel": "إلغاء",
+    "delete": "حذف",
+    "confirm": "تأكيد",
+    "needsNativeReview": "يحتاج مراجعة من متحدث أصلي"
+  }
+}

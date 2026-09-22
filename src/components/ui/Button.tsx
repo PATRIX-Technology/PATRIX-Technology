@@ -1,7 +1,7 @@
 import type { ButtonHTMLAttributes, ReactNode } from 'react';
 import { forwardRef } from 'react';
 
-type Variant = 'primary' | 'secondary' | 'ghost' | 'danger';
+type Variant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'onBrand' | 'onBrandGhost';
 type Size = 'sm' | 'md' | 'lg';
 
 const variantClasses: Record<Variant, string> = {
@@ -11,6 +11,10 @@ const variantClasses: Record<Variant, string> = {
     'bg-ink-100 text-ink-800 hover:bg-ink-200 active:bg-ink-300 disabled:bg-ink-50 disabled:text-ink-300',
   ghost: 'bg-transparent text-ink-700 hover:bg-ink-100 active:bg-ink-200',
   danger: 'bg-coral-600 text-white hover:bg-coral-700 active:bg-coral-800 disabled:bg-coral-300',
+  // For use on top of a brand-coloured surface (e.g. the marketing hero card).
+  onBrand: 'bg-white text-lagoon-700 hover:bg-white/90 active:bg-white/80',
+  onBrandGhost:
+    'bg-white/15 text-white border border-white/30 hover:bg-white/25 active:bg-white/30',
 };
 
 const sizeClasses: Record<Size, string> = {

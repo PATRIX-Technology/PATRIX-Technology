@@ -25,7 +25,7 @@ export class MockImageProvider implements ImageProvider {
       throw new ImageGenerationError('Mock provider simulated failure', true);
     }
 
-    const outfitColor = request.avatarConfig.outfitColor ?? '#20949c';
+    const outfitColor = request.avatarConfig.outfitColor ?? '#0e7a52';
     const svg = renderPlaceholderSvg(request.prompt, outfitColor);
 
     return {

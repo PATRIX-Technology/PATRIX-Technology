@@ -24,7 +24,7 @@ export const SKIN_TONE_OPTIONS = ['light', 'medium', 'tan', 'dark'] as const;
 export const ACCESSORY_OPTIONS = ['none', 'glasses', 'cap', 'bow', 'headband'] as const;
 
 export const OUTFIT_COLOR_OPTIONS = [
-  '#20949c', // lagoon
+  '#0e7a52', // lagoon
   '#e5850c', // saffron
   '#ef4c2a', // coral
   '#6f5b42', // ink
@@ -42,7 +42,7 @@ export type AvatarConfig = z.infer<typeof AvatarConfigSchema>;
 export const DEFAULT_AVATAR_CONFIG: AvatarConfig = {
   hair: 'curly_black',
   skinTone: 'medium',
-  outfitColor: '#20949c',
+  outfitColor: '#0e7a52',
   accessory: 'none',
 };
 

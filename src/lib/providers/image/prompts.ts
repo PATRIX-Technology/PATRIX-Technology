@@ -36,7 +36,7 @@ export function buildIllustrationPrompt(input: IllustrationPromptInput): string 
     const { hair, skinTone, outfitColor, accessory } = input.avatarConfig;
     parts.push(
       `The child character has: ${hair ?? 'curly black'} hair, ${skinTone ?? 'medium'} skin tone, ` +
-        `wearing an outfit in colour ${outfitColor ?? '#20949c'}` +
+        `wearing an outfit in colour ${outfitColor ?? '#0e7a52'}` +
         (accessory && accessory !== 'none' ? `, with a ${accessory}.` : '.'),
     );
   }

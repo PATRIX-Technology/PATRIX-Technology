@@ -24,7 +24,7 @@ export function SettingsForm({ locale, tenant }: { locale: string; tenant: Tenan
           id="brandColor"
           name="brandColor"
           type="color"
-          defaultValue={tenant.brand_primary_color ?? '#20949c'}
+          defaultValue={tenant.brand_primary_color ?? '#0e7a52'}
           className="h-10 w-20 rounded"
         />
       </div>

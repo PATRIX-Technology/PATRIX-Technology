@@ -13,7 +13,7 @@
   --color-text: 36 28 22;
   --color-text-muted: 111 91 66;
   --color-border: 220 210 195;
-  --color-focus-ring: 32 148 156;
+  --color-focus-ring: 14 122 82;
 }
 
 :root[data-theme='dark'] {
@@ -23,7 +23,7 @@
   --color-text: 245 240 235;
   --color-text-muted: 190 175 160;
   --color-border: 70 60 52;
-  --color-focus-ring: 63 178 186;
+  --color-focus-ring: 79 201 138;
 }
 
 @media (prefers-reduced-motion: reduce) {

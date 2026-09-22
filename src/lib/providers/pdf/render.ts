@@ -24,7 +24,7 @@ export interface RenderStoryPdfInput {
   dedication?: string;
 }
 
-const BRAND_COLOR = rgb(0.125, 0.58, 0.612); // lagoon-600
+const BRAND_COLOR = rgb(0.055, 0.478, 0.322); // lagoon-600
 const INK_COLOR = rgb(0.141, 0.11, 0.086);
 // Scalloped-banner palette, tuned to match the reference sample output: a
 // warm cream "sticker" for the repeating title banner and a soft sage band

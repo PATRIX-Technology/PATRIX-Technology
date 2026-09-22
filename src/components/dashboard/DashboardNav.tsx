@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import { signOutAction } from '@/lib/actions/auth';
 import type { TenantRole, TenantType } from '@/types/database';
 import { Badge } from '@/components/ui/Badge';
+import { Logo } from '@/components/brand/Logo';
 
 interface Labels {
   overview: string;
@@ -51,6 +52,9 @@ export function DashboardNav({
   return (
     <nav className="flex w-full flex-col justify-between border-b border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface-raised))] p-6 md:w-64 md:border-b-0 md:border-e">
       <div>
+        <div className="mb-5 flex items-center gap-2">
+          <Logo size={24} />
+        </div>
         <p className="font-display text-lg text-ink-900">{tenantName}</p>
         <Badge tone="info" className="mt-1">
           {tenantType === 'family' ? 'family account' : role.replace('nursery_', '')}

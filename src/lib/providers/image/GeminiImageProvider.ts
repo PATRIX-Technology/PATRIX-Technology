@@ -6,7 +6,11 @@ import type { ImageSafetyChecker } from './safety';
 import { createImageSafetyChecker } from './safety';
 import { buildIllustrationPrompt } from './prompts';
 
-const GEMINI_IMAGE_MODEL = 'gemini-2.5-flash-image';
+// gemini-2.5-flash-image ("nano banana") is deprecated and shuts down
+// 2026-10-02 — this is its announced successor. Confirm against
+// https://ai.google.dev/gemini-api/docs/pricing before relying on this
+// in production; model names and pricing are Google's to change.
+const GEMINI_IMAGE_MODEL = 'gemini-3.1-flash-image';
 
 /**
  * The chosen real vendor: Google Gemini's native image generation model

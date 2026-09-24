@@ -3,8 +3,13 @@ import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { createSupabaseServiceRoleClient } from '@/lib/supabase/service-role';
 import { getCurrentTenantContext } from '@/lib/domain/session';
 import { PdfPreflightFailedError, renderApprovedStoryPdf } from '@/lib/domain/story-pdf';
+import { errorMessage } from '@/lib/errors';
 
 export const runtime = 'nodejs';
+// Rendering embeds every page's real image + runs preflight checks, which
+// can run past Vercel's 10s default on a story with several pages —
+// see the same reasoning on the child page's maxDuration.
+export const maxDuration = 60;
 
 export async function GET(_request: Request, { params }: { params: { storyId: string } }) {
   const supabase = await createSupabaseServerClient();
@@ -21,7 +26,11 @@ export async function GET(_request: Request, { params }: { params: { storyId: st
       status: 200,
       headers: {
         'Content-Type': 'application/pdf',
-        'Content-Disposition': `attachment; filename="${result.fileName}"`,
+        // "inline" so clicking the link opens the PDF in the browser's own
+        // viewer rather than forcing a download — the browser's Save
+        // button still works from there when someone actually wants the
+        // file.
+        'Content-Disposition': `inline; filename="${result.fileName}"`,
         'Cache-Control': 'private, no-store',
       },
     });
@@ -31,6 +40,6 @@ export async function GET(_request: Request, { params }: { params: { storyId: st
       // not meet the print spec, even if it "looks fine" in a preview.
       return NextResponse.json({ error: error.message, issues: error.issues }, { status: 422 });
     }
-    return NextResponse.json({ error: (error as Error).message }, { status: 500 });
+    return NextResponse.json({ error: errorMessage(error) }, { status: 500 });
   }
 }

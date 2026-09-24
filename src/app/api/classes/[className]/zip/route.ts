@@ -4,8 +4,13 @@ import { createSupabaseServiceRoleClient } from '@/lib/supabase/service-role';
 import { getCurrentTenantContext } from '@/lib/domain/session';
 import { renderApprovedStoryPdf } from '@/lib/domain/story-pdf';
 import { buildBulkZip, sanitizeFileNamePart } from '@/lib/providers/pdf/bulk-zip';
+import { errorMessage } from '@/lib/errors';
 
 export const runtime = 'nodejs';
+// Rendering every approved story in a class sequentially can easily run
+// past Vercel's 10s default — see the same reasoning on the single-story
+// PDF route.
+export const maxDuration = 60;
 
 /**
  * Bulk class-level export: every APPROVED story for children in the given
@@ -54,7 +59,7 @@ export async function GET(_request: Request, { params }: { params: { className: 
       const rendered = await renderApprovedStoryPdf(supabase, serviceClient, story.id, context);
       entries.push({ fileName: sanitizeFileNamePart(rendered.childName) + '.pdf', pdfBytes: rendered.pdfBytes });
     } catch (error) {
-      failures.push({ storyId: story.id, error: (error as Error).message });
+      failures.push({ storyId: story.id, error: errorMessage(error) });
     }
   }
 

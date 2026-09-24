@@ -1,6 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { createImageProvider } from '@/lib/providers/image/factory';
 import { ImageGenerationError, SpendCapExceededError } from '@/lib/providers/image/ImageProvider';
+import { errorMessage } from '@/lib/errors';
 import type { StoryJob } from '@/types/database';
 
 const STORAGE_BUCKET = 'story-assets';
@@ -8,21 +9,6 @@ const STORAGE_BUCKET = 'story-assets';
 /** Exponential backoff: 30s, 2m, 8m, 32m (base 4, cap at 4 attempts by default). */
 export function backoffSeconds(attempt: number): number {
   return 30 * 4 ** Math.max(0, attempt - 1);
-}
-
-/** Bare `String(error)` on a non-Error throw (e.g. a raw Supabase/Postgrest
- * error object) renders as the useless "[object Object]" — this pulls a
- * real message out of anything error-shaped before falling back to JSON. */
-function errorMessage(error: unknown): string {
-  if (error instanceof Error) return error.message;
-  if (error && typeof error === 'object' && 'message' in error) {
-    return String((error as { message: unknown }).message);
-  }
-  try {
-    return JSON.stringify(error);
-  } catch {
-    return String(error);
-  }
 }
 
 export interface WorkerRunResult {

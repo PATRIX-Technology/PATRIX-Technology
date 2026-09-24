@@ -3,6 +3,7 @@ import { renderStoryPdf } from '@/lib/providers/pdf/render';
 import { runPreflight, type PreflightIssue } from '@/lib/providers/pdf/preflight';
 import { STORY_ASSETS_BUCKET } from '@/lib/domain/storage';
 import type { TenantContext } from '@/lib/domain/session';
+import { errorMessage } from '@/lib/errors';
 
 export class PdfPreflightFailedError extends Error {
   constructor(public readonly issues: PreflightIssue[]) {
@@ -37,7 +38,7 @@ export async function renderApprovedStoryPdf(
     .eq('tenant_id', context.tenantId)
     .eq('status', 'APPROVED')
     .maybeSingle();
-  if (storyError) throw storyError;
+  if (storyError) throw new Error(`Could not load story ${storyId}: ${errorMessage(storyError)}`);
   if (!story) throw new Error(`Story ${storyId} not found or not approved.`);
 
   const { data: pages } = await supabase
@@ -91,10 +92,16 @@ export async function renderApprovedStoryPdf(
   }
 
   const assetPath = `${context.tenantId}/stories/${story.id}/print/story.pdf`;
-  await serviceClient.storage
+  const { error: uploadError } = await serviceClient.storage
     .from(STORY_ASSETS_BUCKET)
     .upload(assetPath, pdfBytes, { contentType: 'application/pdf', upsert: true });
-  await serviceClient.from('stories').update({ pdf_asset_path: assetPath }).eq('id', story.id);
+  if (uploadError) throw new Error(`Could not save the rendered PDF: ${errorMessage(uploadError)}`);
+
+  const { error: updateError } = await serviceClient
+    .from('stories')
+    .update({ pdf_asset_path: assetPath })
+    .eq('id', story.id);
+  if (updateError) throw new Error(`Could not record the PDF's location: ${errorMessage(updateError)}`);
 
   return {
     pdfBytes,

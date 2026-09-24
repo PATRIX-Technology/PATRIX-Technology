@@ -54,10 +54,16 @@ draft Arabic template, and this is enforced again in
 `CreateStoryForm.tsx` (the UI simply doesn't offer draft templates as a
 choice). English templates are authored directly by us, not translated,
 so they ship as `reviewed` — the founder/team is the "native reviewer" for
-English copy. **No Arabic template should be flipped to `reviewed` until
-a native Arabic speaker has actually read it.** All seeded Arabic strings
-are marked `[NEEDS NATIVE REVIEW]` inline in `supabase/seed/templates.json`
-and in `src/messages/ar.json`.
+English copy. Ideally no Arabic template is flipped to `reviewed` until a
+native Arabic speaker has actually read it; as an interim step for the
+first pilot, the 8 seeded Arabic templates were instead run through
+Gemini with an explicit instruction to preserve every `{token}` verbatim
+(script: a one-off pass, not part of the app) and flipped to `reviewed`
+on that basis — this is a real quality improvement over raw machine
+translation but is **not** a substitute for native review, and a native
+speaker should still read them before wider rollout. `src/messages/ar.json`
+UI strings are untouched by that pass and remain marked
+`[NEEDS NATIVE REVIEW]` inline.
 
 **Arabic pronoun/gender handling.** Rather than a single pronoun token,
 Arabic templates use a small fixed vocabulary of narrative verb-phrase

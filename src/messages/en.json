@@ -120,6 +120,7 @@
     "sendQr": "Generate QR code",
     "parentTitle": "Consent to create {childName}'s personalised story",
     "parentBody": "{orgName} would like to create a personalised storybook for {childName}. This uses the child's first name and a cartoon avatar you choose — never a real photo unless you separately opt in.",
+    "parentPhotoNotice": "This request also asks to use a photo of {childName}. If you grant consent, {orgName} will upload a reference photo that is sent securely to Google's Gemini AI to generate a stylised, cartoon-style illustrated character for the story. The photo itself is never shown, printed, or shared as a photo — only used to guide the illustration. You can withdraw this consent at any time, which deletes the photo immediately.",
     "grant": "I consent",
     "decline": "I do not consent",
     "withdraw": "Withdraw consent",

@@ -29,6 +29,14 @@ export default async function ConsentPage({
                 orgName: info.organisationName ?? '',
               })}
             </p>
+            {info.requestsPhoto && (
+              <p className="mb-6 rounded-lg bg-saffron-50 p-4 text-start text-sm text-ink-700">
+                {t('parentPhotoNotice', {
+                  childName: info.childFirstName ?? '',
+                  orgName: info.organisationName ?? '',
+                })}
+              </p>
+            )}
             <ConsentResponseForm token={params.token} />
           </>
         )}

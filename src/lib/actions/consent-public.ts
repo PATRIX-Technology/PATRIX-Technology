@@ -11,6 +11,7 @@ export interface ConsentLookup {
   organisationName?: string;
   status?: string;
   expiresAt?: string;
+  requestsPhoto?: boolean;
 }
 
 /**
@@ -45,6 +46,7 @@ export async function getConsentInfo(token: string): Promise<ConsentLookup> {
     organisationName: data.organisation_name,
     status: data.status,
     expiresAt: data.expires_at,
+    requestsPhoto: Boolean(data.requests_photo),
   };
 }
 

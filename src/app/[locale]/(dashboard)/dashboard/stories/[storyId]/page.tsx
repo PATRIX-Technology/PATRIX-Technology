@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { ApprovalActions } from '@/components/stories/ApprovalActions';
 import { RegeneratePageButton } from '@/components/stories/RegeneratePageButton';
+import { AutoRefresh } from '@/components/stories/AutoRefresh';
 import type { StoryStatus } from '@/types/database';
 
 export default async function StoryDetailPage({
@@ -39,11 +40,15 @@ export default async function StoryDetailPage({
   const signedUrls = await getSignedAssetUrls(supabase, assetPaths);
 
   const allGenerated = (pages ?? []).every((p) => p.image_status === 'GENERATED');
+  const stillGenerating = (pages ?? []).some(
+    (p) => p.image_status === 'QUEUED' || p.image_status === 'GENERATING',
+  );
   const childName = (story.children as unknown as { first_name: string } | null)?.first_name ?? 'Unknown';
   const status = story.status as StoryStatus;
 
   return (
     <div className="space-y-6">
+      <AutoRefresh active={stillGenerating} />
       <div className="flex items-center justify-between">
         <div>
           <h1 className="font-display text-2xl text-ink-900">
@@ -52,6 +57,11 @@ export default async function StoryDetailPage({
           <Badge tone="info" className="mt-2">
             {t(`status.${status}`)}
           </Badge>
+          {stillGenerating && (
+            <p className="mt-2 text-sm text-ink-500">
+              Generating illustrations — this page updates automatically, no need to refresh.
+            </p>
+          )}
         </div>
         {status === 'APPROVED' && (
           <div className="flex gap-2">

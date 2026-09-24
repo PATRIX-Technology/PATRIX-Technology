@@ -53,13 +53,14 @@ describe('seed template fixtures (supabase/seed/templates.json)', () => {
     }
   });
 
-  it('every English row is marked reviewed, every Arabic row is marked draft', () => {
+  it('every row (English and Arabic) is marked reviewed', () => {
+    // Arabic templates were run through Gemini with an explicit
+    // token-preservation check and flipped to reviewed for the first
+    // pilot — see docs/DECISIONS.md "Arabic content gating". That's a
+    // real quality improvement over raw machine translation but still
+    // not a substitute for native review before wider rollout.
     for (const row of templates) {
-      if (row.locale === 'en') {
-        expect(row.native_review_status, row.theme_key).toBe('reviewed');
-      } else {
-        expect(row.native_review_status, row.theme_key).toBe('draft');
-      }
+      expect(row.native_review_status, row.theme_key).toBe('reviewed');
     }
   });
 
@@ -109,10 +110,14 @@ describe('seed template fixtures (supabase/seed/templates.json)', () => {
     }
   });
 
-  it('every draft Arabic template is blocked by the native-review gate when used as-is', () => {
+  it('the native-review gate still blocks any Arabic template actually marked draft', () => {
+    // The seed data itself is reviewed now (see above), so this
+    // synthesizes a draft row to prove the gate logic in
+    // renderTemplate/assertTemplateUsable still works, independent of
+    // the current seed content.
     for (const row of templates) {
-      const parsed = StoryThemeTemplateSchema.parse(row);
-      if (parsed.locale !== 'ar') continue;
+      if (row.locale !== 'ar') continue;
+      const parsed = StoryThemeTemplateSchema.parse({ ...row, native_review_status: 'draft' });
       expect(() =>
         renderTemplate(parsed, { childName: 'مايا', pronoun: 'she', organisation: 'X' }),
       ).toThrow(/native review/);

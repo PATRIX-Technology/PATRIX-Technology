@@ -13,6 +13,15 @@ import { getSignedAssetUrl } from '@/lib/domain/storage';
 import { flags } from '@/lib/flags';
 import { Badge } from '@/components/ui/Badge';
 
+// Generating a story's images runs synchronously inside createStoryAction
+// (called from this page) so the demo/pilot flow feels immediate rather
+// than waiting on a cron tick — see docs/DECISIONS.md "Job queue
+// implementation". Real image generation calls can take well past
+// Vercel's 10s default, so this raises the ceiling to the Hobby-plan max;
+// bump the Vercel plan (and this number, up to 300s+) if a story ever
+// needs more than 4-5 pages.
+export const maxDuration = 60;
+
 export default async function ChildDetailPage({
   params,
 }: {

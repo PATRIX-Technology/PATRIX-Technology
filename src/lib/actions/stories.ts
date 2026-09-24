@@ -40,8 +40,9 @@ export async function createStoryAction(
 
   const template = StoryThemeTemplateSchema.parse(templateRow);
 
+  let story: { id: string };
   try {
-    await createStory(supabase, {
+    story = await createStory(supabase, {
       tenantId: context.tenantId,
       childId: child.id,
       childName: child.first_name,
@@ -73,7 +74,10 @@ export async function createStoryAction(
 
   revalidatePath(`/${locale}/dashboard/children/${childId}`);
   revalidatePath(`/${locale}/dashboard/stories`);
-  return {};
+  // Send the user straight to the page that shows live per-page progress,
+  // rather than leaving them on the child page with no feedback that
+  // anything happened.
+  redirect(`/${locale}/dashboard/stories/${story.id}`);
 }
 
 export async function approveStoryAction(locale: string, storyId: string): Promise<ActionResult> {

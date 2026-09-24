@@ -1,6 +1,6 @@
 'use client';
 
-import { useFormState } from 'react-dom';
+import { useFormState, useFormStatus } from 'react-dom';
 import { useTranslations } from 'next-intl';
 import { createStoryAction } from '@/lib/actions/stories';
 import type { ActionResult } from '@/lib/actions/auth';
@@ -69,9 +69,28 @@ export function CreateStoryForm({
         ))}
       </div>
       {state.error && <p className="text-sm text-coral-600">{state.error}</p>}
-      <Button type="submit" className="self-start">
-        {t('generate')}
-      </Button>
+      <GenerateButton label={t('generate')} />
     </form>
+  );
+}
+
+/** useFormStatus only reports the status of the nearest ancestor <form>,
+ * so this has to be a component nested inside it — not inline in
+ * CreateStoryForm's own return, which renders that <form> rather than
+ * being inside it. */
+function GenerateButton({ label }: { label: string }) {
+  const { pending } = useFormStatus();
+  return (
+    <div className="flex flex-col items-start gap-2">
+      <Button type="submit" className="self-start" disabled={pending}>
+        {pending ? 'Generating…' : label}
+      </Button>
+      {pending && (
+        <p className="text-sm text-ink-500">
+          Creating the illustrations now — this can take up to a minute. You&apos;ll be taken to the
+          story&apos;s page automatically once it starts.
+        </p>
+      )}
+    </div>
   );
 }

@@ -10,6 +10,21 @@ export function backoffSeconds(attempt: number): number {
   return 30 * 4 ** Math.max(0, attempt - 1);
 }
 
+/** Bare `String(error)` on a non-Error throw (e.g. a raw Supabase/Postgrest
+ * error object) renders as the useless "[object Object]" — this pulls a
+ * real message out of anything error-shaped before falling back to JSON. */
+function errorMessage(error: unknown): string {
+  if (error instanceof Error) return error.message;
+  if (error && typeof error === 'object' && 'message' in error) {
+    return String((error as { message: unknown }).message);
+  }
+  try {
+    return JSON.stringify(error);
+  } catch {
+    return String(error);
+  }
+}
+
 export interface WorkerRunResult {
   processed: number;
   succeeded: number;
@@ -26,13 +41,24 @@ export interface WorkerRunResult {
 export async function runWorkerOnce(supabase: SupabaseClient, maxJobs = 25): Promise<WorkerRunResult> {
   const result: WorkerRunResult = { processed: 0, succeeded: 0, failed: 0, retried: 0 };
 
+  // Claiming is a single atomic call (FOR UPDATE SKIP LOCKED — see
+  // 0006_job_queue_functions.sql), so grab every available job up front,
+  // then actually run them concurrently below. A story's pages used to
+  // generate one at a time, so a 4-page story's wall-clock time was the
+  // SUM of 4 real Gemini calls — easily enough to blow past Vercel's
+  // function timeout on a paid image provider. Running them in parallel
+  // instead bounds it to roughly the slowest single call.
+  const jobs: StoryJob[] = [];
   for (let i = 0; i < maxJobs; i++) {
     const { data: job, error } = await supabase.rpc('claim_next_story_job');
     if (error) throw error;
     if (!job) break;
+    jobs.push(job as StoryJob);
+  }
 
+  const outcomes = await Promise.all(jobs.map((job) => processJob(supabase, job)));
+  for (const outcome of outcomes) {
     result.processed++;
-    const outcome = await processJob(supabase, job as StoryJob);
     if (outcome === 'succeeded') result.succeeded++;
     else if (outcome === 'failed') result.failed++;
     else result.retried++;
@@ -68,7 +94,7 @@ async function handleJobFailure(
   error: unknown,
 ): Promise<'failed' | 'retried'> {
   const attempts = job.attempts + 1;
-  const message = error instanceof Error ? error.message : String(error);
+  const message = errorMessage(error);
   const retryable = error instanceof ImageGenerationError ? error.retryable : true;
   const isSpendCapped = error instanceof SpendCapExceededError;
 

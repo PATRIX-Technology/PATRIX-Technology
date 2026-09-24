@@ -40,7 +40,7 @@ export class RealImageProvider implements ImageProvider {
     const { data: allowed, error } = await this.supabase.rpc('can_spend', {
       target_tenant_id: request.tenantId,
     });
-    if (error) throw error;
+    if (error) throw new Error(`can_spend check failed: ${error.message}`);
     if (!allowed) {
       throw new SpendCapExceededError('tenant');
     }
@@ -66,7 +66,7 @@ export class RealImageProvider implements ImageProvider {
       provider_name: this.name,
       amount: this.config.costPerImageUsd,
     });
-    if (spendError) throw spendError;
+    if (spendError) throw new Error(`record_ai_spend failed: ${spendError.message}`);
 
     const contentType = 'image/png';
     const safety = await this.safetyChecker.check(bytes, contentType);

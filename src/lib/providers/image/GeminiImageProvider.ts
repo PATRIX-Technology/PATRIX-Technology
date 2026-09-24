@@ -26,7 +26,7 @@ export class GeminiImageProvider extends RealImageProvider {
   constructor(
     supabase: SupabaseClient,
     config: RealImageProviderConfig,
-    safetyChecker: ImageSafetyChecker = createImageSafetyChecker(),
+    safetyChecker: ImageSafetyChecker = createImageSafetyChecker(config.apiKey),
   ) {
     super(supabase, config, safetyChecker);
     this.client = new GoogleGenAI({ apiKey: config.apiKey });

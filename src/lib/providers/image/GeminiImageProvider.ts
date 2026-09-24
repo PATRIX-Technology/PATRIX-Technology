@@ -32,7 +32,9 @@ export class GeminiImageProvider extends RealImageProvider {
     this.client = new GoogleGenAI({ apiKey: config.apiKey });
   }
 
-  protected override async callVendorApi(request: GenerateImageRequest): Promise<Uint8Array> {
+  protected override async callVendorApi(
+    request: GenerateImageRequest,
+  ): Promise<{ bytes: Uint8Array; contentType: string }> {
     const prompt = buildIllustrationPrompt({
       sceneDescription: request.prompt,
       avatarConfig: request.avatarConfig,
@@ -64,10 +66,22 @@ export class GeminiImageProvider extends RealImageProvider {
     const response = await this.client.models.generateContent({
       model: GEMINI_IMAGE_MODEL,
       contents: parts,
+      // Gemini defaults to 1K (~1MP) if unset — too soft for a full-screen
+      // tablet reader. 2K is the sweet spot: noticeably sharper, and only
+      // ~$0.034/image more — GEMINI_COST_PER_IMAGE_USD must be kept in
+      // sync with this (currently 0.101, the 2K rate) or spend tracking
+      // will silently undercharge.
+      config: { imageConfig: { imageSize: '2K' } },
     });
 
-    const imageBase64 = response.data;
-    if (!imageBase64) {
+    // response.data is a convenience getter that concatenates every
+    // inline-data part's bytes but drops the mime type — and Gemini's
+    // image models return JPEG, not PNG, so hardcoding a content type
+    // here previously made every PDF/ZIP export fail with "The input is
+    // not a PNG file!". Read the real mime type from the part itself.
+    const imagePart = response.candidates?.[0]?.content?.parts?.find((part) => part.inlineData?.data);
+    const inlineData = imagePart?.inlineData;
+    if (!inlineData?.data) {
       const blockReason = response.promptFeedback?.blockReason;
       throw new Error(
         blockReason
@@ -76,6 +90,9 @@ export class GeminiImageProvider extends RealImageProvider {
       );
     }
 
-    return new Uint8Array(Buffer.from(imageBase64, 'base64'));
+    return {
+      bytes: new Uint8Array(Buffer.from(inlineData.data, 'base64')),
+      contentType: inlineData.mimeType ?? 'image/jpeg',
+    };
   }
 }

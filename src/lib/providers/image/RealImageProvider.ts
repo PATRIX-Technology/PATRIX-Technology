@@ -46,8 +46,9 @@ export class RealImageProvider implements ImageProvider {
     }
 
     let bytes: Uint8Array;
+    let contentType: string;
     try {
-      bytes = await this.callVendorApi(request);
+      ({ bytes, contentType } = await this.callVendorApi(request));
     } catch (cause) {
       throw new ImageGenerationError(
         `Real image provider request failed: ${(cause as Error).message}`,
@@ -68,7 +69,6 @@ export class RealImageProvider implements ImageProvider {
     });
     if (spendError) throw new Error(`record_ai_spend failed: ${spendError.message}`);
 
-    const contentType = 'image/png';
     const safety = await this.safetyChecker.check(bytes, contentType);
     if (!safety.safe) {
       throw new ImageGenerationError(
@@ -92,7 +92,9 @@ export class RealImageProvider implements ImageProvider {
    * response, without needing a real API key — see
    * tests/unit/real-image-provider.test.ts.
    */
-  protected async callVendorApi(_request: GenerateImageRequest): Promise<Uint8Array> {
+  protected async callVendorApi(
+    _request: GenerateImageRequest,
+  ): Promise<{ bytes: Uint8Array; contentType: string }> {
     throw new Error(
       'RealImageProvider.callVendorApi is not implemented. Choose an image generation ' +
         'vendor, obtain API credentials, and implement this method before enabling ' +

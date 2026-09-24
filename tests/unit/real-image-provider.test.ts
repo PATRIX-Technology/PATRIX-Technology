@@ -5,14 +5,15 @@ import { ImageGenerationError, SpendCapExceededError } from '@/lib/providers/ima
 import { UnconfiguredSafetyChecker, type ImageSafetyChecker, type ImageSafetyResult } from '@/lib/providers/image/safety';
 
 const FAKE_BYTES = new Uint8Array([1, 2, 3]);
+const FAKE_CONTENT_TYPE = 'image/jpeg';
 
 class FakeVendorProvider extends RealImageProvider {
   constructor(supabase: SupabaseClient, safetyChecker?: ImageSafetyChecker) {
     super(supabase, { apiKey: 'test', stylePrompt: 'test', costPerImageUsd: 0.08 }, safetyChecker);
   }
 
-  protected override async callVendorApi(): Promise<Uint8Array> {
-    return FAKE_BYTES;
+  protected override async callVendorApi(): Promise<{ bytes: Uint8Array; contentType: string }> {
+    return { bytes: FAKE_BYTES, contentType: FAKE_CONTENT_TYPE };
   }
 }
 
@@ -48,6 +49,11 @@ describe('RealImageProvider', () => {
     const result = await provider.generate(baseRequest);
     expect(result.bytes).toBe(FAKE_BYTES);
     expect(result.costUsd).toBe(0.08);
+    // Gemini's image models return JPEG, not PNG — this must come from
+    // the vendor call's actual response, never a hardcoded assumption
+    // (that assumption previously made every PDF/ZIP export fail with
+    // "The input is not a PNG file!").
+    expect(result.contentType).toBe(FAKE_CONTENT_TYPE);
     expect((supabase as unknown as { rpc: ReturnType<typeof vi.fn> }).rpc).toHaveBeenCalledWith(
       'record_ai_spend',
       expect.objectContaining({ target_tenant_id: 'tenant-1', amount: 0.08 }),
@@ -90,7 +96,7 @@ describe('RealImageProvider', () => {
       constructor() {
         super(supabase, { apiKey: 'test', stylePrompt: 'test', costPerImageUsd: 0.08 });
       }
-      protected override async callVendorApi(): Promise<Uint8Array> {
+      protected override async callVendorApi(): Promise<{ bytes: Uint8Array; contentType: string }> {
         throw new Error('network timeout');
       }
     }

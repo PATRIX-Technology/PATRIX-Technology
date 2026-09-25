@@ -35,6 +35,39 @@ describe('renderStoryPdf + runPreflight (English)', () => {
     expect(result.issues).toEqual([]);
     expect(result.ok).toBe(true);
   }, 30_000);
+
+  it('passes preflight for a caption using an em dash or en dash', async () => {
+    // Regression case: preflight used to reject these outright even
+    // though both embedded fonts render them fine — see
+    // tests/unit/font-coverage.test.ts and docs/DECISIONS.md.
+    const pages = [
+      {
+        pageNumber: 1,
+        text: 'Maya waited — then smiled, and tried the carrots–crunchy and sweet.',
+        imageBytes: onePxPng,
+        imageContentType: 'image/png',
+      },
+    ];
+
+    const pdfBytes = await renderStoryPdf({
+      title: 'Test',
+      childName: 'Maya',
+      organisationName: 'Org',
+      locale: 'en',
+      pages,
+    });
+
+    const result = await runPreflight({
+      pdfBytes,
+      expectedPageCount: pages.length,
+      locale: 'en',
+      pageTexts: pages.map((p) => p.text),
+      missingAssetPageNumbers: [],
+    });
+
+    expect(result.issues).toEqual([]);
+    expect(result.ok).toBe(true);
+  }, 30_000);
 });
 
 describe('renderStoryPdf + runPreflight (Arabic)', () => {

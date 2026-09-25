@@ -2,6 +2,7 @@ import { PDFDocument, PDFName, PDFArray, PDFNumber } from 'pdf-lib';
 import { BLEED_PT, DIMENSION_TOLERANCE_PT, PAGE_HEIGHT_PT, PAGE_WIDTH_PT } from './geometry';
 import type { AppLocale } from '@/types/database';
 import { containsArabic } from './arabic-shaping';
+import { isCharacterSupported } from './font-coverage';
 
 export interface PreflightIssue {
   code:
@@ -28,9 +29,6 @@ export interface PreflightInput {
   missingAssetPageNumbers: number[];
 }
 
-const SUPPORTED_LATIN = /^[\x00-\x7F -ſ‘’“”…]*$/;
-const SUPPORTED_ARABIC = /^[؀-ۿݐ-ݿ\s\x00-\x7F.,!?؛،؟٪«»‘’“”…]*$/;
-
 /**
  * Fails LOUDLY: this is called before a PDF is allowed to reach
  * stories.pdf_asset_path / be offered for download, per the product
@@ -50,12 +48,15 @@ export async function runPreflight(input: PreflightInput): Promise<PreflightResu
   }
 
   for (const [index, text] of input.pageTexts.entries()) {
-    const supportedPattern = input.locale === 'ar' ? SUPPORTED_ARABIC : SUPPORTED_LATIN;
-    if (!supportedPattern.test(text)) {
+    const unsupportedChars = [...text].filter((char) => !isCharacterSupported(char, input.locale));
+    if (unsupportedChars.length > 0) {
+      const distinct = [...new Set(unsupportedChars)];
       issues.push({
         code: 'UNSUPPORTED_CHARACTER',
         page: index + 1,
-        message: `Page ${index + 1} text contains characters outside the embedded font's supported set.`,
+        message: `Page ${index + 1} text contains characters the embedded font has no glyph for: ${distinct
+          .map((c) => `"${c}" (U+${c.codePointAt(0)!.toString(16).toUpperCase()})`)
+          .join(', ')}.`,
       });
     }
     if (input.locale === 'en' && containsArabic(text)) {

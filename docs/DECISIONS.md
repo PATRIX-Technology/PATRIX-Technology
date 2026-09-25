@@ -150,6 +150,23 @@ should keep spot-checking real output.
 Still verify against a physical print proof, not just a PDF viewer,
 before any real print run.
 
+**Arabic name field for children.** Baking captions into the
+illustration (above) surfaced a related issue: a child's name is often
+entered in Latin script (`children.first_name`, e.g. "Hala") even for a
+child whose stories are generated in Arabic, so it sat oddly mid-sentence
+in otherwise-Arabic prose. `children.arabic_name` (migration `0014`) is
+an optional column for the Arabic spelling; `createStoryAction`
+(`src/lib/actions/stories.ts`) uses it instead of `first_name` when the
+chosen template's locale is `ar`, falling back to `first_name` when it's
+unset — so this is purely additive, no existing child needs updating.
+The name is baked into a story's text/captions once at creation time
+(via `renderTemplate`'s `child_name` token), not looked up dynamically
+afterwards, so it only affects stories created after a child's Arabic
+name is set. `docs/NEEDS_FROM_ME.md`-style note: this migration hasn't
+been run against the live database from this session (no network path
+to Supabase from this sandbox) — run `supabase/migrations/0014_child_
+arabic_name.sql` before relying on the new field in production.
+
 **PDF font weights.** `src/lib/providers/pdf/fonts.ts` now embeds a
 single static instance per font — `Inter-Regular-Static.ttf` (wght=400),
 `Fraunces-Display-Static.ttf` (wght=600), `NotoNaskhArabic-Regular-

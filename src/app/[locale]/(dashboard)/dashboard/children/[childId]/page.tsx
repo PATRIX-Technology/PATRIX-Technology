@@ -85,7 +85,10 @@ export default async function ChildDetailPage({
       <div className="flex items-center gap-4">
         <AvatarPreview config={parseAvatarConfig(child.avatar_config)} className="h-16 w-16" />
         <div>
-          <h1 className="font-display text-2xl text-ink-900">{child.first_name}</h1>
+          <h1 className="font-display text-2xl text-ink-900">
+            {child.first_name}
+            {child.arabic_name && <span dir="rtl" className="ms-2 text-ink-500">({child.arabic_name})</span>}
+          </h1>
           <p className="text-sm text-ink-500">{child.class_name ?? 'No class assigned'}</p>
         </div>
       </div>

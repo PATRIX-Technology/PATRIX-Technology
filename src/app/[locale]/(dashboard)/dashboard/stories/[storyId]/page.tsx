@@ -1,4 +1,3 @@
-import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
@@ -65,10 +64,7 @@ export default async function StoryDetailPage({
         </div>
         {status === 'APPROVED' && (
           <div className="flex gap-2">
-            <Link href={`/${params.locale}/dashboard/stories/${story.id}/reader`}>
-              <Button variant="secondary">Open reader</Button>
-            </Link>
-            <a href={`/api/stories/${story.id}/pdf`} target="_blank" rel="noreferrer">
+            <a href={`/api/stories/${story.id}/pdf`} download>
               <Button>{t('downloadPdf')}</Button>
             </a>
           </div>

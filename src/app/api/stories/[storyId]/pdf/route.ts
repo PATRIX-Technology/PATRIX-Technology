@@ -26,11 +26,10 @@ export async function GET(_request: Request, { params }: { params: { storyId: st
       status: 200,
       headers: {
         'Content-Type': 'application/pdf',
-        // "inline" so clicking the link opens the PDF in the browser's own
-        // viewer rather than forcing a download — the browser's Save
-        // button still works from there when someone actually wants the
-        // file.
-        'Content-Disposition': `inline; filename="${result.fileName}"`,
+        // "attachment" so the browser saves the file straight away
+        // instead of opening its own (often low-quality) inline PDF
+        // viewer — a nursery printing these wants the actual file.
+        'Content-Disposition': `attachment; filename="${result.fileName}"`,
         'Cache-Control': 'private, no-store',
       },
     });

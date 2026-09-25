@@ -40,12 +40,18 @@ export async function createStoryAction(
 
   const template = StoryThemeTemplateSchema.parse(templateRow);
 
+  // An Arabic story reads oddly with a Latin name sitting mid-sentence
+  // ("...جلست بجانب Hala...") — use the Arabic spelling when one is on
+  // file for this child, falling back to the Latin first name otherwise.
+  // See docs/DECISIONS.md "Arabic name field for children".
+  const childName = template.locale === 'ar' && child.arabic_name ? child.arabic_name : child.first_name;
+
   let story: { id: string };
   try {
     story = await createStory(supabase, {
       tenantId: context.tenantId,
       childId: child.id,
-      childName: child.first_name,
+      childName,
       pronoun: child.pronoun,
       consentStatus: child.consent_status,
       avatarConfig: parseAvatarConfig(child.avatar_config),

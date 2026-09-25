@@ -87,6 +87,8 @@
     },
     "form": {
       "firstName": "الاسم الأول",
+      "arabicName": "الاسم بالعربية (اختياري)",
+      "arabicNameHint": "يُستخدم بدلاً من الاسم الأول أعلاه عند إنشاء قصة باللغة العربية.",
       "pronoun": "الضمير",
       "pronounOptions": {
         "she": "هي",
@@ -152,12 +154,6 @@
     "bulkZip": "تحميل جميع القصص (ZIP)",
     "storyCount": "{count} قصص",
     "noChildName": "طفل بلا اسم"
-  },
-  "reader": {
-    "next": "الصفحة التالية",
-    "previous": "الصفحة السابقة",
-    "pageOf": "صفحة {current} من {total}",
-    "close": "إغلاق القارئ"
   },
   "common": {
     "loading": "جارٍ التحميل…",

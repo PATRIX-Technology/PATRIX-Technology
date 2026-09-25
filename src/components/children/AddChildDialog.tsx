@@ -29,6 +29,13 @@ export function AddChildDialog({ locale }: { locale: string }) {
       <Modal open={open} onClose={() => setOpen(false)} title={t('add')}>
         <form action={formAction} className="flex flex-col gap-4">
           <TextField name="firstName" label={tForm('firstName')} required maxLength={60} />
+          <TextField
+            name="arabicName"
+            label={tForm('arabicName')}
+            hint={tForm('arabicNameHint')}
+            dir="rtl"
+            maxLength={60}
+          />
           <div>
             <label htmlFor="pronoun" className="mb-1.5 block text-sm font-medium text-ink-700">
               {tForm('pronoun')}

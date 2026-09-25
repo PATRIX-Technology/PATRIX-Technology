@@ -29,6 +29,7 @@ export async function addChildAction(locale: string, formData: FormData): Promis
 
   const parsed = ChildFormSchema.safeParse({
     firstName: formData.get('firstName'),
+    arabicName: formData.get('arabicName') || undefined,
     pronoun: formData.get('pronoun'),
     className: formData.get('className') || undefined,
     preferredLanguage: formData.get('preferredLanguage'),
@@ -41,6 +42,7 @@ export async function addChildAction(locale: string, formData: FormData): Promis
   const { error } = await supabase.from('children').insert({
     tenant_id: context.tenantId,
     first_name: parsed.data.firstName,
+    arabic_name: parsed.data.arabicName || null,
     pronoun: parsed.data.pronoun,
     class_name: parsed.data.className || null,
     preferred_language: parsed.data.preferredLanguage,
@@ -80,6 +82,7 @@ export async function importChildrenCsvAction(locale: string, formData: FormData
       validRows.map((r) => ({
         tenant_id: context.tenantId,
         first_name: r.data!.firstName,
+        arabic_name: r.data!.arabicName || null,
         pronoun: r.data!.pronoun,
         class_name: r.data!.className || null,
         preferred_language: r.data!.preferredLanguage,

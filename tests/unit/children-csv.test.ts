@@ -76,4 +76,20 @@ describe('parseChildrenCsv', () => {
     const { headerError } = parseChildrenCsv('');
     expect(headerError).toMatch(/empty/i);
   });
+
+  it('reads an optional arabic_name column when present', () => {
+    const { results, headerError } = parseChildrenCsv(
+      'first_name,arabic_name,pronoun,class_name,preferred_language\nHala,هالة,she,Sunflower,ar',
+    );
+    expect(headerError).toBeUndefined();
+    expect(results[0]!.data).toMatchObject({ firstName: 'Hala', arabicName: 'هالة' });
+  });
+
+  it('does not require an arabic_name column at all', () => {
+    const { results, headerError } = parseChildrenCsv(
+      'first_name,pronoun,class_name,preferred_language\nMaya,she,Sunflower,en',
+    );
+    expect(headerError).toBeUndefined();
+    expect(results[0]!.data?.arabicName).toBeUndefined();
+  });
 });

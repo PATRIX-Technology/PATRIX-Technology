@@ -8,6 +8,16 @@ export const ChildFormSchema = z.object({
     .min(1, 'First name is required')
     .max(60, 'First name must be 60 characters or fewer')
     .refine((value) => !/\d/.test(value), 'First name should not contain numbers'),
+  /** Optional Arabic spelling, used instead of firstName when generating
+   * an Arabic-locale story — see docs/DECISIONS.md "Arabic name field
+   * for children". */
+  arabicName: z
+    .string()
+    .trim()
+    .max(60, 'Arabic name must be 60 characters or fewer')
+    .refine((value) => !/\d/.test(value), 'Arabic name should not contain numbers')
+    .optional()
+    .or(z.literal('')),
   pronoun: z.enum(['she', 'he', 'they']),
   className: z.string().trim().max(80).optional().or(z.literal('')),
   preferredLanguage: z.enum(['en', 'ar']),
@@ -16,8 +26,10 @@ export const ChildFormSchema = z.object({
 export type ChildFormInput = z.infer<typeof ChildFormSchema>;
 
 /**
- * CSV import schema for bulk class-list uploads. Column order:
- * first_name,pronoun,class_name,preferred_language
+ * CSV import schema for bulk class-list uploads. Required columns:
+ * first_name,pronoun,class_name,preferred_language — an optional
+ * arabic_name column is also read when present (see docs/DECISIONS.md
+ * "Arabic name field for children"), but its absence isn't an error.
  * pronoun/preferred_language are case-insensitive and default sensibly so
  * a nursery admin's spreadsheet doesn't need to be pixel-perfect.
  */
@@ -111,12 +123,14 @@ export function parseChildrenCsv(content: string): { results: CsvRowResult[]; he
   for (let i = 1; i < rows.length; i++) {
     const cells = rows[i]!;
     const firstName = (cells[colIndex('first_name')] ?? '').trim();
+    const arabicName = (cells[colIndex('arabic_name')] ?? '').trim();
     const pronounRaw = cells[colIndex('pronoun')] ?? 'they';
     const className = (cells[colIndex('class_name')] ?? '').trim();
     const languageRaw = cells[colIndex('preferred_language')] ?? 'en';
 
     const parsed = ChildFormSchema.safeParse({
       firstName,
+      arabicName: arabicName || undefined,
       pronoun: normalizePronoun(pronounRaw),
       className: className || undefined,
       preferredLanguage: normalizeLanguage(languageRaw),

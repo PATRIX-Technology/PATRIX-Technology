@@ -87,6 +87,8 @@
     },
     "form": {
       "firstName": "First name",
+      "arabicName": "Arabic name (optional)",
+      "arabicNameHint": "Used instead of the first name above when a story is generated in Arabic.",
       "pronoun": "Pronoun",
       "pronounOptions": {
         "she": "She / her",
@@ -152,12 +154,6 @@
     "bulkZip": "Download all stories (ZIP)",
     "storyCount": "{count} stories",
     "noChildName": "Unnamed child"
-  },
-  "reader": {
-    "next": "Next page",
-    "previous": "Previous page",
-    "pageOf": "Page {current} of {total}",
-    "close": "Close reader"
   },
   "common": {
     "loading": "Loading…",

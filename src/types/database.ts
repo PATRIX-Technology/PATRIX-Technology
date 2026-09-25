@@ -87,6 +87,10 @@ export interface Child {
   id: string;
   tenant_id: string;
   first_name: string;
+  /** Optional Arabic spelling of the child's name, used in place of
+   * first_name when generating an Arabic-locale story — see
+   * docs/DECISIONS.md "Arabic name field for children". */
+  arabic_name: string | null;
   pronoun: Pronoun;
   class_name: string | null;
   preferred_language: AppLocale;

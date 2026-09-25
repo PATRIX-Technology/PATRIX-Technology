@@ -149,7 +149,9 @@
     "reject": "رفض",
     "regeneratePage": "إعادة إنشاء هذه الصفحة",
     "downloadPdf": "تحميل PDF",
-    "bulkZip": "تحميل جميع القصص (ZIP)"
+    "bulkZip": "تحميل جميع القصص (ZIP)",
+    "storyCount": "{count} قصص",
+    "noChildName": "طفل بلا اسم"
   },
   "reader": {
     "next": "الصفحة التالية",

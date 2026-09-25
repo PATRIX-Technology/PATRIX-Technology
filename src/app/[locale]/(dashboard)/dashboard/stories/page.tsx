@@ -32,9 +32,25 @@ export default async function StoriesPage({ params }: { params: { locale: string
 
   const { data: stories } = await supabase
     .from('stories')
-    .select('id, theme_key, status, locale, created_at, children(first_name)')
+    .select('id, child_id, theme_key, status, locale, created_at, children(first_name)')
     .eq('tenant_id', context.tenantId)
     .order('created_at', { ascending: false });
+
+  // One folder per child, so a nursery with several stories per kid isn't
+  // just a flat, hard-to-scan list. Children with no story left do not
+  // appear at all — a folder implies "there's something inside it".
+  const childFolders = new Map<
+    string,
+    { childName: string; stories: NonNullable<typeof stories> }
+  >();
+  for (const story of stories ?? []) {
+    const childName =
+      (story.children as unknown as { first_name: string } | null)?.first_name || t('noChildName');
+    const existing = childFolders.get(story.child_id);
+    if (existing) existing.stories.push(story);
+    else childFolders.set(story.child_id, { childName, stories: [story] });
+  }
+  const sortedFolders = [...childFolders.values()].sort((a, b) => a.childName.localeCompare(b.childName));
 
   return (
     <div>
@@ -52,39 +68,52 @@ export default async function StoriesPage({ params }: { params: { locale: string
       {!stories || stories.length === 0 ? (
         <EmptyState title="No stories yet" body="Create one from a child's profile page." />
       ) : (
-        <Card className="overflow-x-auto p-0">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-[rgb(var(--color-border))] text-left text-ink-500">
-                <th className="p-4">Child</th>
-                <th className="p-4">Theme</th>
-                <th className="p-4">Language</th>
-                <th className="p-4">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {stories.map((story) => (
-                <tr key={story.id} className="border-b border-[rgb(var(--color-border))] last:border-0">
-                  <td className="p-4">
-                    <Link
-                      href={`/${params.locale}/dashboard/stories/${story.id}`}
-                      className="focus-ring font-medium text-ink-900 hover:text-lagoon-700"
-                    >
-                      {(story.children as unknown as { first_name: string } | null)?.first_name ?? '—'}
-                    </Link>
-                  </td>
-                  <td className="p-4 capitalize text-ink-600">{story.theme_key.replace(/_/g, ' ')}</td>
-                  <td className="p-4 text-ink-600">{story.locale.toUpperCase()}</td>
-                  <td className="p-4">
-                    <Badge tone={STATUS_TONE[story.status as StoryStatus]}>
-                      {t(`status.${story.status}`)}
-                    </Badge>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </Card>
+        <div className="space-y-4">
+          {sortedFolders.map((folder) => (
+            <details key={folder.stories[0]!.child_id} className="group" open>
+              <Card className="overflow-hidden p-0">
+                <summary className="focus-ring flex cursor-pointer list-none items-center justify-between gap-3 p-4 hover:bg-ink-100">
+                  <span className="flex items-center gap-2 font-display text-lg text-ink-900">
+                    <span aria-hidden className="text-ink-400 transition-transform group-open:rotate-90">
+                      ▸
+                    </span>
+                    {folder.childName}
+                  </span>
+                  <span className="text-xs text-ink-500">{t('storyCount', { count: folder.stories.length })}</span>
+                </summary>
+                <table className="w-full border-t border-[rgb(var(--color-border))] text-sm">
+                  <thead>
+                    <tr className="border-b border-[rgb(var(--color-border))] text-left text-ink-500">
+                      <th className="p-4">Theme</th>
+                      <th className="p-4">Language</th>
+                      <th className="p-4">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {folder.stories.map((story) => (
+                      <tr key={story.id} className="border-b border-[rgb(var(--color-border))] last:border-0">
+                        <td className="p-4">
+                          <Link
+                            href={`/${params.locale}/dashboard/stories/${story.id}`}
+                            className="focus-ring font-medium capitalize text-ink-900 hover:text-lagoon-700"
+                          >
+                            {story.theme_key.replace(/_/g, ' ')}
+                          </Link>
+                        </td>
+                        <td className="p-4 text-ink-600">{story.locale.toUpperCase()}</td>
+                        <td className="p-4">
+                          <Badge tone={STATUS_TONE[story.status as StoryStatus]}>
+                            {t(`status.${story.status}`)}
+                          </Badge>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </Card>
+            </details>
+          ))}
+        </div>
       )}
     </div>
   );

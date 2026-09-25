@@ -149,7 +149,9 @@
     "reject": "Reject",
     "regeneratePage": "Regenerate this page",
     "downloadPdf": "Download PDF",
-    "bulkZip": "Download all stories (ZIP)"
+    "bulkZip": "Download all stories (ZIP)",
+    "storyCount": "{count} stories",
+    "noChildName": "Unnamed child"
   },
   "reader": {
     "next": "Next page",

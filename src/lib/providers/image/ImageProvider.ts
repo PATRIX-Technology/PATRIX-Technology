@@ -9,12 +9,23 @@ export interface GenerateImageRequest {
   storyId: string;
   pageId: string;
   /** The rendered scene description for this page (tokens already
-   * substituted — see src/lib/domain/templates.ts). Never includes the
-   * story's on-page text itself: the illustration never has text baked
-   * into it, see docs/DECISIONS.md "Gemini illustrations, our own text
-   * overlay". */
+   * substituted — see src/lib/domain/templates.ts). */
   prompt: string;
   avatarConfig: Record<string, string>;
+  /**
+   * This page's on-page story text and its language. For Arabic pages,
+   * the provider bakes this text into the illustration itself as a
+   * caption band — see buildIllustrationPrompt in ./prompts.ts for why:
+   * no PDF text-drawing library correctly shapes Arabic script from this
+   * project's embedded font (confirmed by rendering to an actual PDF and
+   * comparing pixel-for-pixel against real shaping engines — see
+   * docs/DECISIONS.md "Arabic PDF text shaping"), while Gemini's own
+   * image model renders it correctly and legibly as pixels. English
+   * pages are unaffected: the caller still draws English captions itself
+   * (src/lib/providers/pdf/render.ts), since Latin text was never broken.
+   */
+  captionText: string;
+  locale: 'en' | 'ar';
   /**
    * The child's uploaded reference photo, if photo personalisation is
    * enabled/consented for this story (src/lib/domain/consent.ts

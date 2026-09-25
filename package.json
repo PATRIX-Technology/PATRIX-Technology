@@ -24,7 +24,6 @@
     "@supabase/ssr": "^0.5.2",
     "@supabase/supabase-js": "^2.45.4",
     "archiver": "^7.0.1",
-    "harfbuzzjs": "^1.6.2",
     "next": "14.2.15",
     "next-intl": "^4.14.5",
     "pdf-lib": "^1.17.1",

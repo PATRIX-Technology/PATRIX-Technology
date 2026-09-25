@@ -40,6 +40,8 @@ export class GeminiImageProvider extends RealImageProvider {
       avatarConfig: request.avatarConfig,
       hasReferencePhoto: Boolean(request.referencePhotoBytes),
       hasReferenceImage: Boolean(request.referenceImageBytes),
+      captionText: request.captionText,
+      locale: request.locale,
     });
 
     const parts: Array<{ text: string } | { inlineData: { mimeType: string; data: string } }> = [

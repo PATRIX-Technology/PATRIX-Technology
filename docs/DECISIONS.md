@@ -73,70 +73,79 @@ slots (`{v:felt_happy}`, `{v:said}`, etc. — see
 default for a mixed/unspecified-gender group). This default, like all
 Arabic copy, needs native review before it ships to a real family.
 
-**Arabic PDF text shaping.** `pdf-lib`/`fontkit` do not perform Arabic
-contextual shaping — an earlier approach worked around this by pre-
-shaping text into Arabic Presentation Forms (`arabic-reshaper`) and
-bidi-reordering it (`bidi-js`) before handing the result to `drawText`.
-That approach went through several rounds of real bugs (a paragraph
-reordered once instead of per-line; `pdf-lib`'s own `font.layout()` re-
-reversing an already-reordered embedded Latin name; a guessed "advance
-width fudge factor" that never reliably matched the real rendered
-width) and was ultimately replaced outright, because its root problem
-couldn't be patched with more constants: **rendering to an actual PDF
-and rasterising it (`pdftoppm`), then comparing pixel-for-pixel against
-the same text rendered by a real shaping engine (Chromium/HarfBuzz)
-from the identical font file, showed Arabic letters coming out visibly
-disconnected** — not an overlap or spacing bug, but broken glyph
-joining. Root cause, confirmed with HarfBuzz's own shaping output for
-comparison: `NotoNaskhArabic-Regular-Static.ttf` represents several
-letters (ق ت ف ب, etc.) as a dotless base glyph plus a separately-
-positioned combining dot-mark glyph, positioned via the font's GPOS
-`mark` feature. A real shaper applies that positioning. Feeding
-presentation-form codepoints (`arabic-reshaper`'s output) into
-`pdf-lib`'s `page.drawText` bypasses this entirely — presentation-form
-codepoints resolve to the font's flatter "compatibility" glyphs, and
-even where they don't, `pdf-lib`'s `CustomFontEmbedder` only reads
-`.glyphs` from fontkit's `layout()` result and discards `.positions`
-outright, so GPOS mark offsets are silently dropped no matter what.
-No fudge factor could fix a missing positioning offset.
+**Arabic captions baked into the illustration.** `pdf-lib`/`fontkit` do
+not perform Arabic contextual shaping, and every attempt to work around
+that in our own code eventually broke: pre-shaping into Arabic
+Presentation Forms (`arabic-reshaper`) + bidi-reordering (`bidi-js`)
+before `drawText` went through several rounds of real bugs (a paragraph
+reordered once instead of per-line; `pdf-lib`'s own `font.layout()`
+re-reversing an already-reordered embedded Latin name; a guessed
+"advance width fudge factor" that never reliably matched the real
+rendered width). Replacing that with real shaping — the `harfbuzzjs`
+WASM package, drawing raw glyph IDs at HarfBuzz-computed coordinates
+via `pdf-lib`'s low-level content-stream operators, bypassing
+`page.drawText` entirely — fixed the actual rendering (verified by
+rendering to an actual PDF, rasterising it with `pdftoppm`, and
+comparing pixel-for-pixel against a real shaping engine from the
+identical font file: connected, correctly-joined Arabic, confirmed with
+colored marker rectangles at each run boundary so the check didn't
+depend on the reviewer being able to read Arabic). But it introduced a
+NEW failure mode that only showed up in the real deployment, not in any
+local build: `harfbuzzjs` resolves its own WASM file via
+`import.meta.url` internally, and Next.js's webpack bundling baked in
+the BUILD machine's absolute filesystem path, which doesn't exist on
+Vercel's serverless runtime — surfacing as a minified `"t is not a
+function"` in production. Excluding the package from webpack bundling
+(`experimental.serverComponentsExternalPackages`) fixed that specific
+crash (verified by building the app, running the actual production
+server, and hitting the exact code path) — but a live deployment after
+that fix STILL rendered visibly broken Arabic, root cause never fully
+pinned down (a difference between the local build/run environment and
+Vercel's actual serverless runtime that this project's tooling has no
+way to inspect from outside Vercel's own dashboard).
 
-**The fix**: real HarfBuzz shaping (the `harfbuzzjs` WASM package,
-`src/lib/providers/pdf/harfbuzz-shape.ts`) plus drawing raw glyph IDs
-at explicit coordinates via `pdf-lib`'s low-level content-stream
-operators (`PDFOperator`/`PDFOperatorNames`/`PDFHexString`), bypassing
-`page.drawText` entirely for Arabic captions:
+At that point — three substantially different rendering approaches,
+each fixing the specific bug found in the last one, each eventually
+failing a real end-to-end check — the right move was to stop trying to
+make `pdf-lib` shape Arabic at all. A direct side-by-side test settled
+it: asking Gemini's own image model (the same one already generating
+every illustration) to render the exact same caption text directly
+in the image came back as correctly joined, fully legible Arabic
+typography — as good as real printed book text, with correct diacritics,
+on the first try, with none of the shaping/positioning machinery above.
 
-1. `splitIntoDirectionRuns` (`arabic-shaping.ts`) still splits LOGICAL
-   (un-shaped) text into same-script runs — HarfBuzz shapes one
-   direction at a time and does not perform Unicode bidi paragraph
-   analysis itself, so a single `shape()` call over a whole mixed-
-   direction line reverses an embedded Latin run's own character order
-   (confirmed: "Hala" came back as "alaH" when shaped as one RTL
-   buffer). This is the same reason the old code split runs, but it now
-   operates on the original text, not a pre-shaped/reordered string.
-2. `render.ts`'s `drawArabicLine` reverses the RUN order (not each
-   run's internal characters) for correct RTL visual placement — proper
-   Unicode bidi for the common case here (one Arabic sentence, an
-   occasional embedded Latin/number run, no nested embedding levels) —
-   then shapes each run with `shapeRun` (HarfBuzz, correct direction per
-   run) and draws every glyph at its own exact position, including the
-   x/y offsets HarfBuzz computes for combining marks.
-3. `wrapArabicParagraph` measures candidate lines with the exact same
-   run-split-then-shape path `drawArabicLine` draws with, so wrap
-   decisions and the actually-drawn width can never disagree — no
-   measured-vs-real-width fudge factor needed at all.
+**The fix**: for Arabic pages only, `buildIllustrationPrompt`
+(`src/lib/providers/image/prompts.ts`) hands Gemini the page's exact
+caption text and asks it to render that text itself, verbatim, as a
+soft pastel banner across the bottom of the illustration — see
+`GenerateImageRequest.captionText`/`.locale` (`ImageProvider.ts`) and
+`src/lib/jobs/worker.ts`'s `generatePageImage`, which now passes the
+page's own `text` and its story's `locale` into every image generation
+call. `render.ts` no longer draws Arabic PDF text or a caption band for
+Arabic pages at all — it just places the full-bleed image (which
+already has its caption). English pages are unaffected: Latin text
+never had a shaping bug, so `render.ts` still draws English captions
+itself with the embedded Latin font, exactly as before. `preflight.ts`
+no longer checks Arabic caption text against the embedded font's glyph
+coverage, since that font no longer draws Arabic captions at all.
 
-Verified against every previously-failing case from the pilot (a long
-Arabic sentence wrapping across lines with an embedded Latin name
-followed by punctuation, an isolated word containing a mark-decomposed
-letter, a multi-line paragraph) via the same render → `pdftoppm` →
-pixel-inspect methodology, plus a language-independent check: colored
-marker rectangles drawn at each run's computed boundary, confirmed
-against the pixel image to land exactly where each script run starts
-and ends (this catches spacing bugs regardless of whether the reviewer
-can read Arabic). `tests/unit/harfbuzz-shape.test.ts` asserts the
-specific mechanism (non-zero mark offsets) directly; `tests/unit/
-arabic-shaping.test.ts` covers run-splitting.
+This also means: Arabic images generated BEFORE this change do not
+have a caption baked in (they were generated when the illustration
+prompt explicitly said no text) — their PDFs will show the illustration
+with no caption until those pages' images are regenerated. For a
+pre-launch pilot with a handful of test stories, regenerating is the
+right move over adding migration complexity for data that isn't real
+customer data yet.
+
+Trade-offs worth knowing about, in case this ever needs revisiting: the
+caption text becomes part of the image pixels for Arabic pages, so it's
+no longer selectable/screen-reader-accessible in the PDF, can't be
+corrected without regenerating the (paid, non-deterministic) image, and
+depends on Gemini continuing to render this specific font/style of
+Arabic text as reliably as it did in testing — there is no automated
+check for THAT (the "arabic text is legible in the generated image"
+property can't be verified by a unit test), so a native Arabic speaker
+should keep spot-checking real output.
 
 Still verify against a physical print proof, not just a PDF viewer,
 before any real print run.

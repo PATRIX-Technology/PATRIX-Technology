@@ -1,26 +1,33 @@
 /**
- * The illustration prompt sent to Gemini. Deliberately asks for artwork
- * ONLY — never text baked into the image. Story text is rendered
- * separately, by our own code, with real fonts and correct Arabic
- * shaping (src/lib/providers/pdf/arabic-shaping.ts) — see
- * docs/DECISIONS.md "Gemini illustrations, our own text overlay" for why
- * this is more reliable than asking an image model to render Arabic
- * script as pixels.
+ * The illustration prompt sent to Gemini. For English pages, asks for
+ * artwork only — English captions are drawn afterwards by our own code
+ * with the embedded Latin font (that path was never broken; Latin text
+ * needs no contextual shaping). For Arabic pages, asks Gemini to bake
+ * the exact caption text into the image itself as a caption band.
+ *
+ * This split exists because no PDF text-drawing approach this project
+ * tried correctly shaped Arabic script from the embedded font — verified
+ * repeatedly by rendering to an actual PDF, rasterising it, and comparing
+ * pixel-for-pixel against real shaping engines (see docs/DECISIONS.md
+ * "Arabic PDF text shaping" for the full history). Gemini's own image
+ * model, asked directly, renders correctly joined, legible Arabic
+ * typography — confirmed the same way, by generating a real image and
+ * inspecting the pixels. See docs/DECISIONS.md "Arabic captions baked
+ * into the illustration".
  */
 
 export const BRAND_STYLE_PROMPT =
   'Warm, premium children\'s storybook illustration, soft rounded shapes, gentle consistent ' +
   'lighting, cozy detailed background, an anime-influenced but wholesome children\'s-book art ' +
-  'style, culturally appropriate for a UAE/Gulf audience. Absolutely no text, letters, words, or ' +
-  'writing anywhere in the image. Portrait orientation, centred composition with room at the top ' +
-  'and bottom of the frame for a text overlay to be added afterwards (do not fill the very top or ' +
-  'very bottom 15% of the frame with important detail).';
+  'style, culturally appropriate for a UAE/Gulf audience. Portrait orientation, centred composition.';
 
 export interface IllustrationPromptInput {
   sceneDescription: string;
   avatarConfig: { hair?: string; skinTone?: string; outfitColor?: string; accessory?: string };
   hasReferencePhoto: boolean;
   hasReferenceImage: boolean;
+  captionText: string;
+  locale: 'en' | 'ar';
 }
 
 export function buildIllustrationPrompt(input: IllustrationPromptInput): string {
@@ -45,6 +52,22 @@ export function buildIllustrationPrompt(input: IllustrationPromptInput): string 
     parts.push(
       'A reference image of this same character from an earlier page in the story is attached — ' +
         'keep the character\'s face, hair, and outfit exactly consistent with that reference.',
+    );
+  }
+
+  if (input.locale === 'ar') {
+    parts.push(
+      'Render this exact Arabic caption directly in the image yourself, as a soft pastel rounded ' +
+        'banner across the bottom of the frame (covering roughly the bottom 15-20%): right-to-left, ' +
+        'correctly joined Arabic calligraphy, perfectly legible, like real printed book typography. ' +
+        `The caption text is: "${input.captionText}". ` +
+        'Reproduce it exactly, word for word — do not paraphrase, translate, shorten, or add to it.',
+    );
+  } else {
+    parts.push(
+      'Absolutely no text, letters, words, or writing anywhere in the image — the caption is added ' +
+        'separately afterwards. Leave the very top and very bottom 15% of the frame free of important ' +
+        'detail for that text overlay.',
     );
   }
 

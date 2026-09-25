@@ -120,7 +120,7 @@ describe('runWorkerOnce', () => {
     };
     const { client, updates } = createFakeSupabase({
       jobs: [job],
-      pageRow: { image_prompt: 'a fox', stories: { tenant_id: 'tenant-1' } },
+      pageRow: { image_prompt: 'a fox', text: 'A fox in a garden.', stories: { tenant_id: 'tenant-1', locale: 'en' } },
       remainingCount: 0,
     });
 

@@ -115,7 +115,12 @@ export function StoryReader({
               Image unavailable
             </div>
           )}
-          <p className="text-lg leading-relaxed">{page.text}</p>
+          {/* Arabic captions are baked into the illustration itself by
+              Gemini (see docs/DECISIONS.md "Arabic captions baked into
+              the illustration") — showing the same text again here
+              would just duplicate it. English pages still need this:
+              their images never have text baked in. */}
+          {locale !== 'ar' && <p className="text-lg leading-relaxed">{page.text}</p>}
         </div>
 
         <button

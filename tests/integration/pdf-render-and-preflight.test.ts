@@ -71,7 +71,7 @@ describe('renderStoryPdf + runPreflight (English)', () => {
 });
 
 describe('renderStoryPdf + runPreflight (Arabic)', () => {
-  it('produces a valid bleed-inclusive A5 PDF with shaped Arabic text', async () => {
+  it('produces a valid bleed-inclusive A5 PDF for an Arabic story', async () => {
     const pages = [
       { pageNumber: 1, text: 'أكلت مايا الخضروات الملونة.', imageBytes: onePxPng, imageContentType: 'image/png' },
     ];
@@ -95,17 +95,13 @@ describe('renderStoryPdf + runPreflight (Arabic)', () => {
     expect(result.ok).toBe(true);
   }, 30_000);
 
-  it('renders without throwing when an Arabic caption embeds a Latin name and needs to wrap onto multiple lines', async () => {
-    // Regression case for the real bug: a child's name and an
-    // organisation's name are often Latin even in an Arabic story, and a
-    // caption long enough to wrap used to come out with those names
-    // reversed ("Hala" -> "alaH", "test" -> "tset") — see
-    // splitIntoDirectionRuns's comment in arabic-shaping.ts for the full
-    // diagnosis. This can't assert on rendered glyphs directly (they're
-    // CID-encoded), so the real coverage is tests/unit/arabic-shaping.test.ts
-    // asserting splitIntoDirectionRuns keeps such runs intact — this just
-    // proves the full pipeline still produces a valid, correctly-paginated
-    // PDF for exactly this shape of input.
+  it('renders and passes preflight for a long Arabic caption embedding a Latin name, without drawing any Arabic PDF text', async () => {
+    // Arabic captions are baked into the illustration by Gemini (see
+    // src/lib/providers/image/prompts.ts) — render.ts never draws Arabic
+    // text as PDF content at all, so there is no font-shaping/wrapping
+    // logic left to break here, regardless of embedded Latin names like
+    // "Hala" or punctuation. This just proves the pipeline still produces
+    // a valid, correctly-paginated PDF for this shape of input.
     const pages = [
       {
         pageNumber: 1,

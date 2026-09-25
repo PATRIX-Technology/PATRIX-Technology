@@ -48,16 +48,22 @@ export async function runPreflight(input: PreflightInput): Promise<PreflightResu
   }
 
   for (const [index, text] of input.pageTexts.entries()) {
-    const unsupportedChars = [...text].filter((char) => !isCharacterSupported(char, input.locale));
-    if (unsupportedChars.length > 0) {
-      const distinct = [...new Set(unsupportedChars)];
-      issues.push({
-        code: 'UNSUPPORTED_CHARACTER',
-        page: index + 1,
-        message: `Page ${index + 1} text contains characters the embedded font has no glyph for: ${distinct
-          .map((c) => `"${c}" (U+${c.codePointAt(0)!.toString(16).toUpperCase()})`)
-          .join(', ')}.`,
-      });
+    // Arabic captions are baked into the illustration by Gemini, not
+    // drawn as PDF text with our embedded font — see docs/DECISIONS.md
+    // "Arabic captions baked into the illustration" — so font glyph
+    // coverage is irrelevant for Arabic pages here.
+    if (input.locale !== 'ar') {
+      const unsupportedChars = [...text].filter((char) => !isCharacterSupported(char, input.locale));
+      if (unsupportedChars.length > 0) {
+        const distinct = [...new Set(unsupportedChars)];
+        issues.push({
+          code: 'UNSUPPORTED_CHARACTER',
+          page: index + 1,
+          message: `Page ${index + 1} text contains characters the embedded font has no glyph for: ${distinct
+            .map((c) => `"${c}" (U+${c.codePointAt(0)!.toString(16).toUpperCase()})`)
+            .join(', ')}.`,
+        });
+      }
     }
     if (input.locale === 'en' && containsArabic(text)) {
       issues.push({

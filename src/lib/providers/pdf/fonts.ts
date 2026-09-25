@@ -8,12 +8,6 @@ const FONTS_DIR = join(process.cwd(), 'assets', 'fonts');
 export interface EmbeddedFonts {
   latinRegular: PDFFont;
   latinDisplay: PDFFont;
-  arabicRegular: PDFFont;
-  // Raw bytes alongside the embedded PDFFont — HarfBuzz shapes Arabic
-  // captions directly from the font file (see harfbuzz-shape.ts), since
-  // pdf-lib/fontkit's own text layout doesn't apply Arabic joining
-  // correctly (see docs/DECISIONS.md "Arabic PDF text shaping").
-  arabicRegularBytes: Uint8Array;
 }
 
 /**
@@ -31,19 +25,21 @@ export interface EmbeddedFonts {
  * variable font before embedding fixed rendering in both engines. See
  * docs/DECISIONS.md "PDF font subsetting disabled" for the full writeup
  * and how to regenerate these files if the source variable fonts change.
+ *
+ * No Arabic font is embedded here: Arabic captions are baked into the
+ * illustration by Gemini, not drawn as PDF text — see docs/DECISIONS.md
+ * "Arabic captions baked into the illustration".
  */
 export async function embedFonts(pdfDoc: PDFDocument): Promise<EmbeddedFonts> {
-  const [latinBytes, displayBytes, arabicBytes] = await Promise.all([
+  const [latinBytes, displayBytes] = await Promise.all([
     readFile(join(FONTS_DIR, 'Inter-Regular-Static.ttf')),
     readFile(join(FONTS_DIR, 'Fraunces-Display-Static.ttf')),
-    readFile(join(FONTS_DIR, 'NotoNaskhArabic-Regular-Static.ttf')),
   ]);
 
-  const [latinRegular, latinDisplay, arabicRegular] = await Promise.all([
+  const [latinRegular, latinDisplay] = await Promise.all([
     pdfDoc.embedFont(latinBytes, { subset: false }),
     pdfDoc.embedFont(displayBytes, { subset: false }),
-    pdfDoc.embedFont(arabicBytes, { subset: false }),
   ]);
 
-  return { latinRegular, latinDisplay, arabicRegular, arabicRegularBytes: arabicBytes };
+  return { latinRegular, latinDisplay };
 }

@@ -50,7 +50,6 @@ python3 -m fontTools.varLib.instancer assets/fonts/NotoNaskhArabic-Variable.ttf 
 | Supabase JS / SSR clients | MIT |
 | pdf-lib | MIT |
 | @pdf-lib/fontkit | MIT |
-| harfbuzzjs (HarfBuzz WASM build) | MIT |
 | archiver | MIT |
 | qrcode | MIT |
 | zod | MIT |

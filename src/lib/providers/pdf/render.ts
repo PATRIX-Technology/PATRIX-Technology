@@ -1,17 +1,10 @@
 import 'server-only';
 import fontkit from '@pdf-lib/fontkit';
-import { PDFDocument, PDFName, PDFNumber, PDFArray, PDFHexString, PDFOperator, PDFOperatorNames, rgb } from 'pdf-lib';
-import type { PDFFont, PDFPage } from 'pdf-lib';
+import { PDFDocument, PDFName, PDFNumber, PDFArray, rgb } from 'pdf-lib';
 import { embedFonts } from './fonts';
-import { containsArabic, splitIntoDirectionRuns } from './arabic-shaping';
-import { shapeRun, getFontUpem } from './harfbuzz-shape';
 import { drawFlatBottomBanner } from './banners';
 import { BLEED_PT, PAGE_HEIGHT_PT, PAGE_WIDTH_PT, TRIM_WIDTH_PT } from './geometry';
 import type { AppLocale } from '@/types/database';
-
-// Cache key for the Arabic font's HarfBuzz instance — there's only one
-// Arabic font file, so a constant key is fine (see harfbuzz-shape.ts).
-const ARABIC_FONT_CACHE_KEY = 'NotoNaskhArabic-Regular-Static';
 
 export interface RenderPageInput {
   pageNumber: number;
@@ -35,12 +28,21 @@ const CAPTION_BANNER_COLOR = rgb(0.855, 0.914, 0.851);
 
 /**
  * Renders a full print-ready PDF: one page per story page, illustration
- * full-bleed with its caption in a band at the bottom — no cover,
- * dedication, or repeating title banner (removed per pilot feedback: they
- * read as filler, and repeating the English theme title on every single
- * page added nothing). Sets MediaBox to the bleed-inclusive page size and
- * TrimBox/BleedBox explicitly (required by print vendors), per the A5 /
- * 300 DPI / 3mm bleed spec in the product brief.
+ * full-bleed — no cover, dedication, or repeating title banner (removed
+ * per pilot feedback: they read as filler, and repeating the English
+ * theme title on every single page added nothing). Sets MediaBox to the
+ * bleed-inclusive page size and TrimBox/BleedBox explicitly (required by
+ * print vendors), per the A5 / 300 DPI / 3mm bleed spec in the product
+ * brief.
+ *
+ * English pages get a caption band drawn here, in our own Latin font —
+ * that path was never broken. Arabic pages do NOT: the caption is
+ * already baked into the illustration itself by Gemini (see
+ * src/lib/providers/image/prompts.ts and docs/DECISIONS.md "Arabic
+ * captions baked into the illustration") — no PDF text-drawing approach
+ * this project tried ever correctly shaped Arabic script from the
+ * embedded font, confirmed repeatedly by rendering to an actual PDF and
+ * comparing pixel-for-pixel against real shaping engines.
  */
 export async function renderStoryPdf(input: RenderStoryPdfInput): Promise<Uint8Array> {
   const pdfDoc = await PDFDocument.create();
@@ -51,7 +53,6 @@ export async function renderStoryPdf(input: RenderStoryPdfInput): Promise<Uint8A
 
   const fonts = await embedFonts(pdfDoc);
   const isRtl = input.locale === 'ar';
-  const arabicUpem = await getFontUpem(fonts.arabicRegularBytes, ARABIC_FONT_CACHE_KEY);
 
   const addPage = () => {
     const page = pdfDoc.addPage([PAGE_WIDTH_PT, PAGE_HEIGHT_PT]);
@@ -59,10 +60,6 @@ export async function renderStoryPdf(input: RenderStoryPdfInput): Promise<Uint8A
     return page;
   };
 
-  // Full-bleed illustration with a scalloped pastel caption band at the
-  // bottom carrying each page's story text — see docs/DECISIONS.md "PDF
-  // banner-style layout".
-  const captionFont = isRtl ? fonts.arabicRegular : fonts.latinRegular;
   const captionSize = 14;
   const captionLineHeight = 20;
   const captionMaxWidth = TRIM_WIDTH_PT - 70;
@@ -85,50 +82,34 @@ export async function renderStoryPdf(input: RenderStoryPdfInput): Promise<Uint8A
       height: drawHeight,
     });
 
-    // Caption band (bottom, flush to the page edge): height grows with
-    // wrapped line count so the text never collides with the page number.
-    const captionIsArabic = containsArabic(storyPage.text);
-    const captionLines = captionIsArabic
-      ? await wrapArabicParagraph(storyPage.text, fonts.arabicRegularBytes, arabicUpem, captionSize, captionMaxWidth)
-      : wrapText(storyPage.text, captionFont, captionSize, captionMaxWidth);
     const pageNumberY = BLEED_PT + 10;
-    const captionFirstLineY = pageNumberY + 24 + (captionLines.length - 1) * captionLineHeight;
-    const captionTopY = captionFirstLineY + captionSize + 22;
-    drawFlatBottomBanner(page, {
-      x: 0,
-      width: PAGE_WIDTH_PT,
-      topY: captionTopY,
-      bumpRadius: captionBumpRadius,
-      color: CAPTION_BANNER_COLOR,
-      opacity: 0.94,
-    });
 
-    for (const [index, line] of captionLines.entries()) {
-      const y = captionFirstLineY - index * captionLineHeight;
-      if (captionIsArabic) {
-        // `line` here is LOGICAL text (not pre-shaped) — drawArabicLine
-        // splits it into same-script runs and shapes each with HarfBuzz,
-        // which applies real Arabic joining/positioning. See
-        // harfbuzz-shape.ts and splitIntoDirectionRuns's comment.
-        await drawArabicLine(page, line, {
-          fontBytes: fonts.arabicRegularBytes,
-          pdfFont: fonts.arabicRegular,
-          upem: arabicUpem,
-          size: captionSize,
-          centerX: PAGE_WIDTH_PT / 2,
-          y,
-          color: INK_COLOR,
-        });
-      } else {
-        const width = captionFont.widthOfTextAtSize(line, captionSize);
+    if (!isRtl) {
+      // Caption band (bottom, flush to the page edge): height grows with
+      // wrapped line count so the text never collides with the page number.
+      const captionLines = wrapText(storyPage.text, fonts.latinRegular, captionSize, captionMaxWidth);
+      const captionFirstLineY = pageNumberY + 24 + (captionLines.length - 1) * captionLineHeight;
+      const captionTopY = captionFirstLineY + captionSize + 22;
+      drawFlatBottomBanner(page, {
+        x: 0,
+        width: PAGE_WIDTH_PT,
+        topY: captionTopY,
+        bumpRadius: captionBumpRadius,
+        color: CAPTION_BANNER_COLOR,
+        opacity: 0.94,
+      });
+
+      captionLines.forEach((line, index) => {
+        const y = captionFirstLineY - index * captionLineHeight;
+        const width = fonts.latinRegular.widthOfTextAtSize(line, captionSize);
         page.drawText(line, {
           x: PAGE_WIDTH_PT / 2 - width / 2,
           y,
           size: captionSize,
-          font: captionFont,
+          font: fonts.latinRegular,
           color: INK_COLOR,
         });
-      }
+      });
     }
 
     const pageNumberText = String(storyPage.pageNumber);
@@ -176,140 +157,6 @@ async function embedFallbackPng(pdfDoc: PDFDocument) {
     fallbackPngCache = Buffer.from(base64, 'base64');
   }
   return pdfDoc.embedPng(fallbackPngCache);
-}
-
-/**
- * Measures a LOGICAL line's real rendered width by splitting it into
- * same-script runs and shaping each with HarfBuzz — the same runs and
- * the same shaping drawArabicLine will use to draw it, so wrap decisions
- * and the actual drawn width never disagree. See harfbuzz-shape.ts.
- */
-async function measureLogicalLineWidth(
-  fontBytes: Uint8Array,
-  upem: number,
-  size: number,
-  text: string,
-): Promise<number> {
-  const runs = splitIntoDirectionRuns(text);
-  let widthInFontUnits = 0;
-  for (const run of runs) {
-    const shaped = await shapeRun(fontBytes, ARABIC_FONT_CACHE_KEY, run.text, run.isArabic ? 'rtl' : 'ltr');
-    widthInFontUnits += shaped.widthInFontUnits;
-  }
-  return widthInFontUnits * (size / upem);
-}
-
-/**
- * Wraps an Arabic paragraph into LOGICAL-order lines (NOT pre-shaped —
- * drawArabicLine shapes each line's runs itself). Wraps on whole words
- * first, falling back to character-by-character splitting only for a
- * single word wider than the whole line.
- */
-async function wrapArabicParagraph(
-  text: string,
-  fontBytes: Uint8Array,
-  upem: number,
-  size: number,
-  maxWidth: number,
-): Promise<string[]> {
-  const width = (candidate: string) => measureLogicalLineWidth(fontBytes, upem, size, candidate);
-  const words = text.split(' ');
-  const lines: string[] = [];
-  let current = '';
-
-  for (const word of words) {
-    if ((await width(word)) > maxWidth) {
-      if (current) {
-        lines.push(current);
-        current = '';
-      }
-      let chunk = '';
-      for (const char of word) {
-        const candidate = chunk + char;
-        if ((await width(candidate)) > maxWidth && chunk) {
-          lines.push(chunk);
-          chunk = char;
-        } else {
-          chunk = candidate;
-        }
-      }
-      current = chunk;
-      continue;
-    }
-
-    const candidate = current ? `${current} ${word}` : word;
-    if ((await width(candidate)) > maxWidth && current) {
-      lines.push(current);
-      current = word;
-    } else {
-      current = candidate;
-    }
-  }
-  if (current) lines.push(current);
-  return lines;
-}
-
-/**
- * Draws one LOGICAL-order Arabic line, centered on centerX. Splits it
- * into same-script runs, reverses their order (the paragraph is RTL, so
- * the first logical run is drawn rightmost and the last drawn leftmost —
- * proper Unicode bidi for the simple, common case here: one Arabic
- * sentence with an occasional embedded Latin/number run, never multiple
- * nested embedding levels), shapes each run with HarfBuzz for its own
- * correct direction, and draws every glyph at its own exact position
- * (including the x/y offsets HarfBuzz computes for combining marks —
- * see harfbuzz-shape.ts's module comment for why this font needs them)
- * using raw PDF content-stream operators, since `page.drawText` routes
- * through pdf-lib/fontkit's own text layout, which does not apply
- * Arabic joining correctly and discards glyph offsets entirely.
- */
-async function drawArabicLine(
-  page: PDFPage,
-  logicalLine: string,
-  options: { fontBytes: Uint8Array; pdfFont: PDFFont; upem: number; size: number; centerX: number; y: number; color: ReturnType<typeof rgb> },
-): Promise<void> {
-  const { fontBytes, pdfFont, upem, size, centerX, y, color } = options;
-  const pointsPerUnit = size / upem;
-  const runs = [...splitIntoDirectionRuns(logicalLine)].reverse();
-
-  const shapedRuns = await Promise.all(
-    runs.map((run) => shapeRun(fontBytes, ARABIC_FONT_CACHE_KEY, run.text, run.isArabic ? 'rtl' : 'ltr')),
-  );
-  const totalWidth = shapedRuns.reduce((sum, run) => sum + run.widthInFontUnits, 0) * pointsPerUnit;
-
-  page.setFont(pdfFont);
-  // PDFPage.getFont() returns this page's current font resource name —
-  // typed as private in pdf-lib's declarations (no other public API
-  // exposes it), even though it's a real, stable method at runtime.
-  const [, fontKey] = (page as unknown as { getFont(): [PDFFont, PDFName] }).getFont();
-
-  const ops: PDFOperator[] = [
-    PDFOperator.of(PDFOperatorNames.PushGraphicsState),
-    PDFOperator.of(PDFOperatorNames.BeginText),
-    PDFOperator.of(PDFOperatorNames.NonStrokingColorRgb, [
-      String(color.red),
-      String(color.green),
-      String(color.blue),
-    ]),
-    PDFOperator.of(PDFOperatorNames.SetFontAndSize, [fontKey, String(size)]),
-  ];
-
-  let x = centerX - totalWidth / 2;
-  for (const shaped of shapedRuns) {
-    for (const glyph of shaped.glyphs) {
-      const glyphX = x + glyph.xOffset * pointsPerUnit;
-      const glyphY = y + glyph.yOffset * pointsPerUnit;
-      const hex = glyph.glyphId.toString(16).padStart(4, '0');
-      ops.push(
-        PDFOperator.of(PDFOperatorNames.SetTextMatrix, ['1', '0', '0', '1', String(glyphX), String(glyphY)]),
-        PDFOperator.of(PDFOperatorNames.ShowText, [PDFHexString.of(hex)]),
-      );
-      x += glyph.xAdvance * pointsPerUnit;
-    }
-  }
-  ops.push(PDFOperator.of(PDFOperatorNames.EndText), PDFOperator.of(PDFOperatorNames.PopGraphicsState));
-
-  page.pushOperators(...ops);
 }
 
 function wrapText(text: string, font: import('pdf-lib').PDFFont, size: number, maxWidth: number): string[] {

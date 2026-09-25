@@ -32,6 +32,8 @@ const baseRequest = {
   pageId: 'page-1',
   prompt: 'a fox in a garden',
   avatarConfig: {},
+  captionText: 'The fox hid behind the garden gate.',
+  locale: 'en' as const,
 };
 
 describe('RealImageProvider', () => {

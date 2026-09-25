@@ -49,7 +49,7 @@ export async function renderStoryPdf(input: RenderStoryPdfInput): Promise<Uint8A
   pdfDoc.registerFontkit(fontkit);
   pdfDoc.setTitle(input.title);
   pdfDoc.setSubject(`A personalised story for ${input.childName}`);
-  pdfDoc.setProducer('Hikayti Story Platform');
+  pdfDoc.setProducer('Khayali Story Platform');
 
   const fonts = await embedFonts(pdfDoc);
   const isRtl = input.locale === 'ar';

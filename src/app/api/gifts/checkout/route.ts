@@ -74,7 +74,7 @@ export async function POST(request: Request) {
           currency: 'usd',
           unit_amount: Math.round(pack.priceUsd * 100),
           product_data: {
-            name: `Hikayti gift — ${pack.label}`,
+            name: `Khayali gift — ${pack.label}`,
             description: 'A redeemable code for personalised storybook credits.',
           },
         },

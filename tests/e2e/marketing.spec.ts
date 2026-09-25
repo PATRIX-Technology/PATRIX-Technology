@@ -6,7 +6,7 @@ test.describe('Marketing home page', () => {
     await expect(page.locator('html')).toHaveAttribute('lang', 'en');
     await expect(page.locator('html')).toHaveAttribute('dir', 'ltr');
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
-    await expect(page.getByText('Hikayti', { exact: true })).toBeVisible();
+    await expect(page.getByText('Khayali', { exact: true })).toBeVisible();
   });
 
   test('renders in Arabic with the correct language/direction', async ({ page }) => {
@@ -14,7 +14,7 @@ test.describe('Marketing home page', () => {
     await expect(page.locator('html')).toHaveAttribute('lang', 'ar');
     await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
-    await expect(page.getByText('حكايتي', { exact: true })).toBeVisible();
+    await expect(page.getByText('خيالي', { exact: true })).toBeVisible();
   });
 
   test('has a working skip-to-content link for keyboard/screen-reader users', async ({ page }) => {

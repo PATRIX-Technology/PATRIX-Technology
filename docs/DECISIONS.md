@@ -9,7 +9,7 @@ professional advisor.
 
 ## Brand
 
-**Decision: working name "Hikayti" (حكايتي — "my story").**
+**Decision: working name "Khayali" (خيالي — "my story").**
 Chosen for: warm, immediately meaningful in both English and Arabic,
 short, easy to say, no obvious negative connotation in Gulf Arabic. This
 is a **working name only**. No trademark search, domain availability

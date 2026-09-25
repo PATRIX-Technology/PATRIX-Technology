@@ -30,9 +30,9 @@ export function generateStaticParams() {
 }
 
 export const metadata: Metadata = {
-  title: 'Hikayti — Personalised storybooks for nurseries & schools',
+  title: 'Khayali — Personalised storybooks for nurseries & schools',
   description:
-    'Hikayti creates personalised, illustrated storybooks that teach children values and habits — built for nurseries, schools, clinics and children\'s brands.',
+    'Khayali creates personalised, illustrated storybooks that teach children values and habits — built for nurseries, schools, clinics and children\'s brands.',
   manifest: '/manifest.webmanifest',
 };
 

@@ -2,7 +2,7 @@
 
 ## Name
 
-**Hikayti** (حكايتي) — Arabic for "my story." Working name only; not yet
+**Khayali** (خيالي) — Arabic for "my story." Working name only; not yet
 trademark-screened or domain-confirmed. See `docs/NEEDS_FROM_ME.md`.
 Never state or imply trademark uniqueness.
 

@@ -2,7 +2,7 @@
 
 ## One-line pitch
 
-Hikayti turns every child into the hero of a personalised, illustrated
+Khayali turns every child into the hero of a personalised, illustrated
 story that teaches them something real — built for nurseries, schools,
 clinics, banks, and brands who want a gift that actually gets read.
 

@@ -22,7 +22,7 @@ if (!supabaseUrl || !serviceRoleKey) {
 const supabase = createClient(supabaseUrl, serviceRoleKey, { auth: { persistSession: false } });
 
 const DEMO_SLUG = 'demo-nursery';
-const DEMO_PASSWORD = 'HikaytiDemo!2024';
+const DEMO_PASSWORD = 'KhayaliDemo!2024';
 const sha256 = (value) => createHash('sha256').update(value).digest('hex');
 
 async function getOrCreateUser(email, fullName) {
@@ -53,8 +53,8 @@ async function main() {
   }
 
   console.log('Creating demo staff accounts...');
-  const ownerId = await getOrCreateUser('owner@demo.hikayti.com', 'Amina Al Farsi (Demo Owner)');
-  const staffId = await getOrCreateUser('staff@demo.hikayti.com', 'Yusuf Rahman (Demo Staff)');
+  const ownerId = await getOrCreateUser('owner@demo.khayali.com', 'Amina Al Farsi (Demo Owner)');
+  const staffId = await getOrCreateUser('staff@demo.khayali.com', 'Yusuf Rahman (Demo Staff)');
 
   console.log('Creating demo tenant...');
   const { data: tenant, error: tenantError } = await supabase
@@ -202,8 +202,8 @@ async function main() {
 
   console.log('\nDemo data ready.');
   console.log('  Tenant:', tenant.name);
-  console.log('  Owner login: owner@demo.hikayti.com /', DEMO_PASSWORD);
-  console.log('  Staff login: staff@demo.hikayti.com /', DEMO_PASSWORD);
+  console.log('  Owner login: owner@demo.khayali.com /', DEMO_PASSWORD);
+  console.log('  Staff login: staff@demo.khayali.com /', DEMO_PASSWORD);
 }
 
 main().catch((error) => {

@@ -16,10 +16,10 @@ else has already been built and is documented in `docs/HANDOFF.md`.
    - Once created, tell me and I will run the migrations in
      `supabase/migrations/` against it and seed the story templates.
 
-2. **Choose and confirm the brand name.** "Hikayti" is a working name only
+2. **Choose and confirm the brand name.** "Khayali" is a working name only
    (see `docs/DECISIONS.md`). Before it appears on anything public, it
    needs: a basic UAE/GCC trademark screening, and confirmation the
-   matching domain (e.g. `hikayti.com` / `.ae`) is available. I cannot
+   matching domain (e.g. `khayali.com` / `.ae`) is available. I cannot
    register a domain or file a trademark — that needs your payment method
    and identity.
 

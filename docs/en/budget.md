@@ -7,19 +7,50 @@ it for a real decision, prices change. AED conversions use the pegged
 rate of 3.6725/USD. Bookkeeping and legal-review figures are working
 estimates, not quotes.
 
-## Recurring — every year
+## Recurring — fixed, every year
 
 | Item | Annual (AED) | Note |
 |---|---|---|
 | Business licence renewal | 7,000 | As specified by the founder |
-| Gemini AI generation budget | 20,000 | A ceiling, not committed spend — see "Sizing the Gemini spend cap" in `docs/en/pricing.md` |
 | Vercel Pro (1 seat) | 881 | $20/mo confirmed current rate; usage beyond the included credit bills separately |
 | Supabase Pro (1 project) | 1,102 | $25/mo confirmed current rate; usage beyond the included quota bills separately |
 | Domain renewal (.ae) | 150 | AED 120-180/yr across registrars; a generic `.com` runs closer to AED 55/yr |
 | Business email (Google Workspace, 1 user) | 264 | Not yet set up — every proposal/contact document in this repo assumes a real @khayali address |
 | Apple Developer Program | 364 | Only if the iOS app is actually submitted; renews yearly |
 | Bookkeeping, VAT & corporate tax filing | 9,000 | Estimate, not a quote — UAE Corporate Tax (9% above AED 375k) and quarterly VAT filing need an accountant regardless of revenue |
-| **Subtotal, recurring** | **38,761** | |
+| **Subtotal, fixed recurring** | **18,761** | |
+
+## AI generation — variable, scales with usage
+
+Unlike the line items above, this isn't a subscription with a fixed
+price — it's metered per story at the real **$1.00/story** cost
+validated in `docs/en/pricing.md`. An earlier version of this budget
+used a flat AED 20,000/year placeholder here; that was an
+unvalidated round number, not a calculation, and overstated realistic
+Year 1 usage by roughly 4-5x. Built bottoms-up instead:
+
+| Phase | Stories | AI cost |
+|---|---|---|
+| Free pilots (≈5 pilots, ~20-25 children each) | ≈100-150 | ≈$100-150 |
+| Ramp to 3-5 paying nurseries by year end (Starter/Growth mix) | ≈900-1,000 | ≈$900-1,000 |
+| **Realistic Year 1 total** | **≈1,000-1,100** | **≈$1,000-1,100 (AED 3,700-4,000)** |
+
+**Budgeted line: AED 5,000** — the bottoms-up estimate plus headroom
+for pilots that run longer or regenerate more pages than expected.
+This is a *planning* number, separate from the *safety cap* you set in
+Google AI Studio (`aistudio.google.com/spend`), which should stay
+higher — around **$150-200/month** — to avoid hard-blocking real usage;
+see "Sizing the Gemini spend cap" in `docs/en/pricing.md`. Re-run this
+calculation every time a new nursery signs — once you're past a
+handful of paying Growth/Network customers, this line will be
+materially higher than AED 5,000 and needs recomputing, not reused as
+a constant.
+
+| | Annual (AED) |
+|---|---|
+| Fixed recurring (above) | 18,761 |
+| AI generation (Year 1 estimate) | 5,000 |
+| **Subtotal, recurring** | **23,761** |
 
 ## One-time — year 1 only
 
@@ -43,14 +74,20 @@ Growth-tier AED 1,299/mo subscription nets about AED 38 in Stripe fees.
 
 | | AED |
 |---|---|
-| Recurring (every year) | 38,761 |
+| Recurring (every year) | 23,761 |
 | One-time (year 1 only) | 20,092 |
-| 15% contingency buffer | 8,828 |
-| **Year 1 total** | **67,681** |
+| 15% contingency buffer | 6,578 |
+| **Year 1 total** | **50,431** |
 | | |
-| Recurring (every year) | 38,761 |
-| 15% contingency buffer | 5,814 |
-| **Year 2+ ongoing total** | **44,575** |
+| Recurring (every year) | 23,761 |
+| 15% contingency buffer | 3,564 |
+| **Year 2+ ongoing total** | **27,325** |
+
+Year 2+'s recurring line still includes the AED 5,000 AI-generation
+estimate — realistic only if growth stays roughly where Year 1 left
+it. If the nursery base has grown by then (which is the goal), rerun
+the AI generation calculation above against actual signed nurseries
+before trusting this total.
 
 The 15% buffer is standard practice for a first operating year, since
 at least one line here (bookkeeping, the trademark agent fee) will come
@@ -62,18 +99,17 @@ How many of a single tier, subscribed for a full year, would cover the
 entire Year 1 budget on its own (net of that tier's own AI cost, before
 Stripe fees):
 
-- **Starter**: ~14 nurseries × 12 months
-- **Growth**: ~6 nurseries × 12 months
-- **Network**: ~4 nurseries × 12 months
+- **Starter**: ~10 nurseries × 12 months
+- **Growth**: ~5 nurseries × 12 months
+- **Network**: ~3 nurseries × 12 months
 
-(Recalculated at the $1.00/story real-world AI cost from
-`docs/en/pricing.md` rather than the $0.404 theoretical minimum — the
-Network figure moves the most since its cost scales with volume.)
+(Recalculated against the corrected AED 50,431 Year 1 total above,
+using the $1.00/story real-world AI cost from `docs/en/pricing.md`.)
 
 In practice the mix will vary, and pilot/founding-partner discounts
 (see `docs/en/pricing.md`) mean early months contribute less than full
 price. Track the real number as soon as nurseries are signed: cumulative
-net contribution ÷ 67,681 gives exact progress through Year 1's budget.
+net contribution ÷ 50,431 gives exact progress through Year 1's budget.
 
 See also `docs/en/pricing.md` for what's charged and the nursery
 referral program these numbers assume.

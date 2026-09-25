@@ -99,25 +99,32 @@ just once at launch. Reference points: 1 Growth nursery (100
 stories/mo) needs ≈$130; 3 Growth nurseries need ≈$390; 1 Network
 customer (500 stories/mo) needs ≈$650.
 
-Two separate ceilings apply, and the lower one binds first:
+Two different numbers matter here, and they're not the same thing —
+don't confuse a spending *plan* with a safety *ceiling*:
 
 - **Google's own mandatory Tier 1 cap is ~$250/month**, hard, not
   adjustable without applying for a Tier 2 upgrade (needs a payment
   history with Google first). At $1/story that's ≈250 stories/month,
-  platform-wide — down from the ≈618 the $0.404 theoretical minimum
-  implied, and now the binding constraint for even a single Network
-  customer plus a couple of Growth accounts.
-- **The founder's stated yearly AI budget is AED 20,000** (≈$454/month,
-  ≈454 stories/month at $1/story) — still higher than the Tier 1
-  ceiling, so Google's cap is what actually limits volume today, not
-  the yearly budget.
+  platform-wide — the binding external constraint once you have even a
+  single Network customer plus a couple of Growth accounts.
+- **Realistic Year 1 expected spend is far lower than that** — see
+  `docs/en/budget.md`'s bottoms-up calculation (free pilots plus a
+  realistic ramp to 3-5 paying nurseries): roughly $1,000-1,100 for the
+  whole year, averaging under $100/month. An earlier version of this
+  doc used a flat AED 20,000/year (~$454/month) placeholder here; that
+  was an unvalidated guess, not a calculation, and overstated real
+  Year 1 usage by 4-5x.
 
-Practically: start the AI Studio cap around **$150-200/month** (covers
-several pilot nurseries, safely under the $250 Tier 1 ceiling), and
-apply for Tier 2 once committed volume approaches it rather than after
-exceeding it. Switch from AI Studio's experimental per-project cap to
-Gemini's Prepay billing with auto-reload once revenue is real, so a cap
-breach pauses new spend gracefully instead of as a mid-month surprise.
+Practically: don't set the AI Studio spend **cap** to match your
+budgeted **spend** — the cap needs headroom above expected usage so it
+doesn't hard-block a good month, while the budget line is what you
+actually plan to spend. Start the cap around **$150-200/month** (safely
+under the $250 Tier 1 ceiling, comfortably above the ~$85-100/month
+realistic Year 1 average), and apply for Tier 2 once committed volume
+approaches the ceiling rather than after exceeding it. Switch from AI
+Studio's experimental per-project cap to Gemini's Prepay billing with
+auto-reload once revenue is real, so a cap breach pauses new spend
+gracefully instead of as a mid-month surprise.
 
 ## Nursery Partner Program (referral commission)
 

@@ -21,7 +21,11 @@ export function AvatarPicker({
 
   return (
     <div className="flex flex-col gap-4 sm:flex-row sm:gap-6">
-      <AvatarPreview config={value} className="h-32 w-32 shrink-0 self-center sm:self-start" />
+      <AvatarPreview
+        config={value}
+        animated
+        className="h-32 w-32 shrink-0 self-center sm:self-start"
+      />
       <div className="flex-1 space-y-3">
         <PickerRow label={t('hair')}>
           {HAIR_OPTIONS.map((option) => (

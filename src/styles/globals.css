@@ -26,6 +26,52 @@
   --color-focus-ring: 79 201 138;
 }
 
+@keyframes avatar-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-3px);
+  }
+}
+
+@keyframes avatar-blink {
+  0%,
+  90%,
+  100% {
+    opacity: 1;
+  }
+  93%,
+  96% {
+    opacity: 0;
+  }
+}
+
+@keyframes avatar-blink-lids {
+  0%,
+  90%,
+  100% {
+    opacity: 0;
+  }
+  93%,
+  96% {
+    opacity: 1;
+  }
+}
+
+@keyframes sparkle-twinkle {
+  0%,
+  100% {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

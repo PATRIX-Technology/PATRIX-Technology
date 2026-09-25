@@ -4,8 +4,8 @@
   "description": "Personalised illustrated storybooks for nurseries, schools and children's brands.",
   "start_url": "/en",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#0e7a52",
+  "background_color": "#14152B",
+  "theme_color": "#2FBFA6",
   "orientation": "portrait-primary",
   "icons": [
     {

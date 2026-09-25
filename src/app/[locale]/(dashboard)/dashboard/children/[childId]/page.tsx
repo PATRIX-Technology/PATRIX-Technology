@@ -84,7 +84,7 @@ export default async function ChildDetailPage({
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
-        <AvatarPreview config={parseAvatarConfig(child.avatar_config)} className="h-16 w-16" />
+        <AvatarPreview config={parseAvatarConfig(child.avatar_config)} animated className="h-16 w-16" />
         <div className="flex-1">
           <h1 className="font-display text-2xl text-ink-900">
             {[child.first_name, child.last_name].filter(Boolean).join(' ')}

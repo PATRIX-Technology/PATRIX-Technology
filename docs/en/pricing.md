@@ -16,21 +16,37 @@ VAT is 5%.
 Every story renders exactly 4 illustrated pages
 (`supabase/seed/templates.json`) through Gemini at 2K resolution, at
 **$0.101/image** — the constant the app's own spend tracking already
-uses (`GEMINI_COST_PER_IMAGE_USD` in `.env.local`). That's **$0.404
-(≈ AED 1.48) raw AI cost per story**; call it AED 2.00 all-in once
-storage/hosting is included. This was previously unpriced ("real image
-generation... priced per-story once a vendor and their per-image cost
-are confirmed") — it now is, and all three B2B tiers below clear 70%+
-gross margin at their original prices, so there's no cost-driven reason
-to raise them for launch.
+uses (`GEMINI_COST_PER_IMAGE_USD` in `.env.local`). A clean 4-image
+story prices at $0.404 (≈ AED 1.48) in raw AI cost. Real observed
+spend runs closer to **$1.00/story (≈ AED 3.67)** once retries,
+regenerations, and testing overhead are counted in — that's the
+founder's own reported number from actual AI Studio billing, and it's
+the conservative figure all planning below uses. For an exact number
+from real data, run this against Supabase:
+
+```sql
+select avg(story_total) as avg_cost_per_story, count(*)
+from (
+  select story_id, sum(cost_usd) as story_total
+  from story_pages
+  where image_status = 'GENERATED'
+  group by story_id
+) t;
+```
+
+Starter and Growth still clear 70%+ gross margin at their original
+prices. Network compresses to ~48% because AI cost scales with volume
+while the platform fee doesn't — still healthy, but the tier to watch
+if real usage keeps tracking the $1/story rate rather than the
+theoretical $0.404 minimum.
 
 ## B2B — nurseries & schools
 
 | Plan | Monthly | Annual (≈2 months free) | Stories / month | Seats included | COGS/mo | Gross margin | Best for |
 |---|---|---|---|---|---|---|---|
-| **Starter** | AED 499 | AED 4,790 | 25 | 3 | AED 50 | ~90% | A single nursery branch piloting the product |
-| **Growth** | AED 1,299 | AED 12,490 | 100 | 10 | AED 200 | ~85% | A multi-branch nursery or a school |
-| **Network** | AED 3,499 | AED 33,490 | 500 | 50 | AED 1,000 | ~71% | A nursery group, hospital, or bank running a campaign across many locations |
+| **Starter** | AED 499 | AED 4,790 | 25 | 3 | AED 92 | ~82% | A single nursery branch piloting the product |
+| **Growth** | AED 1,299 | AED 12,490 | 100 | 10 | AED 367 | ~72% | A multi-branch nursery or a school |
+| **Network** | AED 3,499 | AED 33,490 | 500 | 50 | AED 1,836 | ~48% | A nursery group, hospital, or bank running a campaign across many locations |
 
 ### Self-serve vs. managed
 
@@ -76,21 +92,25 @@ customer still has quota left. That's a real outage, not graceful
 degradation.
 
 **Rule of thumb: required cap ≈ (sum of every active tenant's monthly
-story quota) × $0.404 × 1.3**, capped at whichever is lower of that
+story quota) × $1.00 × 1.3**, capped at whichever is lower of that
 number and Google's current tier ceiling. Re-check this every time a
 new nursery contract closes — it changes with every signed deal, not
 just once at launch. Reference points: 1 Growth nursery (100
-stories/mo) needs ≈$53; 3 Growth nurseries need ≈$158; 1 Network
-customer (500 stories/mo) needs ≈$263.
+stories/mo) needs ≈$130; 3 Growth nurseries need ≈$390; 1 Network
+customer (500 stories/mo) needs ≈$650.
 
 Two separate ceilings apply, and the lower one binds first:
 
 - **Google's own mandatory Tier 1 cap is ~$250/month**, hard, not
   adjustable without applying for a Tier 2 upgrade (needs a payment
-  history with Google first). That's ≈618 stories/month, platform-wide.
+  history with Google first). At $1/story that's ≈250 stories/month,
+  platform-wide — down from the ≈618 the $0.404 theoretical minimum
+  implied, and now the binding constraint for even a single Network
+  customer plus a couple of Growth accounts.
 - **The founder's stated yearly AI budget is AED 20,000** (≈$454/month,
-  ≈1,120 stories/month) — higher than the Tier 1 ceiling, so it isn't
-  the actual constraint yet.
+  ≈454 stories/month at $1/story) — still higher than the Tier 1
+  ceiling, so Google's cap is what actually limits volume today, not
+  the yearly budget.
 
 Practically: start the AI Studio cap around **$150-200/month** (covers
 several pilot nurseries, safely under the $250 Tier 1 ceiling), and
@@ -106,10 +126,11 @@ parent who buys a family story pack or subscription through it earns
 the nursery a commission, paid monthly, on top of — not instead of —
 their own subscription. This turns every nursery customer into a sales
 channel for the family product. At a 20% commission rate: 1 story pack
-($15) → nursery earns AED 11, your margin stays ~77%; 6 story pack
-($69) → nursery earns AED 51, margin ~76%; Family monthly ($9/mo) →
-nursery earns AED 7/mo recurring, margin ~76%. All figures assume the
-same $0.404/story COGS as above.
+($15) → nursery earns AED 11, your margin stays ~73%; 6 story pack
+($69) → nursery earns AED 51, margin ~71%; Family monthly ($9/mo) →
+nursery earns AED 7/mo recurring, margin ~69%. All figures use the
+$1.00/story COGS from the cost basis above, not the $0.404 theoretical
+minimum.
 
 **Framing note**: describe this to nurseries as "your share" or
 "partner commission" — never as a percentage of "our costs after AI

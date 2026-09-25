@@ -62,9 +62,13 @@ How many of a single tier, subscribed for a full year, would cover the
 entire Year 1 budget on its own (net of that tier's own AI cost, before
 Stripe fees):
 
-- **Starter**: ~13 nurseries × 12 months
-- **Growth**: ~5 nurseries × 12 months
-- **Network**: ~2 nurseries × 12 months
+- **Starter**: ~14 nurseries × 12 months
+- **Growth**: ~6 nurseries × 12 months
+- **Network**: ~4 nurseries × 12 months
+
+(Recalculated at the $1.00/story real-world AI cost from
+`docs/en/pricing.md` rather than the $0.404 theoretical minimum — the
+Network figure moves the most since its cost scales with volume.)
 
 In practice the mix will vary, and pilot/founding-partner discounts
 (see `docs/en/pricing.md`) mean early months contribute less than full

@@ -52,6 +52,26 @@ Phase 2B free of a new infra dependency; if generation volume grows
 enough that polling latency matters, swap in Supabase's `pgmq` extension
 or an external queue without changing the `ImageProvider` contract.
 
+**Two-wave job execution in `runWorkerOnce`.** A batch of claimed jobs
+used to run through one flat `Promise.all` - fast (bounded to roughly
+the slowest single Gemini call instead of the sum of all of them), but
+this raced against "Character consistency across a story's pages"
+(above): `generatePageImage()` looks up the *earliest already-generated*
+page of the same story to send Gemini as a reference, and under full
+parallelism every page of a freshly-created story starts generating
+before any of them finishes, so that lookup reliably found nothing for
+every page - silently defeating the one consistency mechanism a story
+has when no reference photo exists (the common case). Found via manual
+trace-through while investigating generation speed, not via a test or
+bug report - no test previously exercised more than one page job in a
+single `runWorkerOnce` call. `splitIntoWaves()` now runs each story's
+lowest-page-number job alone in a first wave, then every other claimed
+job (later pages of that story, any other story's jobs, `RENDER_PDF`
+jobs) in a second wave - full parallelism is preserved *across* stories
+and job types, so this adds only one extra Gemini call's worth of
+latency to multi-page story creation, not a return to the fully
+sequential original this was built to replace.
+
 **Arabic content gating.** Every Arabic `story_theme_templates` row is
 seeded with `native_review_status = 'draft'`. `assertTemplateUsable()`
 (`src/lib/domain/templates.ts`) throws `TemplateNotReviewedError` for any

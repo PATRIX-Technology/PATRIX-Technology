@@ -42,15 +42,72 @@ export async function runWorkerOnce(supabase: SupabaseClient, maxJobs = 25): Pro
     jobs.push(job as StoryJob);
   }
 
-  const outcomes = await Promise.all(jobs.map((job) => processJob(supabase, job)));
-  for (const outcome of outcomes) {
+  const { firstWave, secondWave } = await splitIntoWaves(supabase, jobs);
+
+  // Two waves, not one flat Promise.all: a story's page 1 has to finish
+  // and be marked GENERATED before pages 2+ start, or
+  // fetchEarliestGeneratedPageImage() below finds nothing and every page
+  // generates its illustration with no reference to keep the character
+  // consistent — see docs/DECISIONS.md "Character consistency across a
+  // story's pages" and "Two-wave job execution". Everything in a wave
+  // still runs fully in parallel (across different stories, and
+  // alongside RENDER_PDF jobs), so this only adds one extra Gemini
+  // call's worth of latency to multi-page story creation, not a return
+  // to the fully-sequential original.
+  const record = (outcome: 'succeeded' | 'failed' | 'retried') => {
     result.processed++;
     if (outcome === 'succeeded') result.succeeded++;
     else if (outcome === 'failed') result.failed++;
     else result.retried++;
-  }
+  };
+
+  (await Promise.all(firstWave.map((job) => processJob(supabase, job)))).forEach(record);
+  (await Promise.all(secondWave.map((job) => processJob(supabase, job)))).forEach(record);
 
   return result;
+}
+
+/**
+ * Splits claimed jobs into two execution waves: for each story, its
+ * lowest-page-number GENERATE_PAGE_IMAGE job goes in the first wave and
+ * every other page job for that story goes in the second; RENDER_PDF
+ * jobs and any story with only one claimed page job are unaffected and
+ * run in the first wave.
+ */
+async function splitIntoWaves(
+  supabase: SupabaseClient,
+  jobs: StoryJob[],
+): Promise<{ firstWave: StoryJob[]; secondWave: StoryJob[] }> {
+  const pageJobs = jobs.filter((job) => job.job_type === 'GENERATE_PAGE_IMAGE' && job.page_id);
+  const otherJobs = jobs.filter((job) => !(job.job_type === 'GENERATE_PAGE_IMAGE' && job.page_id));
+
+  if (pageJobs.length === 0) {
+    return { firstWave: otherJobs, secondWave: [] };
+  }
+
+  const pageIds = pageJobs.map((job) => job.page_id as string);
+  const { data: pages, error } = await supabase.from('story_pages').select('id, page_number').in('id', pageIds);
+  if (error) throw error;
+  const pageNumberById = new Map((pages ?? []).map((p) => [p.id as string, p.page_number as number]));
+
+  const byStory = new Map<string, StoryJob[]>();
+  for (const job of pageJobs) {
+    const list = byStory.get(job.story_id) ?? [];
+    list.push(job);
+    byStory.set(job.story_id, list);
+  }
+
+  const firstWave: StoryJob[] = [...otherJobs];
+  const secondWave: StoryJob[] = [];
+  for (const storyJobs of byStory.values()) {
+    const sorted = [...storyJobs].sort(
+      (a, b) => (pageNumberById.get(a.page_id as string) ?? 0) - (pageNumberById.get(b.page_id as string) ?? 0),
+    );
+    firstWave.push(sorted[0]!);
+    secondWave.push(...sorted.slice(1));
+  }
+
+  return { firstWave, secondWave };
 }
 
 async function processJob(

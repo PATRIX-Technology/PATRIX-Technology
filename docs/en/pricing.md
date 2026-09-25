@@ -143,3 +143,7 @@ as payees). This is the plan, not yet the implementation.
   September (First Day of School), December 2 (National Day
   Gratitude), Ramadan, June (graduation) — these map directly onto
   themes already in the catalog.
+
+See `docs/en/budget.md` for the full annual operating budget (licence
+renewal, hosting, legal, trademark, accounting) these prices need to
+cover.

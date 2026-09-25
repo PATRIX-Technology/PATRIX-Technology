@@ -1,23 +1,23 @@
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { SignInForm } from '@/components/auth/SignInForm';
-import { Card } from '@/components/ui/Card';
+import { AuthShell } from '@/components/auth/AuthShell';
 
 export default function SignInPage({ params }: { params: { locale: string } }) {
   const t = useTranslations('auth.signIn');
+  const marketing = useTranslations('marketing');
+  const brand = useTranslations('brand');
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-[rgb(var(--color-surface))] px-4 py-12">
-      <Card className="w-full max-w-md">
-        <h1 className="mb-6 font-display text-2xl text-ink-900">{t('title')}</h1>
-        <SignInForm locale={params.locale} />
-        <p className="mt-6 text-center text-sm text-ink-500">
-          {t('noAccount')}{' '}
-          <Link href={`/${params.locale}/sign-up`} className="font-medium text-lagoon-600">
-            {t('createOne')}
-          </Link>
-        </p>
-      </Card>
-    </main>
+    <AuthShell locale={params.locale} eyebrow={marketing('hero.eyebrow')} tagline={brand('tagline')}>
+      <h1 className="mb-6 font-display text-2xl text-ink-900">{t('title')}</h1>
+      <SignInForm locale={params.locale} />
+      <p className="mt-6 text-center text-sm text-ink-500">
+        {t('noAccount')}{' '}
+        <Link href={`/${params.locale}/sign-up`} className="font-medium text-lagoon-600">
+          {t('createOne')}
+        </Link>
+      </p>
+    </AuthShell>
   );
 }

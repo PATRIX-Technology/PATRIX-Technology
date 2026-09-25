@@ -8,6 +8,7 @@
     "forNurseries": "For Nurseries & Schools",
     "forFamilies": "For Families",
     "pricing": "Pricing",
+    "contact": "Contact",
     "signIn": "Sign in",
     "getStarted": "Book a demo"
   },
@@ -63,7 +64,8 @@
       "consent": "Consent",
       "staff": "Staff",
       "settings": "Settings",
-      "usage": "Usage & plan"
+      "usage": "Usage & plan",
+      "support": "Support"
     },
     "overview": {
       "welcome": "Welcome back",
@@ -112,6 +114,13 @@
       "granted": "Granted",
       "withdrawn": "Withdrawn"
     }
+  },
+  "contactPage": {
+    "title": "Contact us",
+    "body": "Have a question, an issue with a story, or need help with your nursery's account? Message us on WhatsApp and we'll get back to you.",
+    "whatsappCta": "Chat on WhatsApp",
+    "unavailable": "WhatsApp contact isn't set up yet - check back soon.",
+    "responseTime": "We usually reply within a few hours during UAE business hours."
   },
   "avatar": {
     "title": "Avatar",

@@ -15,6 +15,7 @@ interface Labels {
   staff: string;
   settings: string;
   usage: string;
+  support: string;
 }
 
 export function DashboardNav({
@@ -44,6 +45,7 @@ export function DashboardNav({
     // "Phase 4: families are tenants".
     { href: `${base}/staff`, label: labels.staff, ownerOnly: true, nurseryOnly: true },
     { href: `${base}/settings`, label: labels.settings },
+    { href: `/${locale}/contact`, label: labels.support },
   ].filter(
     (link) =>
       (!link.ownerOnly || role === 'nursery_owner') && (!link.nurseryOnly || tenantType === 'nursery'),
@@ -65,7 +67,9 @@ export function DashboardNav({
               <Link
                 href={link.href}
                 className={`focus-ring block rounded-lg px-3 py-2 text-sm font-medium ${
-                  pathname === link.href ? 'bg-lagoon-100 text-lagoon-800' : 'text-ink-600 hover:bg-ink-100'
+                  pathname === link.href
+                    ? 'bg-lagoon-900/50 text-lagoon-300'
+                    : 'text-ink-600 hover:bg-ink-100'
                 }`}
               >
                 {link.label}

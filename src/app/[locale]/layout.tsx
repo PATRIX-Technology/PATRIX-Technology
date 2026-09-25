@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next';
-import { Fraunces, Inter, Noto_Kufi_Arabic } from 'next/font/google';
+import { Fraunces, Manrope, Noto_Kufi_Arabic } from 'next/font/google';
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from 'next-intl/server';
 import type { ReactNode } from 'react';
@@ -13,7 +13,7 @@ const display = Fraunces({
   display: 'swap',
 });
 
-const body = Inter({
+const body = Manrope({
   subsets: ['latin'],
   variable: '--font-body',
   display: 'swap',

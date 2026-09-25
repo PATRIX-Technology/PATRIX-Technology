@@ -112,12 +112,18 @@ else has already been built and is documented in `docs/HANDOFF.md`.
    (`plans.vat_inclusive`) — this depends on your business registration
    and is a decision for your accountant, not me.
 9. **A native Arabic speaker to review every Arabic template and UI
-   string.** I wrote reasonable Modern Standard Arabic, but every string
-   is marked `[NEEDS NATIVE REVIEW]` on purpose — see
-   `docs/DECISIONS.md` "Arabic content gating". The system will not let
-   a real family receive a story generated from an unreviewed Arabic
-   template; the owner dashboard (`/owner`) shows exactly which templates
-   are still pending.
+   string.** I wrote reasonable Modern Standard Arabic, but none of it
+   has had native review yet. Story templates are properly access-
+   controlled while unreviewed — see `docs/DECISIONS.md` "Arabic content
+   gating" — the system will not let a real family receive a story
+   generated from an unreviewed Arabic template, and the owner dashboard
+   (`/owner`) shows exactly which templates are still pending. UI chrome
+   strings (`src/messages/ar.json`) have no such gate - they already
+   ship - so the pending ones are tracked in
+   `docs/ar/NATIVE_REVIEW_CHECKLIST.md` instead (28 strings as of this
+   writing). That list used to be a `[NEEDS NATIVE REVIEW]` suffix
+   rendered right on the live page; see `docs/DECISIONS.md` "Dark-first
+   design system" for why that changed.
 
 ## Not a decision I need from you, but you should know about it
 

@@ -2,11 +2,31 @@
 @tailwind components;
 @tailwind utilities;
 
+/*
+ * Khayali is dark-first by product decision (see docs/DECISIONS.md
+ * "Dark-first design system") — there is no light/dark toggle, so the
+ * bare :root carries the dark palette directly rather than the usual
+ * light-default-plus-dark-override pattern. `[data-theme='light']` is
+ * kept as an escape hatch (e.g. a future print/export view) but nothing
+ * sets it today.
+ */
 :root {
+  color-scheme: dark;
   --font-display: 'Fraunces', serif;
-  --font-body: 'Inter', sans-serif;
+  --font-body: 'Manrope', sans-serif;
   --font-arabic: 'Noto Kufi Arabic', sans-serif;
 
+  --color-bg: 20 21 43;
+  --color-surface: 30 32 64;
+  --color-surface-raised: 38 42 77;
+  --color-text: 244 241 232;
+  --color-text-muted: 169 166 201;
+  --color-border: 51 54 95;
+  --color-focus-ring: 227 172 61;
+}
+
+:root[data-theme='light'] {
+  color-scheme: light;
   --color-bg: 255 255 255;
   --color-surface: 247 245 242;
   --color-surface-raised: 255 255 255;
@@ -14,16 +34,6 @@
   --color-text-muted: 111 91 66;
   --color-border: 220 210 195;
   --color-focus-ring: 14 122 82;
-}
-
-:root[data-theme='dark'] {
-  --color-bg: 24 20 17;
-  --color-surface: 36 30 26;
-  --color-surface-raised: 46 39 34;
-  --color-text: 245 240 235;
-  --color-text-muted: 190 175 160;
-  --color-border: 70 60 52;
-  --color-focus-ring: 79 201 138;
 }
 
 @keyframes avatar-bob {
@@ -102,11 +112,23 @@ body {
   outline-offset: 2px;
 }
 
+/*
+ * A `left: -9999px` off-screen offset (the classic way to hide this)
+ * blows out the document's scrollable width under dir="rtl" - RTL
+ * scroll containers extend leftward from 0, so a physical `left`
+ * that far out becomes ~9999px of real, scrollable overflow instead of
+ * safely off-canvas. Clipping to a 1px box instead hides it with zero
+ * layout footprint in either direction.
+ */
 .skip-link {
   position: absolute;
-  left: -9999px;
+  inset-inline-start: 0;
   top: 0;
   z-index: 50;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
   background: rgb(var(--color-surface-raised));
   color: rgb(var(--color-text));
   padding: 0.75rem 1rem;
@@ -114,6 +136,10 @@ body {
 }
 
 .skip-link:focus {
-  left: 1rem;
+  width: auto;
+  height: auto;
+  overflow: visible;
+  clip-path: none;
+  inset-inline-start: 1rem;
   top: 1rem;
 }

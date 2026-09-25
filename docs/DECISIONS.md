@@ -62,8 +62,11 @@ Gemini with an explicit instruction to preserve every `{token}` verbatim
 on that basis — this is a real quality improvement over raw machine
 translation but is **not** a substitute for native review, and a native
 speaker should still read them before wider rollout. `src/messages/ar.json`
-UI strings are untouched by that pass and remain marked
-`[NEEDS NATIVE REVIEW]` inline.
+UI strings are untouched by that pass; they used to carry a visible
+`[NEEDS NATIVE REVIEW]` suffix inline, until the dark-first redesign
+(below) turned up that this was rendering on the live Arabic page for
+real users. That suffix has been stripped from every string value; the
+same list now lives, unrendered, in `docs/ar/NATIVE_REVIEW_CHECKLIST.md`.
 
 **Arabic pronoun/gender handling.** Rather than a single pronoun token,
 Arabic templates use a small fixed vocabulary of narrative verb-phrase

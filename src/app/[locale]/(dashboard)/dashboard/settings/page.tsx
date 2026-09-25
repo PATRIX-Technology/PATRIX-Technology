@@ -22,9 +22,9 @@ export default async function SettingsPage({ params }: { params: { locale: strin
     <div className="space-y-6">
       <h1 className="font-display text-2xl text-ink-900">Settings</h1>
       <Card>
-        <CardTitle>Organisation &amp; branding</CardTitle>
+        <CardTitle>{context.tenantType === 'nursery' ? 'Organisation & branding' : 'Family settings'}</CardTitle>
         <div className="mt-4">
-          <SettingsForm locale={params.locale} tenant={tenant} />
+          <SettingsForm locale={params.locale} tenant={tenant} tenantType={context.tenantType} />
         </div>
       </Card>
       {context.role === 'nursery_owner' && (

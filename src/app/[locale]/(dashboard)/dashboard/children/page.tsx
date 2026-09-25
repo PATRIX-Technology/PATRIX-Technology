@@ -37,7 +37,10 @@ export default async function ChildrenPage({ params }: { params: { locale: strin
       <div className="mb-6 flex items-center justify-between">
         <h1 className="font-display text-2xl text-ink-900">{t('title')}</h1>
         <div className="flex gap-2">
-          <CsvImportDialog locale={params.locale} />
+          {/* Bulk CSV import is a nursery/school workflow (a class
+              roster) - a family account has one or two children and
+              never needs it. */}
+          {context.tenantType === 'nursery' && <CsvImportDialog locale={params.locale} />}
           <AddChildDialog locale={params.locale} />
         </div>
       </div>

@@ -61,3 +61,8 @@ suffix - written straight into this list instead):
 - [ ] `stories.bulkZipFailedTitle`: تعذّر تحميل ملف ZIP
 - [ ] `stories.bulkZipFailedBody`: الملف غير جاهز بعد، أو حدث خطأ ما. حاول مرة أخرى بعد قليل.
 - [ ] `stories.createFailedTitle`: تعذّر إنشاء القصة
+- [ ] `staffPage.body`: امنح فريق حضانتك حسابات خاصة بهم ليتمكن أكثر من شخص من إضافة الأطفال وإنشاء القصص. هذا لا يؤثر على الفوترة — المالك فقط (أنت) يمكنه تغيير الباقة أو بيانات الدفع.
+- [ ] `staffPage.inviteTitle`: دعوة موظف
+- [ ] `staffPage.roleOwnerDesc`: صلاحية كاملة، بما في ذلك الفوترة ودعوة الموظفين. يوجد واحد فقط لكل حضانة (من قام بالتسجيل).
+- [ ] `staffPage.roleAdminDesc`: كل ما يستطيع الموظف فعله، بالإضافة إلى حذف ملف طفل.
+- [ ] `staffPage.roleStaffDesc`: إضافة الأطفال، إنشاء القصص واعتمادها، طلب موافقة ولي الأمر.

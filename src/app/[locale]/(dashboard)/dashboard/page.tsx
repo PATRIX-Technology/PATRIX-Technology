@@ -24,10 +24,16 @@ export default async function DashboardOverviewPage() {
         .eq('consent_status', 'pending'),
     ]);
 
+  // A family tenant's own consent is granted automatically at signup
+  // (see docs/DECISIONS.md "Phase 4: families are tenants"), so this
+  // count is always 0 for them - showing it would just be a confusing,
+  // permanently-zero stat.
   const stats = [
     { label: t('childrenCount'), value: childrenCount ?? 0 },
     { label: t('pendingApproval'), value: pendingApprovalCount ?? 0 },
-    { label: t('consentPending'), value: consentPendingCount ?? 0 },
+    ...(context.tenantType === 'nursery'
+      ? [{ label: t('consentPending'), value: consentPendingCount ?? 0 }]
+      : []),
   ];
 
   return (

@@ -12,19 +12,29 @@ export async function updateTenantBrandingAction(locale: string, formData: FormD
   if (context.role !== 'nursery_owner') return { error: 'Only the owner can update branding.' };
 
   const name = String(formData.get('name') ?? '').trim();
-  const brandColor = String(formData.get('brandColor') ?? '').trim();
-  const retentionDays = Number(formData.get('retentionDays') ?? 730);
+  if (!name) return { error: 'Name is required.' };
 
-  if (!name) return { error: 'Organisation name is required.' };
-  if (!/^#[0-9a-fA-F]{6}$/.test(brandColor)) return { error: 'Brand colour must be a hex value.' };
-  if (retentionDays < 30 || retentionDays > 3650) {
-    return { error: 'Retention must be between 30 and 3650 days.' };
+  // Brand colour and data-retention policy are nursery-only fields in
+  // the UI (SettingsForm doesn't render them for a family tenant), so
+  // only touch them here when actually submitted rather than assuming
+  // every caller sends both.
+  const update: { name: string; brand_primary_color?: string; data_retention_days?: number } = { name };
+
+  if (formData.has('brandColor')) {
+    const brandColor = String(formData.get('brandColor') ?? '').trim();
+    if (!/^#[0-9a-fA-F]{6}$/.test(brandColor)) return { error: 'Brand colour must be a hex value.' };
+    update.brand_primary_color = brandColor;
   }
 
-  const { error } = await supabase
-    .from('tenants')
-    .update({ name, brand_primary_color: brandColor, data_retention_days: retentionDays })
-    .eq('id', context.tenantId);
+  if (formData.has('retentionDays')) {
+    const retentionDays = Number(formData.get('retentionDays'));
+    if (retentionDays < 30 || retentionDays > 3650) {
+      return { error: 'Retention must be between 30 and 3650 days.' };
+    }
+    update.data_retention_days = retentionDays;
+  }
+
+  const { error } = await supabase.from('tenants').update(update).eq('id', context.tenantId);
   if (error) return { error: error.message };
 
   revalidatePath(`/${locale}/dashboard/settings`);

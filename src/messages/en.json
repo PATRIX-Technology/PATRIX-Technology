@@ -122,6 +122,21 @@
     "unavailable": "WhatsApp contact isn't set up yet - check back soon.",
     "responseTime": "We usually reply within a few hours during UAE business hours."
   },
+  "staffPage": {
+    "title": "Staff",
+    "body": "Give your nursery's team their own logins so more than one person can add children and create stories. Nothing here affects billing - only the owner (that's you) can change the plan or payment details.",
+    "inviteTitle": "Invite staff",
+    "roleOwnerLabel": "Owner",
+    "roleOwnerDesc": "Full access, including billing and inviting staff. There's exactly one per nursery (whoever signed up).",
+    "roleAdminLabel": "Admin",
+    "roleAdminDesc": "Everything staff can do, plus deleting a child's profile.",
+    "roleStaffLabel": "Staff",
+    "roleStaffDesc": "Add children, create and approve stories, request parent consent.",
+    "table": {
+      "name": "Name",
+      "role": "Role"
+    }
+  },
   "avatar": {
     "title": "Avatar",
     "hair": "Hair",

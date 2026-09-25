@@ -508,6 +508,28 @@ AI-generated content, so neither has a bounded length in practice; a
 fixed-height banner would either clip text or leave awkward empty space
 depending on what a given story happened to contain.
 
+## Bulk export folder structure
+
+**Decision: one whole-tenant export (`/api/stories/export-zip`), not one
+per class.** The class-picker links this replaced required knowing which
+classes existed and downloading each separately; a nursery admin wants
+one click for everything. `src/app/[locale]/(dashboard)/dashboard/stories/page.tsx`
+now shows a single "Download all stories (ZIP)" link whenever the tenant
+has at least one approved story, instead of a row of per-class buttons.
+
+**Decision: `{class}/{child}.pdf` when a child has exactly one approved
+story, `{class}/{child}/{theme}-{shortId}.pdf` per story when they have
+several.** A flat `{class}/{child}.pdf` for every child would silently
+collide (ZIP entries with the same name) the moment any child has more
+than one approved story — this only starts happening for real once
+repeat/regenerated stories are common — so multi-story children get
+their own subfolder instead, while a single-story child stays a flat
+file rather than a needless one-file folder. Children with no
+`class_name` land in a `No class` folder rather than being dropped.
+Logic lives in `buildExportPlan` (`src/lib/providers/pdf/bulk-zip.ts`),
+kept as a pure function specifically so it's unit-testable without a
+database or PDF rendering — see `tests/unit/bulk-zip.test.ts`.
+
 ## Bug fix: Arabic (and Latin) PDF text was silently not rendering
 
 **This was a real, previously undetected defect in code from before this

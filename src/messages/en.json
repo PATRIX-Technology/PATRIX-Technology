@@ -149,7 +149,7 @@
     "reject": "Reject",
     "regeneratePage": "Regenerate this page",
     "downloadPdf": "Download PDF",
-    "bulkZip": "Download class ZIP"
+    "bulkZip": "Download all stories (ZIP)"
   },
   "reader": {
     "next": "Next page",

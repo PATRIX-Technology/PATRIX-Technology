@@ -24,12 +24,11 @@ export default async function StoriesPage({ params }: { params: { locale: string
   const t = await getTranslations('stories');
   if (!context) return null;
 
-  const { data: classNames } = await supabase
-    .from('children')
-    .select('class_name')
+  const { count: approvedCount } = await supabase
+    .from('stories')
+    .select('id', { count: 'exact', head: true })
     .eq('tenant_id', context.tenantId)
-    .not('class_name', 'is', null);
-  const distinctClassNames = [...new Set((classNames ?? []).map((c) => c.class_name as string))];
+    .eq('status', 'APPROVED');
 
   const { data: stories } = await supabase
     .from('stories')
@@ -41,18 +40,13 @@ export default async function StoriesPage({ params }: { params: { locale: string
     <div>
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <h1 className="font-display text-2xl text-ink-900">{t('title')}</h1>
-        {distinctClassNames.length > 0 && (
-          <div className="flex flex-wrap gap-2">
-            {distinctClassNames.map((className) => (
-              <a
-                key={className}
-                href={`/api/classes/${encodeURIComponent(className)}/zip`}
-                className="focus-ring rounded-lg border border-[rgb(var(--color-border))] px-3 py-1.5 text-xs font-medium text-ink-600 hover:bg-ink-100"
-              >
-                {t('bulkZip')}: {className}
-              </a>
-            ))}
-          </div>
+        {Boolean(approvedCount) && (
+          <a
+            href="/api/stories/export-zip"
+            className="focus-ring rounded-lg border border-[rgb(var(--color-border))] px-3 py-1.5 text-xs font-medium text-ink-600 hover:bg-ink-100"
+          >
+            {t('bulkZip')}
+          </a>
         )}
       </div>
       {!stories || stories.length === 0 ? (

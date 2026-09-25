@@ -3,63 +3,56 @@ import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { createSupabaseServiceRoleClient } from '@/lib/supabase/service-role';
 import { getCurrentTenantContext } from '@/lib/domain/session';
 import { renderApprovedStoryPdf } from '@/lib/domain/story-pdf';
-import { buildBulkZip, sanitizeFileNamePart } from '@/lib/providers/pdf/bulk-zip';
+import { buildBulkZip, buildExportPlan, sanitizeFileNamePart } from '@/lib/providers/pdf/bulk-zip';
 import { errorMessage } from '@/lib/errors';
 
 export const runtime = 'nodejs';
-// Rendering every approved story in a class sequentially can easily run
+// Rendering every approved story tenant-wide sequentially can easily run
 // past Vercel's 10s default — see the same reasoning on the single-story
 // PDF route.
 export const maxDuration = 60;
 
 /**
- * Bulk class-level export: every APPROVED story for children in the given
- * class, zipped into one download for a nursery admin. See
- * docs/TEST_CHECKLIST.md for the manual test of this flow.
+ * Whole-tenant export: every APPROVED story, one ZIP, folder per class
+ * (see buildExportPlan for the exact naming rules).
  */
-export async function GET(_request: Request, { params }: { params: { className: string } }) {
+export async function GET(): Promise<NextResponse | Response> {
   const supabase = await createSupabaseServerClient();
   const context = await getCurrentTenantContext(supabase);
   if (!context) {
     return NextResponse.json({ error: 'Not signed in.' }, { status: 401 });
   }
 
-  const className = decodeURIComponent(params.className);
-
   const { data: children } = await supabase
     .from('children')
-    .select('id, first_name')
-    .eq('tenant_id', context.tenantId)
-    .eq('class_name', className);
+    .select('id, first_name, class_name')
+    .eq('tenant_id', context.tenantId);
 
   if (!children || children.length === 0) {
-    return NextResponse.json({ error: 'No children found in this class.' }, { status: 404 });
+    return NextResponse.json({ error: 'No children found.' }, { status: 404 });
   }
 
   const { data: stories } = await supabase
     .from('stories')
-    .select('id, child_id')
+    .select('id, child_id, theme_key')
     .eq('tenant_id', context.tenantId)
-    .eq('status', 'APPROVED')
-    .in(
-      'child_id',
-      children.map((c) => c.id),
-    );
+    .eq('status', 'APPROVED');
 
   if (!stories || stories.length === 0) {
-    return NextResponse.json({ error: 'No approved stories found for this class yet.' }, { status: 404 });
+    return NextResponse.json({ error: 'No approved stories found yet.' }, { status: 404 });
   }
 
+  const plan = buildExportPlan(children, stories);
   const serviceClient = createSupabaseServiceRoleClient();
-  const entries = [];
+  const entries: { fileName: string; pdfBytes: Uint8Array }[] = [];
   const failures: { storyId: string; error: string }[] = [];
 
-  for (const story of stories) {
+  for (const { storyId, fileName } of plan) {
     try {
-      const rendered = await renderApprovedStoryPdf(supabase, serviceClient, story.id, context);
-      entries.push({ fileName: sanitizeFileNamePart(rendered.childName) + '.pdf', pdfBytes: rendered.pdfBytes });
+      const rendered = await renderApprovedStoryPdf(supabase, serviceClient, storyId, context);
+      entries.push({ fileName, pdfBytes: rendered.pdfBytes });
     } catch (error) {
-      failures.push({ storyId: story.id, error: errorMessage(error) });
+      failures.push({ storyId, error: errorMessage(error) });
     }
   }
 
@@ -73,7 +66,7 @@ export async function GET(_request: Request, { params }: { params: { className: 
     status: 200,
     headers: {
       'Content-Type': 'application/zip',
-      'Content-Disposition': `attachment; filename="${sanitizeFileNamePart(className)}-stories.zip"`,
+      'Content-Disposition': `attachment; filename="${sanitizeFileNamePart(context.tenantName)}-stories.zip"`,
       'Cache-Control': 'private, no-store',
     },
   });

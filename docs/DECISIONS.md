@@ -74,51 +74,69 @@ default for a mixed/unspecified-gender group). This default, like all
 Arabic copy, needs native review before it ships to a real family.
 
 **Arabic PDF text shaping.** `pdf-lib`/`fontkit` do not perform Arabic
-contextual shaping. `src/lib/providers/pdf/arabic-shaping.ts` pre-shapes
-text into Arabic Presentation Forms (`arabic-reshaper`) and reorders it
-into left-to-right visual order (`bidi-js`) before handing it to
-`drawText`. Two real bugs were found and fixed here during the first
-pilot's real testing (both invisible in any automated test until a real
-Arabic sentence with an embedded Latin name — a child's or organisation's
-— needed to wrap onto more than one line). A third was found once #2's
-fix (drawing each run separately) was in place:
+contextual shaping — an earlier approach worked around this by pre-
+shaping text into Arabic Presentation Forms (`arabic-reshaper`) and
+bidi-reordering it (`bidi-js`) before handing the result to `drawText`.
+That approach went through several rounds of real bugs (a paragraph
+reordered once instead of per-line; `pdf-lib`'s own `font.layout()` re-
+reversing an already-reordered embedded Latin name; a guessed "advance
+width fudge factor" that never reliably matched the real rendered
+width) and was ultimately replaced outright, because its root problem
+couldn't be patched with more constants: **rendering to an actual PDF
+and rasterising it (`pdftoppm`), then comparing pixel-for-pixel against
+the same text rendered by a real shaping engine (Chromium/HarfBuzz)
+from the identical font file, showed Arabic letters coming out visibly
+disconnected** — not an overlap or spacing bug, but broken glyph
+joining. Root cause, confirmed with HarfBuzz's own shaping output for
+comparison: `NotoNaskhArabic-Regular-Static.ttf` represents several
+letters (ق ت ف ب, etc.) as a dotless base glyph plus a separately-
+positioned combining dot-mark glyph, positioned via the font's GPOS
+`mark` feature. A real shaper applies that positioning. Feeding
+presentation-form codepoints (`arabic-reshaper`'s output) into
+`pdf-lib`'s `page.drawText` bypasses this entirely — presentation-form
+codepoints resolve to the font's flatter "compatibility" glyphs, and
+even where they don't, `pdf-lib`'s `CustomFontEmbedder` only reads
+`.glyphs` from fontkit's `layout()` result and discards `.positions`
+outright, so GPOS mark offsets are silently dropped no matter what.
+No fudge factor could fix a missing positioning offset.
 
-1. Shaping/reordering ran ONCE on the whole paragraph, then lines were
-   split by naive whitespace wrapping. Reordering is only valid as a
-   per-rendered-line operation; doing it once for a multi-line paragraph
-   is wrong the moment it wraps. Fixed in `render.ts`'s
-   `wrapArabicParagraph`: wrap on the logical-order words first, shape/
-   reorder only the finished line.
-2. Separately, and worse: `pdf-lib`'s `CustomFontEmbedder.encodeText`
-   calls fontkit's own `font.layout()` to turn a string into glyphs, and
-   that call performs its OWN bidi pass on whatever it's given — on top
-   of the reordering `shapeArabicForPdf` already did. A `drawText` call
-   containing both Arabic and an embedded Latin run (e.g. "...Hala عند
-   باب test...") came out with the Latin runs reversed ("alaH", "tset")
-   even though `shapeArabicForPdf` had already placed them correctly —
-   confirmed by rendering to an actual PDF and rasterising it with
-   `pdftoppm`, not just inspecting the string in code. fontkit's bidi
-   pass only has something to "fix" when a single `drawText` call mixes
-   directions, so the fix is `splitIntoDirectionRuns` (arabic-shaping.ts):
-   split a shaped line into same-script runs and draw each run as its
-   own `drawText` call (`render.ts`'s `drawShapedLine`). Regression test:
-   `tests/unit/arabic-shaping.test.ts` "splitIntoDirectionRuns".
-3. Drawing runs separately means each run's start position depends on
-   the PREVIOUS run's measured width being right — and
-   `ARABIC_ADVANCE_WIDTH_FUDGE` (below #2's fix, this was 1.2, based on
-   an earlier ~1.15x measurement) under-corrected badly enough that an
-   Arabic run right before a Latin run (e.g. "...كوب الألوان بالخطأ في
-   test...") visibly overlapped it — the next run started before the
-   previous one's real ink had finished. Re-measured directly: rendered
-   two sample runs to an actual PDF, rasterised with `pdftoppm`, and
-   pixel-measured the real ink extent against pdf-lib's reported width
-   — came out at 1.42x and 1.39x, not ~1.15x. Bumped the constant to
-   1.45 (a little headroom above the measured ~1.4x). This is exactly
-   the kind of defect that only shows up by rendering to a real page and
-   looking at it, never by inspecting strings or running preflight
-   (preflight has no notion of visual glyph position) — see
-   `render.ts`'s `ARABIC_ADVANCE_WIDTH_FUDGE` comment for the exact
-   pixel measurements.
+**The fix**: real HarfBuzz shaping (the `harfbuzzjs` WASM package,
+`src/lib/providers/pdf/harfbuzz-shape.ts`) plus drawing raw glyph IDs
+at explicit coordinates via `pdf-lib`'s low-level content-stream
+operators (`PDFOperator`/`PDFOperatorNames`/`PDFHexString`), bypassing
+`page.drawText` entirely for Arabic captions:
+
+1. `splitIntoDirectionRuns` (`arabic-shaping.ts`) still splits LOGICAL
+   (un-shaped) text into same-script runs — HarfBuzz shapes one
+   direction at a time and does not perform Unicode bidi paragraph
+   analysis itself, so a single `shape()` call over a whole mixed-
+   direction line reverses an embedded Latin run's own character order
+   (confirmed: "Hala" came back as "alaH" when shaped as one RTL
+   buffer). This is the same reason the old code split runs, but it now
+   operates on the original text, not a pre-shaped/reordered string.
+2. `render.ts`'s `drawArabicLine` reverses the RUN order (not each
+   run's internal characters) for correct RTL visual placement — proper
+   Unicode bidi for the common case here (one Arabic sentence, an
+   occasional embedded Latin/number run, no nested embedding levels) —
+   then shapes each run with `shapeRun` (HarfBuzz, correct direction per
+   run) and draws every glyph at its own exact position, including the
+   x/y offsets HarfBuzz computes for combining marks.
+3. `wrapArabicParagraph` measures candidate lines with the exact same
+   run-split-then-shape path `drawArabicLine` draws with, so wrap
+   decisions and the actually-drawn width can never disagree — no
+   measured-vs-real-width fudge factor needed at all.
+
+Verified against every previously-failing case from the pilot (a long
+Arabic sentence wrapping across lines with an embedded Latin name
+followed by punctuation, an isolated word containing a mark-decomposed
+letter, a multi-line paragraph) via the same render → `pdftoppm` →
+pixel-inspect methodology, plus a language-independent check: colored
+marker rectangles drawn at each run's computed boundary, confirmed
+against the pixel image to land exactly where each script run starts
+and ends (this catches spacing bugs regardless of whether the reviewer
+can read Arabic). `tests/unit/harfbuzz-shape.test.ts` asserts the
+specific mechanism (non-zero mark offsets) directly; `tests/unit/
+arabic-shaping.test.ts` covers run-splitting.
 
 Still verify against a physical print proof, not just a PDF viewer,
 before any real print run.

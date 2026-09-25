@@ -1,12 +1,17 @@
 import 'server-only';
 import fontkit from '@pdf-lib/fontkit';
-import { PDFDocument, PDFName, PDFNumber, PDFArray, rgb } from 'pdf-lib';
+import { PDFDocument, PDFName, PDFNumber, PDFArray, PDFHexString, PDFOperator, PDFOperatorNames, rgb } from 'pdf-lib';
 import type { PDFFont, PDFPage } from 'pdf-lib';
 import { embedFonts } from './fonts';
-import { shapeArabicForPdf, containsArabic, splitIntoDirectionRuns } from './arabic-shaping';
+import { containsArabic, splitIntoDirectionRuns } from './arabic-shaping';
+import { shapeRun, getFontUpem } from './harfbuzz-shape';
 import { drawFlatBottomBanner } from './banners';
 import { BLEED_PT, PAGE_HEIGHT_PT, PAGE_WIDTH_PT, TRIM_WIDTH_PT } from './geometry';
 import type { AppLocale } from '@/types/database';
+
+// Cache key for the Arabic font's HarfBuzz instance — there's only one
+// Arabic font file, so a constant key is fine (see harfbuzz-shape.ts).
+const ARABIC_FONT_CACHE_KEY = 'NotoNaskhArabic-Regular-Static';
 
 export interface RenderPageInput {
   pageNumber: number;
@@ -46,6 +51,7 @@ export async function renderStoryPdf(input: RenderStoryPdfInput): Promise<Uint8A
 
   const fonts = await embedFonts(pdfDoc);
   const isRtl = input.locale === 'ar';
+  const arabicUpem = await getFontUpem(fonts.arabicRegularBytes, ARABIC_FONT_CACHE_KEY);
 
   const addPage = () => {
     const page = pdfDoc.addPage([PAGE_WIDTH_PT, PAGE_HEIGHT_PT]);
@@ -83,7 +89,7 @@ export async function renderStoryPdf(input: RenderStoryPdfInput): Promise<Uint8A
     // wrapped line count so the text never collides with the page number.
     const captionIsArabic = containsArabic(storyPage.text);
     const captionLines = captionIsArabic
-      ? wrapArabicParagraph(storyPage.text, captionFont, captionSize, captionMaxWidth)
+      ? await wrapArabicParagraph(storyPage.text, fonts.arabicRegularBytes, arabicUpem, captionSize, captionMaxWidth)
       : wrapText(storyPage.text, captionFont, captionSize, captionMaxWidth);
     const pageNumberY = BLEED_PT + 10;
     const captionFirstLineY = pageNumberY + 24 + (captionLines.length - 1) * captionLineHeight;
@@ -97,15 +103,17 @@ export async function renderStoryPdf(input: RenderStoryPdfInput): Promise<Uint8A
       opacity: 0.94,
     });
 
-    captionLines.forEach((line, index) => {
+    for (const [index, line] of captionLines.entries()) {
       const y = captionFirstLineY - index * captionLineHeight;
       if (captionIsArabic) {
-        // `line` here is already shaped + reordered — draw it as its own
-        // direction-homogeneous runs, never as one drawText call over the
-        // whole (mixed-direction) line. See splitIntoDirectionRuns's
-        // comment for why.
-        drawShapedLine(page, line, {
-          font: captionFont,
+        // `line` here is LOGICAL text (not pre-shaped) — drawArabicLine
+        // splits it into same-script runs and shapes each with HarfBuzz,
+        // which applies real Arabic joining/positioning. See
+        // harfbuzz-shape.ts and splitIntoDirectionRuns's comment.
+        await drawArabicLine(page, line, {
+          fontBytes: fonts.arabicRegularBytes,
+          pdfFont: fonts.arabicRegular,
+          upem: arabicUpem,
           size: captionSize,
           centerX: PAGE_WIDTH_PT / 2,
           y,
@@ -121,7 +129,7 @@ export async function renderStoryPdf(input: RenderStoryPdfInput): Promise<Uint8A
           color: INK_COLOR,
         });
       }
-    });
+    }
 
     const pageNumberText = String(storyPage.pageNumber);
     const pageNumberWidth = fonts.latinRegular.widthOfTextAtSize(pageNumberText, 9);
@@ -171,59 +179,55 @@ async function embedFallbackPng(pdfDoc: PDFDocument) {
 }
 
 /**
- * `PDFFont.widthOfTextAtSize` under-reports Arabic presentation-form
- * text's real rendered width — re-measured directly by rendering runs
- * to an actual PDF, rasterising with pdftoppm, and pixel-measuring the
- * real ink extent against pdf-lib's reported width: two sample runs
- * came out at 1.42x and 1.39x, not the ~1.15x an earlier (apparently
- * looser) measurement had found. 1.2x was too small once runs are
- * drawn as separate drawText calls and positioned relative to each
- * other (drawShapedLine) — every run's under-measurement now
- * compounds into the next run's start position instead of being
- * absorbed by one drawText call laying out a whole line itself, so an
- * Arabic run immediately before a Latin run (a child's or
- * organisation's name) visibly overlapped it. Root cause of the gap
- * itself still not pinned down (most likely how pdf-lib derives
- * per-glyph advance widths for combining-mark codepoints vs. what it
- * writes into the PDF's own CID width array); this factor is a
- * deliberate safety margin — with a little headroom above the ~1.4x
- * measured — so runs never overlap without depending on that root
- * cause being fixed. See docs/DECISIONS.md "Arabic PDF text shaping".
+ * Measures a LOGICAL line's real rendered width by splitting it into
+ * same-script runs and shaping each with HarfBuzz — the same runs and
+ * the same shaping drawArabicLine will use to draw it, so wrap decisions
+ * and the actual drawn width never disagree. See harfbuzz-shape.ts.
  */
-const ARABIC_ADVANCE_WIDTH_FUDGE = 1.45;
+async function measureLogicalLineWidth(
+  fontBytes: Uint8Array,
+  upem: number,
+  size: number,
+  text: string,
+): Promise<number> {
+  const runs = splitIntoDirectionRuns(text);
+  let widthInFontUnits = 0;
+  for (const run of runs) {
+    const shaped = await shapeRun(fontBytes, ARABIC_FONT_CACHE_KEY, run.text, run.isArabic ? 'rtl' : 'ltr');
+    widthInFontUnits += shaped.widthInFontUnits;
+  }
+  return widthInFontUnits * (size / upem);
+}
 
 /**
- * Wraps an Arabic paragraph into lines, each ALREADY shaped + bidi-
- * reordered and ready to hand to drawShapedLine. Deliberately wraps on
- * the LOGICAL-order words first and only shapes/reorders each finished
- * line — shaping the whole paragraph once and then splitting it into
- * lines by whitespace (the previous approach) reorders the paragraph as
- * a single visual unit, which is wrong the moment it needs more than one
- * line: reordering must happen per rendered line, not once for the
- * whole paragraph. See docs/DECISIONS.md "Arabic PDF text shaping".
+ * Wraps an Arabic paragraph into LOGICAL-order lines (NOT pre-shaped —
+ * drawArabicLine shapes each line's runs itself). Wraps on whole words
+ * first, falling back to character-by-character splitting only for a
+ * single word wider than the whole line.
  */
-function wrapArabicParagraph(
+async function wrapArabicParagraph(
   text: string,
-  font: PDFFont,
+  fontBytes: Uint8Array,
+  upem: number,
   size: number,
   maxWidth: number,
-): string[] {
-  const shapedWidth = (logical: string) => measureShapedLineWidth(font, size, shapeArabicForPdf(logical));
+): Promise<string[]> {
+  const width = (candidate: string) => measureLogicalLineWidth(fontBytes, upem, size, candidate);
   const words = text.split(' ');
   const lines: string[] = [];
   let current = '';
 
   for (const word of words) {
-    if (shapedWidth(word) > maxWidth) {
+    if ((await width(word)) > maxWidth) {
       if (current) {
-        lines.push(shapeArabicForPdf(current));
+        lines.push(current);
         current = '';
       }
       let chunk = '';
       for (const char of word) {
         const candidate = chunk + char;
-        if (shapedWidth(candidate) > maxWidth && chunk) {
-          lines.push(shapeArabicForPdf(chunk));
+        if ((await width(candidate)) > maxWidth && chunk) {
+          lines.push(chunk);
           chunk = char;
         } else {
           chunk = candidate;
@@ -234,48 +238,78 @@ function wrapArabicParagraph(
     }
 
     const candidate = current ? `${current} ${word}` : word;
-    if (shapedWidth(candidate) > maxWidth && current) {
-      lines.push(shapeArabicForPdf(current));
+    if ((await width(candidate)) > maxWidth && current) {
+      lines.push(current);
       current = word;
     } else {
       current = candidate;
     }
   }
-  if (current) lines.push(shapeArabicForPdf(current));
+  if (current) lines.push(current);
   return lines;
 }
 
-function runWidth(font: PDFFont, size: number, run: { text: string; isArabic: boolean }): number {
-  return font.widthOfTextAtSize(run.text, size) * (run.isArabic ? ARABIC_ADVANCE_WIDTH_FUDGE : 1);
-}
-
-function measureShapedLineWidth(font: PDFFont, size: number, shapedLine: string): number {
-  return splitIntoDirectionRuns(shapedLine).reduce((sum, run) => sum + runWidth(font, size, run), 0);
-}
-
 /**
- * Draws one already-shaped/reordered Arabic line, centered on centerX.
- * Splits it into same-script runs and draws each as its OWN `drawText`
- * call — never the whole (mixed-direction) line in one call — because
- * pdf-lib's CustomFontEmbedder routes text through fontkit's `layout()`,
- * which performs its own bidi pass and reverses embedded Latin runs
- * (a child's name, an organisation name) that shapeArabicForPdf already
- * placed correctly. A call containing only one script gives fontkit
- * nothing to "fix". See splitIntoDirectionRuns's comment for how this
- * was diagnosed.
+ * Draws one LOGICAL-order Arabic line, centered on centerX. Splits it
+ * into same-script runs, reverses their order (the paragraph is RTL, so
+ * the first logical run is drawn rightmost and the last drawn leftmost —
+ * proper Unicode bidi for the simple, common case here: one Arabic
+ * sentence with an occasional embedded Latin/number run, never multiple
+ * nested embedding levels), shapes each run with HarfBuzz for its own
+ * correct direction, and draws every glyph at its own exact position
+ * (including the x/y offsets HarfBuzz computes for combining marks —
+ * see harfbuzz-shape.ts's module comment for why this font needs them)
+ * using raw PDF content-stream operators, since `page.drawText` routes
+ * through pdf-lib/fontkit's own text layout, which does not apply
+ * Arabic joining correctly and discards glyph offsets entirely.
  */
-function drawShapedLine(
+async function drawArabicLine(
   page: PDFPage,
-  shapedLine: string,
-  options: { font: PDFFont; size: number; centerX: number; y: number; color: ReturnType<typeof rgb> },
-): void {
-  const runs = splitIntoDirectionRuns(shapedLine);
-  const totalWidth = runs.reduce((sum, run) => sum + runWidth(options.font, options.size, run), 0);
-  let x = options.centerX - totalWidth / 2;
-  for (const run of runs) {
-    page.drawText(run.text, { x, y: options.y, size: options.size, font: options.font, color: options.color });
-    x += runWidth(options.font, options.size, run);
+  logicalLine: string,
+  options: { fontBytes: Uint8Array; pdfFont: PDFFont; upem: number; size: number; centerX: number; y: number; color: ReturnType<typeof rgb> },
+): Promise<void> {
+  const { fontBytes, pdfFont, upem, size, centerX, y, color } = options;
+  const pointsPerUnit = size / upem;
+  const runs = [...splitIntoDirectionRuns(logicalLine)].reverse();
+
+  const shapedRuns = await Promise.all(
+    runs.map((run) => shapeRun(fontBytes, ARABIC_FONT_CACHE_KEY, run.text, run.isArabic ? 'rtl' : 'ltr')),
+  );
+  const totalWidth = shapedRuns.reduce((sum, run) => sum + run.widthInFontUnits, 0) * pointsPerUnit;
+
+  page.setFont(pdfFont);
+  // PDFPage.getFont() returns this page's current font resource name —
+  // typed as private in pdf-lib's declarations (no other public API
+  // exposes it), even though it's a real, stable method at runtime.
+  const [, fontKey] = (page as unknown as { getFont(): [PDFFont, PDFName] }).getFont();
+
+  const ops: PDFOperator[] = [
+    PDFOperator.of(PDFOperatorNames.PushGraphicsState),
+    PDFOperator.of(PDFOperatorNames.BeginText),
+    PDFOperator.of(PDFOperatorNames.NonStrokingColorRgb, [
+      String(color.red),
+      String(color.green),
+      String(color.blue),
+    ]),
+    PDFOperator.of(PDFOperatorNames.SetFontAndSize, [fontKey, String(size)]),
+  ];
+
+  let x = centerX - totalWidth / 2;
+  for (const shaped of shapedRuns) {
+    for (const glyph of shaped.glyphs) {
+      const glyphX = x + glyph.xOffset * pointsPerUnit;
+      const glyphY = y + glyph.yOffset * pointsPerUnit;
+      const hex = glyph.glyphId.toString(16).padStart(4, '0');
+      ops.push(
+        PDFOperator.of(PDFOperatorNames.SetTextMatrix, ['1', '0', '0', '1', String(glyphX), String(glyphY)]),
+        PDFOperator.of(PDFOperatorNames.ShowText, [PDFHexString.of(hex)]),
+      );
+      x += glyph.xAdvance * pointsPerUnit;
+    }
   }
+  ops.push(PDFOperator.of(PDFOperatorNames.EndText), PDFOperator.of(PDFOperatorNames.PopGraphicsState));
+
+  page.pushOperators(...ops);
 }
 
 function wrapText(text: string, font: import('pdf-lib').PDFFont, size: number, maxWidth: number): string[] {

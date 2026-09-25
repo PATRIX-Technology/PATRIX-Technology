@@ -9,6 +9,11 @@ export interface EmbeddedFonts {
   latinRegular: PDFFont;
   latinDisplay: PDFFont;
   arabicRegular: PDFFont;
+  // Raw bytes alongside the embedded PDFFont — HarfBuzz shapes Arabic
+  // captions directly from the font file (see harfbuzz-shape.ts), since
+  // pdf-lib/fontkit's own text layout doesn't apply Arabic joining
+  // correctly (see docs/DECISIONS.md "Arabic PDF text shaping").
+  arabicRegularBytes: Uint8Array;
 }
 
 /**
@@ -40,5 +45,5 @@ export async function embedFonts(pdfDoc: PDFDocument): Promise<EmbeddedFonts> {
     pdfDoc.embedFont(arabicBytes, { subset: false }),
   ]);
 
-  return { latinRegular, latinDisplay, arabicRegular };
+  return { latinRegular, latinDisplay, arabicRegular, arabicRegularBytes: arabicBytes };
 }

@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Khayali</string>
+    <string name="title_activity_main">Khayali</string>
+    <string name="package_name">com.khayali.app</string>
+    <string name="custom_url_scheme">com.khayali.app</string>
+</resources>

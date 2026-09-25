@@ -29,7 +29,9 @@ export async function addChildAction(locale: string, formData: FormData): Promis
 
   const parsed = ChildFormSchema.safeParse({
     firstName: formData.get('firstName'),
-    arabicName: formData.get('arabicName') || undefined,
+    lastName: formData.get('lastName') || undefined,
+    arabicFirstName: formData.get('arabicFirstName') || undefined,
+    arabicLastName: formData.get('arabicLastName') || undefined,
     pronoun: formData.get('pronoun'),
     className: formData.get('className') || undefined,
     preferredLanguage: formData.get('preferredLanguage'),
@@ -42,7 +44,9 @@ export async function addChildAction(locale: string, formData: FormData): Promis
   const { error } = await supabase.from('children').insert({
     tenant_id: context.tenantId,
     first_name: parsed.data.firstName,
-    arabic_name: parsed.data.arabicName || null,
+    last_name: parsed.data.lastName || null,
+    arabic_first_name: parsed.data.arabicFirstName || null,
+    arabic_last_name: parsed.data.arabicLastName || null,
     pronoun: parsed.data.pronoun,
     class_name: parsed.data.className || null,
     preferred_language: parsed.data.preferredLanguage,
@@ -52,6 +56,65 @@ export async function addChildAction(locale: string, formData: FormData): Promis
   if (error) return { error: error.message };
 
   revalidatePath(`/${locale}/dashboard/children`);
+  return {};
+}
+
+/**
+ * Updates a child's editable profile fields (names, pronoun, class,
+ * preferred language, avatar) — everything the add-child form collects,
+ * minus fields with their own dedicated flows (consent, photo).
+ */
+export async function updateChildAction(
+  locale: string,
+  childId: string,
+  formData: FormData,
+): Promise<ActionResult> {
+  const supabase = await createSupabaseServerClient();
+  const context = await getCurrentTenantContext(supabase);
+  if (!context) return { error: 'Not signed in.' };
+
+  let avatarConfig: unknown = DEFAULT_AVATAR_CONFIG;
+  const avatarConfigRaw = formData.get('avatarConfig');
+  if (typeof avatarConfigRaw === 'string' && avatarConfigRaw.length > 0) {
+    try {
+      avatarConfig = JSON.parse(avatarConfigRaw);
+    } catch {
+      // fall back to the default below via schema validation
+    }
+  }
+
+  const parsed = ChildFormSchema.safeParse({
+    firstName: formData.get('firstName'),
+    lastName: formData.get('lastName') || undefined,
+    arabicFirstName: formData.get('arabicFirstName') || undefined,
+    arabicLastName: formData.get('arabicLastName') || undefined,
+    pronoun: formData.get('pronoun'),
+    className: formData.get('className') || undefined,
+    preferredLanguage: formData.get('preferredLanguage'),
+    avatarConfig,
+  });
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? 'Invalid input.' };
+  }
+
+  const { error } = await supabase
+    .from('children')
+    .update({
+      first_name: parsed.data.firstName,
+      last_name: parsed.data.lastName || null,
+      arabic_first_name: parsed.data.arabicFirstName || null,
+      arabic_last_name: parsed.data.arabicLastName || null,
+      pronoun: parsed.data.pronoun,
+      class_name: parsed.data.className || null,
+      preferred_language: parsed.data.preferredLanguage,
+      avatar_config: parsed.data.avatarConfig,
+    })
+    .eq('id', childId)
+    .eq('tenant_id', context.tenantId);
+  if (error) return { error: error.message };
+
+  revalidatePath(`/${locale}/dashboard/children`);
+  revalidatePath(`/${locale}/dashboard/children/${childId}`);
   return {};
 }
 
@@ -82,7 +145,9 @@ export async function importChildrenCsvAction(locale: string, formData: FormData
       validRows.map((r) => ({
         tenant_id: context.tenantId,
         first_name: r.data!.firstName,
-        arabic_name: r.data!.arabicName || null,
+        last_name: r.data!.lastName || null,
+        arabic_first_name: r.data!.arabicFirstName || null,
+        arabic_last_name: r.data!.arabicLastName || null,
         pronoun: r.data!.pronoun,
         class_name: r.data!.className || null,
         preferred_language: r.data!.preferredLanguage,

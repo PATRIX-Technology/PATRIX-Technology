@@ -77,19 +77,26 @@ describe('parseChildrenCsv', () => {
     expect(headerError).toMatch(/empty/i);
   });
 
-  it('reads an optional arabic_name column when present', () => {
+  it('reads optional last_name/arabic_first_name/arabic_last_name columns when present', () => {
     const { results, headerError } = parseChildrenCsv(
-      'first_name,arabic_name,pronoun,class_name,preferred_language\nHala,هالة,she,Sunflower,ar',
+      'first_name,last_name,arabic_first_name,arabic_last_name,pronoun,class_name,preferred_language\nHala,Al Mansoori,هالة,المنصوري,she,Sunflower,ar',
     );
     expect(headerError).toBeUndefined();
-    expect(results[0]!.data).toMatchObject({ firstName: 'Hala', arabicName: 'هالة' });
+    expect(results[0]!.data).toMatchObject({
+      firstName: 'Hala',
+      lastName: 'Al Mansoori',
+      arabicFirstName: 'هالة',
+      arabicLastName: 'المنصوري',
+    });
   });
 
-  it('does not require an arabic_name column at all', () => {
+  it('does not require last_name/arabic_first_name/arabic_last_name columns at all', () => {
     const { results, headerError } = parseChildrenCsv(
       'first_name,pronoun,class_name,preferred_language\nMaya,she,Sunflower,en',
     );
     expect(headerError).toBeUndefined();
-    expect(results[0]!.data?.arabicName).toBeUndefined();
+    expect(results[0]!.data?.lastName).toBeUndefined();
+    expect(results[0]!.data?.arabicFirstName).toBeUndefined();
+    expect(results[0]!.data?.arabicLastName).toBeUndefined();
   });
 });

@@ -76,19 +76,25 @@
   "children": {
     "title": "Children",
     "add": "Add a child",
+    "edit": "Edit",
     "importCsv": "Import from CSV",
     "empty": "No children yet. Add your first child or import a class list.",
     "table": {
-      "name": "Name",
+      "firstNameEn": "First name (EN)",
+      "lastNameEn": "Family name (EN)",
+      "firstNameAr": "First name (AR)",
+      "lastNameAr": "Family name (AR)",
       "class": "Class",
       "language": "Language",
       "consent": "Consent",
       "avatar": "Avatar"
     },
     "form": {
-      "firstName": "First name",
-      "arabicName": "Arabic name (optional)",
-      "arabicNameHint": "Used instead of the first name above when a story is generated in Arabic.",
+      "firstName": "First name (EN)",
+      "lastName": "Family name (EN, optional)",
+      "arabicFirstName": "First name (AR, optional)",
+      "arabicFirstNameHint": "Used instead of the first name above when a story is generated in Arabic.",
+      "arabicLastName": "Family name (AR, optional)",
       "pronoun": "Pronoun",
       "pronounOptions": {
         "she": "She / her",

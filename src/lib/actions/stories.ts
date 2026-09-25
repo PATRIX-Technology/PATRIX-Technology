@@ -44,7 +44,8 @@ export async function createStoryAction(
   // ("...جلست بجانب Hala...") — use the Arabic spelling when one is on
   // file for this child, falling back to the Latin first name otherwise.
   // See docs/DECISIONS.md "Arabic name field for children".
-  const childName = template.locale === 'ar' && child.arabic_name ? child.arabic_name : child.first_name;
+  const childName =
+    template.locale === 'ar' && child.arabic_first_name ? child.arabic_first_name : child.first_name;
 
   let story: { id: string };
   try {

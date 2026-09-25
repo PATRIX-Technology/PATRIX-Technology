@@ -1,6 +1,18 @@
 import { z } from 'zod';
 import { AvatarConfigSchema, DEFAULT_AVATAR_CONFIG } from './avatar';
 
+/** Shared shape for the three optional name fields (last name, Arabic
+ * first/last name) — same rules as the required first name, just optional. */
+function optionalNameField(label: string) {
+  return z
+    .string()
+    .trim()
+    .max(60, `${label} must be 60 characters or fewer`)
+    .refine((value) => !/\d/.test(value), `${label} should not contain numbers`)
+    .optional()
+    .or(z.literal(''));
+}
+
 export const ChildFormSchema = z.object({
   firstName: z
     .string()
@@ -8,16 +20,15 @@ export const ChildFormSchema = z.object({
     .min(1, 'First name is required')
     .max(60, 'First name must be 60 characters or fewer')
     .refine((value) => !/\d/.test(value), 'First name should not contain numbers'),
+  /** Optional English family name — record-keeping only, never used in
+   * story generation. */
+  lastName: optionalNameField('Family name'),
   /** Optional Arabic spelling, used instead of firstName when generating
-   * an Arabic-locale story — see docs/DECISIONS.md "Arabic name field
-   * for children". */
-  arabicName: z
-    .string()
-    .trim()
-    .max(60, 'Arabic name must be 60 characters or fewer')
-    .refine((value) => !/\d/.test(value), 'Arabic name should not contain numbers')
-    .optional()
-    .or(z.literal('')),
+   * an Arabic-locale story — see docs/DECISIONS.md "Bilingual name
+   * fields for children". */
+  arabicFirstName: optionalNameField('Arabic first name'),
+  /** Optional Arabic spelling of the family name — record-keeping only. */
+  arabicLastName: optionalNameField('Arabic family name'),
   pronoun: z.enum(['she', 'he', 'they']),
   className: z.string().trim().max(80).optional().or(z.literal('')),
   preferredLanguage: z.enum(['en', 'ar']),
@@ -27,9 +38,10 @@ export type ChildFormInput = z.infer<typeof ChildFormSchema>;
 
 /**
  * CSV import schema for bulk class-list uploads. Required columns:
- * first_name,pronoun,class_name,preferred_language — an optional
- * arabic_name column is also read when present (see docs/DECISIONS.md
- * "Arabic name field for children"), but its absence isn't an error.
+ * first_name,pronoun,class_name,preferred_language — optional
+ * last_name/arabic_first_name/arabic_last_name columns are also read
+ * when present (see docs/DECISIONS.md "Bilingual name fields for
+ * children"), but their absence isn't an error.
  * pronoun/preferred_language are case-insensitive and default sensibly so
  * a nursery admin's spreadsheet doesn't need to be pixel-perfect.
  */
@@ -123,14 +135,18 @@ export function parseChildrenCsv(content: string): { results: CsvRowResult[]; he
   for (let i = 1; i < rows.length; i++) {
     const cells = rows[i]!;
     const firstName = (cells[colIndex('first_name')] ?? '').trim();
-    const arabicName = (cells[colIndex('arabic_name')] ?? '').trim();
+    const lastName = (cells[colIndex('last_name')] ?? '').trim();
+    const arabicFirstName = (cells[colIndex('arabic_first_name')] ?? '').trim();
+    const arabicLastName = (cells[colIndex('arabic_last_name')] ?? '').trim();
     const pronounRaw = cells[colIndex('pronoun')] ?? 'they';
     const className = (cells[colIndex('class_name')] ?? '').trim();
     const languageRaw = cells[colIndex('preferred_language')] ?? 'en';
 
     const parsed = ChildFormSchema.safeParse({
       firstName,
-      arabicName: arabicName || undefined,
+      lastName: lastName || undefined,
+      arabicFirstName: arabicFirstName || undefined,
+      arabicLastName: arabicLastName || undefined,
       pronoun: normalizePronoun(pronounRaw),
       className: className || undefined,
       preferredLanguage: normalizeLanguage(languageRaw),

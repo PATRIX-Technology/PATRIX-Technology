@@ -33,7 +33,7 @@ export async function renderApprovedStoryPdf(
 ): Promise<RenderedStoryPdf> {
   const { data: story, error: storyError } = await supabase
     .from('stories')
-    .select('*, children(first_name, arabic_name)')
+    .select('*, children(first_name, arabic_first_name)')
     .eq('id', storyId)
     .eq('tenant_id', context.tenantId)
     .eq('status', 'APPROVED')
@@ -70,8 +70,8 @@ export async function renderApprovedStoryPdf(
       }),
   );
 
-  const child = story.children as unknown as { first_name: string; arabic_name: string | null } | null;
-  const childName = (story.locale === 'ar' && child?.arabic_name) || child?.first_name || '';
+  const child = story.children as unknown as { first_name: string; arabic_first_name: string | null } | null;
+  const childName = (story.locale === 'ar' && child?.arabic_first_name) || child?.first_name || '';
 
   const pdfBytes = await renderStoryPdf({
     title: story.theme_key.replace(/_/g, ' '),

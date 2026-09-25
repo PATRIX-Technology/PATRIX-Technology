@@ -49,7 +49,10 @@ export default async function ChildrenPage({ params }: { params: { locale: strin
             <thead>
               <tr className="border-b border-[rgb(var(--color-border))] text-left text-ink-500">
                 <th className="p-4">{t('table.avatar')}</th>
-                <th className="p-4">{t('table.name')}</th>
+                <th className="p-4">{t('table.firstNameEn')}</th>
+                <th className="p-4">{t('table.lastNameEn')}</th>
+                <th className="p-4">{t('table.firstNameAr')}</th>
+                <th className="p-4">{t('table.lastNameAr')}</th>
                 <th className="p-4">{t('table.class')}</th>
                 <th className="p-4">{t('table.language')}</th>
                 <th className="p-4">{t('table.consent')}</th>
@@ -68,6 +71,13 @@ export default async function ChildrenPage({ params }: { params: { locale: strin
                     >
                       {child.first_name}
                     </Link>
+                  </td>
+                  <td className="p-4 text-ink-600">{child.last_name ?? '—'}</td>
+                  <td dir="rtl" className="p-4 text-ink-600">
+                    {child.arabic_first_name ?? '—'}
+                  </td>
+                  <td dir="rtl" className="p-4 text-ink-600">
+                    {child.arabic_last_name ?? '—'}
                   </td>
                   <td className="p-4 text-ink-600">{child.class_name ?? '—'}</td>
                   <td className="p-4 text-ink-600">{child.preferred_language.toUpperCase()}</td>

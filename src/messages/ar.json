@@ -76,19 +76,25 @@
   "children": {
     "title": "الأطفال",
     "add": "إضافة طفل",
+    "edit": "تعديل [NEEDS NATIVE REVIEW]",
     "importCsv": "استيراد من ملف CSV",
     "empty": "لا يوجد أطفال بعد. أضف طفلك الأول أو استورد قائمة الفصل. [NEEDS NATIVE REVIEW]",
     "table": {
-      "name": "الاسم",
+      "firstNameEn": "الاسم الأول (EN) [NEEDS NATIVE REVIEW]",
+      "lastNameEn": "اسم العائلة (EN) [NEEDS NATIVE REVIEW]",
+      "firstNameAr": "الاسم الأول (AR) [NEEDS NATIVE REVIEW]",
+      "lastNameAr": "اسم العائلة (AR) [NEEDS NATIVE REVIEW]",
       "class": "الفصل",
       "language": "اللغة",
       "consent": "الموافقة",
       "avatar": "الشخصية الرمزية"
     },
     "form": {
-      "firstName": "الاسم الأول",
-      "arabicName": "الاسم بالعربية (اختياري)",
-      "arabicNameHint": "يُستخدم بدلاً من الاسم الأول أعلاه عند إنشاء قصة باللغة العربية.",
+      "firstName": "الاسم الأول (EN) [NEEDS NATIVE REVIEW]",
+      "lastName": "اسم العائلة (EN، اختياري) [NEEDS NATIVE REVIEW]",
+      "arabicFirstName": "الاسم الأول (AR، اختياري) [NEEDS NATIVE REVIEW]",
+      "arabicFirstNameHint": "يُستخدم بدلاً من الاسم الأول أعلاه عند إنشاء قصة باللغة العربية.",
+      "arabicLastName": "اسم العائلة (AR، اختياري) [NEEDS NATIVE REVIEW]",
       "pronoun": "الضمير",
       "pronounOptions": {
         "she": "هي",

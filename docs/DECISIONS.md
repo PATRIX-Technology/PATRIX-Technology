@@ -150,22 +150,36 @@ should keep spot-checking real output.
 Still verify against a physical print proof, not just a PDF viewer,
 before any real print run.
 
-**Arabic name field for children.** Baking captions into the
+**Bilingual name fields for children.** Baking captions into the
 illustration (above) surfaced a related issue: a child's name is often
 entered in Latin script (`children.first_name`, e.g. "Hala") even for a
 child whose stories are generated in Arabic, so it sat oddly mid-sentence
-in otherwise-Arabic prose. `children.arabic_name` (migration `0014`) is
-an optional column for the Arabic spelling; `createStoryAction`
-(`src/lib/actions/stories.ts`) uses it instead of `first_name` when the
-chosen template's locale is `ar`, falling back to `first_name` when it's
-unset — so this is purely additive, no existing child needs updating.
-The name is baked into a story's text/captions once at creation time
-(via `renderTemplate`'s `child_name` token), not looked up dynamically
+in otherwise-Arabic prose. Migration `0014_child_bilingual_names.sql`
+adds three optional columns: `last_name` and `arabic_last_name` (family
+name in each language, record-keeping only — never used in story
+generation), and `arabic_first_name` (the Arabic spelling of the child's
+first name). `createStoryAction` (`src/lib/actions/stories.ts`) and the
+PDF filename/subject logic (`src/lib/domain/story-pdf.ts`) use
+`arabic_first_name` instead of `first_name` when the chosen template's
+locale is `ar`, falling back to `first_name` when it's unset — so this
+is purely additive, no existing child needs updating. The name is baked
+into a story's text/captions once at creation time (via
+`renderTemplate`'s `child_name` token), not looked up dynamically
 afterwards, so it only affects stories created after a child's Arabic
-name is set. `docs/NEEDS_FROM_ME.md`-style note: this migration hasn't
-been run against the live database from this session (no network path
-to Supabase from this sandbox) — run `supabase/migrations/0014_child_
-arabic_name.sql` before relying on the new field in production.
+first name is set. All four fields (`first_name`, `last_name`,
+`arabic_first_name`, `arabic_last_name`) are editable after creation via
+the new `updateChildAction` (`src/lib/actions/children.ts`) — the add
+and edit dialogs (`AddChildDialog`, `EditChildDialog`) both wrap a shared
+`ChildForm` component so the two flows can't drift apart. The children
+list page shows all four as separate columns. `docs/NEEDS_FROM_ME.md`-
+style note: this migration hasn't been run against the live database
+from this session (no network path to Supabase from this sandbox) — run
+`supabase/migrations/0014_child_bilingual_names.sql` before relying on
+any of these fields in production. (This migration was renamed/rewritten
+in place from an earlier, narrower `0014_child_arabic_name.sql` that
+added a single `arabic_name` column — since that version was never
+actually applied anywhere, it was safe to widen in place rather than
+layer a second migration on top.)
 
 **PDF font weights.** `src/lib/providers/pdf/fonts.ts` now embeds a
 single static instance per font — `Inter-Regular-Static.ttf` (wght=400),

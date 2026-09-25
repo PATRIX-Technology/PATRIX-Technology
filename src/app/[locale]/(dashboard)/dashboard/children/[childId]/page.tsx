@@ -7,6 +7,7 @@ import { Card, CardTitle } from '@/components/ui/Card';
 import { AvatarPreview } from '@/components/children/AvatarPreview';
 import { ConsentPanel } from '@/components/children/ConsentPanel';
 import { PhotoUpload } from '@/components/children/PhotoUpload';
+import { EditChildDialog } from '@/components/children/EditChildDialog';
 import { CreateStoryForm } from '@/components/stories/CreateStoryForm';
 import { parseAvatarConfig } from '@/lib/domain/avatar';
 import { getSignedAssetUrl } from '@/lib/domain/storage';
@@ -84,13 +85,31 @@ export default async function ChildDetailPage({
     <div className="space-y-6">
       <div className="flex items-center gap-4">
         <AvatarPreview config={parseAvatarConfig(child.avatar_config)} className="h-16 w-16" />
-        <div>
+        <div className="flex-1">
           <h1 className="font-display text-2xl text-ink-900">
-            {child.first_name}
-            {child.arabic_name && <span dir="rtl" className="ms-2 text-ink-500">({child.arabic_name})</span>}
+            {[child.first_name, child.last_name].filter(Boolean).join(' ')}
+            {child.arabic_first_name && (
+              <span dir="rtl" className="ms-2 text-ink-500">
+                ({[child.arabic_first_name, child.arabic_last_name].filter(Boolean).join(' ')})
+              </span>
+            )}
           </h1>
           <p className="text-sm text-ink-500">{child.class_name ?? 'No class assigned'}</p>
         </div>
+        <EditChildDialog
+          locale={params.locale}
+          childId={child.id}
+          defaultValues={{
+            firstName: child.first_name,
+            lastName: child.last_name,
+            arabicFirstName: child.arabic_first_name,
+            arabicLastName: child.arabic_last_name,
+            pronoun: child.pronoun,
+            className: child.class_name,
+            preferredLanguage: child.preferred_language,
+            avatarConfig: parseAvatarConfig(child.avatar_config),
+          }}
+        />
       </div>
 
       {context.tenantType === 'family' ? (

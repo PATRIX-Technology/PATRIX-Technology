@@ -82,7 +82,7 @@ export async function renderApprovedStoryPdf(
 
   const preflight = await runPreflight({
     pdfBytes,
-    expectedPageCount: 2 + (pages ?? []).length,
+    expectedPageCount: (pages ?? []).length,
     locale: story.locale,
     pageTexts: (pages ?? []).map((p) => p.text),
     missingAssetPageNumbers,

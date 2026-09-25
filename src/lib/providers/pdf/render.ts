@@ -1,9 +1,10 @@
 import 'server-only';
 import fontkit from '@pdf-lib/fontkit';
 import { PDFDocument, PDFName, PDFNumber, PDFArray, rgb } from 'pdf-lib';
+import type { PDFFont, PDFPage } from 'pdf-lib';
 import { embedFonts } from './fonts';
-import { shapeArabicForPdf, containsArabic } from './arabic-shaping';
-import { drawFreeFloatingBanner, drawFlatBottomBanner } from './banners';
+import { shapeArabicForPdf, containsArabic, splitIntoDirectionRuns } from './arabic-shaping';
+import { drawFlatBottomBanner } from './banners';
 import { BLEED_PT, PAGE_HEIGHT_PT, PAGE_WIDTH_PT, TRIM_WIDTH_PT } from './geometry';
 import type { AppLocale } from '@/types/database';
 
@@ -18,25 +19,23 @@ export interface RenderStoryPdfInput {
   title: string;
   childName: string;
   organisationName: string;
-  organisationLogoBytes?: Uint8Array;
   locale: AppLocale;
   pages: RenderPageInput[];
-  dedication?: string;
 }
 
-const BRAND_COLOR = rgb(0.055, 0.478, 0.322); // lagoon-600
 const INK_COLOR = rgb(0.141, 0.11, 0.086);
-// Scalloped-banner palette, tuned to match the reference sample output: a
-// warm cream "sticker" for the repeating title banner and a soft sage band
-// for each page's caption — see docs/DECISIONS.md "PDF banner-style layout".
-const TITLE_BANNER_COLOR = rgb(0.988, 0.965, 0.914);
+// A soft sage caption band, matching the reference sample output — see
+// docs/DECISIONS.md "PDF banner-style layout".
 const CAPTION_BANNER_COLOR = rgb(0.855, 0.914, 0.851);
 
 /**
- * Renders a full print-ready PDF: cover, dedication, one page per story
- * page, and a closing brand page. Sets MediaBox to the bleed-inclusive
- * page size and TrimBox/BleedBox explicitly (required by print vendors),
- * per the A5 / 300 DPI / 3mm bleed spec in the product brief.
+ * Renders a full print-ready PDF: one page per story page, illustration
+ * full-bleed with its caption in a band at the bottom — no cover,
+ * dedication, or repeating title banner (removed per pilot feedback: they
+ * read as filler, and repeating the English theme title on every single
+ * page added nothing). Sets MediaBox to the bleed-inclusive page size and
+ * TrimBox/BleedBox explicitly (required by print vendors), per the A5 /
+ * 300 DPI / 3mm bleed spec in the product brief.
  */
 export async function renderStoryPdf(input: RenderStoryPdfInput): Promise<Uint8Array> {
   const pdfDoc = await PDFDocument.create();
@@ -54,67 +53,14 @@ export async function renderStoryPdf(input: RenderStoryPdfInput): Promise<Uint8A
     return page;
   };
 
-  // --- Cover page --------------------------------------------------------
-  const cover = addPage();
-  drawCenteredText(cover, input.title, {
-    font: isRtl ? fonts.arabicRegular : fonts.latinDisplay,
-    size: 30,
-    y: PAGE_HEIGHT_PT / 2 + 40,
-    color: BRAND_COLOR,
-    rtl: isRtl,
-  });
-  drawCenteredText(cover, input.childName, {
-    font: isRtl ? fonts.arabicRegular : fonts.latinDisplay,
-    size: 22,
-    y: PAGE_HEIGHT_PT / 2 - 10,
-    color: INK_COLOR,
-    rtl: isRtl,
-  });
-  if (input.organisationLogoBytes) {
-    const logo = await embedRasterImage(pdfDoc, input.organisationLogoBytes);
-    const logoWidth = 90;
-    const logoHeight = (logo.height / logo.width) * logoWidth;
-    cover.drawImage(logo, {
-      x: PAGE_WIDTH_PT / 2 - logoWidth / 2,
-      y: BLEED_PT + 30,
-      width: logoWidth,
-      height: logoHeight,
-    });
-  }
-
-  // --- Dedication page -----------------------------------------------------
-  const dedication = addPage();
-  const dedicationText =
-    input.dedication ??
-    (isRtl
-      ? `صُممت هذه القصة خصيصًا لـ${input.childName} من ${input.organisationName}.`
-      : `This story was created especially for ${input.childName} by ${input.organisationName}.`);
-  drawCenteredText(dedication, dedicationText, {
-    font: isRtl ? fonts.arabicRegular : fonts.latinRegular,
-    size: 16,
-    y: PAGE_HEIGHT_PT / 2,
-    color: INK_COLOR,
-    rtl: isRtl,
-    maxWidth: TRIM_WIDTH_PT - 60,
-  });
-
-  // --- Story pages -----------------------------------------------------
-  // Full-bleed illustration with a repeating "sticker" title banner top
-  // and a scalloped pastel caption band bottom, matching the reference
-  // sample output the nursery/parent-facing PDF is designed to resemble —
-  // see docs/DECISIONS.md "PDF banner-style layout".
+  // Full-bleed illustration with a scalloped pastel caption band at the
+  // bottom carrying each page's story text — see docs/DECISIONS.md "PDF
+  // banner-style layout".
   const captionFont = isRtl ? fonts.arabicRegular : fonts.latinRegular;
   const captionSize = 14;
   const captionLineHeight = 20;
   const captionMaxWidth = TRIM_WIDTH_PT - 70;
   const captionBumpRadius = 15;
-
-  const titleFont = isRtl ? fonts.arabicRegular : fonts.latinDisplay;
-  const titleSize = isRtl ? 19 : 17;
-  const titleLineHeight = titleSize * 1.35;
-  const titleBannerWidth = TRIM_WIDTH_PT - 20;
-  const titleMaxWidth = titleBannerWidth - 56;
-  const titleBumpRadius = 13;
 
   for (const storyPage of input.pages) {
     const page = addPage();
@@ -133,50 +79,12 @@ export async function renderStoryPdf(input: RenderStoryPdfInput): Promise<Uint8A
       height: drawHeight,
     });
 
-    // Title banner (repeats every page): height grows with wrapped line
-    // count so a long title + child name never overflows the sticker.
-    // Divides by ARABIC_ADVANCE_WIDTH_FUDGE to match drawCenteredText's own
-    // wrap width exactly, so the pre-measured line count used to size the
-    // banner never drifts from what actually gets drawn inside it.
-    const titleIsArabic = containsArabic(input.title);
-    const titleLines = wrapText(
-      titleIsArabic ? shapeArabicForPdf(input.title) : input.title,
-      titleFont,
-      titleSize,
-      titleIsArabic ? titleMaxWidth / ARABIC_ADVANCE_WIDTH_FUDGE : titleMaxWidth,
-    );
-    const titleBannerHeight = titleLines.length * titleLineHeight + 32;
-    const titleBannerCenterY = PAGE_HEIGHT_PT - BLEED_PT - titleBannerHeight / 2 - 14;
-    drawFreeFloatingBanner(page, {
-      centerX: PAGE_WIDTH_PT / 2,
-      centerY: titleBannerCenterY,
-      width: titleBannerWidth,
-      height: titleBannerHeight,
-      bumpRadius: titleBumpRadius,
-      color: TITLE_BANNER_COLOR,
-      opacity: 0.96,
-    });
-    drawCenteredText(page, input.title, {
-      font: titleFont,
-      size: titleSize,
-      y:
-        titleBannerCenterY +
-        ((titleLines.length - 1) * titleLineHeight) / 2,
-      color: INK_COLOR,
-      rtl: isRtl,
-      maxWidth: titleMaxWidth,
-      lineHeight: titleLineHeight,
-    });
-
     // Caption band (bottom, flush to the page edge): height grows with
     // wrapped line count so the text never collides with the page number.
     const captionIsArabic = containsArabic(storyPage.text);
-    const captionLines = wrapText(
-      captionIsArabic ? shapeArabicForPdf(storyPage.text) : storyPage.text,
-      captionFont,
-      captionSize,
-      captionIsArabic ? captionMaxWidth / ARABIC_ADVANCE_WIDTH_FUDGE : captionMaxWidth,
-    );
+    const captionLines = captionIsArabic
+      ? wrapArabicParagraph(storyPage.text, captionFont, captionSize, captionMaxWidth)
+      : wrapText(storyPage.text, captionFont, captionSize, captionMaxWidth);
     const pageNumberY = BLEED_PT + 10;
     const captionFirstLineY = pageNumberY + 24 + (captionLines.length - 1) * captionLineHeight;
     const captionTopY = captionFirstLineY + captionSize + 22;
@@ -188,22 +96,41 @@ export async function renderStoryPdf(input: RenderStoryPdfInput): Promise<Uint8A
       color: CAPTION_BANNER_COLOR,
       opacity: 0.94,
     });
-    drawCenteredText(page, storyPage.text, {
-      font: captionFont,
-      size: captionSize,
-      y: captionFirstLineY,
-      color: INK_COLOR,
-      rtl: isRtl,
-      maxWidth: captionMaxWidth,
-      lineHeight: captionLineHeight,
+
+    captionLines.forEach((line, index) => {
+      const y = captionFirstLineY - index * captionLineHeight;
+      if (captionIsArabic) {
+        // `line` here is already shaped + reordered — draw it as its own
+        // direction-homogeneous runs, never as one drawText call over the
+        // whole (mixed-direction) line. See splitIntoDirectionRuns's
+        // comment for why.
+        drawShapedLine(page, line, {
+          font: captionFont,
+          size: captionSize,
+          centerX: PAGE_WIDTH_PT / 2,
+          y,
+          color: INK_COLOR,
+        });
+      } else {
+        const width = captionFont.widthOfTextAtSize(line, captionSize);
+        page.drawText(line, {
+          x: PAGE_WIDTH_PT / 2 - width / 2,
+          y,
+          size: captionSize,
+          font: captionFont,
+          color: INK_COLOR,
+        });
+      }
     });
 
-    drawCenteredText(page, String(storyPage.pageNumber), {
-      font: fonts.latinRegular,
-      size: 9,
+    const pageNumberText = String(storyPage.pageNumber);
+    const pageNumberWidth = fonts.latinRegular.widthOfTextAtSize(pageNumberText, 9);
+    page.drawText(pageNumberText, {
+      x: PAGE_WIDTH_PT / 2 - pageNumberWidth / 2,
       y: pageNumberY,
+      size: 9,
+      font: fonts.latinRegular,
       color: INK_COLOR,
-      rtl: false,
     });
   }
 
@@ -231,14 +158,6 @@ async function embedImage(pdfDoc: PDFDocument, bytes: Uint8Array, contentType: s
   return embedFallbackPng(pdfDoc);
 }
 
-async function embedRasterImage(pdfDoc: PDFDocument, bytes: Uint8Array) {
-  try {
-    return await pdfDoc.embedPng(bytes);
-  } catch {
-    return pdfDoc.embedJpg(bytes);
-  }
-}
-
 let fallbackPngCache: Uint8Array | null = null;
 async function embedFallbackPng(pdfDoc: PDFDocument) {
   if (!fallbackPngCache) {
@@ -249,16 +168,6 @@ async function embedFallbackPng(pdfDoc: PDFDocument) {
     fallbackPngCache = Buffer.from(base64, 'base64');
   }
   return pdfDoc.embedPng(fallbackPngCache);
-}
-
-interface DrawTextOptions {
-  font: import('pdf-lib').PDFFont;
-  size: number;
-  y: number;
-  color: ReturnType<typeof rgb>;
-  rtl: boolean;
-  maxWidth?: number;
-  lineHeight?: number;
 }
 
 /**
@@ -276,30 +185,90 @@ interface DrawTextOptions {
  */
 const ARABIC_ADVANCE_WIDTH_FUDGE = 1.2;
 
-function drawCenteredText(page: import('pdf-lib').PDFPage, text: string, options: DrawTextOptions): void {
-  // NOTE: shaping+reordering runs once on the full paragraph, then lines
-  // are split by naive whitespace wrapping. For short story captions (1-3
-  // sentences) this reads correctly, but a fully correct implementation
-  // would re-run bidi reordering per wrapped line. Flagged for native
-  // review + a physical print proof before any real print run — see
-  // docs/DECISIONS.md "Arabic PDF text shaping".
-  const isArabic = options.rtl || containsArabic(text);
-  const displayText = isArabic ? shapeArabicForPdf(text) : text;
-  const widthFudge = isArabic ? ARABIC_ADVANCE_WIDTH_FUDGE : 1;
-  const maxWidth = options.maxWidth ?? TRIM_WIDTH_PT - 60;
-  const lines = wrapText(displayText, options.font, options.size, maxWidth / widthFudge);
-  const lineHeight = options.lineHeight ?? options.size * 1.4;
+/**
+ * Wraps an Arabic paragraph into lines, each ALREADY shaped + bidi-
+ * reordered and ready to hand to drawShapedLine. Deliberately wraps on
+ * the LOGICAL-order words first and only shapes/reorders each finished
+ * line — shaping the whole paragraph once and then splitting it into
+ * lines by whitespace (the previous approach) reorders the paragraph as
+ * a single visual unit, which is wrong the moment it needs more than one
+ * line: reordering must happen per rendered line, not once for the
+ * whole paragraph. See docs/DECISIONS.md "Arabic PDF text shaping".
+ */
+function wrapArabicParagraph(
+  text: string,
+  font: PDFFont,
+  size: number,
+  maxWidth: number,
+): string[] {
+  const shapedWidth = (logical: string) => measureShapedLineWidth(font, size, shapeArabicForPdf(logical));
+  const words = text.split(' ');
+  const lines: string[] = [];
+  let current = '';
 
-  lines.forEach((line, index) => {
-    const width = options.font.widthOfTextAtSize(line, options.size) * widthFudge;
-    page.drawText(line, {
-      x: PAGE_WIDTH_PT / 2 - width / 2,
-      y: options.y - index * lineHeight,
-      size: options.size,
-      font: options.font,
-      color: options.color,
-    });
-  });
+  for (const word of words) {
+    if (shapedWidth(word) > maxWidth) {
+      if (current) {
+        lines.push(shapeArabicForPdf(current));
+        current = '';
+      }
+      let chunk = '';
+      for (const char of word) {
+        const candidate = chunk + char;
+        if (shapedWidth(candidate) > maxWidth && chunk) {
+          lines.push(shapeArabicForPdf(chunk));
+          chunk = char;
+        } else {
+          chunk = candidate;
+        }
+      }
+      current = chunk;
+      continue;
+    }
+
+    const candidate = current ? `${current} ${word}` : word;
+    if (shapedWidth(candidate) > maxWidth && current) {
+      lines.push(shapeArabicForPdf(current));
+      current = word;
+    } else {
+      current = candidate;
+    }
+  }
+  if (current) lines.push(shapeArabicForPdf(current));
+  return lines;
+}
+
+function runWidth(font: PDFFont, size: number, run: { text: string; isArabic: boolean }): number {
+  return font.widthOfTextAtSize(run.text, size) * (run.isArabic ? ARABIC_ADVANCE_WIDTH_FUDGE : 1);
+}
+
+function measureShapedLineWidth(font: PDFFont, size: number, shapedLine: string): number {
+  return splitIntoDirectionRuns(shapedLine).reduce((sum, run) => sum + runWidth(font, size, run), 0);
+}
+
+/**
+ * Draws one already-shaped/reordered Arabic line, centered on centerX.
+ * Splits it into same-script runs and draws each as its OWN `drawText`
+ * call — never the whole (mixed-direction) line in one call — because
+ * pdf-lib's CustomFontEmbedder routes text through fontkit's `layout()`,
+ * which performs its own bidi pass and reverses embedded Latin runs
+ * (a child's name, an organisation name) that shapeArabicForPdf already
+ * placed correctly. A call containing only one script gives fontkit
+ * nothing to "fix". See splitIntoDirectionRuns's comment for how this
+ * was diagnosed.
+ */
+function drawShapedLine(
+  page: PDFPage,
+  shapedLine: string,
+  options: { font: PDFFont; size: number; centerX: number; y: number; color: ReturnType<typeof rgb> },
+): void {
+  const runs = splitIntoDirectionRuns(shapedLine);
+  const totalWidth = runs.reduce((sum, run) => sum + runWidth(options.font, options.size, run), 0);
+  let x = options.centerX - totalWidth / 2;
+  for (const run of runs) {
+    page.drawText(run.text, { x, y: options.y, size: options.size, font: options.font, color: options.color });
+    x += runWidth(options.font, options.size, run);
+  }
 }
 
 function wrapText(text: string, font: import('pdf-lib').PDFFont, size: number, maxWidth: number): string[] {

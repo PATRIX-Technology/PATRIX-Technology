@@ -80,7 +80,7 @@ export async function runPreflight(input: PreflightInput): Promise<PreflightResu
   } else if (pages.length !== input.expectedPageCount) {
     issues.push({
       code: 'PAGE_COUNT_MISMATCH',
-      message: `Expected ${input.expectedPageCount} pages (cover + dedication + story pages), found ${pages.length}.`,
+      message: `Expected ${input.expectedPageCount} pages (one per story page), found ${pages.length}.`,
     });
   }
 

@@ -26,7 +26,7 @@ describe('renderStoryPdf + runPreflight (English)', () => {
 
     const result = await runPreflight({
       pdfBytes,
-      expectedPageCount: 2 + pages.length, // cover + dedication + story pages
+      expectedPageCount: pages.length,
       locale: 'en',
       pageTexts: pages.map((p) => p.text),
       missingAssetPageNumbers: [],
@@ -53,7 +53,46 @@ describe('renderStoryPdf + runPreflight (Arabic)', () => {
 
     const result = await runPreflight({
       pdfBytes,
-      expectedPageCount: 2 + pages.length,
+      expectedPageCount: pages.length,
+      locale: 'ar',
+      pageTexts: pages.map((p) => p.text),
+      missingAssetPageNumbers: [],
+    });
+
+    expect(result.ok).toBe(true);
+  }, 30_000);
+
+  it('renders without throwing when an Arabic caption embeds a Latin name and needs to wrap onto multiple lines', async () => {
+    // Regression case for the real bug: a child's name and an
+    // organisation's name are often Latin even in an Arabic story, and a
+    // caption long enough to wrap used to come out with those names
+    // reversed ("Hala" -> "alaH", "test" -> "tset") — see
+    // splitIntoDirectionRuns's comment in arabic-shaping.ts for the full
+    // diagnosis. This can't assert on rendered glyphs directly (they're
+    // CID-encoded), so the real coverage is tests/unit/arabic-shaping.test.ts
+    // asserting splitIntoDirectionRuns keeps such runs intact — this just
+    // proves the full pipeline still produces a valid, correctly-paginated
+    // PDF for exactly this shape of input.
+    const pages = [
+      {
+        pageNumber: 1,
+        text: 'وقف Hala عند باب test، وهو يمسك حقيبته بقوة. شعرت بالقلق قليلاً.',
+        imageBytes: onePxPng,
+        imageContentType: 'image/png',
+      },
+    ];
+
+    const pdfBytes = await renderStoryPdf({
+      title: 'first day school',
+      childName: 'Hala',
+      organisationName: 'test',
+      locale: 'ar',
+      pages,
+    });
+
+    const result = await runPreflight({
+      pdfBytes,
+      expectedPageCount: pages.length,
       locale: 'ar',
       pageTexts: pages.map((p) => p.text),
       missingAssetPageNumbers: [],
@@ -75,7 +114,7 @@ describe('runPreflight failure modes', () => {
 
     const result = await runPreflight({
       pdfBytes,
-      expectedPageCount: 3,
+      expectedPageCount: 1,
       locale: 'en',
       pageTexts: ['Hello'],
       missingAssetPageNumbers: [1],
@@ -96,7 +135,7 @@ describe('runPreflight failure modes', () => {
 
     const result = await runPreflight({
       pdfBytes,
-      expectedPageCount: 3,
+      expectedPageCount: 1,
       locale: 'en',
       pageTexts: ['Hello مرحبا'],
       missingAssetPageNumbers: [],

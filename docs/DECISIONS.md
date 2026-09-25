@@ -74,14 +74,37 @@ default for a mixed/unspecified-gender group). This default, like all
 Arabic copy, needs native review before it ships to a real family.
 
 **Arabic PDF text shaping.** `pdf-lib`/`fontkit` do not perform Arabic
-contextual shaping or bidi reordering. `src/lib/providers/pdf/arabic-shaping.ts`
-pre-shapes text into Arabic Presentation Forms (`arabic-reshaper`) and
-reorders it into left-to-right visual order (`bidi-js`) before handing it
-to `drawText`. This is correct for a single paragraph; line-wrapping
-currently re-uses one global reordering pass rather than re-shaping per
-wrapped line, which is fine for the short (1-3 sentence) captions this
-platform generates but should be verified against a physical print proof,
-not just a PDF viewer, before any real print run.
+contextual shaping. `src/lib/providers/pdf/arabic-shaping.ts` pre-shapes
+text into Arabic Presentation Forms (`arabic-reshaper`) and reorders it
+into left-to-right visual order (`bidi-js`) before handing it to
+`drawText`. Two real bugs were found and fixed here during the first
+pilot's real testing (both invisible in any automated test until a real
+Arabic sentence with an embedded Latin name — a child's or organisation's
+— needed to wrap onto more than one line):
+
+1. Shaping/reordering ran ONCE on the whole paragraph, then lines were
+   split by naive whitespace wrapping. Reordering is only valid as a
+   per-rendered-line operation; doing it once for a multi-line paragraph
+   is wrong the moment it wraps. Fixed in `render.ts`'s
+   `wrapArabicParagraph`: wrap on the logical-order words first, shape/
+   reorder only the finished line.
+2. Separately, and worse: `pdf-lib`'s `CustomFontEmbedder.encodeText`
+   calls fontkit's own `font.layout()` to turn a string into glyphs, and
+   that call performs its OWN bidi pass on whatever it's given — on top
+   of the reordering `shapeArabicForPdf` already did. A `drawText` call
+   containing both Arabic and an embedded Latin run (e.g. "...Hala عند
+   باب test...") came out with the Latin runs reversed ("alaH", "tset")
+   even though `shapeArabicForPdf` had already placed them correctly —
+   confirmed by rendering to an actual PDF and rasterising it with
+   `pdftoppm`, not just inspecting the string in code. fontkit's bidi
+   pass only has something to "fix" when a single `drawText` call mixes
+   directions, so the fix is `splitIntoDirectionRuns` (arabic-shaping.ts):
+   split a shaped line into same-script runs and draw each run as its
+   own `drawText` call (`render.ts`'s `drawShapedLine`). Regression test:
+   `tests/unit/arabic-shaping.test.ts` "splitIntoDirectionRuns".
+
+Still verify against a physical print proof, not just a PDF viewer,
+before any real print run.
 
 **PDF font weights.** `src/lib/providers/pdf/fonts.ts` now embeds a
 single static instance per font — `Inter-Regular-Static.ttf` (wght=400),
@@ -447,12 +470,25 @@ currently withdraws both together.
 ## PDF banner-style layout
 
 **Decision: story pages moved from "image on top, caption text below" to
-full-bleed illustration with two scalloped banner overlays** — a
-repeating cream title banner at the top and a soft pastel caption band
-flush with the bottom edge — implemented in
-`src/lib/providers/pdf/render.ts` using new shape primitives in
-`src/lib/providers/pdf/banners.ts`. This was done to match a real sample
-PDF output the founder supplied and asked the platform to resemble.
+full-bleed illustration with a scalloped caption band overlay** at the
+bottom edge, implemented in `src/lib/providers/pdf/render.ts` using shape
+primitives in `src/lib/providers/pdf/banners.ts`. This was done to match
+a real sample PDF output the founder supplied and asked the platform to
+resemble.
+
+**Decision: no cover page, no dedication page, no repeating title
+banner.** The original version of this layout also generated a cover
+page (title + child name), a dedication page ("This story was created
+especially for ... by ..."), and a title banner repeating the English
+theme name at the top of every single illustrated page. Removed all
+three per real pilot feedback ("first 2 pages is very poor & not
+needed", "writing first day at school not needed... every single page")
+— they read as filler rather than part of the story. `drawFreeFloating
+Banner` in banners.ts is now unused by render.ts (kept for the caption
+band's flat-bottom variant, `drawFlatBottomBanner`) but left in place in
+case a cover treatment comes back later. `renderStoryPdf`'s page count
+is now exactly `pages.length`, not `2 + pages.length` — `story-pdf.ts`
+and `preflight.ts` were both updated to match.
 
 **Decision: the scalloped/cloud edges are drawn as rows of overlapping
 same-colour circles, not custom SVG bezier/arc paths.** `pdf-lib` does

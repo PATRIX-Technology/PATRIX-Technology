@@ -5,6 +5,7 @@ import { getCurrentTenantContext } from '@/lib/domain/session';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { ClickableRow } from '@/components/ui/ClickableRow';
 import { AddChildDialog } from '@/components/children/AddChildDialog';
 import { CsvImportDialog } from '@/components/children/CsvImportDialog';
 import { AvatarPreview } from '@/components/children/AvatarPreview';
@@ -60,7 +61,11 @@ export default async function ChildrenPage({ params }: { params: { locale: strin
             </thead>
             <tbody>
               {children.map((child) => (
-                <tr key={child.id} className="border-b border-[rgb(var(--color-border))] last:border-0">
+                <ClickableRow
+                  key={child.id}
+                  href={`/${params.locale}/dashboard/children/${child.id}`}
+                  className="border-b border-[rgb(var(--color-border))] last:border-0"
+                >
                   <td className="p-4">
                     <AvatarPreview config={parseAvatarConfig(child.avatar_config)} className="h-10 w-10" />
                   </td>
@@ -86,7 +91,7 @@ export default async function ChildrenPage({ params }: { params: { locale: strin
                       {t(`consentStatus.${child.consent_status}`)}
                     </Badge>
                   </td>
-                </tr>
+                </ClickableRow>
               ))}
             </tbody>
           </table>

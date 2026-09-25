@@ -152,6 +152,7 @@
     "chooseTheme": "Choose a theme",
     "chooseChild": "Choose a child",
     "generate": "Generate story",
+    "createFailedTitle": "Couldn't create the story",
     "status": {
       "DRAFT": "Draft",
       "QUEUED": "Queued",
@@ -165,8 +166,15 @@
     "approve": "Approve",
     "reject": "Reject",
     "regeneratePage": "Regenerate this page",
+    "regenerateStartedTitle": "Regenerating this page",
+    "regenerateStartedBody": "We'll swap in the new illustration as soon as it's ready - this page updates on its own.",
+    "regenerateFailedTitle": "Couldn't start regeneration",
     "downloadPdf": "Download PDF",
+    "downloadFailedTitle": "Couldn't download the PDF",
+    "downloadFailedBody": "The file isn't ready yet, or something went wrong. Try again in a moment.",
     "bulkZip": "Download all stories (ZIP)",
+    "bulkZipFailedTitle": "Couldn't download the ZIP",
+    "bulkZipFailedBody": "The file isn't ready yet, or something went wrong. Try again in a moment.",
     "storyCount": "{count} stories",
     "noChildName": "Unnamed child"
   },

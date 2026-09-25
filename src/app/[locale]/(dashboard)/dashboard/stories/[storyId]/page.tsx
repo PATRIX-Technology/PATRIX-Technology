@@ -5,9 +5,9 @@ import { getCurrentTenantContext } from '@/lib/domain/session';
 import { getSignedAssetUrls } from '@/lib/domain/storage';
 import { Card, CardTitle } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
-import { Button } from '@/components/ui/Button';
 import { ApprovalActions } from '@/components/stories/ApprovalActions';
 import { RegeneratePageButton } from '@/components/stories/RegeneratePageButton';
+import { DownloadButton } from '@/components/stories/DownloadButton';
 import { AutoRefresh } from '@/components/stories/AutoRefresh';
 import type { StoryStatus } from '@/types/database';
 
@@ -64,9 +64,14 @@ export default async function StoryDetailPage({
         </div>
         {status === 'APPROVED' && (
           <div className="flex gap-2">
-            <a href={`/api/stories/${story.id}/pdf`} download>
-              <Button>{t('downloadPdf')}</Button>
-            </a>
+            <DownloadButton
+              href={`/api/stories/${story.id}/pdf`}
+              fallbackFileName={`${childName}-${story.theme_key}.pdf`}
+              failedTitle={t('downloadFailedTitle')}
+              failedBody={t('downloadFailedBody')}
+            >
+              {t('downloadPdf')}
+            </DownloadButton>
           </div>
         )}
       </div>

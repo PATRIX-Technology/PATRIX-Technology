@@ -49,3 +49,15 @@ the marker convention started) and is included here for completeness,
 not because it changed:
 
 - [ ] `children.form.arabicFirstNameHint`: يُستخدم بدلاً من الاسم الأول أعلاه عند إنشاء قصة باللغة العربية.
+
+Added with the toast-notification system (never carried a visible
+suffix - written straight into this list instead):
+
+- [ ] `stories.regenerateStartedTitle`: جارٍ إعادة إنشاء هذه الصفحة
+- [ ] `stories.regenerateStartedBody`: سنستبدلها بالرسمة الجديدة فور جاهزيتها — تتحدّث هذه الصفحة تلقائيًا.
+- [ ] `stories.regenerateFailedTitle`: تعذّر بدء إعادة الإنشاء
+- [ ] `stories.downloadFailedTitle`: تعذّر تحميل ملف PDF
+- [ ] `stories.downloadFailedBody`: الملف غير جاهز بعد، أو حدث خطأ ما. حاول مرة أخرى بعد قليل.
+- [ ] `stories.bulkZipFailedTitle`: تعذّر تحميل ملف ZIP
+- [ ] `stories.bulkZipFailedBody`: الملف غير جاهز بعد، أو حدث خطأ ما. حاول مرة أخرى بعد قليل.
+- [ ] `stories.createFailedTitle`: تعذّر إنشاء القصة

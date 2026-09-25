@@ -9,24 +9,29 @@ professional advisor.
 
 ## Brand
 
-**Decision: working name "Khayali" (خيالي — "my story").**
-Chosen for: warm, immediately meaningful in both English and Arabic,
-short, easy to say, no obvious negative connotation in Gulf Arabic. This
-is a **working name only**. No trademark search, domain availability
-check, or clearance has been performed — see `docs/NEEDS_FROM_ME.md`.
-Never state or imply trademark uniqueness before that clearance is done.
+**Decision: renamed from "Hikayti" to "Khayali" (خيالي — "my
+imagination").** The original working name "Hikayti" (حكايتي — "my
+story") turned out to be a near-identical transliteration of an
+existing Dubai personalised-storybook company, "Hikayati" — same
+product, same city, same category, not a coincidental near-miss.
+"Khayali" was checked against the same product category (and against
+"Qissati", a closer literal translation that turned out to already be
+used by multiple competing AI-storybook apps) before adopting it. This
+is still a **working name**, not a cleared one: no formal UAE/GCC
+trademark search or domain-availability check has been done — see
+`docs/NEEDS_FROM_ME.md`. Never state or imply trademark uniqueness
+before that clearance happens.
 
-**Decision: brand palette — lagoon teal, saffron, coral, warm ink/cream
-neutrals** (see `tailwind.config.ts`). Chosen to read as premium and
-culturally warm without being generic "startup blue" or childish
-primary-colour clip art, per the brief's explicit instruction to avoid
-both.
+**Decision: dark-first design system** — see "Dark-first design
+system" below for the full palette and rationale.
 
-**Decision: typography — Fraunces (display), Inter (Latin body), Noto
-Kufi Arabic (Arabic UI) / Noto Naskh Arabic (Arabic print body).** All
-three are OFL-licensed, self-hostable, and vendored directly into the
-repo (`assets/fonts/`) rather than loaded from a CDN at runtime, so PDF
-generation and the web app use the exact same font files. See
+**Decision: typography — Fraunces (display), Manrope (web UI body),
+Noto Kufi Arabic (Arabic UI).** All are OFL-licensed and loaded via
+`next/font/google`. The *printed PDF* uses a separate, deliberately
+unrelated set of vendored/embedded fonts — Inter (Latin body) and Noto
+Naskh Arabic (Arabic print body), self-hosted from `assets/fonts/` so
+generation never depends on a CDN at runtime — chosen independently for
+print legibility, not to match the web UI's chrome. See
 `docs/LICENSES.md`.
 
 ## Product / architecture
@@ -655,6 +660,91 @@ real PDF viewer, not just structurally.** Added as a note to
 `docs/TEST_CHECKLIST.md` — none of the 146 automated tests would have
 caught either bug above, and both were only found by actually opening a
 rendered PDF.
+
+**Dark-first design system.** The app shipped with a light-default theme
+and an unused `data-theme='dark'` CSS override that nothing ever set —
+so in practice it was always light. Per explicit founder direction, dark
+is now the only theme: `src/styles/globals.css`'s bare `:root` carries
+the dark palette directly (deep indigo `#14152B` background, not flat
+black/grey), with `:root[data-theme='light']` kept as an unused escape
+hatch for a possible future toggle or print view. The `ink`/`lagoon`/
+`saffron`/`coral` Tailwind ramps (`tailwind.config.ts`) were recalibrated
+against every actual call site in the codebase, not abstractly inverted:
+`ink` runs light-text-at-900/subtle-bg-tint-at-50 (the opposite of a
+conventional Tailwind ramp) because that's what its two real usage
+patterns — heading text and hover/active background tints — need on a
+dark surface; `lagoon`/`saffron`/`coral` became teal/gold/rose brand
+accents, picked to still work as solid button fills *and* as inline
+text-on-dark-background link colour at the same shade (600), which a
+generic light-mode-oriented ramp doesn't guarantee. `Badge` tones and
+`DashboardNav`'s active-link state were the only two spots still using a
+literal light-mode `bg-X-100 text-X-800` pair; both were fixed to a
+translucent-dark pattern (`bg-X-900/50 text-X-300`) instead.
+
+Two genuine, pre-existing bugs were only found because this work
+involved actually screenshotting the app (via Playwright + a locally
+launched Chromium) rather than reading the code and assuming it was
+correct — worth doing again for any future layout-level change:
+
+1. The marketing hero's two-column grid had no `min-w-0` on its text
+   column. In English this never mattered (the heading happened to be
+   short enough to wrap anyway), but the longer Arabic heading hit CSS
+   grid's default `min-width: auto` behaviour — a grid item won't shrink
+   below its content's max-content width unless told to — and blew the
+   whole page out to ~1600px+ instead of wrapping. Fixed by adding
+   `min-w-0` to the flex column and a `max-w-xl` to the heading.
+2. The global `.skip-link` accessibility CSS hid itself with
+   `left: -9999px`, the classic technique. `left` is a *physical*
+   property, not a logical one, and RTL scroll containers extend
+   leftward from 0 — so under `dir="rtl"` that -9999px became ~9999px of
+   real, scrollable overflow, inflating the whole document's
+   `scrollWidth` to over 11,000px (confirmed by walking the DOM for the
+   widest element in a headless browser). Switched to a `clip-path`-based
+   hidden technique (1px box, clipped, not offset) that has zero layout
+   footprint in either direction — the modern accessible-hidden pattern,
+   and one that was overdue regardless of the RTL bug.
+
+Also surfaced by that same screenshot pass: `src/messages/ar.json`
+strings marked `[NEEDS NATIVE REVIEW]` were carrying that suffix
+*inside the rendered string value*, so it was literally visible on the
+live Arabic marketing page to real users — worse than the problem the
+marker was meant to flag. Stripped the suffix from all 28 affected
+strings; the same tracking now lives, unrendered, in
+`docs/ar/NATIVE_REVIEW_CHECKLIST.md`.
+
+**Toast notifications replace inline red error text.** `ToastProvider`
+(`src/components/ui/Toast.tsx`), mounted once in the root layout inside
+`NextIntlClientProvider`, replaces two patterns: a raw `<a href
+download>` to an API route (which gives zero feedback on failure — the
+browser either does nothing or navigates the tab to a raw error
+response) and ad-hoc `{state.error && <p className="text-coral-600">}`
+banners for action results. `DownloadButton`
+(`src/components/stories/DownloadButton.tsx`) fetches the file itself,
+checks `response.ok`, and only then triggers a client-side blob
+download — a failure surfaces as a toast instead of a broken
+navigation. Per-field form validation messages next to an input are
+*not* converted to toasts — that's expected, standard UX, not the
+"stupid error redirect" pattern the founder flagged — only page/action-
+level failures (download, regenerate, create-story) are.
+
+**Clickable table rows.** `ClickableRow` (`src/components/ui/
+ClickableRow.tsx`) wraps a `<tr>` with a click/keyboard handler and a
+visible hover/active background tint, used on the Kids and Stories list
+pages. Previously only the one linked cell (a child or story's name)
+was interactive; the rest of the row gave no indication a click would
+do anything. The underlying `<Link>` in the name cell is kept for
+standard link semantics (keyboard focus, middle-click-to-open-in-new-
+tab); `ClickableRow` only adds the "click anywhere in the row" and
+visual-feedback behaviour on top, and explicitly ignores clicks that
+land on a real `<a>`/`<button>` inside the row so it never hijacks one.
+
+**Story-theme picker: illustrated cards, not a radio-button list.**
+`CreateStoryForm` now renders each available theme as a card (a small
+line-icon per `theme_key`, title, a checkmark on the selected one) built
+from a visually-hidden native `<input type="radio">` plus Tailwind's
+`has-[:checked]`/`peer-checked` variants — so it's still a real radio
+group for keyboard/screen-reader users, just styled as cards instead of
+a checklist.
 
 ## Not yet built (explicitly out of scope for this build session)
 

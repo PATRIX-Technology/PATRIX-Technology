@@ -152,6 +152,7 @@
     "chooseTheme": "اختر موضوعًا",
     "chooseChild": "اختر طفلًا",
     "generate": "إنشاء القصة",
+    "createFailedTitle": "تعذّر إنشاء القصة",
     "status": {
       "DRAFT": "مسودة",
       "QUEUED": "في قائمة الانتظار",
@@ -165,8 +166,15 @@
     "approve": "اعتماد",
     "reject": "رفض",
     "regeneratePage": "إعادة إنشاء هذه الصفحة",
+    "regenerateStartedTitle": "جارٍ إعادة إنشاء هذه الصفحة",
+    "regenerateStartedBody": "سنستبدلها بالرسمة الجديدة فور جاهزيتها — تتحدّث هذه الصفحة تلقائيًا.",
+    "regenerateFailedTitle": "تعذّر بدء إعادة الإنشاء",
     "downloadPdf": "تحميل PDF",
+    "downloadFailedTitle": "تعذّر تحميل ملف PDF",
+    "downloadFailedBody": "الملف غير جاهز بعد، أو حدث خطأ ما. حاول مرة أخرى بعد قليل.",
     "bulkZip": "تحميل جميع القصص (ZIP)",
+    "bulkZipFailedTitle": "تعذّر تحميل ملف ZIP",
+    "bulkZipFailedBody": "الملف غير جاهز بعد، أو حدث خطأ ما. حاول مرة أخرى بعد قليل.",
     "storyCount": "{count} قصص",
     "noChildName": "طفل بلا اسم"
   },

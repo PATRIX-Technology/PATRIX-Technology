@@ -5,6 +5,8 @@ import { getCurrentTenantContext } from '@/lib/domain/session';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { DownloadButton } from '@/components/stories/DownloadButton';
+import { ClickableRow } from '@/components/ui/ClickableRow';
 import type { StoryStatus } from '@/types/database';
 
 const STATUS_TONE: Record<StoryStatus, 'neutral' | 'warning' | 'success' | 'danger' | 'info'> = {
@@ -57,12 +59,16 @@ export default async function StoriesPage({ params }: { params: { locale: string
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <h1 className="font-display text-2xl text-ink-900">{t('title')}</h1>
         {Boolean(approvedCount) && (
-          <a
+          <DownloadButton
             href="/api/stories/export-zip"
-            className="focus-ring rounded-lg border border-[rgb(var(--color-border))] px-3 py-1.5 text-xs font-medium text-ink-600 hover:bg-ink-100"
+            fallbackFileName="stories.zip"
+            failedTitle={t('bulkZipFailedTitle')}
+            failedBody={t('bulkZipFailedBody')}
+            variant="secondary"
+            size="sm"
           >
             {t('bulkZip')}
-          </a>
+          </DownloadButton>
         )}
       </div>
       {!stories || stories.length === 0 ? (
@@ -91,7 +97,11 @@ export default async function StoriesPage({ params }: { params: { locale: string
                   </thead>
                   <tbody>
                     {folder.stories.map((story) => (
-                      <tr key={story.id} className="border-b border-[rgb(var(--color-border))] last:border-0">
+                      <ClickableRow
+                        key={story.id}
+                        href={`/${params.locale}/dashboard/stories/${story.id}`}
+                        className="border-b border-[rgb(var(--color-border))] last:border-0"
+                      >
                         <td className="p-4">
                           <Link
                             href={`/${params.locale}/dashboard/stories/${story.id}`}
@@ -106,7 +116,7 @@ export default async function StoriesPage({ params }: { params: { locale: string
                             {t(`status.${story.status}`)}
                           </Badge>
                         </td>
-                      </tr>
+                      </ClickableRow>
                     ))}
                   </tbody>
                 </table>

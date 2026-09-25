@@ -6,6 +6,7 @@ import type { ReactNode } from 'react';
 import { isLocale, localeDirection, locales } from '@/i18n/config';
 import { notFound } from 'next/navigation';
 import '../../styles/globals.css';
+import { ToastProvider } from '@/components/ui/Toast';
 
 const display = Fraunces({
   subsets: ['latin'],
@@ -63,7 +64,9 @@ export default async function LocaleLayout({
           Skip to main content
         </a>
         <NextIntlClientProvider messages={messages}>
-          <div id="main-content">{children}</div>
+          <ToastProvider>
+            <div id="main-content">{children}</div>
+          </ToastProvider>
         </NextIntlClientProvider>
       </body>
     </html>

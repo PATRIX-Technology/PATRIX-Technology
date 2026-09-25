@@ -80,7 +80,8 @@ into left-to-right visual order (`bidi-js`) before handing it to
 `drawText`. Two real bugs were found and fixed here during the first
 pilot's real testing (both invisible in any automated test until a real
 Arabic sentence with an embedded Latin name — a child's or organisation's
-— needed to wrap onto more than one line):
+— needed to wrap onto more than one line). A third was found once #2's
+fix (drawing each run separately) was in place:
 
 1. Shaping/reordering ran ONCE on the whole paragraph, then lines were
    split by naive whitespace wrapping. Reordering is only valid as a
@@ -102,6 +103,22 @@ Arabic sentence with an embedded Latin name — a child's or organisation's
    split a shaped line into same-script runs and draw each run as its
    own `drawText` call (`render.ts`'s `drawShapedLine`). Regression test:
    `tests/unit/arabic-shaping.test.ts` "splitIntoDirectionRuns".
+3. Drawing runs separately means each run's start position depends on
+   the PREVIOUS run's measured width being right — and
+   `ARABIC_ADVANCE_WIDTH_FUDGE` (below #2's fix, this was 1.2, based on
+   an earlier ~1.15x measurement) under-corrected badly enough that an
+   Arabic run right before a Latin run (e.g. "...كوب الألوان بالخطأ في
+   test...") visibly overlapped it — the next run started before the
+   previous one's real ink had finished. Re-measured directly: rendered
+   two sample runs to an actual PDF, rasterised with `pdftoppm`, and
+   pixel-measured the real ink extent against pdf-lib's reported width
+   — came out at 1.42x and 1.39x, not ~1.15x. Bumped the constant to
+   1.45 (a little headroom above the measured ~1.4x). This is exactly
+   the kind of defect that only shows up by rendering to a real page and
+   looking at it, never by inspecting strings or running preflight
+   (preflight has no notion of visual glyph position) — see
+   `render.ts`'s `ARABIC_ADVANCE_WIDTH_FUDGE` comment for the exact
+   pixel measurements.
 
 Still verify against a physical print proof, not just a PDF viewer,
 before any real print run.

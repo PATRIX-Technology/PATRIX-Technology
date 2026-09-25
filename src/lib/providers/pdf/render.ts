@@ -171,19 +171,26 @@ async function embedFallbackPng(pdfDoc: PDFDocument) {
 }
 
 /**
- * `PDFFont.widthOfTextAtSize` measures Arabic presentation-form/combining
- * text roughly 15% narrower than these fonts actually render in real PDF
- * viewers (verified against both MuPDF and Chromium's PDFium — the same
- * string's rendered bounding box came out ~1.15x pdf-lib's reported width;
- * Latin text showed no such gap). Root cause not fully pinned down (most
- * likely how pdf-lib derives per-glyph advance widths for combining-mark
- * codepoints vs. what it writes into the PDF's own CID width array); this
- * factor is a deliberate safety margin so wrapping/centering stay correct
- * — and Arabic text never clips past the trim edge — without depending on
- * that root cause being fixed. See docs/DECISIONS.md "Arabic PDF text
- * shaping".
+ * `PDFFont.widthOfTextAtSize` under-reports Arabic presentation-form
+ * text's real rendered width — re-measured directly by rendering runs
+ * to an actual PDF, rasterising with pdftoppm, and pixel-measuring the
+ * real ink extent against pdf-lib's reported width: two sample runs
+ * came out at 1.42x and 1.39x, not the ~1.15x an earlier (apparently
+ * looser) measurement had found. 1.2x was too small once runs are
+ * drawn as separate drawText calls and positioned relative to each
+ * other (drawShapedLine) — every run's under-measurement now
+ * compounds into the next run's start position instead of being
+ * absorbed by one drawText call laying out a whole line itself, so an
+ * Arabic run immediately before a Latin run (a child's or
+ * organisation's name) visibly overlapped it. Root cause of the gap
+ * itself still not pinned down (most likely how pdf-lib derives
+ * per-glyph advance widths for combining-mark codepoints vs. what it
+ * writes into the PDF's own CID width array); this factor is a
+ * deliberate safety margin — with a little headroom above the ~1.4x
+ * measured — so runs never overlap without depending on that root
+ * cause being fixed. See docs/DECISIONS.md "Arabic PDF text shaping".
  */
-const ARABIC_ADVANCE_WIDTH_FUDGE = 1.2;
+const ARABIC_ADVANCE_WIDTH_FUDGE = 1.45;
 
 /**
  * Wraps an Arabic paragraph into lines, each ALREADY shaped + bidi-

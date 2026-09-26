@@ -1439,14 +1439,30 @@ needs dual-form conjugation this file doesn't otherwise use. Left as a
 known follow-up rather than risking a rushed fix to something nobody
 reported.
 
-**Not covered by this fix**: a story already generated before this
-change (e.g. the founder's original "Bisan" story) keeps its old,
-wrong baked-in page text and illustration — the template fix only
-applies to *new* stories generated after it. The existing "regenerate
-this page" feature (`src/components/stories/RegeneratePageButton.tsx`)
-re-runs generation for a single page against the current template, so
-it's the fix for any specific already-generated page a family wants
-corrected.
+**Follow-up: fixing every already-generated Arabic story, not just
+new ones.** A story already generated before this change keeps its
+old, wrong `story_pages.text` — and for Arabic, that wrong text is
+also already baked into the illustration's pixels (Gemini is asked to
+render the exact caption directly into the image itself; see "Arabic
+captions baked into the illustration" above), so correcting the text
+column alone would leave the picture still showing the old wrong
+caption. Two changes:
+- `regeneratePageAction` (`src/lib/actions/stories.ts`) now
+  re-renders the page's caption from the *current* live template
+  before queueing the image job, instead of reusing whatever text was
+  stored at the story's original creation time — so "Regenerate this
+  page" self-heals a page against future template fixes too, not just
+  this one. Best-effort: any lookup failure falls through to
+  regenerating with the existing text rather than blocking the action.
+- Added `scripts/resync-arabic-story-text.ts`
+  (`npm run resync-arabic-story-text`, dry-run by default, `--apply`
+  to write) — a one-off migration that does the same recompute-and-
+  compare across *every* Arabic story, not just one page at a time,
+  and queues a re-generation job for each page whose text actually
+  changed. Reports an estimated regeneration cost before anything is
+  applied, since each queued job costs real money once a worker picks
+  it up (if real, non-mock generation is on) — see
+  `docs/NEEDS_FROM_ME.md` item 9a for the exact commands.
 
 **What this is not**: a substitute for the native Arabic review this
 repo has flagged as outstanding since the start (see

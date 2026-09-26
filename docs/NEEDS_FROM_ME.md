@@ -210,26 +210,48 @@ else has already been built and is documented in `docs/HANDOFF.md`.
    design system" for why that changed.
 
 9a. **Push the Arabic story-template grammar fix to your live Supabase
-   project, then regenerate the "Bisan" page you flagged.** You caught
-   a real bug: several Arabic story templates used a hardcoded
-   masculine verb/pronoun for the child instead of one that changes
-   with the child's actual gender ("قالت بيسان وهو ينظر" instead of
-   "وهي تنظر" for a girl). I found and fixed about 30 instances of this
-   across all 6 themes — see `docs/DECISIONS.md` "Arabic
-   gender-agreement audit of the story templates". Two things this
-   needs from you, since I have no network access to your Supabase
-   project from here:
-   - Run `npm run db:seed` from a machine with your `.env.local`
-     filled in (same file that has `SUPABASE_SERVICE_ROLE_KEY`) — this
-     upserts the corrected `supabase/seed/templates.json` over the
-     live `story_theme_templates` rows by `(theme_key, locale)`, so it
-     only touches the story templates, nothing else. Safe to re-run
-     any time.
-   - The Bisan story you already generated keeps its old, wrong page
-     1 text and illustration — the template fix only affects stories
-     generated *after* the reseed. Open that story and use the
-     "Regenerate this page" button on page 1 to redo it against the
-     corrected template.
+   project, then fix every already-generated Arabic story, not just
+   "Bisan."** You caught a real bug: several Arabic story templates
+   used a hardcoded masculine verb/pronoun for the child instead of one
+   that changes with the child's actual gender ("قالت بيسان وهو ينظر"
+   instead of "وهي تنظر" for a girl). I found and fixed about 30
+   instances of this across all 6 themes — see `docs/DECISIONS.md`
+   "Arabic gender-agreement audit of the story templates". I have no
+   network access to your Supabase project from here, so this needs
+   three commands from you, run in order, from a terminal open in the
+   project folder on a computer that has your real `.env.local` (the
+   one with `SUPABASE_SERVICE_ROLE_KEY` filled in) — if that's not a
+   computer you use, open a Claude Code session on one that is and
+   paste it this exact list:
+
+   1. `npm run db:seed` — pushes the corrected templates
+      (`supabase/seed/templates.json`) to your live database. Only
+      touches story templates, nothing else. Safe to re-run any time.
+   2. `npm run resync-arabic-story-text` — a **dry run**: scans every
+      Arabic story already generated, recomputes what its caption text
+      *should* say now that the templates are fixed, and prints exactly
+      what would change (story by story, old text vs. new text) plus
+      how many images would need to be redrawn and what that would
+      cost. It changes nothing yet — read the report first.
+   3. `npm run resync-arabic-story-text -- --apply` — once the report
+      in step 2 looks right, this actually applies it: corrects the
+      stored caption text for every affected page and queues each one
+      for its illustration to be redrawn with the corrected caption
+      (Arabic captions are baked directly into the illustration by
+      Gemini, not drawn separately — see docs/DECISIONS.md "Arabic
+      captions baked into the illustration" — so the picture itself
+      has to be regenerated too, which is the real cost step 2 warns
+      you about; it's the same per-image rate as any other story).
+      Redrawing happens gradually through the existing job queue (the
+      5-minute safety-net cron from item 4b, if you've set that up, or
+      the next time anyone opens the app) — not instantly when the
+      command finishes.
+
+   Going forward, hitting "Regenerate this page" on any single page
+   now automatically re-checks its caption against the current
+   template first, so a future template fix like this one will not
+   need a repeat of step 3 for pages someone happens to regenerate by
+   hand — only for everything else, the same way.
 
 ## Not a decision I need from you, but you should know about it
 

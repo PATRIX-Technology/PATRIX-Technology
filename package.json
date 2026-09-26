@@ -16,6 +16,7 @@
     "test:e2e": "playwright test",
     "format": "prettier --write .",
     "db:seed": "node scripts/seed-platform-data.mjs",
+    "resync-arabic-story-text": "tsx scripts/resync-arabic-story-text.ts",
     "db:reset": "node scripts/reset-demo-data.mjs",
     "cap:sync": "cap sync",
     "cap:android": "cap open android",
@@ -62,6 +63,7 @@
     "postcss": "^8.4.47",
     "prettier": "^3.3.3",
     "tailwindcss": "^3.4.13",
+    "tsx": "^4.23.15",
     "typescript": "^5.6.2",
     "vitest": "^2.1.2"
   }

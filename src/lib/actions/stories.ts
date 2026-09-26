@@ -5,7 +5,7 @@ import { redirect } from 'next/navigation';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { getCurrentTenantContext } from '@/lib/domain/session';
 import { createStory, ConsentRequiredError, QuotaExceededError } from '@/lib/domain/stories';
-import { StoryThemeTemplateSchema } from '@/lib/domain/templates';
+import { renderTemplate, StoryThemeTemplateSchema } from '@/lib/domain/templates';
 import { runWorkerOnce } from '@/lib/jobs/worker';
 import { createSupabaseServiceRoleClient } from '@/lib/supabase/service-role';
 import { parseAvatarConfig } from '@/lib/domain/avatar';
@@ -129,9 +129,64 @@ export async function regeneratePageAction(locale: string, storyId: string, page
   const context = await getCurrentTenantContext(supabase);
   if (!context) return { error: 'Not signed in.' };
 
+  // Re-render this page's caption text from the live template before
+  // regenerating its image, rather than reusing whatever text was
+  // stored at the story's original creation time. Templates get fixed
+  // (see docs/DECISIONS.md "Arabic gender-agreement audit of the story
+  // templates") — without this, "Regenerate this page" would keep
+  // reproducing an old, already-corrected mistake forever. Best-effort:
+  // if any lookup here fails, fall through and regenerate the image
+  // with the existing text rather than blocking the whole action.
+  const { data: page } = await supabase
+    .from('story_pages')
+    .select('page_number, text')
+    .eq('id', pageId)
+    .eq('story_id', storyId)
+    .maybeSingle();
+  const { data: story } = await supabase
+    .from('stories')
+    .select('theme_key, locale, pronoun_snapshot, tenant_id, child_id')
+    .eq('id', storyId)
+    .maybeSingle();
+
+  let refreshedText: string | undefined;
+  if (page && story) {
+    const [{ data: templateRow }, { data: child }, { data: tenant }] = await Promise.all([
+      supabase
+        .from('story_theme_templates')
+        .select('*')
+        .eq('theme_key', story.theme_key)
+        .eq('locale', story.locale)
+        .maybeSingle(),
+      supabase.from('children').select('first_name, arabic_first_name').eq('id', story.child_id).maybeSingle(),
+      supabase.from('tenants').select('name').eq('id', story.tenant_id).maybeSingle(),
+    ]);
+    if (templateRow && child) {
+      try {
+        const template = StoryThemeTemplateSchema.parse(templateRow);
+        const childName =
+          story.locale === 'ar' && child.arabic_first_name ? child.arabic_first_name : child.first_name;
+        const rendered = renderTemplate(template, {
+          childName,
+          pronoun: story.pronoun_snapshot ?? 'they',
+          organisation: tenant?.name ?? context.tenantName,
+        });
+        refreshedText = rendered.find((p) => p.order === page.page_number)?.text;
+      } catch {
+        // Template failed validation/rendering — regenerate with the
+        // existing text rather than blocking the user's request.
+      }
+    }
+  }
+
   const { error: pageError } = await supabase
     .from('story_pages')
-    .update({ image_status: 'QUEUED', attempts: 0, last_error: null })
+    .update({
+      image_status: 'QUEUED',
+      attempts: 0,
+      last_error: null,
+      ...(refreshedText ? { text: refreshedText } : {}),
+    })
     .eq('id', pageId)
     .eq('story_id', storyId);
   if (pageError) return { error: pageError.message };

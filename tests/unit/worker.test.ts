@@ -37,6 +37,9 @@ function createFakeSupabase(overrides: {
         jobIndex += 1;
         return { data: job, error: null };
       }
+      if (fn === 'reclaim_stale_story_jobs') {
+        return { data: 0, error: null };
+      }
       throw new Error(`Unexpected rpc ${fn}`);
     }),
     from: vi.fn((table: string) => ({

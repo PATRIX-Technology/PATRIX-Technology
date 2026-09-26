@@ -1471,6 +1471,55 @@ mechanical class of error — wrong grammatical gender — using ordinary
 Modern Standard Arabic conjugation rules; it is not a substitute for a
 native speaker's judgment on phrasing, idiom, or tone.
 
+## Fixing every already-generated Arabic story, live
+
+Applied the above template fix and the resync logic directly against
+the founder's production Supabase project (via the Supabase MCP
+connector, once the founder connected it) rather than only shipping
+the tooling and waiting for someone to run it. Findings from the real
+data, not just the design:
+
+- All 8 Arabic story templates were updated live to the corrected
+  content. Of the founder's 13 already-generated Arabic stories (52
+  pages), 37 pages had the wrong-gender text and were corrected;
+  their `story_pages.text` was rewritten to the correctly-gendered
+  version and each was re-queued as a `GENERATE_PAGE_IMAGE` job — see
+  "Arabic captions baked into the illustration" above for why the
+  image itself, not just the text, has to be redrawn.
+- Some of these stories used the child's Latin name ("Hala") baked
+  into Arabic prose instead of her Arabic name ("بيسان"), because
+  `arabic_first_name` didn't exist on her child record yet at the
+  time those specific stories were generated (see "Arabic name field
+  for children"). The resync deliberately detected and preserved
+  whichever name each story's own already-rendered text used (by
+  checking which name string appears in its own page 1), rather than
+  blindly re-rendering every story with the child's *current* name —
+  fixing the reported grammar bug should not silently rename a
+  character in an unrelated story as a side effect.
+
+## Stale RUNNING job reclaim (the real cause of partial generation)
+
+While pulling the live data above to compute what needed fixing, found
+21 `story_jobs` rows stuck in `RUNNING` status for hours — orphaned by
+the exact Vercel-function-timeout scenario described in "Defending
+against a mid-generation function timeout" above: a worker claims a
+job (moves it to RUNNING), the function gets killed mid-Gemini-call,
+and nothing ever moves that row anywhere else, because
+`claim_next_story_job()` only ever looks at `QUEUED` rows — a `RUNNING`
+row is invisible to it forever. This is almost certainly the real
+mechanism behind "it takes a lot of time... sometimes generates 2 or 3
+only": a story's remaining pages were queued behind a page whose job
+got permanently stuck, with nothing to ever un-stick it.
+
+**Fix**: `reclaim_stale_story_jobs()` (migration
+`0020_reclaim_stale_story_jobs.sql`), called at the top of
+`runWorkerOnce()` on every invocation. A `RUNNING` job whose
+`claimed_at` is older than 5 minutes gets put back to `QUEUED` for an
+immediate retry (if it has attempts left) or marked `FAILED` with the
+same cascade to its page/story that `handleJobFailure()` already does
+(if attempts are exhausted). Applied directly to the live database and
+run once immediately, which reclaimed the 21 stuck jobs.
+
 ## Not yet built (explicitly out of scope for this build session)
 
 - Vendor moderation integration for image safety checks

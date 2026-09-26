@@ -27,6 +27,15 @@ export interface WorkerRunResult {
 export async function runWorkerOnce(supabase: SupabaseClient, maxJobs = 25): Promise<WorkerRunResult> {
   const result: WorkerRunResult = { processed: 0, succeeded: 0, failed: 0, retried: 0 };
 
+  // A job that was claimed (RUNNING) but whose worker process got killed
+  // mid-request (e.g. a Vercel function timeout during real Gemini
+  // generation) would otherwise stay RUNNING forever — claim_next_story_job
+  // only ever looks at QUEUED rows, so it's invisible to normal claiming.
+  // Confirmed in production as the actual cause of stories that appeared
+  // stuck showing only 2-3 pages generated. See
+  // supabase/migrations/0020_reclaim_stale_story_jobs.sql.
+  await supabase.rpc('reclaim_stale_story_jobs');
+
   // Claiming is a single atomic call (FOR UPDATE SKIP LOCKED — see
   // 0006_job_queue_functions.sql), so grab every available job up front,
   // then actually run them concurrently below. A story's pages used to

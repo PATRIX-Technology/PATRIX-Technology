@@ -76,19 +76,31 @@ else has already been built and is documented in `docs/HANDOFF.md`.
    the page outright; it no longer does, but the story can still end
    up stuck "generating" until something re-runs the job queue. This
    workflow does that automatically every 5 minutes, but only once
-   both secrets exist (Settings → Secrets and variables → Actions, on
-   the GitHub repo):
-   - `APP_URL` — your deployed site's base URL (e.g.
-     `https://khayali.vercel.app`, no trailing slash)
-   - `CRON_SECRET` — any random string you choose, set to the *same*
-     value in Vercel's own environment variables (`CRON_SECRET`) so
-     the two sides agree
-   Without both, the workflow just fails harmlessly every 5 minutes —
-   it won't block anything else, but stuck stories won't self-recover
-   either until you add them. See `docs/DECISIONS.md` "Defending
-   against a mid-generation function timeout" for why this exists
-   instead of Vercel's own Cron (Hobby plan restricts that to once a
-   day, which is too infrequent to matter here).
+   both secrets exist. I checked directly (via the GitHub Actions and
+   Vercel connectors you added): neither secret has ever been set, so
+   this workflow has never actually run — every stuck story until now
+   sat there until the app itself happened to get used again. Add
+   these two (Settings → Secrets and variables → Actions, on the
+   GitHub repo → New repository secret):
+   - `APP_URL` — `https://patrix-technology.vercel.app` (no trailing
+     slash — this is your project's real stable domain, confirmed via
+     the Vercel connector).
+   - `CRON_SECRET` — I generated a new value and already set it as
+     `CRON_SECRET` in Vercel's own project environment variables (via
+     the Vercel connector), so GitHub just needs the *same* value —
+     I've given it to you directly in chat rather than writing it into
+     this file, since a secret committed to the repo stops being a
+     secret. Copy it from there.
+   Once both are saved, the workflow will start succeeding on its next
+   5-minute tick — no redeploy or further action needed. See
+   `docs/DECISIONS.md` "Defending against a mid-generation function
+   timeout" for why this exists instead of Vercel's own Cron (Hobby
+   plan restricts that to once a day, too infrequent to matter here).
+   Until you add these, stuck-page recovery still happens, just only
+   when someone creates or regenerates a story in the app (that
+   synchronously triggers the same worker) — see `docs/DECISIONS.md`
+   "Stale RUNNING job reclaim" for the bigger fix that made this
+   matter less urgently than it used to.
 
 5. **Confirm your monthly AI spend cap.** You told me $500/month is fine
    — that's a safety switch in the database, not a bill I can generate on
@@ -209,49 +221,29 @@ else has already been built and is documented in `docs/HANDOFF.md`.
    rendered right on the live page; see `docs/DECISIONS.md` "Dark-first
    design system" for why that changed.
 
-9a. **Push the Arabic story-template grammar fix to your live Supabase
-   project, then fix every already-generated Arabic story, not just
-   "Bisan."** You caught a real bug: several Arabic story templates
-   used a hardcoded masculine verb/pronoun for the child instead of one
-   that changes with the child's actual gender ("قالت بيسان وهو ينظر"
-   instead of "وهي تنظر" for a girl). I found and fixed about 30
-   instances of this across all 6 themes — see `docs/DECISIONS.md`
-   "Arabic gender-agreement audit of the story templates". I have no
-   network access to your Supabase project from here, so this needs
-   three commands from you, run in order, from a terminal open in the
-   project folder on a computer that has your real `.env.local` (the
-   one with `SUPABASE_SERVICE_ROLE_KEY` filled in) — if that's not a
-   computer you use, open a Claude Code session on one that is and
-   paste it this exact list:
-
-   1. `npm run db:seed` — pushes the corrected templates
-      (`supabase/seed/templates.json`) to your live database. Only
-      touches story templates, nothing else. Safe to re-run any time.
-   2. `npm run resync-arabic-story-text` — a **dry run**: scans every
-      Arabic story already generated, recomputes what its caption text
-      *should* say now that the templates are fixed, and prints exactly
-      what would change (story by story, old text vs. new text) plus
-      how many images would need to be redrawn and what that would
-      cost. It changes nothing yet — read the report first.
-   3. `npm run resync-arabic-story-text -- --apply` — once the report
-      in step 2 looks right, this actually applies it: corrects the
-      stored caption text for every affected page and queues each one
-      for its illustration to be redrawn with the corrected caption
-      (Arabic captions are baked directly into the illustration by
-      Gemini, not drawn separately — see docs/DECISIONS.md "Arabic
-      captions baked into the illustration" — so the picture itself
-      has to be regenerated too, which is the real cost step 2 warns
-      you about; it's the same per-image rate as any other story).
-      Redrawing happens gradually through the existing job queue (the
-      5-minute safety-net cron from item 4b, if you've set that up, or
-      the next time anyone opens the app) — not instantly when the
-      command finishes.
+9a. **Done — nothing left for you here.** You caught a real bug:
+   several Arabic story templates used a hardcoded masculine
+   verb/pronoun for the child instead of one that changes with the
+   child's actual gender ("قالت بيسان وهو ينظر" instead of "وهي تنظر"
+   for a girl). I found and fixed about 30 instances of this across
+   all 8 themes — see `docs/DECISIONS.md` "Arabic gender-agreement
+   audit of the story templates". Once you connected the Supabase and
+   Vercel connectors, I applied the whole fix directly against your
+   live project myself, rather than just handing you commands to run:
+   pushed the corrected templates, then found and corrected all 37
+   already-wrong pages across your 13 existing Arabic stories (not
+   only Bisan's) and queued each one to have its illustration redrawn
+   with the corrected caption — see `docs/DECISIONS.md` "Fixing every
+   already-generated Arabic story, live" for exactly what changed.
+   Those redraws finish gradually through the job queue; see item 4b
+   for the one thing that's still genuinely yours to do (two GitHub
+   secrets) so that queue keeps draining automatically even when
+   nobody's actively using the app.
 
    Going forward, hitting "Regenerate this page" on any single page
    now automatically re-checks its caption against the current
-   template first, so a future template fix like this one will not
-   need a repeat of step 3 for pages someone happens to regenerate by
-   hand — only for everything else, the same way.
+   template first, so a future template fix like this one won't need
+   a repeat of this every time — only genuinely new bugs will.
 
 ## Not a decision I need from you, but you should know about it
 

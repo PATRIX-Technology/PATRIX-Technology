@@ -109,3 +109,18 @@ export function extractCheckoutMetadata(
 export function planIsAvailableForTenant(plan: Pick<Plan, 'audience'>, tenantType: TenantType): boolean {
   return plan.audience === tenantType;
 }
+
+/**
+ * How much cheaper a plan's annual price is than paying its monthly price
+ * for 12 months, as a rounded percentage — what the billing UI shows next
+ * to the annual toggle (e.g. "Save 20% vs. monthly"). Every plan already
+ * has both price_monthly_cents and price_annual_cents (see
+ * scripts/seed-platform-data.mjs), so this is pure arithmetic, not a
+ * lookup — no plan should ever have a $0 monthly price, but guards
+ * against a division by zero rather than throwing on bad seed data.
+ */
+export function annualSavingsPercent(plan: Pick<Plan, 'price_monthly_cents' | 'price_annual_cents'>): number {
+  const costIfPaidMonthly = plan.price_monthly_cents * 12;
+  if (costIfPaidMonthly <= 0) return 0;
+  return Math.round((1 - plan.price_annual_cents / costIfPaidMonthly) * 100);
+}

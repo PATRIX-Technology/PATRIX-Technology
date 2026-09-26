@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  annualSavingsPercent,
   extractCheckoutMetadata,
   mapStripeSubscriptionStatus,
   planIsAvailableForTenant,
@@ -112,5 +113,23 @@ describe('planIsAvailableForTenant', () => {
 
   it('rejects a nursery tenant buying a family-audience plan', () => {
     expect(planIsAvailableForTenant({ audience: 'family' }, 'nursery')).toBe(false);
+  });
+});
+
+describe('annualSavingsPercent', () => {
+  it('computes ~20% savings for the Starter nursery plan (499/mo vs 4790/yr)', () => {
+    expect(annualSavingsPercent({ price_monthly_cents: 49900, price_annual_cents: 479000 })).toBe(20);
+  });
+
+  it('computes ~17% savings for the Family plan ($9/mo vs $90/yr — exactly 2 months free)', () => {
+    expect(annualSavingsPercent({ price_monthly_cents: 900, price_annual_cents: 9000 })).toBe(17);
+  });
+
+  it('returns 0 rather than dividing by zero when monthly price is 0', () => {
+    expect(annualSavingsPercent({ price_monthly_cents: 0, price_annual_cents: 0 })).toBe(0);
+  });
+
+  it('returns a negative number if annual is somehow priced higher than 12 months (bad data, not hidden)', () => {
+    expect(annualSavingsPercent({ price_monthly_cents: 1000, price_annual_cents: 13000 })).toBeLessThan(0);
   });
 });

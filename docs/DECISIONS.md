@@ -856,6 +856,28 @@ mechanism). Verified with new tests
 against a local Postgres 16 instance — full suite (171 tests) passes,
 `tsc --noEmit` is clean.
 
+**Monthly/annual billing toggle.** The checkout route already accepted a
+`billingInterval` and looked up the matching `stripe_price_id_monthly`
+or `stripe_price_id_annual`, and every plan already has an annual price
+seeded — but `BillingSection.tsx` hardcoded `billingInterval: 'monthly'`
+in its `subscribe()` call, so annual was never actually reachable from
+the UI, for any plan (nursery or family). Added a Monthly/Annual toggle
+above the plan grid; the selected interval now drives both which price
+each card shows and what gets sent to checkout. `annualSavingsPercent`
+(`src/lib/domain/billing.ts`) computes the "Save X% vs. monthly" badge
+shown next to the annual price, from each plan's own
+`price_monthly_cents`/`price_annual_cents` — no hardcoded percentage,
+so it stays correct if prices change. Unit-tested in
+`tests/unit/billing.test.ts` (Starter's ~20%, Family's ~17% — exactly
+2 months free — a guard against a $0 monthly price, and a case where
+bad seed data would show a negative "savings" rather than hide it).
+Not verified in a live browser — `FEATURE_BILLING` is off and this
+sandbox has no network path to a real Supabase project to sign in
+against, so this dashboard page can't actually be reached end-to-end
+from here; verified by typecheck, the unit tests above, and matching
+the exact Button/Badge/Tailwind-token patterns already used elsewhere
+in this same file.
+
 ## Not yet built (explicitly out of scope for this build session)
 
 - Vendor moderation integration for image safety checks

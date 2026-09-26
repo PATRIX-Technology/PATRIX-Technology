@@ -3,7 +3,10 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
+import { annualSavingsPercent } from '@/lib/domain/billing';
 import type { Plan, Subscription } from '@/types/database';
+
+type BillingInterval = 'monthly' | 'annual';
 
 export function BillingSection({
   plans,
@@ -15,6 +18,7 @@ export function BillingSection({
   const [loadingPlanKey, setLoadingPlanKey] = useState<string | null>(null);
   const [couponCode, setCouponCode] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [billingInterval, setBillingInterval] = useState<BillingInterval>('monthly');
 
   async function subscribe(planKey: string) {
     setLoadingPlanKey(planKey);
@@ -23,7 +27,7 @@ export function BillingSection({
       const response = await fetch('/api/billing/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ planKey, billingInterval: 'monthly', couponCode: couponCode || undefined }),
+        body: JSON.stringify({ planKey, billingInterval, couponCode: couponCode || undefined }),
       });
       const data = await response.json();
       if (!response.ok) {
@@ -52,34 +56,63 @@ export function BillingSection({
         </div>
       )}
 
-      <div className="grid gap-4 sm:grid-cols-3">
-        {plans.map((plan) => (
-          <div
-            key={plan.id}
-            className={`rounded-xl2 border p-4 ${
-              plan.id === currentPlanId ? 'border-lagoon-600 bg-lagoon-50' : 'border-[rgb(var(--color-border))]'
+      <div
+        className="inline-flex rounded-xl border border-[rgb(var(--color-border))] p-1"
+        role="group"
+        aria-label="Billing interval"
+      >
+        {(['monthly', 'annual'] as const).map((interval) => (
+          <button
+            key={interval}
+            type="button"
+            onClick={() => setBillingInterval(interval)}
+            aria-pressed={billingInterval === interval}
+            className={`rounded-lg px-3 py-1.5 text-sm font-medium capitalize transition-colors ${
+              billingInterval === interval ? 'bg-lagoon-600 text-white' : 'text-ink-600 hover:bg-ink-100'
             }`}
           >
-            <p className="font-display text-lg text-ink-900">{plan.name}</p>
-            <p className="mt-1 text-2xl font-semibold text-ink-800">
-              {(plan.price_monthly_cents / 100).toFixed(0)} {plan.currency}
-              <span className="text-sm font-normal text-ink-500">/mo</span>
-            </p>
-            <p className="mt-1 text-xs text-ink-500">
-              {plan.vat_inclusive ? 'VAT included' : 'VAT excluded'}
-            </p>
-            <p className="mt-2 text-sm text-ink-600">{plan.stories_per_month} stories/month</p>
-            <Button
-              className="mt-4 w-full"
-              variant={plan.id === currentPlanId ? 'secondary' : 'primary'}
-              isLoading={loadingPlanKey === plan.key}
-              onClick={() => subscribe(plan.key)}
-              disabled={plan.id === currentPlanId}
-            >
-              {plan.id === currentPlanId ? 'Current plan' : 'Subscribe'}
-            </Button>
-          </div>
+            {interval}
+          </button>
         ))}
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-3">
+        {plans.map((plan) => {
+          const priceCents = billingInterval === 'annual' ? plan.price_annual_cents : plan.price_monthly_cents;
+          const savings = annualSavingsPercent(plan);
+          return (
+            <div
+              key={plan.id}
+              className={`rounded-xl2 border p-4 ${
+                plan.id === currentPlanId ? 'border-lagoon-600 bg-lagoon-50' : 'border-[rgb(var(--color-border))]'
+              }`}
+            >
+              <p className="font-display text-lg text-ink-900">{plan.name}</p>
+              <p className="mt-1 text-2xl font-semibold text-ink-800">
+                {(priceCents / 100).toFixed(0)} {plan.currency}
+                <span className="text-sm font-normal text-ink-500">
+                  {billingInterval === 'annual' ? '/yr' : '/mo'}
+                </span>
+              </p>
+              {billingInterval === 'annual' && savings > 0 && (
+                <p className="mt-0.5 text-xs font-medium text-lagoon-600">Save {savings}% vs. monthly</p>
+              )}
+              <p className="mt-1 text-xs text-ink-500">
+                {plan.vat_inclusive ? 'VAT included' : 'VAT excluded'}
+              </p>
+              <p className="mt-2 text-sm text-ink-600">{plan.stories_per_month} stories/month</p>
+              <Button
+                className="mt-4 w-full"
+                variant={plan.id === currentPlanId ? 'secondary' : 'primary'}
+                isLoading={loadingPlanKey === plan.key}
+                onClick={() => subscribe(plan.key)}
+                disabled={plan.id === currentPlanId}
+              >
+                {plan.id === currentPlanId ? 'Current plan' : 'Subscribe'}
+              </Button>
+            </div>
+          );
+        })}
       </div>
 
       <div className="flex items-end gap-2">

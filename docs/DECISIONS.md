@@ -766,6 +766,30 @@ from a visually-hidden native `<input type="radio">` plus Tailwind's
 group for keyboard/screen-reader users, just styled as cards instead of
 a checklist.
 
+**Bug fix: a new tenant had no subscription row until they paid.**
+`create_tenant()` and `create_family_tenant()` (0001, 0009) inserted the
+tenant, its owner membership, and (for families) a starter quota row —
+but never touched `subscriptions`. The only writer of that table was
+the Stripe webhook, so a brand-new signup had zero rows in
+`subscriptions` for as long as they hadn't completed checkout — no
+"trialing" record to see who'd signed up, and the `trial_story_used`
+column had nothing reading or writing it (the actual free-trial-story
+gate is the `quotas` table's `stories_included_this_period` default of
+1, wired independently via `consume_story_quota`). Migration
+`0015_subscription_on_signup.sql` redefines both RPCs to also
+`insert into subscriptions (tenant_id) values (new_tenant_id)`
+immediately at signup — every column but `tenant_id` takes its default
+(`status = 'trialing'`, `plan_id`/`stripe_customer_id` null) — plus a
+one-time backfill for any tenant created before this migration. The
+billing webhook and checkout route already read/write this table by
+`tenant_id` with `upsert(..., { onConflict: 'tenant_id' })`, so a
+pre-existing trialing row is simply updated in place once a real plan
+is purchased; nothing about the paid path changes. Verified against the
+full integration suite (`tests/integration/family-tenants.test.ts` now
+asserts the trialing row directly for both a nursery and a family
+signup) plus a manual run of every integration test against a local
+Postgres 16 instance — all 159 tests pass, `tsc --noEmit` is clean.
+
 ## Not yet built (explicitly out of scope for this build session)
 
 - Vendor moderation integration for image safety checks

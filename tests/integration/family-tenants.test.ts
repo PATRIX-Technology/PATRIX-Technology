@@ -10,7 +10,7 @@ describe('family tenants (Phase 4 scaffolding)', () => {
 
   afterAll(async () => db.teardown());
 
-  it('create_family_tenant creates a family-typed tenant, an owner membership, and a starter quota', async () => {
+  it('create_family_tenant creates a family-typed tenant, an owner membership, a starter quota, and a trialing subscription', async () => {
     const userId = await createUser(db.adminClient, 'Amina');
     const client = await db.connectAs({ role: 'authenticated', userId });
 
@@ -35,6 +35,14 @@ describe('family tenants (Phase 4 scaffolding)', () => {
       [tenantId],
     );
     expect(quota.rows[0].stories_included_this_period).toBe(1);
+
+    const subscription = await db.adminClient.query(
+      'select status, plan_id from subscriptions where tenant_id = $1',
+      [tenantId],
+    );
+    expect(subscription.rows).toHaveLength(1);
+    expect(subscription.rows[0].status).toBe('trialing');
+    expect(subscription.rows[0].plan_id).toBeNull();
   });
 
   it('auto-grants consent for a child added under a family tenant', async () => {
@@ -70,6 +78,27 @@ describe('family tenants (Phase 4 scaffolding)', () => {
     );
     expect(child.rows[0].consent_status).toBe('not_requested');
     await client.end();
+  });
+
+  it('create_tenant also ties a new nursery to a trialing subscription immediately, not only after Stripe checkout', async () => {
+    const userId = await createUser(db.adminClient, 'Another Nursery Owner');
+    const client = await db.connectAs({ role: 'authenticated', userId });
+    const { rows } = await client.query(`select create_tenant($1, $2, $3) as tenant_id`, [
+      'Another Test Nursery',
+      `another-test-nursery-${userId.slice(0, 8)}`,
+      'Another Nursery Owner',
+    ]);
+    const tenantId = rows[0].tenant_id;
+    await client.end();
+
+    const subscription = await db.adminClient.query(
+      'select status, plan_id, stripe_customer_id from subscriptions where tenant_id = $1',
+      [tenantId],
+    );
+    expect(subscription.rows).toHaveLength(1);
+    expect(subscription.rows[0].status).toBe('trialing');
+    expect(subscription.rows[0].plan_id).toBeNull();
+    expect(subscription.rows[0].stripe_customer_id).toBeNull();
   });
 
   it('a family tenant is isolated from another family tenant exactly like a nursery is', async () => {

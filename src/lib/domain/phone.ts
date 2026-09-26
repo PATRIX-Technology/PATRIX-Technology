@@ -1,32 +1,45 @@
+import { getCountries, getCountryCallingCode, parsePhoneNumberFromString, type CountryCode } from 'libphonenumber-js';
+
+export type { CountryCode };
+
 /**
- * Normalizes a UAE mobile number to E.164 (+9715XXXXXXXX) — the format
- * Supabase's phone auth (and every SMS provider behind it) requires.
- * Accepts the way people actually type a UAE mobile locally (leading 0,
- * no country code, with or without spaces/dashes) as well as already-
- * correct E.164 input, and returns null for anything that isn't a
- * plausible UAE mobile number rather than silently mangling it — a
- * landline area code (02/03/04/06/07/09) or a wrong-length number should
- * fail loudly here, not send an SMS to nowhere and confuse the user with
- * a generic Supabase error later. UAE mobiles are always 9 digits after
- * the +971 country code, starting with 5 (050/052/054/055/056/058).
+ * Normalizes a phone number to E.164 (e.g. +971501234567) for Supabase's
+ * phone auth. Accepts either an already-international number (a leading
+ * '+', country auto-detected — this is how the phone auth forms actually
+ * call it, since the country picker already resolved the number to E.164
+ * client-side before submitting) or a local/national number plus an
+ * explicit `defaultCountry` to interpret it against. Returns null for
+ * anything libphonenumber-js can't validate as a real number for that
+ * country, rather than sending a doomed SMS to a malformed number.
  */
-export function normalizeUaePhone(input: string): string | null {
-  const stripped = input.replace(/[\s\-()]/g, '');
+export function normalizePhoneNumber(input: string, defaultCountry?: CountryCode): string | null {
+  const parsed = parsePhoneNumberFromString(input, defaultCountry);
+  if (!parsed || !parsed.isValid()) return null;
+  return parsed.number;
+}
 
-  let digitsAfterCountryCode: string;
-  if (stripped.startsWith('+971')) {
-    digitsAfterCountryCode = stripped.slice(4);
-  } else if (stripped.startsWith('971')) {
-    digitsAfterCountryCode = stripped.slice(3);
-  } else if (stripped.startsWith('05')) {
-    digitsAfterCountryCode = stripped.slice(1);
-  } else if (stripped.startsWith('5')) {
-    digitsAfterCountryCode = stripped;
-  } else {
-    return null;
-  }
+export interface PhoneCountryOption {
+  code: CountryCode;
+  name: string;
+  callingCode: string;
+}
 
-  if (!/^5\d{8}$/.test(digitsAfterCountryCode)) return null;
-
-  return `+971${digitsAfterCountryCode}`;
+/**
+ * Every country libphonenumber-js knows a numbering plan for, with a
+ * locale-appropriate display name (Intl.DisplayNames — built into the
+ * JS runtime, no extra dataset dependency needed) and dial code, sorted
+ * by name for a usable dropdown. Used by CountryPhoneField
+ * (src/components/auth/CountryPhoneField.tsx); not cached across calls
+ * since it's cheap (245 entries) and only ever built once per form
+ * render, not per keystroke.
+ */
+export function getPhoneCountryOptions(locale: string): PhoneCountryOption[] {
+  const displayNames = new Intl.DisplayNames([locale], { type: 'region' });
+  return getCountries()
+    .map((code) => ({
+      code,
+      name: displayNames.of(code) ?? code,
+      callingCode: getCountryCallingCode(code),
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name, locale));
 }

@@ -882,12 +882,22 @@ in this same file.
 existing email/password option on all three auth entry points (sign-in,
 nursery sign-up, family sign-up), using Supabase's built-in phone-auth
 (`signInWithOtp`/`verifyOtp` — an SMS OTP, not a password) rather than
-building a custom SMS flow. `normalizeUaePhone`
-(`src/lib/domain/phone.ts`) accepts however someone actually types a
-UAE mobile (leading 0, no country code, spaces/dashes) and converts to
-the E.164 format Supabase requires, rejecting landline area codes and
-wrong lengths outright rather than sending a doomed SMS. Two design
-decisions worth flagging:
+building a custom SMS flow. Originally built UAE-only with a hand-rolled
+E.164 converter, then widened to every country: `normalizePhoneNumber`
+(`src/lib/domain/phone.ts`) now wraps `libphonenumber-js` rather than
+hand-rolling per-country dialing rules for ~245 countries — that's the
+kind of validation logic (trunk prefixes, number lengths, mobile vs.
+landline ranges, all of it different per country) a well-maintained
+library gets right and a bespoke implementation would get subtly wrong
+somewhere. `CountryPhoneField` (`src/components/auth/`) pairs a country
+picker — `getPhoneCountryOptions`, every country libphonenumber-js
+knows, named via the runtime's own `Intl.DisplayNames` rather than a
+second hand-maintained country-name dataset — with a national-number
+input, and resolves the pair to E.164 client-side before the hidden
+`phone` field is submitted; the server actions only ever see an
+already-international number, so they don't need a `country` parameter
+at all. Defaults to AE (still the primary market) but every country is
+selectable. Three design decisions worth flagging:
 
 - **Sign-up sends OTP with `shouldCreateUser: true`; sign-in ALSO does**
   — not `false`. Using `false` on sign-in would make Supabase return a
@@ -928,10 +938,12 @@ Twilio (or similar) setup Supabase itself needs before this can send a
 single real SMS. Not verified in a live browser or with a real SMS —
 this sandbox has no SMS provider configured and no way to receive a
 code, so this needs real end-to-end testing once Supabase's phone
-provider is set up; verified so far by `normalizeUaePhone`'s unit tests
-(17 cases, including every UAE mobile prefix and landline rejection),
-`tsc --noEmit`, and matching the exact server-action/`useFormState`
-patterns already proven elsewhere in this file.
+provider is set up; verified so far by `normalizePhoneNumber`'s and
+`getPhoneCountryOptions`'s unit tests (15 cases spanning several
+countries' numbering plans, both English and Arabic display names,
+alphabetical sort order), `tsc --noEmit`, and matching the exact
+server-action/`useFormState` patterns already proven elsewhere in this
+file.
 
 ## Not yet built (explicitly out of scope for this build session)
 

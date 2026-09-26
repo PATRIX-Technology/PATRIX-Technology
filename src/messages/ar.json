@@ -58,7 +58,7 @@
       "emailTab": "البريد الإلكتروني",
       "phoneTab": "الهاتف",
       "phoneLabel": "رقم الهاتف المتحرك",
-      "phonePlaceholder": "٠٥٠ ١٢٣ ٤٥٦٧",
+      "countryLabel": "الدولة",
       "sendCode": "إرسال الرمز",
       "codeSentTo": "أرسلنا رمزًا إلى {phone}.",
       "codeLabel": "رمز مكوّن من ٦ أرقام",

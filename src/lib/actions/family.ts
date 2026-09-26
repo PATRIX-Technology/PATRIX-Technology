@@ -5,7 +5,7 @@ import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { enforceRateLimit, RateLimitExceededError } from '@/lib/rate-limit';
 import { getClientIp } from '@/lib/request-ip';
 import { getCurrentTenantContext } from '@/lib/domain/session';
-import { normalizeUaePhone } from '@/lib/domain/phone';
+import { normalizePhoneNumber } from '@/lib/domain/phone';
 import type { ActionResult } from './auth';
 
 const AUTH_RATE_LIMIT = { limit: 10, windowMs: 5 * 60 * 1000 };
@@ -73,9 +73,9 @@ export async function sendFamilySignUpOtpAction(formData: FormData): Promise<Act
   if (!phoneInput || !fullName) {
     return { error: 'All fields are required.' };
   }
-  const phone = normalizeUaePhone(phoneInput);
+  const phone = normalizePhoneNumber(phoneInput);
   if (!phone) {
-    return { error: 'Enter a valid UAE mobile number, e.g. 050 123 4567.' };
+    return { error: 'Enter a valid mobile number.' };
   }
 
   try {
@@ -105,7 +105,7 @@ export async function verifyFamilySignUpOtpAction(locale: string, formData: Form
   const token = String(formData.get('token') ?? '').trim();
   const fullName = String(formData.get('fullName') ?? '').trim();
 
-  const phone = normalizeUaePhone(phoneInput);
+  const phone = normalizePhoneNumber(phoneInput);
   if (!phone || !token) {
     return { error: 'Enter the code we sent you.' };
   }

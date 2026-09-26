@@ -58,7 +58,7 @@
       "emailTab": "Email",
       "phoneTab": "Phone",
       "phoneLabel": "Mobile number",
-      "phonePlaceholder": "050 123 4567",
+      "countryLabel": "Country",
       "sendCode": "Send code",
       "codeSentTo": "We sent a code to {phone}.",
       "codeLabel": "6-digit code",

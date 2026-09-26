@@ -6,11 +6,12 @@ import { useTranslations } from 'next-intl';
 import { sendSignInOtpAction, verifySignInOtpAction, type ActionResult } from '@/lib/actions/auth';
 import { Button } from '@/components/ui/Button';
 import { TextField } from '@/components/ui/Input';
+import { CountryPhoneField } from '@/components/auth/CountryPhoneField';
 
 export function PhoneSignInForm({ locale }: { locale: string }) {
   const t = useTranslations('auth.phone');
   const [step, setStep] = useState<'phone' | 'code'>('phone');
-  const [phone, setPhone] = useState('');
+  const [phone, setPhone] = useState<string | null>(null);
 
   const [sendState, sendFormAction] = useFormState<ActionResult, FormData>(async (_prev, formData) => {
     const result = await sendSignInOtpAction(formData);
@@ -26,23 +27,14 @@ export function PhoneSignInForm({ locale }: { locale: string }) {
   if (step === 'phone') {
     return (
       <form action={sendFormAction} className="flex flex-col gap-4">
-        <TextField
-          name="phone"
-          type="tel"
-          inputMode="tel"
-          autoComplete="tel"
-          label={t('phoneLabel')}
-          placeholder={t('phonePlaceholder')}
-          value={phone}
-          onChange={(event) => setPhone(event.target.value)}
-          required
-        />
+        <CountryPhoneField label={t('phoneLabel')} onChange={setPhone} />
+        <input type="hidden" name="phone" value={phone ?? ''} />
         {sendState.error && (
           <p role="alert" className="text-sm text-coral-600">
             {sendState.error}
           </p>
         )}
-        <Button type="submit" size="lg">
+        <Button type="submit" size="lg" disabled={!phone}>
           {t('sendCode')}
         </Button>
       </form>
@@ -51,8 +43,8 @@ export function PhoneSignInForm({ locale }: { locale: string }) {
 
   return (
     <form action={verifyFormAction} className="flex flex-col gap-4">
-      <input type="hidden" name="phone" value={phone} />
-      <p className="text-sm text-ink-600">{t('codeSentTo', { phone })}</p>
+      <input type="hidden" name="phone" value={phone ?? ''} />
+      <p className="text-sm text-ink-600">{t('codeSentTo', { phone: phone ?? '' })}</p>
       <TextField
         name="token"
         inputMode="numeric"

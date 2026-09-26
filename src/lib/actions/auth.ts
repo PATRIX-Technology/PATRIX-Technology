@@ -5,7 +5,7 @@ import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { enforceRateLimit, RateLimitExceededError } from '@/lib/rate-limit';
 import { getClientIp } from '@/lib/request-ip';
 import { getCurrentTenantContext } from '@/lib/domain/session';
-import { normalizeUaePhone } from '@/lib/domain/phone';
+import { normalizePhoneNumber } from '@/lib/domain/phone';
 
 export interface ActionResult {
   error?: string;
@@ -117,9 +117,9 @@ export async function sendNurserySignUpOtpAction(formData: FormData): Promise<Ac
   if (!phoneInput || !orgName || !fullName) {
     return { error: 'All fields are required.' };
   }
-  const phone = normalizeUaePhone(phoneInput);
+  const phone = normalizePhoneNumber(phoneInput);
   if (!phone) {
-    return { error: 'Enter a valid UAE mobile number, e.g. 050 123 4567.' };
+    return { error: 'Enter a valid mobile number.' };
   }
 
   try {
@@ -153,7 +153,7 @@ export async function verifyNurserySignUpOtpAction(locale: string, formData: For
   const orgName = String(formData.get('orgName') ?? '').trim();
   const fullName = String(formData.get('fullName') ?? '').trim();
 
-  const phone = normalizeUaePhone(phoneInput);
+  const phone = normalizePhoneNumber(phoneInput);
   if (!phone || !token) {
     return { error: 'Enter the code we sent you.' };
   }
@@ -196,9 +196,9 @@ export async function verifyNurserySignUpOtpAction(locale: string, formData: For
  */
 export async function sendSignInOtpAction(formData: FormData): Promise<ActionResult> {
   const phoneInput = String(formData.get('phone') ?? '').trim();
-  const phone = normalizeUaePhone(phoneInput);
+  const phone = normalizePhoneNumber(phoneInput);
   if (!phone) {
-    return { error: 'Enter a valid UAE mobile number, e.g. 050 123 4567.' };
+    return { error: 'Enter a valid mobile number.' };
   }
 
   try {
@@ -230,7 +230,7 @@ export async function sendSignInOtpAction(formData: FormData): Promise<ActionRes
 export async function verifySignInOtpAction(locale: string, formData: FormData): Promise<ActionResult> {
   const phoneInput = String(formData.get('phone') ?? '').trim();
   const token = String(formData.get('token') ?? '').trim();
-  const phone = normalizeUaePhone(phoneInput);
+  const phone = normalizePhoneNumber(phoneInput);
   if (!phone || !token) {
     return { error: 'Enter the code we sent you.' };
   }

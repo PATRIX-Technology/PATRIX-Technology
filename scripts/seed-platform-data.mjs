@@ -36,6 +36,7 @@ const plans = [
     vat_inclusive: true,
     stories_per_month: 25,
     seats_included: 3,
+    audience: 'nursery',
   },
   {
     key: 'growth',
@@ -46,6 +47,7 @@ const plans = [
     vat_inclusive: true,
     stories_per_month: 100,
     seats_included: 10,
+    audience: 'nursery',
   },
   {
     key: 'network',
@@ -56,6 +58,29 @@ const plans = [
     vat_inclusive: true,
     stories_per_month: 500,
     seats_included: 50,
+    audience: 'nursery',
+  },
+  {
+    key: 'family',
+    name: 'Family',
+    price_monthly_cents: 900,
+    price_annual_cents: 9000,
+    currency: 'USD',
+    vat_inclusive: true,
+    stories_per_month: 1,
+    seats_included: 1,
+    audience: 'family',
+  },
+  {
+    key: 'family_plus',
+    name: 'Family Plus',
+    price_monthly_cents: 1900,
+    price_annual_cents: 19000,
+    currency: 'USD',
+    vat_inclusive: true,
+    stories_per_month: 3,
+    seats_included: 1,
+    audience: 'family',
   },
 ];
 

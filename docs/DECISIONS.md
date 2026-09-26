@@ -821,6 +821,41 @@ unknown plan id loudly rather than silently granting zero stories, and
 confirms only `service_role` can call it. Full suite (163 tests) passes,
 `tsc --noEmit` is clean.
 
+**Family monthly subscription plans (Family / Family Plus).** Previously
+only nursery tiers existed in `plans`; individuals had one-time gift
+packs (`src/lib/domain/gifts.ts`) but no recurring subscription, despite
+docs proposing $9/mo (1 story) and $19/mo (3 stories) family plans.
+Migration `0017_family_plans.sql` adds `plans.audience`, reusing the
+existing `tenant_type` enum (`'nursery' | 'family'`) rather than
+inventing a parallel one — every plan now declares which kind of tenant
+it's priced for. `scripts/seed-platform-data.mjs` seeds the two new
+rows (`family`, `family_plus`) alongside the existing three, USD-priced
+like the gift packs, AED-priced nursery tiers unaffected (default to
+`audience = 'nursery'`, so the migration itself is non-destructive).
+Enforcement is two-layered: the settings page
+(`dashboard/settings/page.tsx`) filters its `plans` query by the
+signed-in tenant's own `tenant_type`, so a family only ever sees Family/
+Family Plus and a nursery only ever sees Starter/Growth/Network — and
+`planIsAvailableForTenant` (`src/lib/domain/billing.ts`) is checked
+server-side in the checkout route regardless of what the client sent,
+so bypassing the UI can't buy the wrong audience's plan. Deliberately
+**not** implementing the "rolls over up to 3 stories" idea from an
+earlier draft of `docs/en/pricing.md` — that needs an accumulating
+credit balance, a different quota mechanism than the flat per-period
+allowance `quotas`/`consume_story_quota`/`sync_quota_to_plan` (0016)
+already use everywhere else; simplified to a flat monthly allowance
+like every other plan, and the docs are corrected to say so rather than
+overclaim a mechanic that doesn't exist. Also corrected a stale doc
+claim in the same section: the free trial story is enforced by
+`quotas`'s default of 1, not `subscriptions.trial_story_used` — that
+column exists in the schema but nothing reads or writes it (harmless as
+long as no code branches on it, but worth not misciting it as the
+mechanism). Verified with new tests
+(`tests/integration/plan-audience.test.ts`,
+`planIsAvailableForTenant` cases in `tests/unit/billing.test.ts`)
+against a local Postgres 16 instance — full suite (171 tests) passes,
+`tsc --noEmit` is clean.
+
 ## Not yet built (explicitly out of scope for this build session)
 
 - Vendor moderation integration for image safety checks

@@ -69,18 +69,37 @@ even with the added labour.
 ## Individuals & families
 
 - **Free trial** — every new tenant gets **one free trial story** on
-  signup (`subscriptions.trial_story_used`), no card required.
+  signup. This is enforced by the `quotas` table's default
+  (`stories_included_this_period = 1`, checked by `consume_story_quota`
+  before every generation) — not the `subscriptions.trial_story_used`
+  column, which exists in the schema but nothing currently reads or
+  writes it.
 - **Story packs** (already built — `src/lib/domain/gifts.ts`, live in
   Stripe checkout): 1 story/$15, 3 stories/$39 ($13 each), 6
   stories/$69 ($11.50 each).
-- **Family — new, not yet built**: $9/month for 1 story/month (rolls
-  over up to 3) — cheaper per-story than a single pack, for recurring
-  use rather than one-off gifting.
-- **Family Plus — new, not yet built**: $19/month for 3 stories/month.
+- **Family** (built — `plans.key = 'family'`, `audience = 'family'`):
+  $9/month for 1 story/month — cheaper per-story than a single pack,
+  for recurring use rather than one-off gifting.
+- **Family Plus** (built — `plans.key = 'family_plus'`): $19/month for
+  3 stories/month.
 
-Gift packs are priced in USD, nursery plans in AED — worth aligning to
-one currency once a merchant-of-record setup is chosen; not urgent
-before launch.
+Both family plans use the same period-based quota model as the nursery
+tiers (a flat monthly allowance, reset each period) — the "rolls over
+up to 3" rollover-credit idea from an earlier draft of this doc is
+**not** implemented; it would need a different quota mechanism (an
+accumulating balance capped at 3, rather than a flat per-period reset)
+that doesn't exist yet. Simple flat allowance for now, matching every
+other plan in the system.
+
+`plans.audience` (`'nursery'` or `'family'`) keeps the two plan
+families apart: the settings page only shows a tenant the plans that
+match its own type, and the checkout route rejects a cross-type
+purchase server-side (`planIsAvailableForTenant` in
+`src/lib/domain/billing.ts`) even if the UI were bypassed.
+
+Gift packs and family plans are priced in USD, nursery plans in AED —
+worth aligning to one currency once a merchant-of-record setup is
+chosen; not urgent before launch.
 
 ## Sizing the Gemini spend cap
 

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   extractCheckoutMetadata,
   mapStripeSubscriptionStatus,
+  planIsAvailableForTenant,
   subscriptionFromStripe,
   type StripeSubscriptionLike,
 } from '@/lib/domain/billing';
@@ -93,5 +94,23 @@ describe('extractCheckoutMetadata', () => {
 
   it('throws when metadata is null', () => {
     expect(() => extractCheckoutMetadata({ metadata: null })).toThrow(/metadata/);
+  });
+});
+
+describe('planIsAvailableForTenant', () => {
+  it('allows a nursery tenant to buy a nursery-audience plan', () => {
+    expect(planIsAvailableForTenant({ audience: 'nursery' }, 'nursery')).toBe(true);
+  });
+
+  it('allows a family tenant to buy a family-audience plan', () => {
+    expect(planIsAvailableForTenant({ audience: 'family' }, 'family')).toBe(true);
+  });
+
+  it('rejects a family tenant buying a nursery-audience plan', () => {
+    expect(planIsAvailableForTenant({ audience: 'nursery' }, 'family')).toBe(false);
+  });
+
+  it('rejects a nursery tenant buying a family-audience plan', () => {
+    expect(planIsAvailableForTenant({ audience: 'family' }, 'nursery')).toBe(false);
   });
 });

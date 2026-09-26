@@ -197,6 +197,9 @@ export interface Plan {
   stripe_price_id_monthly: string | null;
   stripe_price_id_annual: string | null;
   is_active: boolean;
+  /** Which kind of tenant this plan is priced for — enforced at checkout,
+   * a nursery cannot buy a family-priced plan and vice versa. */
+  audience: TenantType;
   created_at: string;
 }
 

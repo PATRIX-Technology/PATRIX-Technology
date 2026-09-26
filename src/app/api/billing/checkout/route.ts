@@ -3,6 +3,7 @@ import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { getCurrentTenantContext } from '@/lib/domain/session';
 import { getStripeClient } from '@/lib/billing/stripe';
 import { validateCoupon, couponRejectionMessage } from '@/lib/domain/coupons';
+import { planIsAvailableForTenant } from '@/lib/domain/billing';
 import { flags } from '@/lib/flags';
 
 export const runtime = 'nodejs';
@@ -36,6 +37,12 @@ export async function POST(request: Request) {
   const { data: plan } = await supabase.from('plans').select('*').eq('key', planKey).eq('is_active', true).maybeSingle();
   if (!plan) {
     return NextResponse.json({ error: 'Unknown plan.' }, { status: 404 });
+  }
+  if (!planIsAvailableForTenant(plan, context.tenantType)) {
+    return NextResponse.json(
+      { error: `The ${plan.name} plan isn't available for a ${context.tenantType} account.` },
+      { status: 403 },
+    );
   }
 
   const priceId = billingInterval === 'annual' ? plan.stripe_price_id_annual : plan.stripe_price_id_monthly;

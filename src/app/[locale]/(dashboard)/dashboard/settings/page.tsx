@@ -14,7 +14,12 @@ export default async function SettingsPage({ params }: { params: { locale: strin
   const { data: tenant } = await supabase.from('tenants').select('*').eq('id', context.tenantId).single();
 
   const [{ data: plans }, { data: subscription }] = await Promise.all([
-    supabase.from('plans').select('*').eq('is_active', true).order('price_monthly_cents'),
+    supabase
+      .from('plans')
+      .select('*')
+      .eq('is_active', true)
+      .eq('audience', context.tenantType)
+      .order('price_monthly_cents'),
     supabase.from('subscriptions').select('*').eq('tenant_id', context.tenantId).maybeSingle(),
   ]);
 

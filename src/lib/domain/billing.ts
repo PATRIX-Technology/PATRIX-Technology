@@ -1,5 +1,5 @@
 import type Stripe from 'stripe';
-import type { SubscriptionStatus } from '@/types/database';
+import type { Plan, SubscriptionStatus, TenantType } from '@/types/database';
 
 /**
  * Maps Stripe's subscription status strings onto our own enum. Kept as an
@@ -97,4 +97,15 @@ export function extractCheckoutMetadata(
     throw new Error('Checkout session is missing required tenant_id/plan_id metadata.');
   }
   return { tenantId, planId };
+}
+
+/**
+ * A nursery-priced plan (Starter/Growth/Network) and a family-priced plan
+ * (Family/Family Plus) share the same `plans` table, so nothing at the
+ * schema level stops a nursery from checking out with a family plan or
+ * vice versa — this is the actual enforcement, called from the checkout
+ * route before a Stripe session is ever created.
+ */
+export function planIsAvailableForTenant(plan: Pick<Plan, 'audience'>, tenantType: TenantType): boolean {
+  return plan.audience === tenantType;
 }

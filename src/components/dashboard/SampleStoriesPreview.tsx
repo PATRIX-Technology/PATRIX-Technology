@@ -2,13 +2,14 @@ import type { PlatformSampleStory } from '@/types/database';
 import { Card, CardTitle } from '@/components/ui/Card';
 
 /**
- * Shows the founder-chosen sample stories (one English, one Arabic) in
- * place of letting a new family account generate a free one — see
- * docs/DECISIONS.md "Removing the free trial story". Read-only: no
- * "create your own" action here, since the point is to demonstrate the
- * product before asking for a subscription, not to hand out a story.
+ * Shows the founder-chosen sample stories (one English, one Arabic) on
+ * the dashboard home tab, for both a family account (in place of a free
+ * trial story) and a nursery account (alongside its own operational
+ * stats). Read-only: no "create your own" action here, since the point
+ * is to demonstrate the product before asking for a subscription, not
+ * to hand out a story.
  */
-export function FamilySampleStories({
+export function SampleStoriesPreview({
   samples,
   imageUrls,
 }: {

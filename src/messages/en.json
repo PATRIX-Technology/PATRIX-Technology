@@ -68,7 +68,7 @@
   },
   "dashboard": {
     "nav": {
-      "overview": "Overview",
+      "overview": "Home",
       "children": "Children",
       "stories": "Stories",
       "templates": "Story themes",

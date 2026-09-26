@@ -985,6 +985,36 @@ for family tenants** — superseded by "Family photo consent: a single
 checkbox at upload time" below, which implements exactly the product
 decision this paragraph originally called for.
 
+## Sample stories + plans extended to the nursery dashboard, "Overview" renamed "Home"
+
+**Founder's request**: put the sample-stories-and-pricing block (built
+for family accounts, see "Removing the free trial story" below) on the
+dashboard's home tab in the left nav, and show the same thing for
+nursery accounts too.
+
+**Renamed the nav item** `overview` → `Home` (`الرئيسية` in Arabic) in
+both message files — it was already the first item in the left sidebar
+and already pointed at this exact route; nothing about the URL or nav
+structure needed to change, just the label, now that this tab does
+more than show stats.
+
+**Extended to nursery accounts**: renamed `FamilySampleStories` to the
+tenant-neutral `SampleStoriesPreview` and extracted the
+samples-fetching + `BillingSection` block into a shared
+`SamplesAndPlans` component parameterised by `audience: TenantType`, so
+the plans query still correctly filters to nursery-priced plans
+(Starter/Growth/Network) rather than family ones. A nursery's Home tab
+now shows the same two platform sample stories and its own plan cards
+*above* its existing operational stats (children count, pending
+approval, consent pending) — kept those, rather than replacing them
+outright like the family dashboard does, since a working nursery admin
+still needs that count for daily use; the family dashboard never had
+an equivalent stat worth keeping. Both tenant types show the identical
+pair of sample stories (still exactly one English + one Arabic,
+`is_platform_sample`) — no separate nursery-specific samples, per the
+founder's "same idea" framing; that can be split later if a difference
+in what a nursery vs. a family should be shown turns out to matter.
+
 ## Internal doc references leaking into customer-facing copy
 
 **Founder feedback**: the family consent card literally read "...see

@@ -995,6 +995,52 @@ sign-off — the same sign-off already required before nurseries can use
 it, per `docs/NEEDS_FROM_ME.md`. Flagging rather than unilaterally
 enabling it.
 
+## Avatar visual redesign
+
+**Founder feedback**: the avatar system (already redesigned once this
+session toward an "animated/cartoon style," see that entry above) still
+read as flat and plain next to reference images of polished 3D-toy-style
+children's-app avatars, and the picker itself showed plain text labels
+and colour dots rather than an exciting, showroom-like choice.
+
+**Fix, kept deliberately parametric** (no new illustration assets, no
+schema change — `AvatarConfig`'s hair/skinTone/outfitColor/accessory
+fields are untouched, so nothing about story generation, the Gemini
+prompt integration, or the database changes):
+
+- `AvatarPreview.tsx`: added a radial skin gradient (soft light-to-shadow
+  falloff instead of a flat fill), a linear hair gradient, small
+  skin-toned ears (drawn behind the face circle so only a sliver peeks
+  out — hidden automatically under a hijab/cap since those are drawn on
+  top afterwards), eyebrows, a subtle nose shadow, bigger sparkly eyes
+  (two highlight dots instead of one), and an open laughing mouth (dark
+  inner shape + a white tooth-line) instead of a plain smile stroke. The
+  body/shirt got a diagonal sheen overlay and a soft collar highlight.
+  Redesigned the `bow` accessory (was a stray triangle that read as a
+  forehead mark) into an actual two-loop ribbon bow with a centre knot,
+  and the `cap` accessory (previously visually identical to
+  `headband` — both were just a coloured arc) into a proper dome shape
+  covering the whole top of the head with a fold-line band, clearly
+  distinct from the thinner mid-forehead `headband` strip.
+- Every gradient's `<linearGradient>`/`<radialGradient>` id is scoped
+  with React's `useId()` rather than a fixed string, because SVG
+  element ids are global across the whole page: with a fixed id, every
+  simultaneously-rendered avatar (a table of children, or the picker's
+  many live option thumbnails, added below) would have silently
+  resolved `url(#skinGrad)` to whichever instance happened to be first
+  in the DOM, corrupting every other avatar's colours.
+- `AvatarPicker.tsx`: replaced the plain text pills (hair/accessory) and
+  bare colour dots (outfit) with a live mini `AvatarPreview` per option,
+  each already merged with the child's other current choices, inside a
+  selectable card with a checkmark badge on the active one — so picking
+  an avatar reads as browsing real little characters rather than
+  choosing from a spec sheet.
+- Verified visually (not just by type/build passing) by server-rendering
+  a grid of sample configs with `react-dom/server` and screenshotting it
+  with Playwright — this project's normal `tsc`/test/lint pipeline
+  wouldn't have caught the bow/cap shape problems, since nothing here
+  changed the `AvatarConfig` data shape those tests actually check.
+
 ## maxDuration must not exceed the Hobby ceiling
 
 **Retracting an earlier decision.** An earlier fix (see the crash

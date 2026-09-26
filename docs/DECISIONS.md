@@ -995,6 +995,27 @@ sign-off — the same sign-off already required before nurseries can use
 it, per `docs/NEEDS_FROM_ME.md`. Flagging rather than unilaterally
 enabling it.
 
+## CSV bulk import: documented and given a downloadable template
+
+Bulk CSV import for a nursery's class roster already existed
+(`CsvImportDialog.tsx`, gated to `tenantType === 'nursery'` on the
+children page) — the founder's ask was for it to be properly documented
+and easier to use, not for the feature to be rebuilt. Added:
+
+- A downloadable template CSV (`public/templates/children-import-template.csv`,
+  linked from the import dialog) with the exact required header row and
+  three example rows (mixed English/Arabic names, both pronouns, blank
+  optional columns) — verified it parses through `parseChildrenCsv` with
+  zero row errors before shipping it.
+- A field-by-field table inside the import dialog itself (column name,
+  whether the column must exist vs. whether a cell can be blank,
+  accepted values), replacing the previous one-line hint.
+- `docs/CHILDREN_CSV_IMPORT.md`: the full reference — every column's
+  rules, what the import deliberately does NOT set (avatar, photo
+  consent — both still per-child, same as before), and a placeholder
+  note on future direct integration with a nursery's own system (not
+  built — no vendor/system was named to design against yet).
+
 ## Avatar visual redesign
 
 **Founder feedback**: the avatar system (already redesigned once this

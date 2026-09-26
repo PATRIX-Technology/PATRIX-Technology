@@ -107,9 +107,7 @@ async function FamilyDashboardHome({
             <BillingSection plans={plans ?? []} subscription={subscription ?? null} />
           </div>
         ) : (
-          <p className="mt-2 text-sm text-ink-500">
-            Subscriptions aren&apos;t enabled on this deployment yet — see docs/NEEDS_FROM_ME.md.
-          </p>
+          <p className="mt-2 text-sm text-ink-500">Subscriptions aren&apos;t available yet — check back soon.</p>
         )}
       </Card>
     </div>

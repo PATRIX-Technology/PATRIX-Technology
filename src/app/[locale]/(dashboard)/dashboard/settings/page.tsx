@@ -40,11 +40,7 @@ export default async function SettingsPage({ params }: { params: { locale: strin
               <BillingSection plans={plans ?? []} subscription={subscription ?? null} />
             </div>
           ) : (
-            <p className="mt-2 text-sm text-ink-500">
-              Billing is not enabled on this deployment yet — see docs/NEEDS_FROM_ME.md. The
-              architecture (plans, quotas, Stripe webhooks) is built and tested; it activates once
-              a Stripe account and price IDs are configured.
-            </p>
+            <p className="mt-2 text-sm text-ink-500">Billing isn&apos;t available yet — check back soon.</p>
           )}
         </Card>
       )}
@@ -60,9 +56,9 @@ export default async function SettingsPage({ params }: { params: { locale: strin
       <Card>
         <CardTitle>Privacy</CardTitle>
         <p className="mt-2 max-w-xl text-sm text-ink-600">
-          Child data is stored with row-level tenant isolation, private storage with short-lived signed
-          URLs, and configurable retention (see docs/en/privacy.md in this project&apos;s repository for
-          details). This is not legal advice — see docs/DECISIONS.md.
+          Every child&apos;s data is kept private to your own account, stored securely, and never shared
+          with other families or organisations. Photos and images are only ever accessible through
+          short-lived, private links.
         </p>
       </Card>
     </div>

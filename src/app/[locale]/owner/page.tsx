@@ -63,8 +63,7 @@ export default async function OwnerDashboardPage({ params }: { params: { locale:
       <Card>
         <CardTitle>Arabic templates awaiting native review ({draftArabicTemplates.length})</CardTitle>
         <p className="mt-2 text-sm text-ink-500">
-          These themes cannot be used to generate a real child&apos;s story until flipped to
-          &quot;reviewed&quot;. See docs/DECISIONS.md &quot;Arabic content gating&quot;.
+          These themes cannot be used to generate a real child&apos;s story until marked as reviewed.
         </p>
         <ul className="mt-4 space-y-2">
           {draftArabicTemplates.map((tpl) => (
@@ -95,8 +94,8 @@ export default async function OwnerDashboardPage({ params }: { params: { locale:
       <Card>
         <CardTitle>Your session</CardTitle>
         <p className="mt-2 text-sm text-ink-600">
-          Signed in as {context?.fullName ?? userData.user.email}. Impersonation tooling with mandatory
-          audit logging and full revenue reporting are not yet built — see docs/HANDOFF.md.
+          Signed in as {context?.fullName ?? userData.user.email}. Impersonation tooling and full
+          revenue reporting are coming soon.
         </p>
       </Card>
     </div>

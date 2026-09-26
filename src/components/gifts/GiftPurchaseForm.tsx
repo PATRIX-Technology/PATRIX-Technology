@@ -67,10 +67,7 @@ export function GiftPurchaseForm({ locale }: { locale: string }) {
       <Button type="submit" size="lg" isLoading={isLoading}>
         Continue to payment
       </Button>
-      <p className="text-xs text-ink-500">
-        Runs in Stripe test mode until this deployment&apos;s Stripe account goes live — see
-        docs/NEEDS_FROM_ME.md.
-      </p>
+      <p className="text-xs text-ink-500">Secure checkout powered by Stripe.</p>
     </form>
   );
 }

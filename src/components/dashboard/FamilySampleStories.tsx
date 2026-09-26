@@ -20,9 +20,7 @@ export function FamilySampleStories({
     return (
       <Card>
         <CardTitle>Sample stories</CardTitle>
-        <p className="mt-2 text-sm text-ink-500">
-          Sample stories aren&apos;t set up on this deployment yet — see docs/NEEDS_FROM_ME.md.
-        </p>
+        <p className="mt-2 text-sm text-ink-500">Sample stories are coming soon.</p>
       </Card>
     );
   }

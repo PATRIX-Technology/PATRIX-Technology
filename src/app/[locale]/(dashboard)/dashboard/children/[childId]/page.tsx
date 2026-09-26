@@ -127,11 +127,10 @@ export default async function ChildDetailPage({
         <Card>
           <CardTitle>Consent</CardTitle>
           <p className="mt-2 text-sm text-ink-600">
-            As this child&apos;s parent/guardian, your consent to generate and read their storybooks
-            was recorded automatically when you added them to your family account — see
-            docs/DECISIONS.md &quot;Phase 4: families are tenants&quot;. Uploading a reference photo is
-            separate and needs a one-time confirmation, shown below, since the photo is shared with
-            our AI illustration provider.
+            As this child&apos;s parent or guardian, your consent to create and read their storybooks
+            was recorded automatically when you added them to your family account. Uploading a
+            reference photo is separate and needs a one-time confirmation, shown below, since the
+            photo is shared with our AI illustration provider.
           </p>
         </Card>
       ) : (

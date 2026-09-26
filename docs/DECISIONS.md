@@ -985,6 +985,29 @@ for family tenants** — superseded by "Family photo consent: a single
 checkbox at upload time" below, which implements exactly the product
 decision this paragraph originally called for.
 
+## Internal doc references leaking into customer-facing copy
+
+**Founder feedback**: the family consent card literally read "...see
+docs/DECISIONS.md 'Phase 4: families are tenants'" — an internal file
+path and section title, shown to a real customer. Not an isolated
+typo: a repo-wide check found the same pattern in eight more places —
+the gift page, the (just-added) family dashboard and its sample-story
+empty state, the billing settings card, the privacy blurb (which also
+named `docs/en/privacy.md` and "this project's repository" directly),
+the gift purchase form's Stripe-test-mode note, and two spots on the
+owner page. Root cause: this whole build narrates its own reasoning
+inline via comments referencing `docs/DECISIONS.md`/`docs/NEEDS_FROM_ME.md`
+next to the code they explain — the right habit for a comment, wrong
+the moment matching wording gets typed into an actual JSX text node
+instead of staying above it in a `//` or `/* */`. Rewrote every one as
+plain customer-facing copy (e.g. "Billing isn't available yet — check
+back soon" instead of naming the internal doc and why) and removed
+the stale "with their own free family account" line on the gift page
+(no longer true — see "Removing the free trial story" below). Verified
+with a repo-wide grep for these doc paths and the phrase "this
+deployment" outside of comments — zero remaining hits in `src/app` or
+`src/components`.
+
 ## Removing the free trial story
 
 **Founder's request**: remove the free trial entirely — every new

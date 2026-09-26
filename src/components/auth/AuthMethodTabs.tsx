@@ -5,18 +5,23 @@ import { useState, type ReactNode } from 'react';
 export type AuthMethod = 'email' | 'phone';
 
 /**
- * Shared Email/Phone toggle for the sign-in and sign-up pages — a render
- * prop rather than a fixed pair of slots so each page decides what its
- * own Email and Phone forms actually look like.
+ * Shared Email/Phone toggle for the sign-in and sign-up pages. Takes both
+ * forms as plain ReactNode props (not a render-prop function) because
+ * every caller here is a Server Component: passing a function as
+ * children/props from a Server Component to a Client Component like this
+ * one isn't serialisable and crashes with a server-side exception (see
+ * docs/DECISIONS.md "Server-to-client function props on auth pages").
  */
 export function AuthMethodTabs({
   emailLabel,
   phoneLabel,
-  children,
+  emailContent,
+  phoneContent,
 }: {
   emailLabel: string;
   phoneLabel: string;
-  children: (method: AuthMethod) => ReactNode;
+  emailContent: ReactNode;
+  phoneContent: ReactNode;
 }) {
   const [method, setMethod] = useState<AuthMethod>('email');
 
@@ -47,7 +52,7 @@ export function AuthMethodTabs({
           </button>
         ))}
       </div>
-      {children(method)}
+      {method === 'email' ? emailContent : phoneContent}
     </div>
   );
 }

@@ -20,15 +20,12 @@ export default function FamilySignUpPage({ params }: { params: { locale: string 
           </Link>
           .
         </p>
-        <AuthMethodTabs emailLabel={tPhone('emailTab')} phoneLabel={tPhone('phoneTab')}>
-          {(method) =>
-            method === 'email' ? (
-              <FamilySignUpForm locale={params.locale} />
-            ) : (
-              <PhoneFamilySignUpForm locale={params.locale} />
-            )
-          }
-        </AuthMethodTabs>
+        <AuthMethodTabs
+          emailLabel={tPhone('emailTab')}
+          phoneLabel={tPhone('phoneTab')}
+          emailContent={<FamilySignUpForm locale={params.locale} />}
+          phoneContent={<PhoneFamilySignUpForm locale={params.locale} />}
+        />
         <p className="mt-6 text-center text-sm text-ink-500">
           Already have an account?{' '}
           <Link href={`/${params.locale}/sign-in`} className="font-medium text-lagoon-600">

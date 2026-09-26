@@ -995,6 +995,32 @@ sign-off — the same sign-off already required before nurseries can use
 it, per `docs/NEEDS_FROM_ME.md`. Flagging rather than unilaterally
 enabling it.
 
+## Server-to-client function props on auth pages
+
+**Root cause of the reported "sign in"/"sign up"/"create family account"
+server-side exceptions** (digest `4195642915`, seen on the live app for
+all three): `sign-in/page.tsx`, `sign-up/page.tsx`, and
+`family/sign-up/page.tsx` are Server Components, and each passed a
+render-prop function as `children` to `AuthMethodTabs`, a `'use client'`
+component: `<AuthMethodTabs>{(method) => method === 'email' ? <A/> :
+<B/>}</AuthMethodTabs>`. Functions aren't serialisable across the
+Server→Client Component boundary — Next.js throws a server-side
+exception the moment it tries to send that prop to the client, which is
+exactly the generic "Application error: a server-side exception has
+occurred" the founder saw with no further detail. This was introduced
+this session when phone-number sign-in/sign-up was added (each page
+needed to add a second, phone, form alongside the existing email one).
+
+**Fix**: `AuthMethodTabs` now takes `emailContent`/`phoneContent` as
+plain `ReactNode` props instead of a function — the caller still decides
+what each tab renders, but by passing two already-built elements rather
+than a function that builds them on demand. Passing a Server Component's
+rendered element as a prop to a Client Component is fine (that's the
+standard "pass Server Components as children" pattern); only passing a
+*function* is not. All three call sites updated the same way. Confirmed
+with `next build`: all three pages now prerender successfully where they
+previously would have failed the same way in production.
+
 ## Gender in the illustration prompt
 
 **Bug reported by the founder**: story illustrations always rendered

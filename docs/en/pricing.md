@@ -68,12 +68,15 @@ even with the added labour.
 
 ## Individuals & families
 
-- **Free trial** — every new tenant gets **one free trial story** on
-  signup. This is enforced by the `quotas` table's default
-  (`stories_included_this_period = 1`, checked by `consume_story_quota`
-  before every generation) — not the `subscriptions.trial_story_used`
-  column, which exists in the schema but nothing currently reads or
-  writes it.
+- **No free trial** — a new signup starts at 0 stories
+  (`quotas.stories_included_this_period` defaults to 0, checked by
+  `consume_story_quota` before every generation). A family account's
+  dashboard shows two fixed sample stories instead (see
+  `docs/DECISIONS.md` "Removing the free trial story"), with the plans
+  below them. Removed because a free trial story per signup was being
+  farmed by creating new accounts repeatedly. The
+  `subscriptions.trial_story_used` column still exists in the schema
+  but nothing reads or writes it — harmless, just not the mechanism.
 - **Story packs** (already built — `src/lib/domain/gifts.ts`, live in
   Stripe checkout): 1 story/$15, 3 stories/$39 ($13 each), 6
   stories/$69 ($11.50 each).

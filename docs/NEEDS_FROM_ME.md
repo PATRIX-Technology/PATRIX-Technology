@@ -127,6 +127,28 @@ else has already been built and is documented in `docs/HANDOFF.md`.
    purchase page (`/gift`, Phase 4), both stay hidden behind the same
    flag.
 
+6b. **Pick the two sample stories** shown on a new family account's
+   dashboard (replacing the free trial story you asked me to remove —
+   see `docs/DECISIONS.md` "Removing the free trial story"). This is a
+   taste call, so I didn't pick for you: choose one already-approved
+   English story and one already-approved Arabic story you're happy to
+   show off, then run this in the Supabase SQL editor (replace the two
+   IDs — find them from the Stories list, or `select id, theme_key,
+   locale from stories where status = 'APPROVED' and locale = 'en'`,
+   swapping `'en'` for `'ar'` too):
+
+   ```sql
+   update stories set is_platform_sample = true where id = '<your english story id>';
+   update stories set is_platform_sample = true where id = '<your arabic story id>';
+   ```
+
+   Until you run this, the family dashboard shows a plain "not set up
+   yet" card instead of a broken one — safe to leave for now, but the
+   whole point of removing the free trial was to show these instead, so
+   don't leave it too long. You can swap either one for a different
+   story later the same way (just flip the old one back to `false`
+   first, or the unique-per-locale check will refuse the new one).
+
 ## Before family accounts / gifting feel complete (Phase 4)
 
 6a. **A transactional email provider** (Resend, Postmark, SendGrid, or

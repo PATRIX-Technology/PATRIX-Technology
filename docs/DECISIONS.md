@@ -985,6 +985,57 @@ for family tenants** — superseded by "Family photo consent: a single
 checkbox at upload time" below, which implements exactly the product
 decision this paragraph originally called for.
 
+## Removing the free trial story
+
+**Founder's request**: remove the free trial entirely — every new
+signup got one free story (`quotas.stories_included_this_period`
+defaulted to 1), and nothing stopped someone from farming free
+generations by creating new family accounts repeatedly. Replace it
+with two fixed sample stories (one English, one Arabic) shown on a new
+family account's dashboard, with the subscription plans right below.
+
+**Removing the trial**: changed `quotas.stories_included_this_period`'s
+column default from 1 to 0, and `create_family_tenant`'s explicit
+insert to match (migration `0019_remove_trial_and_platform_samples.sql`).
+A nursery tenant was already getting the same "1 free story" indirectly
+through this same column default (its quota row is created lazily, on
+first `consume_story_quota` call, rather than explicitly at signup like
+a family's) — fixing the default closes that path too, not just
+`create_family_tenant`'s.
+
+**Platform sample stories**: added `stories.is_platform_sample`
+(boolean, at most one `true` per locale, enforced by a partial unique
+index) and `get_platform_sample_stories()`, a `security definer` RPC
+that returns the flagged story/stories joined to their template's
+title/synopsis and first page. Deliberately a narrow RPC rather than a
+relaxed RLS policy on `stories`: every other query in this project is
+strictly tenant-isolated, and a sample explicitly meant for every
+signed-in user to see (regardless of their own tenant) is the one
+legitimate exception — scoping the exception to one function that
+returns only the founder-flagged rows keeps it from becoming a general
+cross-tenant read hole. The family dashboard
+(`(dashboard)/dashboard/page.tsx`) signs the sample's image with the
+service-role client, not the viewer's own RLS-scoped client, since the
+image belongs to whichever tenant the founder actually generated it
+under.
+
+**Which two stories serve as the samples is a taste call, not a
+technical one** — deliberately not hardcoded. The founder picks two of
+his own already-approved stories (one per locale) and flags them
+himself via SQL; see the migration handoff message for the exact
+commands. Until at least one is flagged, the family dashboard shows a
+plain "not set up yet" card instead of a broken/empty one.
+
+**Also changed**: the family dashboard overview
+(`(dashboard)/dashboard/page.tsx`) no longer shows the generic stats
+grid (children count, pending-approval count) that a nursery sees —
+replaced entirely with the sample stories + a "Choose a plan" card
+reusing the existing `BillingSection` component, gated behind
+`flags.billing` exactly like the settings page already does (shows a
+friendly "not enabled yet" message when billing isn't configured,
+rather than dead Subscribe buttons). The nursery dashboard is
+unchanged.
+
 ## Custom error boundary for the locale segment
 
 **Problem this fixes, not tied to any one crash**: every crash report

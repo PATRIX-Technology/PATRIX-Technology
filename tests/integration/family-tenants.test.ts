@@ -10,7 +10,7 @@ describe('family tenants (Phase 4 scaffolding)', () => {
 
   afterAll(async () => db.teardown());
 
-  it('create_family_tenant creates a family-typed tenant, an owner membership, a starter quota, and a trialing subscription', async () => {
+  it('create_family_tenant creates a family-typed tenant, an owner membership, a zero quota (no free trial), and a trialing subscription', async () => {
     const userId = await createUser(db.adminClient, 'Amina');
     const client = await db.connectAs({ role: 'authenticated', userId });
 
@@ -34,7 +34,9 @@ describe('family tenants (Phase 4 scaffolding)', () => {
       'select stories_included_this_period from quotas where tenant_id = $1',
       [tenantId],
     );
-    expect(quota.rows[0].stories_included_this_period).toBe(1);
+    // No free trial story -- see docs/DECISIONS.md "Removing the free
+    // trial story". A brand-new family account starts at 0, not 1.
+    expect(quota.rows[0].stories_included_this_period).toBe(0);
 
     const subscription = await db.adminClient.query(
       'select status, plan_id from subscriptions where tenant_id = $1',

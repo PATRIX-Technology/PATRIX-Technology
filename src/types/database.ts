@@ -219,6 +219,19 @@ export interface Subscription {
   updated_at: string;
 }
 
+/** Result row of get_platform_sample_stories() — see docs/DECISIONS.md
+ * "Removing the free trial story". Shown on a new family account's
+ * dashboard in place of a free trial story. */
+export interface PlatformSampleStory {
+  story_id: string;
+  theme_key: string;
+  locale: AppLocale;
+  title: string;
+  synopsis: string;
+  first_page_text: string | null;
+  first_page_image_asset_path: string | null;
+}
+
 export interface Quota {
   tenant_id: string;
   stories_included_this_period: number;

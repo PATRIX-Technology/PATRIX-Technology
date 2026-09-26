@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useFormState } from 'react-dom';
+import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { sendSignInOtpAction, verifySignInOtpAction, type ActionResult } from '@/lib/actions/auth';
 import { Button } from '@/components/ui/Button';
@@ -10,6 +11,7 @@ import { CountryPhoneField } from '@/components/auth/CountryPhoneField';
 
 export function PhoneSignInForm({ locale }: { locale: string }) {
   const t = useTranslations('auth.phone');
+  const router = useRouter();
   const [step, setStep] = useState<'phone' | 'code'>('phone');
   const [phone, setPhone] = useState<string | null>(null);
 
@@ -23,6 +25,10 @@ export function PhoneSignInForm({ locale }: { locale: string }) {
   const [verifyState, verifyFormAction] = useFormState<ActionResult, FormData>(async (_prev, formData) => {
     return verifyWithLocale(formData);
   }, {});
+
+  useEffect(() => {
+    if (verifyState.redirectTo) router.push(verifyState.redirectTo);
+  }, [verifyState, router]);
 
   if (step === 'phone') {
     return (

@@ -1,9 +1,9 @@
 'use client';
 
 import { useFormState, useFormStatus } from 'react-dom';
+import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { createStoryAction } from '@/lib/actions/stories';
-import type { ActionResult } from '@/lib/actions/auth';
+import { createStoryAction, type CreateStoryResult } from '@/lib/actions/stories';
 import { Button } from '@/components/ui/Button';
 import { useToast } from '@/components/ui/Toast';
 import { useEffect, useRef } from 'react';
@@ -122,15 +122,25 @@ export function CreateStoryForm({
 }) {
   const t = useTranslations('stories');
   const showToast = useToast();
+  const router = useRouter();
   const action = createStoryAction.bind(null, locale, childId);
-  const [state, formAction] = useFormState<ActionResult, FormData>(async (_prev, formData) => {
+  const [state, formAction] = useFormState<CreateStoryResult, FormData>(async (_prev, formData) => {
     return action(formData);
   }, {});
   const submitCount = useRef(0);
 
   useEffect(() => {
-    if (submitCount.current === 0 || !state.error) return;
-    showToast({ title: t('createFailedTitle'), description: state.error, tone: 'error' });
+    if (submitCount.current === 0) return;
+    if (state.error) {
+      showToast({ title: t('createFailedTitle'), description: state.error, tone: 'error' });
+      return;
+    }
+    // Navigated here client-side rather than via redirect() inside the
+    // action itself -- see docs/DECISIONS.md "Client-side navigation
+    // instead of redirect() inside a useFormState action".
+    if (state.storyId) {
+      router.push(`/${locale}/dashboard/stories/${state.storyId}`);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state]);
 

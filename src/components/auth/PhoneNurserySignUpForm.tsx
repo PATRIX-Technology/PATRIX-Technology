@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useFormState } from 'react-dom';
+import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import {
   sendNurserySignUpOtpAction,
@@ -15,6 +16,7 @@ import { CountryPhoneField } from '@/components/auth/CountryPhoneField';
 export function PhoneNurserySignUpForm({ locale }: { locale: string }) {
   const t = useTranslations('auth.phone');
   const tSignUp = useTranslations('auth.signUp');
+  const router = useRouter();
   const [step, setStep] = useState<'details' | 'code'>('details');
   const [orgName, setOrgName] = useState('');
   const [fullName, setFullName] = useState('');
@@ -30,6 +32,10 @@ export function PhoneNurserySignUpForm({ locale }: { locale: string }) {
   const [verifyState, verifyFormAction] = useFormState<ActionResult, FormData>(async (_prev, formData) => {
     return verifyWithLocale(formData);
   }, {});
+
+  useEffect(() => {
+    if (verifyState.redirectTo) router.push(verifyState.redirectTo);
+  }, [verifyState, router]);
 
   if (step === 'details') {
     return (

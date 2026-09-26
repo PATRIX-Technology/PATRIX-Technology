@@ -11,11 +11,24 @@ import { createSupabaseServiceRoleClient } from '@/lib/supabase/service-role';
 import { parseAvatarConfig } from '@/lib/domain/avatar';
 import type { ActionResult } from './auth';
 
+export interface CreateStoryResult extends ActionResult {
+  storyId?: string;
+}
+
+/**
+ * Deliberately returns { storyId } instead of calling next/navigation's
+ * redirect() on success — see docs/DECISIONS.md "Client-side navigation
+ * instead of redirect() inside a useFormState action" for why: every
+ * hard-to-reproduce client-side crash reported on this exact page
+ * ("generating a story") involved a Server Action that redirected from
+ * inside a useFormState-driven form. CreateStoryForm now navigates
+ * itself, client-side, once storyId appears in the resolved state.
+ */
 export async function createStoryAction(
   locale: string,
   childId: string,
   formData: FormData,
-): Promise<ActionResult> {
+): Promise<CreateStoryResult> {
   const templateId = String(formData.get('templateId') ?? '');
   if (!templateId) return { error: 'Please choose a theme.' };
 
@@ -81,10 +94,10 @@ export async function createStoryAction(
 
   revalidatePath(`/${locale}/dashboard/children/${childId}`);
   revalidatePath(`/${locale}/dashboard/stories`);
-  // Send the user straight to the page that shows live per-page progress,
-  // rather than leaving them on the child page with no feedback that
-  // anything happened.
-  redirect(`/${locale}/dashboard/stories/${story.id}`);
+  // CreateStoryForm navigates to this story's page itself, client-side,
+  // once it sees storyId — see the note on CreateStoryResult above for
+  // why this doesn't call redirect() here directly.
+  return { storyId: story.id };
 }
 
 export async function approveStoryAction(locale: string, storyId: string): Promise<ActionResult> {

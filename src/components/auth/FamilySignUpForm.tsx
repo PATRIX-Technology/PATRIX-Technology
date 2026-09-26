@@ -1,16 +1,23 @@
 'use client';
 
+import { useEffect } from 'react';
 import { useFormState } from 'react-dom';
+import { useRouter } from 'next/navigation';
 import { familySignUpAction } from '@/lib/actions/family';
 import type { ActionResult } from '@/lib/actions/auth';
 import { Button } from '@/components/ui/Button';
 import { TextField } from '@/components/ui/Input';
 
 export function FamilySignUpForm({ locale }: { locale: string }) {
+  const router = useRouter();
   const action = familySignUpAction.bind(null, locale);
   const [state, formAction] = useFormState<ActionResult, FormData>(async (_prev, formData) => {
     return action(formData);
   }, {});
+
+  useEffect(() => {
+    if (state.redirectTo) router.push(state.redirectTo);
+  }, [state, router]);
 
   return (
     <form action={formAction} className="flex flex-col gap-4">

@@ -10,6 +10,15 @@ import { normalizePhoneNumber } from '@/lib/domain/phone';
 export interface ActionResult {
   error?: string;
   message?: string;
+  /** Set on success by an action that used to call next/navigation's
+   * redirect() directly. The calling form navigates itself, client-side,
+   * once this appears in the resolved state — see docs/DECISIONS.md
+   * "Client-side navigation instead of redirect() inside a useFormState
+   * action" for why: redirect() thrown from inside a useFormState-driven
+   * Server Action was the root cause behind several hard-to-reproduce
+   * client-side crashes reported during this build (sign-in, sign-up,
+   * family sign-up, and story creation all shared this exact pattern). */
+  redirectTo?: string;
 }
 
 /** Auth attempts: 10 per IP per 5 minutes — generous for a real user who
@@ -69,7 +78,7 @@ export async function signUpAction(locale: string, formData: FormData): Promise<
     return { error: rpcError.message };
   }
 
-  redirect(`/${locale}/dashboard`);
+  return { redirectTo: `/${locale}/dashboard` };
 }
 
 export async function signInAction(locale: string, formData: FormData): Promise<ActionResult> {
@@ -98,7 +107,7 @@ export async function signInAction(locale: string, formData: FormData): Promise<
     return { error: 'Incorrect email or password.' };
   }
 
-  redirect(`/${locale}/dashboard`);
+  return { redirectTo: `/${locale}/dashboard` };
 }
 
 /**
@@ -179,7 +188,7 @@ export async function verifyNurserySignUpOtpAction(locale: string, formData: For
     }
   }
 
-  redirect(`/${locale}/dashboard`);
+  return { redirectTo: `/${locale}/dashboard` };
 }
 
 /**
@@ -246,7 +255,7 @@ export async function verifySignInOtpAction(locale: string, formData: FormData):
     return { error: 'No account found for that number — sign up instead.' };
   }
 
-  redirect(`/${locale}/dashboard`);
+  return { redirectTo: `/${locale}/dashboard` };
 }
 
 export async function signOutAction(locale: string): Promise<void> {

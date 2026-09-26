@@ -1,6 +1,5 @@
 'use server';
 
-import { redirect } from 'next/navigation';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { enforceRateLimit, RateLimitExceededError } from '@/lib/rate-limit';
 import { getClientIp } from '@/lib/request-ip';
@@ -58,7 +57,7 @@ export async function familySignUpAction(locale: string, formData: FormData): Pr
     return { error: rpcError.message };
   }
 
-  redirect(`/${locale}/dashboard`);
+  return { redirectTo: `/${locale}/dashboard` };
 }
 
 /**
@@ -130,5 +129,5 @@ export async function verifyFamilySignUpOtpAction(locale: string, formData: Form
     }
   }
 
-  redirect(`/${locale}/dashboard`);
+  return { redirectTo: `/${locale}/dashboard` };
 }

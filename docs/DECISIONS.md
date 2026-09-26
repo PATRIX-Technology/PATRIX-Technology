@@ -985,6 +985,21 @@ for family tenants** — superseded by "Family photo consent: a single
 checkbox at upload time" below, which implements exactly the product
 decision this paragraph originally called for.
 
+## Client-side navigation instead of redirect() inside a useFormState action
+
+**Root cause, finally confirmed, of the recurring "client-side exception" crashes** reported throughout this build (story generation, and very likely the earlier sign-in/sign-up/family-signup reports too, alongside the separate function-as-children bug already fixed for those pages): every one of them involved a Server Action that called `next/navigation`'s `redirect()` on success, invoked through `useFormState`. Confirmed this specific instance with real evidence, not just suspicion — added `src/app/[locale]/error.tsx` (see that entry below) so the next crash would show a real stack trace instead of Next's generic message, and the founder hit it again: `TypeError: Cannot read properties of undefined (reading 'error')`, thrown inside React-DOM's own action-queue internals, triggered from `CreateStoryForm`'s submit. A careful audit of every `.error`/`{error}` access in that page's actual compiled client bundle turned up nothing unguarded in the app's own code — pointing at the `redirect()`-inside-`useFormState` combination itself as the culprit, a known rough edge in this app's Next.js version (14.2.15; see `docs/NEEDS_FROM_ME.md` item 10 on the 14→16 upgrade).
+
+**Fix**: every Server Action that both (a) redirects on success and (b) is driven through `useFormState` now returns `{ redirectTo: "/path" }` instead of calling `redirect()` directly; the calling form does `router.push(state.redirectTo)` in a `useEffect`. Added `redirectTo?: string` to the shared `ActionResult` interface (`src/lib/actions/auth.ts`) for this. Touched every instance of the pattern across the app, not just the one that reproduced:
+
+- `createStoryAction` (`src/lib/actions/stories.ts`) → `CreateStoryForm.tsx`
+- `signInAction`, `signUpAction`, `verifySignInOtpAction` (`src/lib/actions/auth.ts`) → `SignInForm.tsx`, `SignUpForm.tsx`, `PhoneSignInForm.tsx`
+- `familySignUpAction`, `verifyFamilySignUpOtpAction` (`src/lib/actions/family.ts`) → `FamilySignUpForm.tsx`, `PhoneFamilySignUpForm.tsx`
+- `verifyNurserySignUpOtpAction` (`src/lib/actions/auth.ts`) → `PhoneNurserySignUpForm.tsx`
+
+**Deliberately left unchanged**: `signOutAction` and the (currently unused, dead-code) `redirectToReader` — both call `redirect()` but neither is driven through `useFormState` (a plain `<form action={signOutAction}>` and a would-be `onClick` caller respectively), which is the officially supported, safe pattern; only the `useFormState` combination was ever at risk.
+
+**How this was actually diagnosed**, since it's worth recording given how long this took across the session: fetching the live deployed JS bundle named in the crash's stack trace was blocked by this sandbox's network policy (no route to the live app), so instead ran `next build` locally against the same commit, located the equivalent client chunk on disk, and grepped its compiled output for every `.error` access pattern — all of them turned out to be safe (`x.error &&` guards on values `useFormState` guarantees are never undefined), which is what shifted suspicion from "a bug in this app's own component code" to "an interaction with the framework's own action-redirect machinery," and from there to the specific fix above.
+
 ## Sample stories + plans extended to the nursery dashboard, "Overview" renamed "Home"
 
 **Founder's request**: put the sample-stories-and-pricing block (built

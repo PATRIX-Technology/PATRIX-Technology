@@ -1,6 +1,8 @@
 'use client';
 
+import { useEffect } from 'react';
 import { useFormState } from 'react-dom';
+import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { signInAction, type ActionResult } from '@/lib/actions/auth';
 import { Button } from '@/components/ui/Button';
@@ -8,10 +10,15 @@ import { TextField } from '@/components/ui/Input';
 
 export function SignInForm({ locale }: { locale: string }) {
   const t = useTranslations('auth.signIn');
+  const router = useRouter();
   const action = signInAction.bind(null, locale);
   const [state, formAction] = useFormState<ActionResult, FormData>(async (_prev, formData) => {
     return action(formData);
   }, {});
+
+  useEffect(() => {
+    if (state.redirectTo) router.push(state.redirectTo);
+  }, [state, router]);
 
   return (
     <form action={formAction} className="flex flex-col gap-4">

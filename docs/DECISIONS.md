@@ -985,6 +985,40 @@ for family tenants** — superseded by "Family photo consent: a single
 checkbox at upload time" below, which implements exactly the product
 decision this paragraph originally called for.
 
+## Custom error boundary for the locale segment
+
+**Problem this fixes, not tied to any one crash**: every crash report
+investigated during this build hit the same wall — Next.js's generic
+production fallback ("Application error: a server-side/client-side
+exception has occurred") shows nothing but a bare digest, so diagnosing
+each one meant either the founder's own Vercel dashboard access (for a
+server-side exception, which at least logs a real stack there) or
+static code review and guesswork (for a client-side exception, which
+Vercel's function logs never see at all, since it never touches the
+server). Added `src/app/[locale]/error.tsx`, Next.js's own error
+boundary convention for a route segment: it renders the real
+`error.message` and, for a genuine client-side exception, the full
+`error.stack` too, directly on the page — screenshot-able, no devtools
+needed. A server-side exception still only ever exposes `digest` here
+(Next.js deliberately never sends that error's real message or stack
+to the client), so the founder's own Vercel logs remain the only way to
+read those; this only closes the client-side half of the gap, which
+until now had no path to a real stack trace at all.
+
+**Investigating the specific report that prompted this** ("client-side
+exception" screenshot, still on `/dashboard/children/[childId]`, while
+trying to generate a story on a family account): ruled out the avatar
+picker redesign as the cause — built a real (not simulated) SSR +
+browser-hydration reproduction of `AvatarPicker` with `esbuild` +
+Playwright/Chromium, since that component's live mini-avatar-preview
+grid is the one new thing this exact page always mounts (inside
+`EditChildDialog`'s `<dialog>`, regardless of whether the dialog is
+open — `Modal.tsx` renders `children` unconditionally and only toggles
+`showModal()`/`close()`). Hydration came back completely clean. Without
+a real stack trace, couldn't take the investigation further with
+confidence — hence this error boundary, so the next occurrence gives a
+concrete answer instead of another screenshot of the generic message.
+
 ## Family photo consent: a single checkbox at upload time
 
 **The founder's request**: "for family if in UAE law needed the

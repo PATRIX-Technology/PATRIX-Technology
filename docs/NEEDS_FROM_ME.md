@@ -27,6 +27,25 @@ else has already been built and is documented in `docs/HANDOFF.md`.
    for Next.js) or a similar host — but creating that account and
    connecting billing is yours to do.
 
+3a. **An SMS provider, for phone-number sign-in/sign-up to actually send
+   codes.** The sign-in, nursery sign-up, and family sign-up pages all
+   now have a "Phone" tab (alongside the existing email/password option)
+   that sends a 6-digit code via SMS — the code (server actions in
+   `src/lib/actions/auth.ts` and `src/lib/actions/family.ts`, using
+   Supabase's built-in phone-auth methods) is fully built and can't be
+   tested further from my side, but it will not send a single real SMS
+   until Supabase itself has an SMS provider configured. In your
+   Supabase project: **Authentication → Providers → Phone**, then add a
+   provider — Twilio is the one Supabase's own docs walk through, and
+   needs its own Twilio account, a phone number purchased through
+   Twilio, and its Account SID/Auth Token entered into Supabase. This
+   costs real money per SMS sent (Twilio's UAE rates are usually a few
+   cents per message) — budget for it the same way as the Gemini spend
+   cap below, and expect to test this live yourself once it's
+   configured, since I have no way to receive an SMS to confirm it end-
+   to-end. Until this is configured, the Phone tab's "Send code" button
+   will fail with a Supabase error, not send anything.
+
 ## Before enabling real (paid) AI image generation
 
 4. **Provide a Gemini API key.** Google Gemini is now the wired-up image

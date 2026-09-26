@@ -1,8 +1,13 @@
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { FamilySignUpForm } from '@/components/auth/FamilySignUpForm';
+import { PhoneFamilySignUpForm } from '@/components/auth/PhoneFamilySignUpForm';
+import { AuthMethodTabs } from '@/components/auth/AuthMethodTabs';
 import { Card } from '@/components/ui/Card';
 
 export default function FamilySignUpPage({ params }: { params: { locale: string } }) {
+  const tPhone = useTranslations('auth.phone');
+
   return (
     <main className="flex min-h-screen items-center justify-center bg-[rgb(var(--color-surface))] px-4 py-12">
       <Card className="w-full max-w-md">
@@ -15,7 +20,15 @@ export default function FamilySignUpPage({ params }: { params: { locale: string 
           </Link>
           .
         </p>
-        <FamilySignUpForm locale={params.locale} />
+        <AuthMethodTabs emailLabel={tPhone('emailTab')} phoneLabel={tPhone('phoneTab')}>
+          {(method) =>
+            method === 'email' ? (
+              <FamilySignUpForm locale={params.locale} />
+            ) : (
+              <PhoneFamilySignUpForm locale={params.locale} />
+            )
+          }
+        </AuthMethodTabs>
         <p className="mt-6 text-center text-sm text-ink-500">
           Already have an account?{' '}
           <Link href={`/${params.locale}/sign-in`} className="font-medium text-lagoon-600">

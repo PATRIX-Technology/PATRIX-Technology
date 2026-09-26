@@ -53,6 +53,17 @@
       "submit": "Create organisation",
       "haveAccount": "Already have an account?",
       "signInInstead": "Sign in instead"
+    },
+    "phone": {
+      "emailTab": "Email",
+      "phoneTab": "Phone",
+      "phoneLabel": "Mobile number",
+      "phonePlaceholder": "050 123 4567",
+      "sendCode": "Send code",
+      "codeSentTo": "We sent a code to {phone}.",
+      "codeLabel": "6-digit code",
+      "verify": "Verify & continue",
+      "changeNumber": "Use a different number"
     }
   },
   "dashboard": {

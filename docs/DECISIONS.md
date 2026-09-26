@@ -878,6 +878,61 @@ from here; verified by typecheck, the unit tests above, and matching
 the exact Button/Badge/Tailwind-token patterns already used elsewhere
 in this same file.
 
+**Phone-number sign-in and sign-up.** Added a "Phone" tab alongside the
+existing email/password option on all three auth entry points (sign-in,
+nursery sign-up, family sign-up), using Supabase's built-in phone-auth
+(`signInWithOtp`/`verifyOtp` — an SMS OTP, not a password) rather than
+building a custom SMS flow. `normalizeUaePhone`
+(`src/lib/domain/phone.ts`) accepts however someone actually types a
+UAE mobile (leading 0, no country code, spaces/dashes) and converts to
+the E.164 format Supabase requires, rejecting landline area codes and
+wrong lengths outright rather than sending a doomed SMS. Two design
+decisions worth flagging:
+
+- **Sign-up sends OTP with `shouldCreateUser: true`; sign-in ALSO does**
+  — not `false`. Using `false` on sign-in would make Supabase return a
+  distinguishable "no account" error at the *send* step, before the
+  caller has proven they control that phone number — a classic
+  enumeration side-channel (try a list of numbers, see which ones error
+  differently). Instead, `verifySignInOtpAction` checks
+  `getCurrentTenantContext` *after* a real code has been verified, and
+  only then says "no account, sign up instead" — at that point only the
+  true owner of the phone (or someone who's already compromised their
+  SMS) can ever reach it. The cost is a harmless orphan `auth.users` row
+  with no tenant if someone starts sign-in with an unregistered number
+  and abandons the flow — the same tradeoff email auth already has for
+  an unconfirmed signup that's never completed.
+- **The two-step (phone → code) forms are client components using
+  `useFormState` per step, not one submission** — matching how
+  `SignInForm`/`SignUpForm` already use `useFormState` against server
+  actions that call `redirect()` on success (this is the same, already-
+  proven mechanism, not a new pattern). Org name / full name are
+  collected on step 1 and carried to step 2 as hidden form fields (React
+  state on the client, not a server-side session of any kind), since
+  `verifyNurserySignUpOtpAction`/`verifyFamilySignUpOtpAction` need them
+  to call `create_tenant`/`create_family_tenant` after the code checks
+  out. Both verify actions check for an existing tenant first and skip
+  tenant creation if one is found, rather than assuming a fresh signup —
+  calling `create_tenant` a second time for the same user has no
+  "already exists" guard of its own and would create a duplicate tenant,
+  which would happen if someone abandoned sign-up after receiving a code
+  once and retried, or landed on sign-up by mistake with an existing
+  number.
+
+OTP sends are rate-limited tighter than password auth
+(`OTP_SEND_RATE_LIMIT`, 5 per 10 minutes per IP+phone vs. password
+auth's 10 per 5 minutes) — an SMS costs real money per send via whatever
+provider ends up configured, so SMS-bombing a number is a cost/abuse
+vector password auth doesn't have. See `docs/NEEDS_FROM_ME.md` for the
+Twilio (or similar) setup Supabase itself needs before this can send a
+single real SMS. Not verified in a live browser or with a real SMS —
+this sandbox has no SMS provider configured and no way to receive a
+code, so this needs real end-to-end testing once Supabase's phone
+provider is set up; verified so far by `normalizeUaePhone`'s unit tests
+(17 cases, including every UAE mobile prefix and landline rejection),
+`tsc --noEmit`, and matching the exact server-action/`useFormState`
+patterns already proven elsewhere in this file.
+
 ## Not yet built (explicitly out of scope for this build session)
 
 - Vendor moderation integration for image safety checks

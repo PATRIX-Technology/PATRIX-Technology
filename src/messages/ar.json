@@ -53,6 +53,17 @@
       "submit": "إنشاء المؤسسة",
       "haveAccount": "لديك حساب بالفعل؟",
       "signInInstead": "سجّل الدخول"
+    },
+    "phone": {
+      "emailTab": "البريد الإلكتروني",
+      "phoneTab": "الهاتف",
+      "phoneLabel": "رقم الهاتف المتحرك",
+      "phonePlaceholder": "٠٥٠ ١٢٣ ٤٥٦٧",
+      "sendCode": "إرسال الرمز",
+      "codeSentTo": "أرسلنا رمزًا إلى {phone}.",
+      "codeLabel": "رمز مكوّن من ٦ أرقام",
+      "verify": "تحقق ومتابعة",
+      "changeNumber": "استخدام رقم آخر"
     }
   },
   "dashboard": {

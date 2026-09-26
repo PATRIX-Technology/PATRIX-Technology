@@ -182,7 +182,7 @@ async function generatePageImage(supabase: SupabaseClient, job: StoryJob): Promi
 
   const { data: page, error: pageError } = await supabase
     .from('story_pages')
-    .select('*, stories!inner(tenant_id, status, child_id, avatar_config_snapshot, locale)')
+    .select('*, stories!inner(tenant_id, status, child_id, avatar_config_snapshot, pronoun_snapshot, locale)')
     .eq('id', job.page_id)
     .single();
   if (pageError) throw pageError;
@@ -204,6 +204,7 @@ async function generatePageImage(supabase: SupabaseClient, job: StoryJob): Promi
     pageId: job.page_id,
     prompt: page.image_prompt,
     avatarConfig: page.stories.avatar_config_snapshot ?? {},
+    pronoun: page.stories.pronoun_snapshot ?? 'they',
     captionText: page.text,
     locale: page.stories.locale,
     ...(referencePhoto

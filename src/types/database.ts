@@ -143,6 +143,7 @@ export interface Story {
   locale: AppLocale;
   status: StoryStatus;
   avatar_config_snapshot: AvatarConfig;
+  pronoun_snapshot: Pronoun;
   rejected_reason: string | null;
   pdf_asset_path: string | null;
   bulk_export_id: string | null;

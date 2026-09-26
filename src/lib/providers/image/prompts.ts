@@ -24,11 +24,24 @@ export const BRAND_STYLE_PROMPT =
 export interface IllustrationPromptInput {
   sceneDescription: string;
   avatarConfig: { hair?: string; skinTone?: string; outfitColor?: string; accessory?: string };
+  /** The child's pronoun (stories.pronoun_snapshot) — only used in the
+   * avatar-config character description below (no reference photo); see
+   * docs/DECISIONS.md "Gender in the illustration prompt" for why this
+   * has to be spelled out explicitly rather than left for Gemini to
+   * infer, and why a reference photo doesn't need it (the photo already
+   * carries this visually). */
+  pronoun: 'she' | 'he' | 'they';
   hasReferencePhoto: boolean;
   hasReferenceImage: boolean;
   captionText: string;
   locale: 'en' | 'ar';
 }
+
+const GENDER_DESCRIPTOR: Record<'she' | 'he' | 'they', string> = {
+  she: 'a girl',
+  he: 'a boy',
+  they: 'a child',
+};
 
 export function buildIllustrationPrompt(input: IllustrationPromptInput): string {
   const parts = [BRAND_STYLE_PROMPT, `Scene: ${input.sceneDescription}`];
@@ -42,8 +55,8 @@ export function buildIllustrationPrompt(input: IllustrationPromptInput): string 
   } else {
     const { hair, skinTone, outfitColor, accessory } = input.avatarConfig;
     parts.push(
-      `The child character has: ${hair ?? 'curly black'} hair, ${skinTone ?? 'medium'} skin tone, ` +
-        `wearing an outfit in colour ${outfitColor ?? '#2FBFA6'}` +
+      `The child character is ${GENDER_DESCRIPTOR[input.pronoun]}, with: ${hair ?? 'curly black'} hair, ` +
+        `${skinTone ?? 'medium'} skin tone, wearing an outfit in colour ${outfitColor ?? '#2FBFA6'}` +
         (accessory && accessory !== 'none' ? `, with a ${accessory}.` : '.'),
     );
   }

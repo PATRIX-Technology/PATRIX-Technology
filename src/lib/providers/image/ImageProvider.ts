@@ -1,3 +1,5 @@
+import type { Pronoun } from '@/types/database';
+
 /**
  * Provider-agnostic abstraction for turning a rendered page (text + image
  * prompt + avatar config) into an illustration. Swapping AI vendors, or
@@ -12,6 +14,11 @@ export interface GenerateImageRequest {
    * substituted — see src/lib/domain/templates.ts). */
   prompt: string;
   avatarConfig: Record<string, string>;
+  /** The story's pronoun_snapshot — see docs/DECISIONS.md "Gender in the
+   * illustration prompt". Only affects the avatar-config character
+   * description (no reference photo); a real photo already carries this
+   * information visually, so it's not injected as text in that branch. */
+  pronoun: Pronoun;
   /**
    * This page's on-page story text and its language. For Arabic pages,
    * the provider bakes this text into the illustration itself as a

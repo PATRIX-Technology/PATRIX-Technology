@@ -62,6 +62,7 @@ export async function createStory(supabase: SupabaseClient, input: CreateStoryIn
       locale: input.locale,
       status: 'QUEUED',
       avatar_config_snapshot: input.avatarConfig,
+      pronoun_snapshot: input.pronoun,
       created_by: input.createdBy,
     })
     .select()

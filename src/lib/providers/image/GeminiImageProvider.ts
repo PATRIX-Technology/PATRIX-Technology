@@ -38,6 +38,7 @@ export class GeminiImageProvider extends RealImageProvider {
     const prompt = buildIllustrationPrompt({
       sceneDescription: request.prompt,
       avatarConfig: request.avatarConfig,
+      pronoun: request.pronoun,
       hasReferencePhoto: Boolean(request.referencePhotoBytes),
       hasReferenceImage: Boolean(request.referenceImageBytes),
       captionText: request.captionText,

@@ -995,6 +995,42 @@ sign-off — the same sign-off already required before nurseries can use
 it, per `docs/NEEDS_FROM_ME.md`. Flagging rather than unilaterally
 enabling it.
 
+## Gender in the illustration prompt
+
+**Bug reported by the founder**: story illustrations always rendered
+the child character as male-presenting, regardless of the child's
+actual pronoun on file. Story *text* was never the problem — the
+caption/template system (`src/lib/domain/templates.ts`,
+`src/lib/domain/pronouns.ts`) already renders every pronoun and
+Arabic verb conjugation correctly from `children.pronoun`, confirmed
+by a scan of `supabase/seed/templates.json` for hardcoded gendered
+English words (found none). The actual bug was one level over: the
+*image* prompt built in `buildIllustrationPrompt`
+(`src/lib/providers/image/prompts.ts`) described the avatar's hair,
+skin tone, outfit colour and accessory, but never told Gemini the
+child's gender at all — so for any story generated from the avatar
+config (no reference photo), Gemini had nothing to go on and
+defaulted toward a boy-presenting character.
+
+**Fix**: added `stories.pronoun_snapshot` (migration
+`0018_pronoun_snapshot.sql`), a copy of the child's pronoun taken at
+story-creation time — same reasoning as the existing
+`avatar_config_snapshot` column: editing a child's pronoun later must
+not change an in-progress or already-approved story's illustrations
+mid-way through. Threaded through `createStory` → the job worker →
+`GenerateImageRequest` → `GeminiImageProvider` → a new
+`GENDER_DESCRIPTOR` map in `buildIllustrationPrompt` ('she' → "a
+girl", 'he' → "a boy", 'they' → "a child"), which now opens the
+avatar-config character description with e.g. "The child character is
+a girl, with: ...".
+
+**Deliberately left unchanged**: the reference-photo branch of the
+prompt. A real uploaded photo already conveys the child's appearance
+(including gender presentation) visually, so no text descriptor is
+injected there — adding one would risk contradicting what Gemini can
+already see in the photo itself. `MockImageProvider` needed no
+changes; it never calls `buildIllustrationPrompt`.
+
 ## Not yet built (explicitly out of scope for this build session)
 
 - Vendor moderation integration for image safety checks

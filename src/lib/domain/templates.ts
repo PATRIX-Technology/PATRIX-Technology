@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import type { Locale } from '@/i18n/config';
-import { arabicVerb, englishPronoun, isArabicVerbKey, type Pronoun } from './pronouns';
+import { ARABIC_POSSESSIVE_SUFFIX, arabicVerb, englishPronoun, isArabicVerbKey, type Pronoun } from './pronouns';
 
 export const TemplatePageSchema = z.object({
   order: z.number().int().min(1),
@@ -54,6 +54,9 @@ export function assertTemplateUsable(template: StoryThemeTemplate): void {
 const SIMPLE_TOKEN = /\{(child_name|organisation|mascot)\}/g;
 const PRONOUN_TOKEN = /\{pronoun:(subject|possessive|object)(_cap)?\}/g;
 const ARABIC_VERB_TOKEN = /\{v:([a-z_]+)\}/g;
+// Fuses directly onto a preceding Arabic word stem with no space (e.g.
+// "عائلت{ps}" -> "عائلتها") — see ARABIC_POSSESSIVE_SUFFIX in pronouns.ts.
+const ARABIC_POSSESSIVE_TOKEN = /\{ps\}/g;
 
 function capitalize(value: string): string {
   return value.length > 0 ? value[0]!.toUpperCase() + value.slice(1) : value;
@@ -90,6 +93,7 @@ export function renderTokens(input: string, ctx: TokenContext): string {
       if (!isArabicVerbKey(key)) return match;
       return arabicVerb(key, ctx.pronoun);
     });
+    output = output.replace(ARABIC_POSSESSIVE_TOKEN, () => ARABIC_POSSESSIVE_SUFFIX[ctx.pronoun]);
   }
 
   return output;

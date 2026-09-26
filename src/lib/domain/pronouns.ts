@@ -53,6 +53,51 @@ export const ARABIC_VERB_KEYS = [
   'waved',
   'celebrated',
   'subject_pronoun',
+  // Added to close a class of gender-agreement bugs where a template
+  // hardcoded a masculine verb/phrase for the CHILD's own action instead
+  // of using a token — see docs/DECISIONS.md "Arabic gender-agreement
+  // audit of the story templates".
+  'told',
+  'fills',
+  'looked',
+  'did_not_find',
+  'asked_for_more',
+  'ignored_teeth',
+  'warned_the_child',
+  'saw',
+  'never_stopped_brushing',
+  'stood',
+  'while_holding_bag',
+  'did_not_want',
+  'made_new_friends',
+  'could_not',
+  'feels_present',
+  'was_not_sure',
+  'knew',
+  'learns_present',
+  'older_sibling_copula',
+  'older_sibling_noun',
+  'showed_toy',
+  'helped_choose',
+  'accidentally_dropped',
+  'thought_to_hide',
+  'took_deep_breath',
+  'imagined',
+  'discovers_present',
+  'emptied',
+  'saved_it_up',
+  'while_looking',
+  'while_humming',
+  'sat_down',
+  'true_bubble_hero',
+  'thought',
+  'called_it_home',
+  'heard',
+  'went_together_dual',
+  'clean_imperative',
+  'opened_water',
+  'put_soap',
+  'to_eat_snack',
 ] as const;
 
 export type ArabicVerbKey = (typeof ARABIC_VERB_KEYS)[number];
@@ -82,6 +127,88 @@ export const ARABIC_CONJUGATIONS: Record<ArabicVerbKey, Record<Pronoun, string>>
   sang: { she: 'غنّت', he: 'غنّى', they: 'غنّوا' },
   waved: { she: 'لوّحت', he: 'لوّح', they: 'لوّحوا' },
   celebrated: { she: 'احتفلت', he: 'احتفل', they: 'احتفلوا' },
+  told: { she: 'أخبرت', he: 'أخبر', they: 'أخبروا' },
+  fills: { she: 'تملأ', he: 'يملأ', they: 'يملؤون' },
+  looked: { she: 'نظرت', he: 'نظر', they: 'نظروا' },
+  did_not_find: { she: 'لم تجد', he: 'لم يجد', they: 'لم يجدوا' },
+  asked_for_more: { she: 'وطلبت', he: 'وطلب', they: 'وطلبوا' },
+  ignored_teeth: {
+    she: 'أن تتجاهل تنظيف أسنانها',
+    he: 'أن يتجاهل تنظيف أسنانه',
+    they: 'أن يتجاهلوا تنظيف أسنانهم',
+  },
+  warned_the_child: { she: 'فحذّرتها', he: 'فحذّرته', they: 'فحذّرتهم' },
+  saw: { she: 'رأت', he: 'رأى', they: 'رأوا' },
+  never_stopped_brushing: {
+    she: 'لم تتوقف عن تنظيف أسنانها',
+    he: 'لم يتوقف عن تنظيف أسنانه',
+    they: 'لم يتوقفوا عن تنظيف أسنانهم',
+  },
+  stood: { she: 'وقفت', he: 'وقف', they: 'وقفوا' },
+  while_holding_bag: {
+    she: 'وهي تمسك حقيبتها',
+    he: 'وهو يمسك حقيبته',
+    they: 'وهم يمسكون حقيبتهم',
+  },
+  did_not_want: { she: 'ترغب', he: 'يرغب', they: 'يرغبوا' },
+  made_new_friends: { she: 'كوّنت', he: 'كوّن', they: 'كوّنوا' },
+  could_not: { she: 'تستطع', he: 'يستطع', they: 'يستطيعوا' },
+  feels_present: { she: 'تشعر', he: 'يشعر', they: 'يشعرون' },
+  was_not_sure: {
+    she: 'لم تكن متأكدة',
+    he: 'لم يكن متأكدًا',
+    they: 'لم يكونوا متأكدين',
+  },
+  knew: { she: 'عرفت', he: 'عرف', they: 'عرفوا' },
+  learns_present: { she: 'تتعلّم', he: 'يتعلّم', they: 'يتعلّمون' },
+  older_sibling_copula: { she: 'تكون', he: 'يكون', they: 'يكونوا' },
+  older_sibling_noun: {
+    she: 'أختًا كبيرة وحنونة',
+    he: 'أخًا كبيرًا وحنونًا',
+    they: 'إخوةً كبارًا وحنونين',
+  },
+  showed_toy: { she: 'أرته', he: 'أراه', they: 'أروه' },
+  helped_choose: { she: 'وحتى ساعدت', he: 'وحتى ساعد', they: 'وحتى ساعدوا' },
+  accidentally_dropped: { she: 'أسقطت', he: 'أسقط', they: 'أسقطوا' },
+  thought_to_hide: {
+    she: 'وفكّرت أن تخفي ما حدث وألّا تخبر أحداً',
+    he: 'وفكّر أن يخفي ما حدث وألّا يخبر أحداً',
+    they: 'وفكّروا أن يخفوا ما حدث وألّا يخبروا أحداً',
+  },
+  took_deep_breath: { she: 'أخذت', he: 'أخذ', they: 'أخذوا' },
+  imagined: { she: 'تخيلت', he: 'تخيل', they: 'تخيلوا' },
+  discovers_present: { she: 'تكتشف', he: 'يكتشف', they: 'يكتشفون' },
+  emptied: { she: 'أفرغت', he: 'أفرغ', they: 'أفرغوا' },
+  saved_it_up: { she: 'ادّخرتها', he: 'ادّخرها', they: 'ادّخروها' },
+  while_looking: { she: 'وهي تنظر', he: 'وهو ينظر', they: 'وهم ينظرون' },
+  while_humming: { she: 'وهي تدندن', he: 'وهو يدندن', they: 'وهم يدندنون' },
+  sat_down: { she: 'جلست', he: 'جلس', they: 'جلسوا' },
+  true_bubble_hero: {
+    she: 'بطلة فقاعات حقيقية',
+    he: 'بطل فقاعات حقيقي',
+    they: 'أبطال فقاعات حقيقيون',
+  },
+  thought: { she: 'فكّرت', he: 'فكّر', they: 'فكّروا' },
+  called_it_home: { she: 'سمّته', he: 'سمّاه', they: 'سمّوه' },
+  heard: { she: 'سمعت', he: 'سمع', they: 'سمعوا' },
+  went_together_dual: { she: 'ذهبتا', he: 'ذهبا', they: 'ذهبا' },
+  clean_imperative: { she: 'نظّفي', he: 'نظّف', they: 'نظّفوا' },
+  opened_water: { she: 'فتحت', he: 'فتح', they: 'فتحوا' },
+  put_soap: { she: 'ووضعت', he: 'ووضع', they: 'ووضعوا' },
+  to_eat_snack: { she: 'لتأكل', he: 'ليأكل', they: 'ليأكلوا' },
+};
+
+/**
+ * Arabic possessive/object pronoun suffixes ("his"/"her"/"their" when
+ * fused onto a noun, or "him"/"her"/"them" when fused onto a verb — the
+ * same three suffixes cover both in MSA). Used via the {ps} token
+ * directly appended to a word stem in template text (e.g. "عائلت{ps}"),
+ * unlike {v:...} keys which supply a whole conjugated word.
+ */
+export const ARABIC_POSSESSIVE_SUFFIX: Record<Pronoun, string> = {
+  she: 'ها',
+  he: 'ه',
+  they: 'هم',
 };
 
 export function arabicVerb(key: ArabicVerbKey, pronoun: Pronoun): string {

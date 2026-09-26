@@ -1375,6 +1375,86 @@ injected there — adding one would risk contradicting what Gemini can
 already see in the photo itself. `MockImageProvider` needed no
 changes; it never calls `buildIllustrationPrompt`.
 
+## Arabic gender-agreement audit of the story templates
+
+**The bug**: a founder-reported story ("Bisan", a girl, national day
+theme) showed page 1 text reading "قالت بيسان **وهو ينظر** إلى
+الأعلام" — "said Bisan while **he** looks at the flags" — a masculine
+pronoun/verb for a female child. The existing token system
+(`{v:verb_key}` in `src/lib/domain/templates.ts`, backed by
+`ARABIC_CONJUGATIONS` in `src/lib/domain/pronouns.ts`) already handles
+this correctly *when a template uses it* — the bug was that this one
+phrase, and many others across the other five themes, were typed as
+literal Arabic text instead of a token, so they silently defaulted to
+whatever gender the original author typed and never varied with the
+child's actual `pronoun`.
+
+**Scope of the audit**: grepped every Arabic `text`/`synopsis` field in
+`supabase/seed/templates.json` for hardcoded gendered verbs, pronouns,
+and possessive suffixes referring to *the child* (not the mascot, who
+is always female and correctly hardcoded feminine throughout, and not
+third parties like "the teacher" or "the sugar bugs" whose own fixed
+gender doesn't depend on the child). Found roughly 30 such instances
+across all 6 themes — this was a systemic gap, not a one-off. Two
+related latent bugs turned up during the same pass and were fixed
+alongside it:
+- Several lines reused the `{v:said}` token (which conjugates by the
+  *child's* pronoun) for a sentence whose actual speaker was the
+  mascot or the teacher — always female, so this would have rendered
+  wrong ("he said") for any male child. Replaced with the literal
+  "قالت" where the fixed-gender character is the one speaking.
+- A couple of `{v:tried}`/`{v:said}` tokens were reused for the wrong
+  *meaning* entirely (e.g. "sang softly" and "showed a toy" were both
+  written as `{v:said}`) — fixed to use the correct verb.
+
+**The fix, two parts**:
+1. Extended `ARABIC_VERB_KEYS`/`ARABIC_CONJUGATIONS` in
+   `src/lib/domain/pronouns.ts` with ~35 new verb/phrase keys (e.g.
+   `while_looking`, `stood`, `told`, `felt_grateful` reuse, etc.),
+   each with a she/he/they form.
+2. Added a new `{ps}` token (`ARABIC_POSSESSIVE_SUFFIX` +
+   `ARABIC_POSSESSIVE_TOKEN` in `templates.ts`/`pronouns.ts`) for the
+   attached possessive/object suffix ("his"/"her"/"their", or
+   "him"/"her"/"them" on a verb — the same three suffixes cover both
+   in MSA). It fuses directly onto a word stem with no space, e.g.
+   `"عائلت{ps}"` → `"عائلتها"` for a girl, so a template author never
+   has to spell out a whole new word for something as simple as "her
+   family" vs "his family".
+
+Then rewrote every affected line in `supabase/seed/templates.json` to
+use tokens instead of literal gendered text, and re-verified by
+rendering all 6 Arabic themes for she/he/they and reading every line
+(the existing `tests/unit/seed-templates.test.ts` only checks for
+*leftover* tokens, not correct grammar, so this needed an eyes-on pass
+— which itself caught two mistakes introduced while writing the fix: a
+doubled "لم لم" negation, and one missed hardcoded masculine verb —
+both corrected before this landed).
+
+**Deliberately left unfixed**: `hand_washing`'s Arabic synopsis
+("يصبح {child_name} و{mascot} بطلَي الفقاعات...") has a *number*
+agreement mismatch (singular verb with a two-person subject) — a
+separate class of error from what was reported, lower-visibility
+(synopsis copy, not a page a family reads), and fixing it correctly
+needs dual-form conjugation this file doesn't otherwise use. Left as a
+known follow-up rather than risking a rushed fix to something nobody
+reported.
+
+**Not covered by this fix**: a story already generated before this
+change (e.g. the founder's original "Bisan" story) keeps its old,
+wrong baked-in page text and illustration — the template fix only
+applies to *new* stories generated after it. The existing "regenerate
+this page" feature (`src/components/stories/RegeneratePageButton.tsx`)
+re-runs generation for a single page against the current template, so
+it's the fix for any specific already-generated page a family wants
+corrected.
+
+**What this is not**: a substitute for the native Arabic review this
+repo has flagged as outstanding since the start (see
+`docs/NEEDS_FROM_ME.md` item 9). This audit fixes an objective,
+mechanical class of error — wrong grammatical gender — using ordinary
+Modern Standard Arabic conjugation rules; it is not a substitute for a
+native speaker's judgment on phrasing, idiom, or tone.
+
 ## Not yet built (explicitly out of scope for this build session)
 
 - Vendor moderation integration for image safety checks

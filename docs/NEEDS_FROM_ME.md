@@ -209,6 +209,28 @@ else has already been built and is documented in `docs/HANDOFF.md`.
    rendered right on the live page; see `docs/DECISIONS.md` "Dark-first
    design system" for why that changed.
 
+9a. **Push the Arabic story-template grammar fix to your live Supabase
+   project, then regenerate the "Bisan" page you flagged.** You caught
+   a real bug: several Arabic story templates used a hardcoded
+   masculine verb/pronoun for the child instead of one that changes
+   with the child's actual gender ("قالت بيسان وهو ينظر" instead of
+   "وهي تنظر" for a girl). I found and fixed about 30 instances of this
+   across all 6 themes — see `docs/DECISIONS.md` "Arabic
+   gender-agreement audit of the story templates". Two things this
+   needs from you, since I have no network access to your Supabase
+   project from here:
+   - Run `npm run db:seed` from a machine with your `.env.local`
+     filled in (same file that has `SUPABASE_SERVICE_ROLE_KEY`) — this
+     upserts the corrected `supabase/seed/templates.json` over the
+     live `story_theme_templates` rows by `(theme_key, locale)`, so it
+     only touches the story templates, nothing else. Safe to re-run
+     any time.
+   - The Bisan story you already generated keeps its old, wrong page
+     1 text and illustration — the template fix only affects stories
+     generated *after* the reseed. Open that story and use the
+     "Regenerate this page" button on page 1 to redo it against the
+     corrected template.
+
 ## Not a decision I need from you, but you should know about it
 
 10. **A Next.js major-version upgrade (14 → 16) is required to close

@@ -18,10 +18,15 @@ import { Badge } from '@/components/ui/Badge';
 // (called from this page) so the demo/pilot flow feels immediate rather
 // than waiting on a cron tick — see docs/DECISIONS.md "Job queue
 // implementation". Real image generation calls can take well past
-// Vercel's 10s default, so this raises the ceiling to the Hobby-plan max;
-// bump the Vercel plan (and this number, up to 300s+) if a story ever
-// needs more than 4-5 pages.
-export const maxDuration = 60;
+// Vercel's 10s default. 300 is the Vercel Pro ceiling; on the Hobby plan
+// Vercel silently clamps this to its own 60s max, which is genuinely
+// tight for real (non-mock) Gemini calls even with the two-wave
+// parallel job execution in worker.ts — a real production timeout here
+// is the most likely explanation for an "application error" when
+// generating a story. Shipping 300 now is safe either way and takes
+// effect immediately (no further deploy) the moment the project
+// upgrades to Pro — see docs/NEEDS_FROM_ME.md.
+export const maxDuration = 300;
 
 export default async function ChildDetailPage({
   params,

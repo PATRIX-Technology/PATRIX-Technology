@@ -3,6 +3,11 @@ import { createSupabaseServiceRoleClient } from '@/lib/supabase/service-role';
 import { runWorkerOnce } from '@/lib/jobs/worker';
 
 export const runtime = 'nodejs';
+// Processing up to 50 jobs (real Gemini calls among them) can run well
+// past Vercel's default — see the same reasoning as the child page's
+// maxDuration. 300 is the Vercel Pro ceiling; the Hobby plan silently
+// clamps this to its own 60s max.
+export const maxDuration = 300;
 
 /**
  * Scheduled entry point for the story-generation job queue. Configure your

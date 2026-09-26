@@ -8,8 +8,11 @@ import { errorMessage } from '@/lib/errors';
 export const runtime = 'nodejs';
 // Rendering embeds every page's real image + runs preflight checks, which
 // can run past Vercel's 10s default on a story with several pages —
-// see the same reasoning on the child page's maxDuration.
-export const maxDuration = 60;
+// see the same reasoning on the child page's maxDuration. 300 is the
+// Vercel Pro ceiling; the Hobby plan silently clamps this to its own 60s
+// max, so shipping 300 now is safe and takes effect with no further
+// deploy once the project upgrades to Pro.
+export const maxDuration = 300;
 
 export async function GET(_request: Request, { params }: { params: { storyId: string } }) {
   const supabase = await createSupabaseServerClient();

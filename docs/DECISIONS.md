@@ -945,6 +945,56 @@ alphabetical sort order), `tsc --noEmit`, and matching the exact
 server-action/`useFormState` patterns already proven elsewhere in this
 file.
 
+**Bug fix / hardening: landing page nav, and raised every `maxDuration`
+to the Vercel Pro ceiling.** The founder reported real application
+errors on the live deployment: generating a story, creating a family
+account, and the "Book a demo" button (which just navigates to
+`/sign-up`). Investigated by reading code, not live logs — this
+sandbox has no network path to the live Vercel deployment or the
+production Supabase project. Ruled out my own recent schema changes
+(`plans.audience`, `sync_quota_to_plan`) as the cause: every reference
+to either is gated behind `flags.billing`, which is off, so neither can
+be reached by any currently-live code path — confirmed by grepping
+every usage site. The strongest remaining lead: every route that calls
+real Gemini image generation (`children/[childId]/page.tsx`, the PDF
+and ZIP export routes, the cron worker) declared `maxDuration = 60` —
+already the Vercel **Hobby** plan's hard ceiling, not a number chosen
+freely. Two sequential-page waves of real (non-mock) Gemini calls
+plus Postgres round-trips can plausibly exceed 60s in practice, and a
+platform-level timeout kills the function before any application-level
+try/catch runs, which is indistinguishable from the crash pages
+reported. Raised all four to 300 (the Vercel **Pro** ceiling) — inert
+on Hobby (Vercel silently clamps back to 60) but takes effect
+immediately, no redeploy needed, the moment the project upgrades to
+Pro. This is a hypothesis, not a confirmed root cause — the founder
+would need to check Vercel's own function/runtime logs for the actual
+digest (`4195642915` was reported) to know for certain, and the
+family-account-creation crash in particular has no equivalent
+Gemini-timeout explanation, so it may be a separate issue not yet
+diagnosed.
+
+Also fixed, independent of the crash investigation: the landing page's
+mobile header (`<640px`) showed only a "Get Started" button — no
+"Sign in" link at all, unlike desktop. Restructured to show both
+**Sign in** and **Sign up** at every screen width, added the missing
+`nav.signUp` translation key (en/ar), and removed the now-unused
+`nav.getStarted` key.
+
+**Known limitation, not a bug: photo personalisation is unavailable
+for family tenants**, unconditionally, in `children/[childId]/page.tsx`
+(`context.tenantType !== 'family'` in `photoOptionAvailable`'s
+condition). Not an oversight — a family tenant's consent is
+auto-granted by a database trigger with no scope selection at all (see
+"Phase 4: families are tenants"), so there is currently no mechanism to
+capture "this family also consents to photo use" the way a nursery's
+consent-request flow does with its scope checkbox. Enabling this needs
+a small product decision (e.g. a checkbox shown directly on the photo
+upload UI for a family tenant, captured at upload time rather than via
+a separate request/response flow) plus the founder's own legal-review
+sign-off — the same sign-off already required before nurseries can use
+it, per `docs/NEEDS_FROM_ME.md`. Flagging rather than unilaterally
+enabling it.
+
 ## Not yet built (explicitly out of scope for this build session)
 
 - Vendor moderation integration for image safety checks

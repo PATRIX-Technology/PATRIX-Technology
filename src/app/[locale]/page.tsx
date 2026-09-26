@@ -55,8 +55,8 @@ export default function MarketingHome({ params }: { params: { locale: string } }
 
   return (
     <main>
-      <header className="mx-auto flex max-w-6xl items-center justify-between px-6 py-6">
-        <span className="flex items-center gap-2.5 font-display text-xl text-ink-900">
+      <header className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-6 py-6">
+        <span className="flex min-w-0 items-center gap-2.5 truncate font-display text-xl text-ink-900">
           <Logo size={30} variant="flat" />
           {brand('name')}
         </span>
@@ -67,16 +67,17 @@ export default function MarketingHome({ params }: { params: { locale: string } }
           <Link href={`/${locale}/contact`} className="focus-ring rounded hover:text-ink-800">
             {nav('contact')}
           </Link>
-          <Link href={`/${locale}/sign-in`} className="focus-ring rounded hover:text-ink-800">
-            {nav('signIn')}
+        </nav>
+        <div className="flex flex-shrink-0 items-center gap-2 sm:gap-3">
+          <Link href={`/${locale}/sign-in`}>
+            <Button size="sm" variant="ghost">
+              {nav('signIn')}
+            </Button>
           </Link>
           <Link href={`/${locale}/sign-up`}>
-            <Button size="sm">{nav('getStarted')}</Button>
+            <Button size="sm">{nav('signUp')}</Button>
           </Link>
-        </nav>
-        <Link href={`/${locale}/sign-up`} className="sm:hidden">
-          <Button size="sm">{nav('getStarted')}</Button>
-        </Link>
+        </div>
       </header>
 
       <section className="mx-auto max-w-6xl px-6 pb-10 pt-4 md:pb-16 md:pt-10">

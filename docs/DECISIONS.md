@@ -981,19 +981,67 @@ mobile header (`<640px`) showed only a "Get Started" button — no
 `nav.getStarted` key.
 
 **Known limitation, not a bug: photo personalisation is unavailable
-for family tenants**, unconditionally, in `children/[childId]/page.tsx`
-(`context.tenantType !== 'family'` in `photoOptionAvailable`'s
-condition). Not an oversight — a family tenant's consent is
-auto-granted by a database trigger with no scope selection at all (see
-"Phase 4: families are tenants"), so there is currently no mechanism to
-capture "this family also consents to photo use" the way a nursery's
-consent-request flow does with its scope checkbox. Enabling this needs
-a small product decision (e.g. a checkbox shown directly on the photo
-upload UI for a family tenant, captured at upload time rather than via
-a separate request/response flow) plus the founder's own legal-review
-sign-off — the same sign-off already required before nurseries can use
-it, per `docs/NEEDS_FROM_ME.md`. Flagging rather than unilaterally
-enabling it.
+for family tenants** — superseded by "Family photo consent: a single
+checkbox at upload time" below, which implements exactly the product
+decision this paragraph originally called for.
+
+## Family photo consent: a single checkbox at upload time
+
+**The founder's request**: "for family if in UAE law needed the
+consent then please add it, if not needed then don't have any text
+related to it in GUI and have the upload of photos available directly."
+
+**I can't answer the legal half of that.** Whether UAE's Personal Data
+Protection Law (Federal Decree-Law No. 45 of 2021) specifically requires
+documented consent for a parent's own upload of their own child's photo
+to a third-party AI processor (Google Gemini) is a real legal question
+with real liability consequences — not something to infer from general
+knowledge and ship as if settled. This is exactly the gap
+`docs/NEEDS_FROM_ME.md` item 5a already flags: a qualified legal review
+of photo personalisation, UAE/GCC-specific, has never been done, and
+`PHOTO_PERSONALIZATION_LEGAL_REVIEW_COMPLETE` must stay off until it is.
+
+**What I implemented instead of guessing**: the previous state was a
+flat, unconditional block — `context.tenantType !== 'family'` in
+`photoOptionAvailable`, meaning no family tenant could ever use photo
+personalisation regardless of the flags. That flat block wasn't a
+stand-in for a legal answer, it was a missing mechanism: unlike a
+nursery, a family tenant's consent is auto-granted by a database
+trigger (`auto_grant_family_consent`) that only ever sets
+`children.consent_status`, never a photo-scoped `consent_requests` row,
+so `has_granted_photo_consent` could never return true for a family
+child no matter what. Fixing that mechanism doesn't require resolving
+the legal question, so I built it: removed the tenant-type block and
+the (family-inapplicable) per-tenant opt-in requirement from
+`photoOptionAvailable` in `children/[childId]/page.tsx`; when photo
+personalisation is switched on (both flags), a family tenant now sees
+the upload widget directly, with one required checkbox
+(`PhotoUpload.tsx`'s `requireFamilyConsentCheckbox`) shown inline the
+first time only: "I am this child's parent or legal guardian, and I
+consent to Khayali and its AI illustration provider (Google Gemini)
+using this photo solely to personalise this child's storybook
+illustrations." Checking it and uploading in the same action makes
+`uploadChildPhotoAction` insert a `consent_requests` row
+(`status: 'granted'`, `scope: {story: true, photo: true}`) atomically
+with the upload — reusing the exact same `has_granted_photo_consent`
+check the nursery flow already relies on, so nothing about the nursery
+request/wait/respond path changed at all. Verified the RLS insert
+policy actually permits this (a family tenant member inserting a row
+with `status: 'granted'` directly, no separate grant step) with a new
+integration test in `tests/integration/family-tenants.test.ts`.
+
+**Why a checkbox rather than fully "direct, no text"**: sending an
+identifiable child's photo to a third-party AI vendor is the kind of
+processing that data-protection regimes modelled on GDPR — which UAE
+PDPL is — routinely expect a documented, specific, affirmative consent
+for, independent of who initiated the upload. Given genuine uncertainty
+about whether UAE law specifically requires it here, one required
+checkbox on the same screen as the upload (one click, not a separate
+flow) was the smallest addition that stays defensible if consent turns
+out to be required, while staying close to "upload directly" if it
+isn't strictly required. This is a pragmatic default pending real legal
+input, not a legal conclusion — see the updated
+`docs/NEEDS_FROM_ME.md` item 5a.
 
 ## CSV bulk import: documented and given a downloadable template
 

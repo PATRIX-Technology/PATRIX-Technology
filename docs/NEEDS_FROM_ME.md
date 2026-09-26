@@ -89,6 +89,23 @@ else has already been built and is documented in `docs/HANDOFF.md`.
    should be able to upload a child's photo until this review is done.
    See `docs/DECISIONS.md` "Photo personalisation wiring".
 
+   You asked whether UAE law specifically requires consent for a
+   *family* account's own parent uploading their own child's photo —
+   I can't answer that; it's exactly this item. What I did instead:
+   built the mechanism so a family tenant *can* grant photo consent
+   (previously it was hard-blocked with no way to grant it at all), via
+   one required checkbox shown directly on the upload screen at the
+   moment of upload — not the nursery's separate multi-step request
+   flow, since a family account's owner IS the child's parent/guardian,
+   so there's no separate party to ask. That checkbox is a pragmatic
+   default, not a legal conclusion: please have this reviewed alongside
+   everything else in this item before turning
+   `PHOTO_PERSONALIZATION_LEGAL_REVIEW_COMPLETE` on for real — including
+   whether the checkbox's exact wording is sufficient, or needs to say
+   more (e.g. naming Google Gemini as the processor, retention period,
+   right to withdraw). See `docs/DECISIONS.md` "Family photo consent: a
+   single checkbox at upload time".
+
 ## Before enabling billing
 
 6. **A Stripe account** (test mode to start — nothing here should ever

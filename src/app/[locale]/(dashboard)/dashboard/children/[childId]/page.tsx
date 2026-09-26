@@ -60,25 +60,35 @@ export default async function ChildDetailPage({
     .eq('id', context.tenantId)
     .maybeSingle();
 
-  // Whether the "also ask for photo consent" checkbox should even be
-  // offered — feature flag + legal review + tenant opt-in. Actually
-  // uploading a photo needs a fourth condition (granted consent covering
-  // photo) checked below and again, authoritatively, in
-  // uploadChildPhotoAction — see docs/DECISIONS.md "Photo personalisation
-  // wiring".
+  // Whether photo personalisation is switched on for this deployment at
+  // all — feature flag + legal review, and for a nursery, that tenant's
+  // own opt-in too. A family tenant has no separate opt-in toggle: the
+  // account owner IS the child's parent/guardian, so there's no
+  // tenant-level policy decision distinct from the per-child consent
+  // checkbox itself — see docs/DECISIONS.md "Family photo consent: a
+  // single checkbox at upload time" (this replaces the previous flat
+  // `context.tenantType !== 'family'` block that disabled photo upload
+  // for every family account outright).
   const photoOptionAvailable =
     flags.photoPersonalization &&
     flags.photoPersonalizationLegalReviewComplete &&
-    Boolean(tenant?.photo_personalization_opt_in) &&
-    context.tenantType !== 'family';
+    (context.tenantType === 'family' || Boolean(tenant?.photo_personalization_opt_in));
 
-  let photoUploadAvailable = false;
+  let hasPhotoConsent = false;
   if (photoOptionAvailable) {
-    const { data: hasPhotoConsent } = await supabase.rpc('has_granted_photo_consent', {
+    const { data } = await supabase.rpc('has_granted_photo_consent', {
       target_child_id: child.id,
     });
-    photoUploadAvailable = Boolean(hasPhotoConsent);
+    hasPhotoConsent = Boolean(data);
   }
+
+  // A nursery still needs the multi-party request/wait/respond flow
+  // before any upload UI appears at all. A family tenant sees the
+  // upload widget directly once photo personalisation is switched on —
+  // PhotoUpload itself shows a one-time required consent checkbox until
+  // hasPhotoConsent is true.
+  const photoUploadAvailable =
+    photoOptionAvailable && (context.tenantType === 'family' || hasPhotoConsent);
 
   const photoUrl = child.photo_asset_path ? await getSignedAssetUrl(supabase, child.photo_asset_path) : null;
 
@@ -117,8 +127,11 @@ export default async function ChildDetailPage({
         <Card>
           <CardTitle>Consent</CardTitle>
           <p className="mt-2 text-sm text-ink-600">
-            As this child&apos;s parent/guardian, your consent was recorded automatically when you added
-            them to your family account — see docs/DECISIONS.md &quot;Phase 4: families are tenants&quot;.
+            As this child&apos;s parent/guardian, your consent to generate and read their storybooks
+            was recorded automatically when you added them to your family account — see
+            docs/DECISIONS.md &quot;Phase 4: families are tenants&quot;. Uploading a reference photo is
+            separate and needs a one-time confirmation, shown below, since the photo is shared with
+            our AI illustration provider.
           </p>
         </Card>
       ) : (
@@ -148,6 +161,7 @@ export default async function ChildDetailPage({
               childId={child.id}
               hasPhoto={Boolean(child.photo_asset_path)}
               photoUrl={photoUrl}
+              requireFamilyConsentCheckbox={context.tenantType === 'family' && !hasPhotoConsent}
             />
           </div>
         </Card>

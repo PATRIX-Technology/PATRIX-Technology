@@ -276,24 +276,51 @@ export async function uploadChildPhotoAction(locale: string, formData: FormData)
     return { error: 'Photo must be smaller than 8MB.' };
   }
 
-  const { data: tenant } = await supabase
-    .from('tenants')
-    .select('photo_personalization_opt_in')
-    .eq('id', context.tenantId)
-    .maybeSingle();
-  if (!tenant?.photo_personalization_opt_in) {
-    return { error: 'This organisation has not opted in to photo personalisation — see Settings.' };
-  }
-
   const { data: hasConsent, error: consentError } = await supabase.rpc('has_granted_photo_consent', {
     target_child_id: childId,
   });
   if (consentError) return { error: consentError.message };
-  if (!hasConsent) {
-    return {
-      error:
-        "This child's parent has not granted consent for photo use yet — request photo consent first.",
-    };
+
+  if (context.tenantType === 'family') {
+    // A family tenant has no separate parent to ask — the account owner
+    // IS the child's parent/guardian — so there's no per-tenant opt-in
+    // toggle and no multi-party request/wait/respond flow to go through.
+    // Instead, the single required checkbox on the upload form itself
+    // (see PhotoUpload.tsx requireFamilyConsentCheckbox) grants a
+    // consent_requests row atomically with this same upload, the first
+    // time only. See docs/DECISIONS.md "Family photo consent: a single
+    // checkbox at upload time".
+    if (!hasConsent) {
+      if (formData.get('familyPhotoConsent') !== 'on') {
+        return { error: 'Please check the consent box to upload a photo.' };
+      }
+      const { tokenHash } = generateConsentToken();
+      const { error: grantError } = await supabase.from('consent_requests').insert({
+        tenant_id: context.tenantId,
+        child_id: childId,
+        token_hash: tokenHash,
+        scope: { story: true, photo: true },
+        status: 'granted',
+        requested_by: context.userId,
+        responded_at: new Date().toISOString(),
+      });
+      if (grantError) return { error: grantError.message };
+    }
+  } else {
+    const { data: tenant } = await supabase
+      .from('tenants')
+      .select('photo_personalization_opt_in')
+      .eq('id', context.tenantId)
+      .maybeSingle();
+    if (!tenant?.photo_personalization_opt_in) {
+      return { error: 'This organisation has not opted in to photo personalisation — see Settings.' };
+    }
+    if (!hasConsent) {
+      return {
+        error:
+          "This child's parent has not granted consent for photo use yet — request photo consent first.",
+      };
+    }
   }
 
   const extension = file.type === 'image/png' ? 'png' : file.type === 'image/webp' ? 'webp' : 'jpg';

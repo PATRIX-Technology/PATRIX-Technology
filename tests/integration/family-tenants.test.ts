@@ -120,4 +120,39 @@ describe('family tenants (Phase 4 scaffolding)', () => {
     expect(rows).toHaveLength(0);
     await clientB.end();
   });
+
+  it('a family tenant member can self-grant photo consent directly, without the nursery request/respond flow', async () => {
+    // Mirrors exactly what uploadChildPhotoAction does for a family
+    // tenant on first upload: insert a consent_requests row with
+    // status='granted' and scope.photo=true in one step, rather than
+    // create_family_tenant's own auto-grant (which only ever sets
+    // children.consent_status, not a photo-scoped consent_requests row —
+    // see docs/DECISIONS.md "Family photo consent: a single checkbox at
+    // upload time").
+    const ownerId = await createUser(db.adminClient, 'Photo Family Owner');
+    const client = await db.connectAs({ role: 'authenticated', userId: ownerId });
+    const tenantRow = await client.query(`select create_family_tenant($1, $2) as tenant_id`, [
+      'Photo Family',
+      'Photo Owner',
+    ]);
+    const tenantId = tenantRow.rows[0].tenant_id;
+    const childRow = await client.query(
+      `insert into children (tenant_id, first_name, pronoun) values ($1, 'Sara', 'she') returning id`,
+      [tenantId],
+    );
+    const childId = childRow.rows[0].id;
+
+    const before = await client.query('select has_granted_photo_consent($1) as granted', [childId]);
+    expect(before.rows[0].granted).toBe(false);
+
+    await client.query(
+      `insert into consent_requests (tenant_id, child_id, token_hash, scope, status, requested_by, responded_at)
+       values ($1, $2, $3, $4, 'granted', $5, now())`,
+      [tenantId, childId, `test-hash-${childId}`, { story: true, photo: true }, ownerId],
+    );
+
+    const after = await client.query('select has_granted_photo_consent($1) as granted', [childId]);
+    expect(after.rows[0].granted).toBe(true);
+    await client.end();
+  });
 });

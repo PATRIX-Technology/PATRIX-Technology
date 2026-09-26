@@ -11,11 +11,19 @@ export function PhotoUpload({
   childId,
   hasPhoto,
   photoUrl,
+  requireFamilyConsentCheckbox = false,
 }: {
   locale: string;
   childId: string;
   hasPhoto: boolean;
   photoUrl: string | null;
+  /** Family tenants have no separate multi-party consent flow to wait on
+   * (the account owner IS the child's parent/guardian) — see
+   * docs/DECISIONS.md "Family photo consent: a single checkbox at upload
+   * time". When true, shows one required checkbox right above the file
+   * input so granting consent and uploading happen in a single action,
+   * instead of the nursery flow's separate request/wait/respond steps. */
+  requireFamilyConsentCheckbox?: boolean;
 }) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploadState, uploadFormAction] = useFormState<ActionResult, FormData>(
@@ -47,6 +55,21 @@ export function PhotoUpload({
   return (
     <form action={uploadFormAction} className="flex flex-col gap-3">
       <input type="hidden" name="childId" value={childId} />
+      {requireFamilyConsentCheckbox && (
+        <label className="flex items-start gap-2 text-sm text-ink-600">
+          <input
+            type="checkbox"
+            name="familyPhotoConsent"
+            required
+            className="focus-ring mt-0.5 h-4 w-4 rounded border-[rgb(var(--color-border))]"
+          />
+          <span>
+            I am this child&apos;s parent or legal guardian, and I consent to Khayali and its AI
+            illustration provider (Google Gemini) using this photo solely to personalise this
+            child&apos;s storybook illustrations.
+          </span>
+        </label>
+      )}
       <input
         ref={fileInputRef}
         type="file"

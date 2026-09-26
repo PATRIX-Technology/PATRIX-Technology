@@ -7,13 +7,9 @@ import { buildBulkZip, buildExportPlan, sanitizeFileNamePart } from '@/lib/provi
 import { errorMessage } from '@/lib/errors';
 
 export const runtime = 'nodejs';
-// Rendering every approved story tenant-wide sequentially can easily run
-// past Vercel's 10s default — see the same reasoning on the single-story
-// PDF route. 300 is the Vercel Pro ceiling; on the Hobby plan Vercel
-// silently clamps this to its own 60s max, so this value is safe to ship
-// now and takes effect with no further deploy the moment the project
-// upgrades to Pro.
-export const maxDuration = 300;
+// 60 is the Hobby plan's ceiling for this config value — see
+// docs/DECISIONS.md "maxDuration must not exceed the Hobby ceiling".
+export const maxDuration = 60;
 
 /**
  * Whole-tenant export: every APPROVED story, one ZIP, folder per class

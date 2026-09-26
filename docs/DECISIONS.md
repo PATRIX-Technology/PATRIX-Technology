@@ -995,6 +995,41 @@ sign-off — the same sign-off already required before nurseries can use
 it, per `docs/NEEDS_FROM_ME.md`. Flagging rather than unilaterally
 enabling it.
 
+## maxDuration must not exceed the Hobby ceiling
+
+**Retracting an earlier decision.** An earlier fix (see the crash
+investigation entry below) raised `maxDuration` to 300 in four
+route/page files, reasoning at the time that "the Hobby plan silently
+clamps this to its own 60s max" — i.e. that it was harmless to ship
+even without upgrading to Vercel Pro. That reasoning was never actually
+verified against Vercel's real behaviour, and the founder later
+reported that a code fix pushed well after that change (the
+sign-in/sign-up crash fix, see below) appeared to have no effect at
+all in production — the exact symptom you'd see if a deployment was
+failing outright rather than a runtime bug persisting. Vercel is known
+to reject a deployment at build time when a route's `maxDuration`
+exceeds what the current plan allows, rather than silently clamping
+it, which would explain every commit after the 300 change never
+actually going live.
+
+**Fix**: reverted `maxDuration` from 300 back to 60 (the Hobby plan's
+own ceiling) in all four files it touched
+(`children/[childId]/page.tsx`, `export-zip/route.ts`,
+`[storyId]/pdf/route.ts`, `cron/worker/route.ts`). 60 is safe on Hobby
+and was already confirmed sufficient — the founder reported stories
+generating successfully without upgrading to Pro. If real Gemini
+calls genuinely need more headroom than 60s later, that requires an
+actual Vercel Pro upgrade, not just raising this number — see
+`docs/NEEDS_FROM_ME.md`.
+
+**Not yet confirmed**: whether this was in fact why later commits
+appeared to have no effect — that depends on Vercel's actual
+behaviour for an out-of-range `maxDuration` at build time, which
+hasn't been directly observed in this project (this sandbox has no
+Vercel deploy access). The founder should check the Deployments tab
+for the commit that introduced `maxDuration = 300` and confirm whether
+it (and everything after it) actually built successfully or failed.
+
 ## Server-to-client function props on auth pages
 
 **Root cause of the reported "sign in"/"sign up"/"create family account"

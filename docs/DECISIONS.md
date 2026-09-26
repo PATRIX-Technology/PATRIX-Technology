@@ -790,6 +790,37 @@ asserts the trialing row directly for both a nursery and a family
 signup) plus a manual run of every integration test against a local
 Postgres 16 instance — all 159 tests pass, `tsc --noEmit` is clean.
 
+**Bug fix: paying for a plan never gave a tenant the quota to use it.**
+`subscriptions.plan_id` and `quotas.stories_included_this_period` are two
+separate tables, and nothing connected them — the Stripe webhook only
+ever wrote to `subscriptions`. A nursery that paid for, say, Growth
+(100 stories/month) would have their `subscriptions.plan_id` updated
+correctly, but `quotas.stories_included_this_period` would stay at
+whatever it already was (1, from the free trial via `quotas`'s default
+and `consume_story_quota`) — `hard_cap` would then block them from
+generating anything past their trial, despite having just paid.
+Migration `0016_sync_quota_to_plan.sql` adds `sync_quota_to_plan()`, a
+`security definer` function locked to `service_role` only (unlike
+`consume_story_quota`, a tenant has no legitimate reason to grant
+themselves quota) — it looks up the plan's `stories_per_month`, and
+upserts `quotas` with that allowance, `stories_used_this_period` reset
+to 0, for a period matching Stripe's own subscription period.
+`src/app/api/billing/webhook/route.ts`'s `checkout.session.completed`
+handler calls it right after upserting `subscriptions`. Deliberately
+**not** wired into `customer.subscription.updated` — that event doesn't
+reliably carry a `plan_id` (see `subscriptionFromStripe`'s "renewal
+events do not know the plan" case), and this app always routes a plan
+change (first subscribe or a later upgrade) through a brand-new
+checkout session rather than Stripe's self-serve portal, so
+`checkout.session.completed` is the one place a plan change ever
+carries a trustworthy plan_id. Verified with a new integration test
+(`tests/integration/quota-sync-on-checkout.test.ts`) against a local
+Postgres 16 instance: the RPC grants the right allowance, resets usage,
+creates a `quotas` row from scratch if none existed yet, rejects an
+unknown plan id loudly rather than silently granting zero stories, and
+confirms only `service_role` can call it. Full suite (163 tests) passes,
+`tsc --noEmit` is clean.
+
 ## Not yet built (explicitly out of scope for this build session)
 
 - Vendor moderation integration for image safety checks

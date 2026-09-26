@@ -107,6 +107,24 @@ async function handleEvent(
       const upsert = subscriptionFromStripe(subscription, tenantId, planId);
       const { error } = await serviceClient.from('subscriptions').upsert(upsert, { onConflict: 'tenant_id' });
       if (error) throw error;
+
+      // The subscription row now reflects which plan they bought, but that
+      // alone does nothing to what they can actually use — quotas is a
+      // separate table, checked independently by consume_story_quota
+      // before every story generation. Without this, a tenant who just
+      // paid for e.g. Growth (100 stories/month) would still be capped at
+      // whatever their quota already was (1, from the free trial), unable
+      // to use the plan they just bought. sync_quota_to_plan (0016) gives
+      // them the full allowance for a fresh period matching Stripe's own.
+      const periodStart = upsert.current_period_start ?? new Date().toISOString();
+      const periodEnd = upsert.current_period_end ?? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+      const { error: quotaError } = await serviceClient.rpc('sync_quota_to_plan', {
+        target_tenant_id: tenantId,
+        target_plan_id: planId,
+        new_period_start: periodStart,
+        new_period_end: periodEnd,
+      });
+      if (quotaError) throw quotaError;
       break;
     }
 

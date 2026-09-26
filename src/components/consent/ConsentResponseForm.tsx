@@ -41,8 +41,8 @@ export function ConsentResponseForm({ token }: { token: string }) {
           </Button>
         </form>
       </div>
-      {grantState.error && <p className="text-sm text-coral-600">{grantState.error}</p>}
-      {declineState.error && <p className="text-sm text-coral-600">{declineState.error}</p>}
+      {grantState?.error && <p className="text-sm text-coral-600">{grantState.error}</p>}
+      {declineState?.error && <p className="text-sm text-coral-600">{declineState.error}</p>}
     </div>
   );
 }

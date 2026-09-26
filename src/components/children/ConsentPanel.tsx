@@ -50,10 +50,10 @@ export function ConsentPanel({
   );
 
   useEffect(() => {
-    if (requestState.consentUrl) {
+    if (requestState?.consentUrl) {
       QRCode.toDataURL(requestState.consentUrl, { margin: 1, width: 200 }).then(setQrDataUrl);
     }
-  }, [requestState.consentUrl]);
+  }, [requestState?.consentUrl]);
 
   return (
     <div className="space-y-4">
@@ -92,10 +92,10 @@ export function ConsentPanel({
         )}
       </div>
 
-      {requestState.error && <p className="text-sm text-coral-600">{requestState.error}</p>}
-      {withdrawState.error && <p className="text-sm text-coral-600">{withdrawState.error}</p>}
+      {requestState?.error && <p className="text-sm text-coral-600">{requestState.error}</p>}
+      {withdrawState?.error && <p className="text-sm text-coral-600">{withdrawState.error}</p>}
 
-      {requestState.consentUrl && (
+      {requestState?.consentUrl && (
         <div className="rounded-xl2 border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-4">
           <p className="mb-2 text-sm font-medium text-ink-700">
             Share this link or QR code with the parent:

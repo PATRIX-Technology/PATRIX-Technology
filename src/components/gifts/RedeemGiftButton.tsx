@@ -22,7 +22,7 @@ export function RedeemGiftButton({ code }: { code: string }) {
       <Button type="submit" size="lg">
         Redeem this gift
       </Button>
-      {state.error && <p className="mt-2 text-sm text-coral-600">{state.error}</p>}
+      {state?.error && <p className="mt-2 text-sm text-coral-600">{state.error}</p>}
     </form>
   );
 }

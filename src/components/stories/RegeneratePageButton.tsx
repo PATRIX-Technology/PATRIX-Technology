@@ -25,7 +25,7 @@ export function RegeneratePageButton({
 
   useEffect(() => {
     if (submitCount.current === 0) return;
-    if (state.error) {
+    if (state?.error) {
       showToast({
         title: t('regenerateFailedTitle'),
         description: state.error,

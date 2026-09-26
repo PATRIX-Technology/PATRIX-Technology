@@ -16,7 +16,7 @@ export function FamilySignUpForm({ locale }: { locale: string }) {
   }, {});
 
   useEffect(() => {
-    if (state.redirectTo) router.push(state.redirectTo);
+    if (state?.redirectTo) router.push(state.redirectTo);
   }, [state, router]);
 
   return (
@@ -24,7 +24,7 @@ export function FamilySignUpForm({ locale }: { locale: string }) {
       <TextField name="fullName" label="Your full name" required />
       <TextField name="email" type="email" label="Email address" required />
       <TextField name="password" type="password" label="Password" required minLength={8} />
-      {state.error && (
+      {state?.error && (
         <p role="alert" className="text-sm text-coral-600">
           {state.error}
         </p>

@@ -61,7 +61,7 @@ export function SettingsForm({
           />
         </>
       )}
-      {state.error && <p className="text-sm text-coral-600">{state.error}</p>}
+      {state?.error && <p className="text-sm text-coral-600">{state.error}</p>}
       <Button type="submit" className="self-start">
         Save
       </Button>

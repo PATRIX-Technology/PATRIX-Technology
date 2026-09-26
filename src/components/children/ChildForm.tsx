@@ -108,7 +108,7 @@ export function ChildForm({
         </select>
       </div>
       <AvatarPicker value={avatar} onChange={setAvatar} />
-      {state.error && (
+      {state?.error && (
         <p role="alert" className="text-sm text-coral-600">
           {state.error}
         </p>

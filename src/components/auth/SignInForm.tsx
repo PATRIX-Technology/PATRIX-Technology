@@ -17,14 +17,14 @@ export function SignInForm({ locale }: { locale: string }) {
   }, {});
 
   useEffect(() => {
-    if (state.redirectTo) router.push(state.redirectTo);
+    if (state?.redirectTo) router.push(state.redirectTo);
   }, [state, router]);
 
   return (
     <form action={formAction} className="flex flex-col gap-4">
       <TextField name="email" type="email" label={t('email')} required />
       <TextField name="password" type="password" label={t('password')} required />
-      {state.error && (
+      {state?.error && (
         <p role="alert" className="text-sm text-coral-600">
           {state.error}
         </p>

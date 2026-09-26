@@ -81,10 +81,18 @@ export async function createStoryAction(
     return { error: (error as Error).message };
   }
 
-  // Kick the job worker synchronously so the mock provider "generates"
-  // images immediately in dev/demo rather than waiting for the next cron
-  // tick. A real deployment relies on the scheduled trigger at
-  // /api/cron/worker instead (see docs/DECISIONS.md "Job queue implementation").
+  // Kick the job worker synchronously so images generate right away
+  // instead of waiting for the scheduled trigger at /api/cron/worker.
+  // With the real provider this can run long enough on a multi-page
+  // story to risk Vercel's function timeout killing the request
+  // mid-generation — see docs/DECISIONS.md "Defending against a
+  // mid-generation function timeout" for why that no longer crashes the
+  // page (CreateStoryForm now tolerates the resolved state coming back
+  // undefined) even though it's left running synchronously here: the
+  // /api/cron/worker safety net only actually runs on a schedule once
+  // one is configured (see docs/NEEDS_FROM_ME.md), and removing this
+  // synchronous call without that in place first would leave a
+  // real-provider story stuck "queued" forever instead of just slow.
   try {
     const serviceClient = createSupabaseServiceRoleClient();
     await runWorkerOnce(serviceClient, 25);

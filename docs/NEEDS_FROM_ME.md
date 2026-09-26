@@ -69,6 +69,27 @@ else has already been built and is documented in `docs/HANDOFF.md`.
    configured, every real-generated image is blocked by default (fails
    closed) — see `docs/DECISIONS.md` "Image safety checks fail closed".
 
+4b. **Two GitHub repository secrets, for the story-generation safety
+   net** (`.github/workflows/story-worker-cron.yml`). A real (non-mock)
+   multi-page story's image generation can run long enough to hit
+   Vercel's own function time limit mid-request — that used to crash
+   the page outright; it no longer does, but the story can still end
+   up stuck "generating" until something re-runs the job queue. This
+   workflow does that automatically every 5 minutes, but only once
+   both secrets exist (Settings → Secrets and variables → Actions, on
+   the GitHub repo):
+   - `APP_URL` — your deployed site's base URL (e.g.
+     `https://khayali.vercel.app`, no trailing slash)
+   - `CRON_SECRET` — any random string you choose, set to the *same*
+     value in Vercel's own environment variables (`CRON_SECRET`) so
+     the two sides agree
+   Without both, the workflow just fails harmlessly every 5 minutes —
+   it won't block anything else, but stuck stories won't self-recover
+   either until you add them. See `docs/DECISIONS.md` "Defending
+   against a mid-generation function timeout" for why this exists
+   instead of Vercel's own Cron (Hobby plan restricts that to once a
+   day, which is too infrequent to matter here).
+
 5. **Confirm your monthly AI spend cap.** You told me $500/month is fine
    — that's a safety switch in the database, not a bill I can generate on
    your behalf (see `docs/DECISIONS.md` for how `global_spend_cap` works).

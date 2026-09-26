@@ -23,7 +23,7 @@ export function RedeemGiftCodeForm() {
         className="min-w-[220px]"
       />
       <Button type="submit">Redeem</Button>
-      {state.error && <p className="w-full text-sm text-coral-600">{state.error}</p>}
+      {state?.error && <p className="w-full text-sm text-coral-600">{state.error}</p>}
       {typeof state.storyCreditsAdded === 'number' && (
         <p className="w-full text-sm text-lagoon-700">
           Added {state.storyCreditsAdded} story credit{state.storyCreditsAdded === 1 ? '' : 's'}.

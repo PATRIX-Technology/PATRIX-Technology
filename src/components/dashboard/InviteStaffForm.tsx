@@ -30,8 +30,8 @@ export function InviteStaffForm({ locale }: { locale: string }) {
         </select>
       </div>
       <Button type="submit">Invite</Button>
-      {state.error && <p className="w-full text-sm text-coral-600">{state.error}</p>}
-      {state.message && <p className="w-full text-sm text-ink-600">{state.message}</p>}
+      {state?.error && <p className="w-full text-sm text-coral-600">{state.error}</p>}
+      {state?.message && <p className="w-full text-sm text-ink-600">{state.message}</p>}
     </form>
   );
 }

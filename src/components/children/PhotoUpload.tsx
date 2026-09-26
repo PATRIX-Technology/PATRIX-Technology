@@ -78,7 +78,7 @@ export function PhotoUpload({
         required
         className="focus-ring rounded-lg border border-[rgb(var(--color-border))] p-2 text-sm"
       />
-      {uploadState.error && <p className="text-sm text-coral-600">{uploadState.error}</p>}
+      {uploadState?.error && <p className="text-sm text-coral-600">{uploadState.error}</p>}
       <Button type="submit" size="sm" className="self-start">
         Upload photo
       </Button>

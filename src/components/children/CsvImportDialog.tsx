@@ -110,7 +110,7 @@ export function CsvImportDialog({ locale }: { locale: string }) {
             required
             className="focus-ring rounded-lg border border-[rgb(var(--color-border))] p-2 text-sm"
           />
-          {state.error && (
+          {state?.error && (
             <p role="alert" className="text-sm text-coral-600">
               {state.error}
             </p>

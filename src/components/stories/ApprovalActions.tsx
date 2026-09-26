@@ -48,7 +48,7 @@ export function ApprovalActions({
       {!canApprove && (
         <p className="text-xs text-ink-500">Every page must finish generating before this story can be approved.</p>
       )}
-      {approveState.error && <p className="text-sm text-coral-600">{approveState.error}</p>}
+      {approveState?.error && <p className="text-sm text-coral-600">{approveState.error}</p>}
       {showReject && (
         <form action={rejectFormAction} className="flex gap-2">
           <input
@@ -62,7 +62,7 @@ export function ApprovalActions({
           </Button>
         </form>
       )}
-      {rejectState.error && <p className="text-sm text-coral-600">{rejectState.error}</p>}
+      {rejectState?.error && <p className="text-sm text-coral-600">{rejectState.error}</p>}
     </div>
   );
 }

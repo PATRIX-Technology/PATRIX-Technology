@@ -24,7 +24,7 @@ export function PhoneNurserySignUpForm({ locale }: { locale: string }) {
 
   const [sendState, sendFormAction] = useFormState<ActionResult, FormData>(async (_prev, formData) => {
     const result = await sendNurserySignUpOtpAction(formData);
-    if (!result.error) setStep('code');
+    if (result && !result.error) setStep('code');
     return result;
   }, {});
 
@@ -34,7 +34,7 @@ export function PhoneNurserySignUpForm({ locale }: { locale: string }) {
   }, {});
 
   useEffect(() => {
-    if (verifyState.redirectTo) router.push(verifyState.redirectTo);
+    if (verifyState?.redirectTo) router.push(verifyState.redirectTo);
   }, [verifyState, router]);
 
   if (step === 'details') {
@@ -57,7 +57,7 @@ export function PhoneNurserySignUpForm({ locale }: { locale: string }) {
         />
         <CountryPhoneField label={t('phoneLabel')} onChange={setPhone} />
         <input type="hidden" name="phone" value={phone ?? ''} />
-        {sendState.error && (
+        {sendState?.error && (
           <p role="alert" className="text-sm text-coral-600">
             {sendState.error}
           </p>
@@ -85,7 +85,7 @@ export function PhoneNurserySignUpForm({ locale }: { locale: string }) {
         autoFocus
         required
       />
-      {verifyState.error && (
+      {verifyState?.error && (
         <p role="alert" className="text-sm text-coral-600">
           {verifyState.error}
         </p>

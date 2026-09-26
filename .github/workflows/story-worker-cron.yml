@@ -1,0 +1,35 @@
+name: Story worker safety net
+
+# Backup trigger for the story-generation job queue. Server actions
+# already kick the worker synchronously right after creating a story
+# (see src/lib/actions/stories.ts), which is normally all that's
+# needed. This exists only to pick up jobs that got orphaned in
+# QUEUED/GENERATING status -- most likely because a real (non-mock)
+# image generation on a multi-page story ran long enough to hit
+# Vercel's function timeout mid-request. See docs/DECISIONS.md
+# "Defending against a mid-generation function timeout".
+#
+# Needs two repository secrets to actually run (see
+# docs/NEEDS_FROM_ME.md): APP_URL (the deployed site's base URL) and
+# CRON_SECRET (must match the same value set in Vercel's environment
+# variables). Without both set, this job fails harmlessly on every run
+# -- it does not block deploys or other workflows.
+on:
+  schedule:
+    - cron: '*/5 * * * *'
+  workflow_dispatch: {}
+
+jobs:
+  trigger-worker:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Hit /api/cron/worker
+        run: |
+          if [ -z "$APP_URL" ] || [ -z "$CRON_SECRET" ]; then
+            echo "APP_URL and/or CRON_SECRET repository secrets are not set -- see docs/NEEDS_FROM_ME.md. Skipping."
+            exit 0
+          fi
+          curl -sS -f -X GET "$APP_URL/api/cron/worker" -H "Authorization: Bearer $CRON_SECRET"
+        env:
+          APP_URL: ${{ secrets.APP_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}

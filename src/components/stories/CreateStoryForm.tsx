@@ -131,6 +131,15 @@ export function CreateStoryForm({
 
   useEffect(() => {
     if (submitCount.current === 0) return;
+    // Defensive: on a slow/aborted request (e.g. a Vercel function
+    // timeout mid-generation, see docs/DECISIONS.md "Story generation
+    // no longer blocks the request on real image generation"), the
+    // dispatched action's promise can settle without a normal resolved
+    // ActionResult, and useFormState's exposed state has been observed
+    // to come back as undefined in that case rather than throwing --
+    // reading state.error directly then crashes the whole page instead
+    // of just failing this one submission.
+    if (!state) return;
     if (state.error) {
       showToast({ title: t('createFailedTitle'), description: state.error, tone: 'error' });
       return;

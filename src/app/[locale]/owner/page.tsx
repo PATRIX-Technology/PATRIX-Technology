@@ -4,6 +4,7 @@ import { getCurrentTenantContext } from '@/lib/domain/session';
 import { checkOwnerMfaGate } from '@/lib/domain/mfa';
 import { Card, CardTitle } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
+import { SuggestionStatusControl } from '@/components/dashboard/SuggestionStatusControl';
 
 export default async function OwnerDashboardPage({ params }: { params: { locale: string } }) {
   const supabase = await createSupabaseServerClient();
@@ -28,13 +29,18 @@ export default async function OwnerDashboardPage({ params }: { params: { locale:
     redirect(`/${params.locale}/owner/mfa-challenge`);
   }
 
-  const [{ data: tenants }, { data: templates }, { data: globalCap }] = await Promise.all([
+  const [{ data: tenants }, { data: templates }, { data: globalCap }, { data: suggestions }] = await Promise.all([
     supabase.from('tenants').select('id, name, status, created_at').order('created_at', { ascending: false }),
     supabase
       .from('story_theme_templates')
       .select('theme_key, locale, native_review_status')
       .order('theme_key'),
     supabase.from('global_spend_cap').select('*').maybeSingle(),
+    supabase
+      .from('story_template_suggestions')
+      .select('id, topic, description, status, created_at, tenants(name), profiles(full_name)')
+      .order('created_at', { ascending: false })
+      .limit(50),
   ]);
 
   const draftArabicTemplates = (templates ?? []).filter(
@@ -89,6 +95,36 @@ export default async function OwnerDashboardPage({ params }: { params: { locale:
             {Number(globalCap?.monthly_cap_usd ?? 0).toFixed(2)} this period
           </span>
         </div>
+      </Card>
+
+      <Card>
+        <CardTitle>Story idea suggestions ({(suggestions ?? []).length})</CardTitle>
+        <p className="mt-2 text-sm text-ink-500">
+          Ideas nurseries and families suggested from the Stories page. Marking one &quot;added&quot; is
+          just a note for you — building the actual template still happens in a session.
+        </p>
+        <ul className="mt-4 divide-y divide-[rgb(var(--color-border))]">
+          {(suggestions ?? []).map((suggestion) => {
+            const tenant = suggestion.tenants as unknown as { name: string } | null;
+            const submitter = suggestion.profiles as unknown as { full_name: string } | null;
+            return (
+              <li key={suggestion.id} className="flex items-start justify-between gap-3 py-3">
+                <div className="min-w-0">
+                  <p className="font-medium text-ink-800">{suggestion.topic}</p>
+                  <p className="mt-1 text-sm text-ink-600">{suggestion.description}</p>
+                  <p className="mt-1 text-xs text-ink-500">
+                    {tenant?.name ?? 'Unknown'} — {submitter?.full_name ?? 'Unknown'} ·{' '}
+                    {new Date(suggestion.created_at).toLocaleDateString()}
+                  </p>
+                </div>
+                <SuggestionStatusControl suggestionId={suggestion.id} status={suggestion.status} />
+              </li>
+            );
+          })}
+          {(suggestions ?? []).length === 0 && (
+            <p className="py-3 text-sm text-ink-500">No suggestions yet.</p>
+          )}
+        </ul>
       </Card>
 
       <Card>

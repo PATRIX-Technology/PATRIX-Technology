@@ -196,6 +196,38 @@ needed for this: nothing is emailed to a recipient, the referrer just
 shares their own link directly. See `docs/DECISIONS.md` "Referral
 program replaces gifting".
 
+## Before the story-idea Telegram notification works
+
+6c. **A free Telegram bot, so you get notified the instant a nursery
+   or family submits a story-idea suggestion** (from the "💡 Suggest a
+   story idea" button on the Stories page) — no cost ever, no business
+   account, about 5 minutes:
+
+   1. Open Telegram (app or web.telegram.org) and search for
+      `@BotFather` — it's the official bot Telegram itself runs for
+      creating other bots.
+   2. Send it `/newbot`, then follow its prompts: give the bot a
+      display name (anything, e.g. "Khayali Suggestions"), then a
+      *username* that must end in "bot" (e.g. `khayali_suggestions_bot`).
+   3. BotFather replies with a token that looks like
+      `123456789:AAF-xxxxxxxxxxxxxxxxxxxxxxxxxxxxx`. Copy it.
+   4. Search for your new bot by the username you just gave it, open
+      the chat, and send it any message (e.g. "hi") — Telegram bots
+      can't message you first until you've messaged them once.
+   5. In a browser, open this URL with your real token pasted in:
+      `https://api.telegram.org/bot<YOUR TOKEN>/getUpdates` — in the
+      page that loads, find `"chat":{"id":` followed by a number.
+      That number is your chat id.
+   6. Give me both the token and the chat id (paste them in chat, or
+      add them yourself as `TELEGRAM_BOT_TOKEN` / `TELEGRAM_CHAT_ID` in
+      Vercel's project environment variables) and I'll confirm it's
+      wired up. Until these are set, suggestions are still saved to
+      the database — you just won't get pinged about them.
+
+   See `docs/DECISIONS.md` "Telegram notifications for story
+   suggestions" for why Telegram over a paid WhatsApp Business API
+   integration.
+
 ## Legal / compliance (do not treat any of this as done)
 
 7. **A lawyer's review of the UAE PDPL posture.** I've designed for

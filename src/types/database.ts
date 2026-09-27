@@ -11,6 +11,7 @@ export type TenantStatus = 'active' | 'suspended' | 'closed';
  * docs/DECISIONS.md "Phase 4: families are tenants". */
 export type TenantType = 'nursery' | 'family';
 export type ReferralStatus = 'pending' | 'rewarded';
+export type StorySuggestionStatus = 'new' | 'reviewed' | 'added' | 'declined';
 export type Pronoun = 'she' | 'he' | 'they';
 export type AppLocale = 'en' | 'ar';
 export type ConsentStatus = 'not_requested' | 'pending' | 'granted' | 'declined' | 'withdrawn';
@@ -80,6 +81,16 @@ export interface ReferralSummary {
   pending_count: number;
   rewarded_count: number;
   total_stories_earned: number;
+}
+
+export interface StoryTemplateSuggestion {
+  id: string;
+  tenant_id: string;
+  submitted_by: string | null;
+  topic: string;
+  description: string;
+  status: StorySuggestionStatus;
+  created_at: string;
 }
 
 export interface TenantMember {

@@ -4,14 +4,16 @@ import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { getCurrentTenantContext } from '@/lib/domain/session';
 import { enforceRateLimit, RateLimitExceededError } from '@/lib/rate-limit';
 import { getClientIp } from '@/lib/request-ip';
+import { sendTelegramMessage } from '@/lib/notifications/telegram';
+import type { StorySuggestionStatus } from '@/types/database';
 import type { ActionResult } from './auth';
 
 /**
  * Saves a nursery/family's story-idea suggestion — see
- * docs/DECISIONS.md "Story template suggestions". This only records
- * the idea; the WhatsApp hand-off to the founder is a separate,
- * client-side wa.me link the dialog offers after a successful save
- * (see SuggestTemplateDialog), not something this action sends itself.
+ * docs/DECISIONS.md "Story template suggestions". Always saved to the
+ * database first; the Telegram notification and the WhatsApp wa.me
+ * link the dialog offers afterwards are both best-effort extras on
+ * top of that saved row, never a substitute for it.
  */
 export async function suggestStoryTemplateAction(formData: FormData): Promise<ActionResult> {
   const supabase = await createSupabaseServerClient();
@@ -40,5 +42,40 @@ export async function suggestStoryTemplateAction(formData: FormData): Promise<Ac
   });
   if (error) return { error: error.message };
 
+  await sendTelegramMessage(
+    `📖 New story idea suggestion\n\nFrom: ${context.tenantName} (${context.fullName})\n\nTopic: ${topic}\n\nWhy it matters: ${description}`,
+  );
+
   return { message: 'saved' };
+}
+
+/**
+ * Owner-only status update for a suggestion (new -> reviewed / added /
+ * declined) — backs the Owner dashboard list. RLS enforces this at
+ * the database level too (story_template_suggestions_owner_update in
+ * migration 0024); the explicit check here just gives a clearer error
+ * than the raw Postgres RLS message would.
+ */
+export async function updateSuggestionStatusAction(
+  suggestionId: string,
+  status: StorySuggestionStatus,
+): Promise<ActionResult> {
+  const supabase = await createSupabaseServerClient();
+  const { data: userData } = await supabase.auth.getUser();
+  if (!userData.user) return { error: 'Sign in first.' };
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('is_platform_owner')
+    .eq('id', userData.user.id)
+    .maybeSingle();
+  if (!profile?.is_platform_owner) return { error: 'Not authorized.' };
+
+  const { error } = await supabase
+    .from('story_template_suggestions')
+    .update({ status })
+    .eq('id', suggestionId);
+  if (error) return { error: error.message };
+
+  return { message: 'updated' };
 }

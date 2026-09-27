@@ -1797,12 +1797,52 @@ for a future story theme. Two deliberately separate halves:
    asked for.
 
 Intentionally *not* built: the suggestion never becomes a template on
-its own. The founder reviews suggestions (via WhatsApp and/or a direct
-`select * from story_template_suggestions order by created_at desc`
-in Supabase) and, for any he wants to run with, brings it to a session
-for the actual template-building work — writing the page-by-page
-story content, choosing art direction, Arabic native review, etc. —
-the same way every existing theme was built.
+its own. The founder reviews suggestions (via Telegram, the Owner
+dashboard, and/or a direct `select * from story_template_suggestions
+order by created_at desc` in Supabase) and, for any he wants to run
+with, brings it to a session for the actual template-building work —
+writing the page-by-page story content, choosing art direction,
+Arabic native review, etc. — the same way every existing theme was
+built.
+
+## Telegram notifications for story suggestions
+
+Follow-up (same session), founder feedback: "other than whatsapp
+please do the best... if there's any better than having another
+whatsapp api costs." The `wa.me` tap-to-send link built above has a
+real gap — it only reaches the founder if the submitter actually taps
+through, so it's not a substitute for an automatic notification. A
+real WhatsApp *Business* API integration (Meta Cloud API or Twilio)
+would close that gap, but needs a verified business account and costs
+per message — not something to set up on spec.
+
+**Telegram's Bot API was the better answer**: free forever (no
+per-message cost, no business verification, no approval process),
+and setup is a five-minute chat with `@BotFather` rather than a vendor
+onboarding — see `docs/NEEDS_FROM_ME.md` "Before the story-idea
+Telegram notification works" for the exact steps given to the
+founder. `src/lib/notifications/telegram.ts`'s `sendTelegramMessage()`
+posts to `https://api.telegram.org/bot<token>/sendMessage`, is a
+silent no-op when `TELEGRAM_BOT_TOKEN`/`TELEGRAM_CHAT_ID` aren't set
+yet, and swallows any send failure — same "never let a notification
+failure break the feature it's attached to" rule as the WhatsApp link
+and every other best-effort side effect in this codebase (referral
+recording, etc.). Called from `suggestStoryTemplateAction` right after
+the database insert succeeds, alongside (not instead of) the existing
+WhatsApp button — a submitter who prefers WhatsApp can still use it;
+the Telegram message is what actually guarantees the founder hears
+about it without depending on that tap.
+
+Also added, same feedback: a "Story idea suggestions" card on the
+Owner dashboard (`src/app/[locale]/owner/page.tsx`) listing every
+suggestion across every tenant (topic, description, who submitted it,
+when), with a status dropdown (`SuggestionStatusControl`, calling the
+new `updateSuggestionStatusAction`) so the founder can mark one
+reviewed/added/declined from the app instead of writing SQL by hand.
+This is a durable, zero-cost fallback that works even if the Telegram
+bot is never configured or a notification is missed — the database
+row this whole feature is built on was always the source of truth;
+this just makes it visible without SQL.
 
 ## Not yet built (explicitly out of scope for this build session)
 

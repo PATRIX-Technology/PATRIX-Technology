@@ -1716,19 +1716,37 @@ Implementation, deliberately decoupled from tenant creation itself:
   the Stripe webhook's `checkout.session.completed` handler, right
   after `sync_quota_to_plan`. `service_role`-only, mirroring
   `sync_quota_to_plan` (0016) exactly.
-- `get_referral_summary(target_tenant_id)` — backs the new "Invite
-  friends, earn free stories" settings card
-  (`src/components/dashboard/InviteFriendsCard.tsx`), which replaced
-  the "Redeem a gift code" card in the same spot. Points the shareable
-  link at whichever sign-up flow (`/sign-up` or `/family/sign-up`)
-  matches the referring tenant's own type, since that's realistically
-  who they're inviting.
+- `get_referral_summary(target_tenant_id)` — backs the invite page
+  (see below). Points the shareable link at whichever sign-up flow
+  (`/sign-up` or `/family/sign-up`) matches the referring tenant's own
+  type, since that's realistically who they're inviting.
 
 The `?ref=CODE` query param is read server-side on both sign-up pages
 and threaded into each sign-up form as a hidden field — for the
 phone-OTP flows specifically, only into the second (verify/create)
 step's form, since that's the only step that actually creates a
 tenant.
+
+**Follow-up (same session): promoted from a settings card to a
+persistent, highlighted nav destination.** Founder feedback: this is a
+growth lever, so it should be visible everywhere, not buried in
+Settings behind a click. Moved the whole thing to its own page
+(`src/app/[locale]/(dashboard)/dashboard/invite/page.tsx` — the link
+box, a 3-step "how it works" explainer, and stats) and added a 🎁
+gift-icon nav item in `DashboardNav`, styled apart from the plain nav
+list (gold/saffron background, not the lagoon-tinted active state the
+other links use) and placed right under the tenant name header so
+it's the first thing visible on every dashboard page regardless of
+which one is active. Deleted `InviteFriendsCard.tsx` and
+`src/lib/actions/referrals.ts` (the settings-card version and its
+client-side fetch action) in favour of the page fetching
+`get_referral_summary` directly, server-side, and handing the
+referral code + a server-known `NEXT_PUBLIC_APP_URL` down to a leaner
+client component (`InviteLinkBox`) that only handles the copy button.
+That `appUrl`-as-prop choice isn't cosmetic: building the invite URL
+from `window.location.origin` at render time would read `undefined`
+during SSR and the real origin during client hydration — a hydration
+mismatch — so the app URL has to come from the server, not `window`.
 
 No real gift was ever purchased (Stripe has never gone live), so
 removing the `gifts` table, `redeem_gift()`, and `get_gift_status()` in

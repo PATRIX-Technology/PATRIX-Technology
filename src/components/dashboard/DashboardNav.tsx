@@ -16,6 +16,7 @@ interface Labels {
   settings: string;
   usage: string;
   support: string;
+  invite: string;
 }
 
 export function DashboardNav({
@@ -61,7 +62,26 @@ export function DashboardNav({
         <Badge tone="info" className="mt-1">
           {tenantType === 'family' ? 'family account' : role.replace('nursery_', '')}
         </Badge>
-        <ul className="mt-8 flex flex-col gap-1">
+        {/* Deliberately styled apart from the plain nav links below (a
+            gift icon + gold accent) and placed right under the tenant
+            header, so it's the first thing seen on every dashboard page
+            regardless of which one is active — this is a growth lever,
+            not routine navigation. See docs/DECISIONS.md "Referral
+            program replaces gifting". */}
+        <Link
+          href={`${base}/invite`}
+          className={`focus-ring mt-4 flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-semibold transition-colors ${
+            pathname === `${base}/invite`
+              ? 'bg-saffron-900/70 text-saffron-300'
+              : 'bg-saffron-900/40 text-saffron-300 hover:bg-saffron-900/60'
+          }`}
+        >
+          <span aria-hidden className="text-lg">
+            🎁
+          </span>
+          <span>{labels.invite}</span>
+        </Link>
+        <ul className="mt-6 flex flex-col gap-1">
           {links.map((link) => (
             <li key={link.href}>
               <Link

@@ -38,6 +38,7 @@ export default async function DashboardLayout({
           settings: t('settings'),
           usage: t('usage'),
           support: t('support'),
+          invite: t('invite'),
         }}
       />
       <main className="flex-1 bg-[rgb(var(--color-surface))] p-6 md:p-10">{children}</main>

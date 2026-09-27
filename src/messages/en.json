@@ -76,7 +76,8 @@
       "staff": "Staff",
       "settings": "Settings",
       "usage": "Usage & plan",
-      "support": "Support"
+      "support": "Support",
+      "invite": "Invite & earn free stories"
     },
     "overview": {
       "welcome": "Welcome back",
@@ -219,7 +220,18 @@
     "copyLink": "Copy link",
     "copied": "Copied!",
     "loading": "Loading your invite link…",
-    "stats": "{pending} invite(s) pending, {rewarded} completed — you've earned {stories} free stories so far."
+    "stats": "{pending} invite(s) pending, {rewarded} completed — you've earned {stories} free stories so far.",
+    "pageTitle": "Invite friends, earn free stories",
+    "pageBody": "Every person who signs up with your link and subscribes earns you free stories — automatically, matching whatever plan they choose. No limit on how many people you invite.",
+    "yourLink": "Your invite link",
+    "howItWorksTitle": "How it works",
+    "step1": "Share your link — by WhatsApp, email, or however you'd reach them.",
+    "step2": "They sign up with it and subscribe to any plan.",
+    "step3": "You get free stories added to your account automatically — matching their plan, no waiting.",
+    "yourStats": "Your stats",
+    "pendingLabel": "Pending",
+    "rewardedLabel": "Completed",
+    "storiesEarnedLabel": "Stories earned"
   },
   "common": {
     "loading": "Loading…",

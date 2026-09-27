@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { signOutAction } from '@/lib/actions/auth';
 import type { TenantRole, TenantType } from '@/types/database';
@@ -36,7 +36,10 @@ export function DashboardNav({
   labels: Labels;
 }) {
   const pathname = usePathname();
+  const router = useRouter();
   const brand = useTranslations('brand');
+  const common = useTranslations('common');
+  const isRtl = locale === 'ar';
   const base = `/${locale}/dashboard`;
 
   const links = [
@@ -57,9 +60,33 @@ export function DashboardNav({
   return (
     <nav className="flex w-full flex-col justify-between border-b border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface-raised))] p-6 md:w-64 md:border-b-0 md:border-e">
       <div>
-        <div className="mb-5 flex items-center gap-2.5 font-display text-lg text-ink-900">
-          <Logo size={24} />
-          {brand('name')}
+        <div className="mb-5 flex items-center gap-2.5">
+          {/* The Capacitor-wrapped mobile app has no browser chrome, so
+              there's otherwise no way to navigate backward at all on a
+              phone — this sits in the nav's own corner rather than
+              floating fixed over it, so it never fights the sidebar
+              for space at any breakpoint. See docs/DECISIONS.md
+              "Mobile: Capacitor wrapper for Android + iOS". */}
+          <button
+            type="button"
+            onClick={() => router.back()}
+            aria-label={common('back')}
+            className="focus-ring flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[rgb(var(--color-border))] text-ink-600 transition-colors hover:bg-ink-100"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className={isRtl ? 'rotate-180' : ''}>
+              <path
+                d="M15 6l-6 6 6 6"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </button>
+          <div className="flex items-center gap-2.5 font-display text-lg text-ink-900">
+            <Logo size={24} />
+            {brand('name')}
+          </div>
         </div>
         <p className="font-display text-lg text-ink-900">{tenantName}</p>
         <Badge tone="info" className="mt-1">

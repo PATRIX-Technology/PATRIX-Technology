@@ -2116,6 +2116,31 @@ live Supabase project — same limitation hit earlier this session with
 couldn't be exercised live here; the fix takes real effect once
 deployed, where that restriction doesn't apply).
 
+## Back button in the dashboard nav's corner
+
+Founder feedback: "let's do back and front icons in the corners to be
+easy" — clarified via a follow-up question to mean a single app-wide
+back button in the top corner of every dashboard page, since the
+Capacitor-wrapped mobile app (see "Mobile: Capacitor wrapper for
+Android + iOS") has no browser chrome at all, so phone users otherwise
+have no way to navigate backward.
+
+Considered a `fixed`-position button floating over the whole
+viewport, but `DashboardNav` already occupies that exact corner at
+every breakpoint (a full-width top bar on mobile, a 256px-wide sidebar
+on desktop) — a fixed overlay would either sit on top of the
+logo/brand row or need breakpoint-specific offset math that breaks the
+moment nav content wraps differently. Placed it inside `DashboardNav`
+itself instead, as a small circular icon button directly before the
+logo, so it's part of the existing layout flow rather than fighting it
+for space — same visual "corner of the screen" result at every
+breakpoint, with none of the collision risk. Calls `router.back()`
+(plain browser/webview history, no app-specific target to maintain).
+The chevron flips (`rotate-180`) for Arabic, matching the
+already-established `rotate-90` precedent for the disclosure chevron
+on the Stories page, so it visually points toward the "start" reading
+direction rather than always pointing left regardless of locale.
+
 ## Not yet built (explicitly out of scope for this build session)
 
 - Vendor moderation integration for image safety checks

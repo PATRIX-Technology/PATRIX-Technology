@@ -284,6 +284,7 @@
   "common": {
     "loading": "Loading…",
     "error": "Something went wrong. Please try again.",
+    "back": "Back",
     "save": "Save",
     "cancel": "Cancel",
     "delete": "Delete",

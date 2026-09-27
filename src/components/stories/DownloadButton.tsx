@@ -23,17 +23,26 @@ function blobToBase64(blob: Blob): Promise<string> {
 
 /**
  * The one mechanism that reliably triggers an actual on-device download
- * on every browser and OS, mobile included: a genuine network navigation
- * to the real endpoint, which sets `Content-Disposition: attachment` —
- * so the BROWSER's own native download handling takes over, exactly like
- * any plain download link on any site. Deliberately NOT a JS-constructed
- * blob-URL-and-`<a download>` click: that's a client-side simulation of
- * a download that many mobile browsers (confirmed on a real device —
- * the button just opened the PDF inline instead of saving it) don't
- * reliably honour, unlike a real HTTP response with that header.
+ * on every browser, OS, and WebView, mobile included: a genuine
+ * same-tab navigation to the real endpoint, which sets
+ * `Content-Disposition: attachment` — so the BROWSER's own native
+ * download handling takes over, exactly like any plain download link
+ * on any site. Same-tab, not `window.open(..., '_blank')`: many mobile
+ * browsers and in-app/WebView contexts (Capacitor's included) either
+ * block a JS-initiated new tab outright or simply don't support opening
+ * one at all, in which case `window.open` just does nothing —
+ * confirmed on a real device, worse than the blob-URL fallback it
+ * replaced. Same-tab navigation has no such requirement: when the
+ * response really is `Content-Disposition: attachment`, the browser
+ * intercepts it as a pure download and the current page never actually
+ * changes — no popup blocker involved, and nothing to be unsupported.
+ * The one tradeoff is the (rare) error case, where the response is a
+ * plain JSON error with no attachment header and the tab genuinely
+ * navigates to show it — recoverable via the dashboard's own corner
+ * back button.
  */
 function downloadDirectly(href: string) {
-  window.open(href, '_blank', 'noopener,noreferrer');
+  window.location.assign(href);
 }
 
 /**

@@ -2308,6 +2308,41 @@ test/demo tenants from earlier in the build, not real customer
 accounts, so left alone; the founder's ask was specifically about
 sign-up going forward ("once registered").
 
+## Fixed: the previous fix's own fallback stopped working entirely
+
+Founder feedback right after that fix went live: "when click on
+download now not even showing the pdf." A real regression — worse
+than the bug it replaced.
+
+The previous fix's fallback, `downloadDirectly()`, used
+`window.open(href, '_blank', 'noopener,noreferrer')`. That's exactly
+the kind of call many mobile browsers and in-app/WebView contexts
+(Capacitor's included) either refuse outright as a popup or simply
+have no capability to honour at all — there's no "tab" to open in a
+single-WebView shell — in which case `window.open` just returns
+`null` and nothing happens. Silent nothing is a worse failure mode
+than the inline-viewer behaviour it was meant to fix.
+
+Switched `downloadDirectly()` to a same-tab navigation instead —
+`window.location.assign(href)`. This has no such requirement: every
+browsing context that can display a page at all can navigate to a
+URL, no exceptions, no popup blocker involved. And because the PDF/
+ZIP routes already set `Content-Disposition: attachment`, the browser
+recognises the response as a download and intercepts it *before*
+actually replacing the page — the current page stays exactly as it
+was in the success case, so this isn't even the tradeoff it sounds
+like. The one real cost is the (rare) error path, where the response
+is plain JSON with no attachment header and the tab genuinely
+navigates to show it — recoverable now via the corner back button
+added earlier this session, which didn't exist the first time this
+exact approach was considered and set aside in favour of `window.open`.
+
+Re-verified the branch logic (which tier gets used, in what order) in
+a real Chromium instance via Playwright — unchanged from the previous
+fix and still correct; `window.location.assign` itself is a standard
+platform primitive, not something this app invented, so no further
+verification of the navigation mechanism itself was needed.
+
 ## Not yet built (explicitly out of scope for this build session)
 
 - Vendor moderation integration for image safety checks

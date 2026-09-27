@@ -1609,6 +1609,37 @@ Left the owner-only admin page's raw theme_key alone (
 management list showing which specific template needs native review,
 not a title a nursery or family ever sees.
 
+## PDF download crashing for every Arabic-named child
+
+Reported live: "not able to download pdf" on an otherwise fully
+GENERATED, APPROVED Arabic story. The generic error toast made this
+impossible to diagnose from the outside, so the first fix was making
+`DownloadButton` surface the server's real error message instead of a
+one-size-fits-all string (that first attempt itself shipped with a
+bug — it built the real message but the `catch` block still displayed
+the hardcoded generic text; fixed in the very next commit). With the
+real message visible, the actual cause was immediate: "Cannot convert
+argument to a ByteString because the character at index 22 has a
+value of 1576 which is greater than 255" — 1576 is U+0628, the Arabic
+letter beh. `Content-Disposition: attachment; filename="بيسان-....pdf"`
+was being set directly; HTTP header values must be Latin1, so
+constructing the response threw *after* rendering, preflight, and the
+storage upload had all already succeeded — this had nothing to do
+with images, fonts, or PDF geometry, all of which the earlier
+investigation had (correctly) ruled out. Added
+`src/lib/http/content-disposition.ts` (`contentDispositionHeader()`):
+an ASCII-safe `filename="..."` fallback alongside the real Unicode
+name via RFC 5987's `filename*=UTF-8''...`, used by both the
+single-story PDF route and the whole-tenant ZIP export (which
+previously avoided the crash only by silently stripping non-ASCII
+names to underscores via `sanitizeFileNamePart` — same bug class,
+just non-fatal). `DownloadButton` now reads `filename*` first so the
+saved file keeps its real name. Regression-tested in
+`tests/unit/content-disposition.test.ts`, since any future
+`Content-Disposition` header built by hand from an unescaped
+user-facing string will hit the exact same class of bug the moment
+that string contains anything outside Latin1 — not just Arabic.
+
 ## Not yet built (explicitly out of scope for this build session)
 
 - Vendor moderation integration for image safety checks

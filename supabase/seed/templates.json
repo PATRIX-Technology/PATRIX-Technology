@@ -422,9 +422,9 @@
   {
     "theme_key": "national_day_gratitude",
     "locale": "en",
-    "title": "Colours of Gratitude",
+    "title": "UAE National Day",
     "synopsis": "{child_name} discovers what makes {pronoun:object} proud and thankful about home on UAE National Day.",
-    "mascot_name": "Marya the Fox",
+    "mascot_name": "Grandma Amal",
     "native_review_status": "reviewed",
     "pages": [
       {
@@ -435,7 +435,7 @@
       {
         "order": 2,
         "text": "\"Today we say thank you — for our home, our family, and our community,\" said {mascot}, waving a small flag.",
-        "image_prompt": "Cartoon fox mascot waving a small UAE flag beside {child_name}'s avatar, warm community gathering in the background, storybook illustration style."
+        "image_prompt": "{mascot}, a warm grandmother in traditional Emirati dress, waving a small UAE flag beside {child_name}'s avatar, warm community gathering in the background, storybook illustration style."
       },
       {
         "order": 3,
@@ -445,16 +445,16 @@
       {
         "order": 4,
         "text": "That evening, {child_name} sang along with the fireworks lighting up the sky, feeling proud and thankful to belong.",
-        "image_prompt": "{child_name}'s avatar watching fireworks in UAE flag colours with family, cartoon fox mascot beside them, night sky celebration, storybook illustration style."
+        "image_prompt": "{child_name}'s avatar watching fireworks in UAE flag colours with family, {mascot} beside them, night sky celebration, storybook illustration style."
       }
     ]
   },
   {
     "theme_key": "national_day_gratitude",
     "locale": "ar",
-    "title": "ألوان الشكر",
+    "title": "اليوم الوطني لدولة الإمارات",
     "synopsis": "{v:discovers_present} {child_name} أسباب فخر{ps} وحب{ps} لوطن{ps} في اليوم الوطني لدولة الإمارات.",
-    "mascot_name": "ماريا الثعلبة",
+    "mascot_name": "الجدة أمل",
     "native_review_status": "reviewed",
     "pages": [
       {
@@ -465,7 +465,7 @@
       {
         "order": 2,
         "text": "قالت {mascot} وهي تلوّح بعَلَمٍ صغير: «اليوم نقول شكرًا لوطننا، وعائلتنا، ومجتمعنا!»",
-        "image_prompt": "الثعلب الكرتوني يلوّح بعلم إماراتي صغير بجانب شخصية {child_name}، تجمّع مجتمعي دافئ في الخلفية، أسلوب رسوم كتاب قصص."
+        "image_prompt": "{mascot}، جدة ترتدي اللباس التقليدي الإماراتي، تلوّح بعلم إماراتي صغير بجانب شخصية {child_name}، تجمّع مجتمعي دافئ في الخلفية، أسلوب رسوم كتاب قصص."
       },
       {
         "order": 3,
@@ -475,7 +475,7 @@
       {
         "order": 4,
         "text": "وفي ذلك المساء، {v:sang} {child_name} تحت الألعاب النارية التي أضاءت السماء، {v:felt_proud} و{v:felt_grateful} بالانتماء.",
-        "image_prompt": "شخصية {child_name} تشاهد الألعاب النارية بألوان علم الإمارات مع العائلة، الثعلب الكرتوني بجانبها، احتفال في سماء ليلية، أسلوب رسوم كتاب قصص."
+        "image_prompt": "شخصية {child_name} تشاهد الألعاب النارية بألوان علم الإمارات مع العائلة، {mascot} بجانبها، احتفال في سماء ليلية، أسلوب رسوم كتاب قصص."
       }
     ]
   }

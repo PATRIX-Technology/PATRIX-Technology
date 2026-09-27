@@ -1937,6 +1937,47 @@ and `auth.signIn.createOrgAccount`/`createFamilyAccount` translation
 keys the tabs replaced; added `auth.accountType.organisation`/`family`
 (en + ar) as the tab labels.
 
+## UAE National Day template: renamed, mascot swapped for a human character
+
+Founder feedback: "Love story template of national day but name it as
+UAE National Day & remove animals as not good to be like this!!!
+(just people story please)." Two changes, scoped to the
+`national_day_gratitude` theme only (not the platform-wide "Marya the
+Fox" mascot used elsewhere — see "Mascot" in `docs/en/brand.md` — which
+the founder didn't ask to change):
+
+- Title renamed from "Colours of Gratitude"/"ألوان الشكر" to "UAE
+  National Day"/"اليوم الوطني لدولة الإمارات" (the official Arabic
+  term for the day, not a literal word-for-word translation).
+- Mascot swapped from "Marya the Fox"/"ماريا الثعلبة" to "Grandma
+  Amal"/"الجدة أمل" — a human grandmother figure fits a story about
+  family/community gratitude better than an animal anyway. The two
+  page `image_prompt`s that hardcoded "cartoon fox mascot" /
+  "الثعلب الكرتوني" as literal text (rather than the `{mascot}` token)
+  were rewritten to describe the new human character instead.
+
+Updated `supabase/seed/templates.json` (the source of truth for future
+seeds) and the live `story_theme_templates` rows for both locales
+directly via the Supabase MCP connector, same pattern as "Fixing every
+already-generated Arabic story, live" above. Also found one
+already-generated, already-approved Arabic story on this theme (child
+"بيسان", tenant "test") whose page 2 and page 4 text/image_prompt still
+said "ماريا الثعلبة"/"الثعلب الكرتوني" with the fox already baked into
+the generated illustrations — this is almost certainly the story that
+prompted the complaint. Rewrote both pages' text/image_prompt to the
+new grandmother wording, reset their `image_status` to `QUEUED`, and
+queued fresh `GENERATE_PAGE_IMAGE` jobs so the existing GitHub Actions
+cron (`.github/workflows/story-worker-cron.yml`, every 5 minutes)
+regenerates the actual illustrations without the fox. Pages 1 and 3
+never mentioned the mascot, so left untouched to avoid burning
+generation cost on images that don't need to change.
+
+The template stayed `native_review_status = 'reviewed'` rather than
+resetting to `draft` — this was a small, mechanical edit (an official
+proper noun and an animal-to-human swap), not new free-form prose, but
+per "Arabic content gating" above it's still not a substitute for an
+actual native speaker reading it.
+
 ## Not yet built (explicitly out of scope for this build session)
 
 - Vendor moderation integration for image safety checks

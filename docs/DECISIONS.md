@@ -2215,6 +2215,64 @@ no Mac/Xcode — see "What this sandbox could not do" in
 `docs/en/mobile.md`); it takes effect once the native app is actually
 built and installed.
 
+## Fixed: PDF download still opened in-browser instead of saving, on a real phone
+
+Founder feedback right after the previous fix, testing on a real
+phone: "one phone when open the app on browser can view it on browser
+when click it but not download it as pdf... I need it to be
+downloaded as pdf for all mobiles phones & all OSs even windows etc."
+
+That phone's browser evidently doesn't support the Web Share API's
+file payload (`navigator.canShare({ files })` returns false or is
+undefined there), which is exactly the tier the previous fix relied
+on for mobile — so it fell through to the *original* blob-URL-and-
+`<a download>` trick as tier 3, and that's precisely the mechanism
+already flagged as unreliable on mobile browsers in the previous
+entry. Root cause: a client-side-constructed `blob:` URL clicked via
+a synthetic `<a>` is a JS *simulation* of a download, and different
+mobile browsers/WebViews honour the `download` attribute on it
+inconsistently — some just open the blob inline instead, which is
+exactly "view it on browser... not download."
+
+Replaced that fallback with `downloadDirectly()`: a genuine
+`window.open(href, '_blank')` navigation straight to the real API
+endpoint. `src/app/api/stories/[storyId]/pdf/route.ts` (and the
+ZIP export route) already sets a real `Content-Disposition:
+attachment` header on the actual HTTP response — with a *real*
+network request hitting that header, the **browser's own native
+download handling** takes over, the same way any plain download link
+on any website works. That's a fundamentally different, far more
+reliable path than reconstructing the bytes into a client-side blob:
+it's what browsers are actually built to do for that header, not a
+JS workaround approximating it — and it works identically whether
+the OS is Android, iOS, Windows, macOS, or Linux, because none of
+this depends on Web Share support at all.
+
+Also restructured *when* the fetch-and-share path even runs: the
+button now checks `canShare` up front, before any network request, and
+skips straight to `downloadDirectly()` with no fetch at all when
+sharing isn't available (most desktop browsers, and this phone) —
+both because that fetch was pure waste when it was only going to be
+discarded in favour of a direct download anyway, and because firing
+`downloadDirectly()` synchronously, with no `await` ahead of it, means
+it can never lose the browser's brief "user activation" window the
+way an async fetch-then-share sequence risks (some browsers silently
+refuse `navigator.share()` once that's expired — a second, subtler
+way that path could have failed even where file sharing genuinely was
+supported). The Web Share and Capacitor-native tiers from the
+previous fix are otherwise unchanged, and now also fall back to this
+same `downloadDirectly()` — rather than the old blob trick — if
+`navigator.share()` itself fails for any reason other than the person
+cancelling the share sheet.
+
+Re-verified the full branch matrix in a real (non-mocked) Chromium
+instance via Playwright: no-file-share-support now goes straight to
+the direct-navigation download with zero fetch calls; Web Share
+succeeding still hands over a real `File` with no `url` in the
+payload; Web Share failing for a non-cancel reason now correctly
+falls through to the direct download instead of silently doing
+nothing.
+
 ## Not yet built (explicitly out of scope for this build session)
 
 - Vendor moderation integration for image safety checks

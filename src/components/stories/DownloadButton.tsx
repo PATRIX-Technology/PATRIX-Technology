@@ -22,36 +22,49 @@ function blobToBase64(blob: Blob): Promise<string> {
 }
 
 /**
- * Saves/shares a fetched file using whichever mechanism actually works on
- * the platform running it, in order of preference:
+ * The one mechanism that reliably triggers an actual on-device download
+ * on every browser and OS, mobile included: a genuine network navigation
+ * to the real endpoint, which sets `Content-Disposition: attachment` —
+ * so the BROWSER's own native download handling takes over, exactly like
+ * any plain download link on any site. Deliberately NOT a JS-constructed
+ * blob-URL-and-`<a download>` click: that's a client-side simulation of
+ * a download that many mobile browsers (confirmed on a real device —
+ * the button just opened the PDF inline instead of saving it) don't
+ * reliably honour, unlike a real HTTP response with that header.
+ */
+function downloadDirectly(href: string) {
+  window.open(href, '_blank', 'noopener,noreferrer');
+}
+
+/**
+ * Saves/shares an already-fetched file via the OS's native share sheet
+ * where one is available — letting the person pick WhatsApp/Telegram/
+ * Messenger/"Save to Files" from a single action — falling back to
+ * downloadDirectly() (see above) wherever it isn't:
  *
- * 1. Inside the Capacitor-wrapped native app (Android/iOS), a plain
- *    `<a download>` on a blob URL mostly does nothing — WebViews don't
- *    have a download manager hooked up the way a real browser does. So
- *    write the bytes to disk with @capacitor/filesystem and hand the
- *    real file:// path to @capacitor/share's native OS share sheet,
- *    which always offers "Save to Files" alongside WhatsApp/Telegram/
- *    Messenger/etc. — an actual file, not a link of any kind.
+ * 1. Inside the Capacitor-wrapped native app (Android/iOS), write the
+ *    bytes to disk with @capacitor/filesystem and hand the real
+ *    file:// path to @capacitor/share's native share sheet — an actual
+ *    file, never a link of any kind.
  * 2. A mobile browser that supports the Web Share API's file payload
  *    (iOS Safari 15+, Android Chrome) gets the same real-file share
- *    sheet via `navigator.share({ files })`. This is also the only
- *    reliable way to get a real download on iOS Safari specifically —
- *    it often just opens a blob PDF inline instead of saving it, and if
- *    that inline view's own Share button is then used, THAT is where a
- *    bare blob: URL (unopenable outside the tab that created it) can
- *    end up getting passed to WhatsApp/Telegram instead of the file
- *    itself. Sharing actual `File` bytes through the Web Share API
- *    sidesteps that blob-URL problem entirely.
- * 3. Everywhere else (desktop Windows/macOS/Linux browsers, older
- *    mobile browsers) — the original blob-URL-and-`<a download>` trick,
- *    which is well-supported there.
+ *    sheet via `navigator.share({ files })`. Sharing actual `File`
+ *    bytes this way is also what stops a bare, unopenable `blob:` URL
+ *    (only valid inside the tab that created it) from ending up in
+ *    WhatsApp/Telegram if the browser's own inline PDF viewer's Share
+ *    button gets used instead of this one.
  */
-async function saveOrShareFile(blob: Blob, fileName: string, title: string): Promise<void> {
+async function saveOrShareFile(blob: Blob, fileName: string, title: string, href: string): Promise<void> {
   if (Capacitor.isNativePlatform()) {
-    const base64Data = await blobToBase64(blob);
-    const { uri } = await Filesystem.writeFile({ path: fileName, data: base64Data, directory: Directory.Cache });
-    await Share.share({ title, files: [uri] });
-    return;
+    try {
+      const base64Data = await blobToBase64(blob);
+      const { uri } = await Filesystem.writeFile({ path: fileName, data: base64Data, directory: Directory.Cache });
+      await Share.share({ title, files: [uri] });
+      return;
+    } catch {
+      downloadDirectly(href);
+      return;
+    }
   }
 
   const file = new File([blob], fileName, { type: blob.type || 'application/pdf' });
@@ -61,20 +74,12 @@ async function saveOrShareFile(blob: Blob, fileName: string, title: string): Pro
       return;
     } catch (err) {
       // AbortError (the person cancelled the share sheet) is not a
-      // failure -- nothing more to do. Any other error falls through
-      // to the plain download below rather than leaving them stuck.
+      // failure -- nothing more to do.
       if (err instanceof Error && err.name === 'AbortError') return;
     }
   }
 
-  const blobUrl = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.href = blobUrl;
-  link.download = fileName;
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-  URL.revokeObjectURL(blobUrl);
+  downloadDirectly(href);
 }
 
 /**
@@ -83,6 +88,17 @@ async function saveOrShareFile(blob: Blob, fileName: string, title: string): Pro
  * worse, navigates the tab to a raw error response. Fetching the file
  * ourselves lets a failure surface as a toast instead. See
  * docs/DECISIONS.md "Toast notifications replace inline red errors".
+ *
+ * That fetch-first approach is only worth its cost (an extra full
+ * request, since this route re-renders the PDF/ZIP each call) when the
+ * file bytes are actually needed for one of the share tiers above.
+ * Otherwise — no Capacitor, no Web Share file support, which is most
+ * desktop browsers and evidently some mobile ones too — it's skipped
+ * entirely in favour of downloadDirectly() straight away, fired
+ * synchronously inside this click handler so it's never at risk of
+ * losing "user activation" the way an async fetch-then-share sequence
+ * can (some browsers silently refuse navigator.share() once that
+ * window has passed).
  */
 export function DownloadButton({
   href,
@@ -101,6 +117,16 @@ export function DownloadButton({
   const [loading, setLoading] = useState(false);
 
   async function handleClick() {
+    const probeFile = new File([], fallbackFileName, { type: 'application/pdf' });
+    const canUseFileShare =
+      Capacitor.isNativePlatform() ||
+      (typeof navigator !== 'undefined' && navigator.canShare?.({ files: [probeFile] }));
+
+    if (!canUseFileShare) {
+      downloadDirectly(href);
+      return;
+    }
+
     setLoading(true);
     try {
       const response = await fetch(href);
@@ -122,7 +148,7 @@ export function DownloadButton({
       const fileName = (utf8Match && decodeURIComponent(utf8Match[1]!)) || plainMatch?.[1] || fallbackFileName;
 
       const blob = await response.blob();
-      await saveOrShareFile(blob, fileName, fileName);
+      await saveOrShareFile(blob, fileName, fileName, href);
     } catch (err) {
       // A server-provided reason (a specific preflight issue, a real
       // exception) is more useful than the generic fallback below, which

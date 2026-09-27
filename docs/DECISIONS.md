@@ -2141,6 +2141,80 @@ already-established `rotate-90` precedent for the disclosure chevron
 on the Stories page, so it visually points toward the "start" reading
 direction rather than always pointing left regardless of locale.
 
+## PDF download/share now hands over a real file, not a blob link
+
+Founder feedback: "Make sure download pdf... to be able to download
+as pdf format on the device" on Android/iPhone/Windows/Linux/macOS,
+and "Share on whatsapp/meta/telegram etc. to be pdf file not 'blob
+link'." `DownloadButton` (used for both the single-story PDF and the
+bulk-ZIP export) previously always did the same thing regardless of
+platform: fetch the file, wrap it in a `blob:` URL, and click a
+hidden `<a download>`. That's solid on desktop Windows/macOS/Linux
+browsers, but two real platform gaps prompted this:
+
+- **iOS Safari in particular** often ignores the `download` attribute
+  on a `blob:` URL and just opens the PDF inline in the browser's own
+  viewer instead of saving it. If that viewer's own Share button gets
+  used from there, what's on offer to hand to WhatsApp/Telegram is
+  effectively that `blob:` reference — which only resolves inside the
+  exact browser tab that created it, so it shows up as a dead/unopenable
+  link the instant it leaves that tab. This is what "not blob link"
+  was reporting.
+- **Inside the Capacitor-wrapped native app** (see "Mobile: Capacitor
+  wrapper for Android + iOS"), a WebView has no download manager hooked
+  up the way a real browser does — the same `<a download>` trick
+  mostly does nothing there at all.
+
+`saveOrShareFile()` in `DownloadButton.tsx` now picks the mechanism
+that actually works per platform, in order:
+
+1. **`Capacitor.isNativePlatform()` (the native app, once built)** —
+   write the bytes to disk with the newly added `@capacitor/filesystem`
+   plugin (`Directory.Cache` — app-private, needs no storage
+   permission on either OS) and hand the resulting real `file://` URI
+   to `@capacitor/share`'s native OS share sheet. That sheet always
+   offers "Save to Files" alongside WhatsApp/Telegram/Messenger/etc. —
+   an actual file, never a link of any kind.
+2. **A mobile browser with Web Share Level 2 file support** (iOS
+   Safari 15+, Android Chrome) — `navigator.canShare({ files })` /
+   `navigator.share({ files })` directly, bypassing `@capacitor/share`
+   entirely for this tier since its own web fallback (checked in
+   `node_modules/@capacitor/share`'s `ShareWeb.share()`) only forwards
+   `title`/`text`/`url` to `navigator.share`, silently dropping
+   `files` — using the Capacitor plugin here would have quietly
+   regressed back to the exact bug being fixed. This also doubles as
+   the iOS "real download": the resulting native share sheet's own
+   "Save to Files" option is the standard way iOS hands a `File` to
+   on-device storage; there is no blob-to-Downloads-folder equivalent
+   to fall back to on that platform.
+3. **Everywhere else** (desktop browsers without file-share support,
+   older mobile browsers) — the original blob-URL-and-`<a download>`
+   trick, unchanged, since it's well-supported there already.
+
+Added `@capacitor/filesystem` and `@capacitor/share` (official
+first-party plugins, same major version as the already-installed
+`@capacitor/android`/`@capacitor/ios`/`@capacitor/core`) and ran
+`npm run cap:sync`, which registered both in the Android Gradle build
+and the iOS Swift Package Manager manifest — no manual native code
+needed, and no new permissions: `Directory.Cache` and the native share
+sheet both need none on either platform.
+
+Verified in a real (non-mocked) Chromium instance via Playwright,
+extracting the exact web-tier logic into an isolated test page: the
+Web Share branch hands over a genuine `File` object (`instanceof
+File` true, correct name/type/size, and — the actual point of the
+fix — **no `url` field in the share payload at all**, only `files`),
+cancelling the share sheet doesn't also trigger a duplicate download,
+and the no-file-share-support case still falls through to the
+original blob-download link. The native (tier 1) branch is
+implemented against Capacitor's documented plugin API (its exact
+shape confirmed by reading the installed packages' own type
+definitions) but couldn't be exercised on a real device — same
+sandbox limitation as the rest of the native build (no Android SDK,
+no Mac/Xcode — see "What this sandbox could not do" in
+`docs/en/mobile.md`); it takes effect once the native app is actually
+built and installed.
+
 ## Not yet built (explicitly out of scope for this build session)
 
 - Vendor moderation integration for image safety checks

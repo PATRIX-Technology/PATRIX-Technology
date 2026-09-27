@@ -57,7 +57,7 @@ export function SuggestTemplateDialog({
 
   return (
     <>
-      <Button variant="secondary" onClick={() => setOpen(true)}>
+      <Button type="button" variant="secondary" onClick={() => setOpen(true)}>
         💡 {t('suggestIdea')}
       </Button>
       <Modal open={open} onClose={handleClose} title={t('suggestIdeaTitle')}>

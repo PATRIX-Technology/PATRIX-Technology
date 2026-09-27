@@ -1978,6 +1978,96 @@ proper noun and an animal-to-human swap), not new free-form prose, but
 per "Arabic content gating" above it's still not a substitute for an
 actual native speaker reading it.
 
+## Staff invites: real accounts via a shareable link, not email
+
+Founder feedback: "Let when someone registered to be tied with their
+subscription as well" — clarified via a follow-up question to mean
+staff invites specifically, since every *tenant* sign-up (nursery or
+family, email or phone) was already confirmed to create a
+`subscriptions` row atomically (see "Tie every new tenant to a
+subscription row at signup"). Staff invites were the real gap:
+`inviteStaffAction` only ever wrote an `audit_logs` row saying "recorded
+for later" — no real login was ever created, because Supabase Auth's
+`auth.admin.inviteUserByEmail` needs SMTP configured on the project (a
+founder setup step), and that was never wired past the stub.
+
+Rather than add that SMTP dependency, this reuses the shareable-link
+pattern already established for consent requests and referral invites:
+a new `staff_invites` table stores a `token_hash` (sha256 of a random
+24-byte token — same trust model as `consent_requests.token_hash`,
+raw token never persisted); the owner gets a link built from the raw
+token and shares it themselves (WhatsApp, email, in person — their
+choice, `InviteStaffForm` shows a copy button + a `wa.me` link);
+the invited person visits `/staff/accept/[token]` (public,
+unauthenticated — `get_staff_invite_info` is a SECURITY DEFINER RPC
+granted to `anon`, same shape as `get_consent_request_info`), sets
+their own password, and `accept_staff_invite` (SECURITY DEFINER,
+`authenticated` only) adds them to `tenant_members` on the **inviting
+tenant** with the invited role. This deliberately never calls
+`create_tenant`/`create_family_tenant`, so no new tenant and no new
+subscription get created — the whole point is joining the existing
+one. `accept_staff_invite` checks the authenticated account's email
+against the invite's email (case-insensitively) before accepting, so
+someone else can't grab a forwarded link and join under their own
+account; it also enforces the invite's 14-day expiry and refuses a
+second acceptance once a token has already been used.
+
+An invite that requires email confirmation (a Supabase Auth project
+setting) is handled the same way `signUpAction` already tolerates it:
+`auth.signUp()` without an immediate session just tells the person to
+confirm their email and revisit the same link — the invite stays
+`pending` until `accept_staff_invite` actually runs, so nothing is
+lost either way.
+
+The staff page now also lists pending (not yet accepted) invites in
+the members table with a "pending" badge, so the owner isn't left
+wondering whether anything happened after inviting someone.
+
+Verified against the live Supabase project directly (via the
+connector): inserted a real `staff_invites` row for the founder's
+"test" tenant, confirmed `get_staff_invite_info` correctly returns the
+tenant name/role/email/status for the right token and `found: false`
+for a garbage one, then deleted the row. Full acceptance wasn't
+smoke-tested live (that would mean creating a real `auth.users` row on
+production) — covered instead by `tests/integration/staff-invites.test.ts`
+(join-the-existing-tenant-not-a-new-one, email-mismatch rejection,
+expiry, double-acceptance, RLS isolation), which exercises real
+Postgres RLS the same way `tests/integration/referrals.test.ts` does,
+though it can't run in this sandbox (no local Postgres — same
+pre-existing limitation as every other integration test here).
+
+## Suggest-a-story-idea now also reachable from a child's own page
+
+Founder feedback: "Create story idea/اقترح فكرة قصة to have it also in
+child page under the list of the templates." `SuggestTemplateDialog`
+previously only appeared once, at the top of the Stories list page.
+Added the same component directly below the template picker
+(`CreateStoryForm`) on a child's own detail page — a sibling of the
+form, not inside its `<form>` element, since the dialog's own trigger
+button defaults to `type="submit"` without an explicit override (fixed
+that too, defensively, since it's now used in more places). Already
+fully bilingual — the underlying `stories.suggestIdea*` translation
+keys were added when this feature first shipped and needed no changes.
+
+## "Add Child and Start The Story!" CTA on the dashboard home tab
+
+Founder feedback, verbatim, for the button text. Added as a prominent
+button right under the welcome heading on the dashboard "Home" tab,
+for both nursery and family tenants, linking to `/dashboard/children`
+— the fastest path from "just logged in" to actually creating
+something, rather than requiring a detour through the nav.
+
+## Landing page trust bar no longer says "Dubai"
+
+Founder feedback: "Remove 'Dubai' word from landing page as will be
+globally." The `marketing.trustBar` string was the only "Dubai"
+mention in the app's UI (confirmed by grepping `src/`) — changed from
+"Built for Dubai nurseries, schools, clinics and children's brands" to
+"Built for nurseries, schools, clinics and children's brands
+worldwide" (en) and the equivalent Arabic. Marketing/pitch documents
+in `docs/` weren't touched — the founder's ask was specifically the
+landing page.
+
 ## Not yet built (explicitly out of scope for this build session)
 
 - Vendor moderation integration for image safety checks

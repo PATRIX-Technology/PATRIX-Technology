@@ -9,6 +9,7 @@ import { ConsentPanel } from '@/components/children/ConsentPanel';
 import { PhotoUpload } from '@/components/children/PhotoUpload';
 import { EditChildDialog } from '@/components/children/EditChildDialog';
 import { CreateStoryForm } from '@/components/stories/CreateStoryForm';
+import { SuggestTemplateDialog } from '@/components/stories/SuggestTemplateDialog';
 import { parseAvatarConfig } from '@/lib/domain/avatar';
 import { getSignedAssetUrl } from '@/lib/domain/storage';
 import { flags } from '@/lib/flags';
@@ -181,6 +182,9 @@ export default async function ChildDetailPage({
             consentStatus={child.consent_status}
             templates={templates ?? []}
           />
+        </div>
+        <div className="mt-4">
+          <SuggestTemplateDialog tenantName={context.tenantName} fullName={context.fullName} />
         </div>
       </Card>
 

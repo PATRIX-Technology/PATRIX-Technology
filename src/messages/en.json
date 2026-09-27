@@ -20,7 +20,7 @@
       "ctaPrimary": "Book a demo",
       "ctaSecondary": "See how it works"
     },
-    "trustBar": "Built for Dubai nurseries, schools, clinics and children's brands",
+    "trustBar": "Built for nurseries, schools, clinics and children's brands worldwide",
     "familyCallout": {
       "title": "A parent yourself?",
       "body": "Create a free family account and make a personalised story for your own child — then invite friends and earn free stories when they subscribe.",
@@ -88,6 +88,7 @@
     },
     "overview": {
       "welcome": "Welcome back",
+      "addChildCta": "Add Child and Start The Story!",
       "childrenCount": "Children enrolled",
       "storiesGenerated": "Stories created",
       "pendingApproval": "Awaiting your approval",
@@ -160,9 +161,32 @@
     "roleAdminDesc": "Everything staff can do, plus deleting a child's profile.",
     "roleStaffLabel": "Staff",
     "roleStaffDesc": "Add children, create and approve stories, request parent consent.",
+    "inviteEmailLabel": "Email",
+    "inviteRoleLabel": "Role",
+    "inviteSubmit": "Invite",
+    "inviteLinkReady": "Share this link with them — it lets them set up their own login and join your team.",
+    "inviteLinkCopy": "Copy link",
+    "inviteLinkCopied": "Copied!",
+    "inviteWhatsappText": "You've been invited to join our team on Khayali — set up your login here:",
+    "invitePendingLabel": "Invite pending",
     "table": {
       "name": "Name",
       "role": "Role"
+    }
+  },
+  "staffAccept": {
+    "title": "Join your team",
+    "body": "You've been invited to join {tenantName} as {role}. Set a password below to activate your login.",
+    "email": "Email address",
+    "fullName": "Your full name",
+    "password": "Password",
+    "submit": "Join the team",
+    "invalidOrExpired": "This invite link is invalid or has expired. Ask the owner to send you a new one.",
+    "alreadyUsed": "This invite has already been used.",
+    "emailConfirmationPending": "Almost there — check your email to confirm your address, then open this same link again to finish joining.",
+    "roles": {
+      "nursery_admin": "Admin",
+      "nursery_staff": "Staff"
     }
   },
   "avatar": {

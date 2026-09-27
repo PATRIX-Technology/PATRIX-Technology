@@ -1,15 +1,17 @@
+import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { createSupabaseServiceRoleClient } from '@/lib/supabase/service-role';
 import { getCurrentTenantContext } from '@/lib/domain/session';
 import { getSignedAssetUrl } from '@/lib/domain/storage';
 import { Card, CardTitle } from '@/components/ui/Card';
+import { Button } from '@/components/ui/Button';
 import { SampleStoriesPreview } from '@/components/dashboard/SampleStoriesPreview';
 import { BillingSection } from '@/components/dashboard/BillingSection';
 import { flags } from '@/lib/flags';
 import type { PlatformSampleStory, TenantType } from '@/types/database';
 
-export default async function DashboardOverviewPage() {
+export default async function DashboardOverviewPage({ params }: { params: { locale: string } }) {
   const supabase = await createSupabaseServerClient();
   const context = await getCurrentTenantContext(supabase);
   const t = await getTranslations('dashboard.overview');
@@ -23,6 +25,9 @@ export default async function DashboardOverviewPage() {
         <h1 className="font-display text-2xl text-ink-900">
           {t('welcome')}, {firstName}
         </h1>
+        <Link href={`/${params.locale}/dashboard/children`}>
+          <Button size="lg">{t('addChildCta')}</Button>
+        </Link>
         <SamplesAndPlans tenantId={context.tenantId} audience="family" />
       </div>
     );
@@ -54,6 +59,9 @@ export default async function DashboardOverviewPage() {
       <h1 className="font-display text-2xl text-ink-900">
         {t('welcome')}, {firstName}
       </h1>
+      <Link href={`/${params.locale}/dashboard/children`}>
+        <Button size="lg">{t('addChildCta')}</Button>
+      </Link>
       <SamplesAndPlans tenantId={context.tenantId} audience="nursery" />
       <div className="grid gap-4 sm:grid-cols-3">
         {stats.map((stat) => (

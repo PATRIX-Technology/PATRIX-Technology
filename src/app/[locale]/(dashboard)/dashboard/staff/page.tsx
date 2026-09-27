@@ -16,6 +16,16 @@ export default async function StaffPage({ params }: { params: { locale: string }
     .select('user_id, role, profiles(full_name)')
     .eq('tenant_id', context.tenantId);
 
+  const { data: pendingInvites } =
+    context.role === 'nursery_owner'
+      ? await supabase
+          .from('staff_invites')
+          .select('id, email, role')
+          .eq('tenant_id', context.tenantId)
+          .eq('status', 'pending')
+          .order('created_at', { ascending: false })
+      : { data: null };
+
   return (
     <div className="space-y-6">
       <div>
@@ -59,6 +69,16 @@ export default async function StaffPage({ params }: { params: { locale: string }
                 <td className="p-4">{(member.profiles as unknown as { full_name: string } | null)?.full_name}</td>
                 <td className="p-4">
                   <Badge tone="info">{member.role.replace('nursery_', '')}</Badge>
+                </td>
+              </tr>
+            ))}
+            {(pendingInvites ?? []).map((invite) => (
+              <tr key={invite.id} className="border-b border-[rgb(var(--color-border))] last:border-0">
+                <td className="p-4 text-ink-500">
+                  {invite.email} <span className="text-xs">— {t('invitePendingLabel')}</span>
+                </td>
+                <td className="p-4">
+                  <Badge tone="warning">{invite.role.replace('nursery_', '')}</Badge>
                 </td>
               </tr>
             ))}

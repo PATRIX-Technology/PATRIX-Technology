@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { getCurrentTenantContext } from '@/lib/domain/session';
+import { generateStaffInviteToken, buildStaffInviteUrl } from '@/lib/domain/staff-invites';
 import type { ActionResult } from './auth';
 
 export async function updateTenantBrandingAction(locale: string, formData: FormData): Promise<ActionResult> {
@@ -41,32 +42,47 @@ export async function updateTenantBrandingAction(locale: string, formData: FormD
   return {};
 }
 
-export async function inviteStaffAction(locale: string, formData: FormData): Promise<ActionResult> {
+export interface InviteStaffResult extends ActionResult {
+  inviteUrl?: string;
+}
+
+const INVITABLE_ROLES = ['nursery_admin', 'nursery_staff'] as const;
+
+/**
+ * Generates a shareable invite link rather than sending an email directly
+ * -- auth.admin.inviteUserByEmail needs SMTP configured on the Supabase
+ * project (a founder setup step), while a link the owner shares themself
+ * (WhatsApp, email, in person -- their choice) needs nothing extra, same
+ * reasoning as the referral/consent links elsewhere in this app. The
+ * invited person sets their own password on the public accept page,
+ * which calls accept_staff_invite to join THIS tenant -- never a new one,
+ * see docs/DECISIONS.md "Staff invites: real accounts via a shareable
+ * link, not email".
+ */
+export async function inviteStaffAction(locale: string, formData: FormData): Promise<InviteStaffResult> {
   const supabase = await createSupabaseServerClient();
   const context = await getCurrentTenantContext(supabase);
   if (!context) return { error: 'Not signed in.' };
   if (context.role !== 'nursery_owner') return { error: 'Only the owner can invite staff.' };
 
-  const email = String(formData.get('email') ?? '').trim();
+  const email = String(formData.get('email') ?? '').trim().toLowerCase();
   const role = String(formData.get('role') ?? 'nursery_staff');
+  if (!email) return { error: 'Email is required.' };
+  if (!INVITABLE_ROLES.includes(role as (typeof INVITABLE_ROLES)[number])) {
+    return { error: 'Invalid role.' };
+  }
 
-  // Supabase Auth invite-by-email (auth.admin.inviteUserByEmail) requires
-  // the service role key AND an SMTP/email provider configured on the
-  // Supabase project — both are founder setup steps (see
-  // docs/NEEDS_FROM_ME.md). This records the intended role so it can be
-  // applied the moment the invited user's account exists; wiring the
-  // actual email send is the next step once a Supabase project is live.
-  const { error } = await supabase.from('audit_logs').insert({
+  const { token, tokenHash } = generateStaffInviteToken();
+  const { error } = await supabase.from('staff_invites').insert({
     tenant_id: context.tenantId,
-    actor_user_id: context.userId,
-    action: 'staff_invite_requested',
-    target_type: 'tenant_member',
-    metadata: { role },
+    email,
+    role,
+    token_hash: tokenHash,
+    invited_by: context.userId,
   });
   if (error) return { error: error.message };
 
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000';
   revalidatePath(`/${locale}/dashboard/staff`);
-  return {
-    message: `Invite recorded for ${email}. Email delivery requires Supabase Auth to be configured — see docs/NEEDS_FROM_ME.md.`,
-  };
+  return { inviteUrl: buildStaffInviteUrl(baseUrl, locale, token) };
 }

@@ -1844,6 +1844,22 @@ bot is never configured or a notification is missed — the database
 row this whole feature is built on was always the source of truth;
 this just makes it visible without SQL.
 
+**Follow-up (same session): parked, not pursued further.** The
+founder created the bot (`@TooniX_Bot`) and its token is set in
+Vercel, but getting `TELEGRAM_CHAT_ID` stalled — Telegram wasn't
+responding to any bot on his account, `getUpdates` kept returning no
+results even after sending messages, and a separate well-known bot
+(`@userinfobot`) got no response either, which points at something
+account/client-side on his end rather than anything this app could
+fix. Once he understood the WhatsApp links here were never the paid
+Business API (see above — plain `wa.me` click-to-chat, free forever),
+the automatic-notification gap Telegram was meant to close stopped
+mattering enough to keep troubleshooting: "let's stay whatsapp then."
+`TELEGRAM_BOT_TOKEN` stays in Vercel, unused and harmless
+(`sendTelegramMessage` no-ops without `TELEGRAM_CHAT_ID`, which was
+never set) — a five-minute finish if he ever wants to revisit it, not
+something to bring back up unprompted.
+
 ## Invite link shares to WhatsApp/Telegram/Email in one tap
 
 Founder feedback, after noticing the invite link on the new page was

@@ -2273,6 +2273,41 @@ payload; Web Share failing for a non-cancel reason now correctly
 falls through to the direct download instead of silently doing
 nothing.
 
+## Sign-up names auto-capitalised — first letter of each word
+
+Founder feedback: "family account once registered need first letter
+to be Capital please & same for organization." Added
+`capitalizeWords()` (`src/lib/domain/names.ts`) — capitalises the
+first letter of each word, leaves the rest of every word untouched
+(so an already-correctly-cased name like "McDonald" or "O'Brien"
+never gets mangled), and is a harmless no-op on Arabic or any other
+script with no case distinction, since `toUpperCase()` has nothing to
+change there.
+
+Applied it at all four places a name actually gets written into a
+tenant/profile record — the point right before each RPC call, not
+earlier, so what's stored is what matters, not just what's briefly
+shown mid-flow:
+
+- Org sign-up, email (`signUpAction`) and phone
+  (`verifyNurserySignUpOtpAction`) — both `orgName` (the tenant's
+  `tenant_name`) and `fullName` (`owner_full_name`).
+- Family sign-up, email (`familySignUpAction`) and phone
+  (`verifyFamilySignUpOtpAction`) — `fullName`, which also feeds the
+  auto-generated `"{name}'s Family"` display name, so capitalising it
+  once fixes both.
+
+`tenantSlugFrom()` still runs on the *original* (non-capitalised)
+`orgName` — it already lowercases everything itself for the URL-safe
+slug, so this makes no difference there.
+
+Checked the live database for existing lowercase tenant names to
+consider backfilling them too — the three that matched (`test`,
+`test22's Family`, `test nm2's Family`) are all this project's own
+test/demo tenants from earlier in the build, not real customer
+accounts, so left alone; the founder's ask was specifically about
+sign-up going forward ("once registered").
+
 ## Not yet built (explicitly out of scope for this build session)
 
 - Vendor moderation integration for image safety checks

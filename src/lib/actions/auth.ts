@@ -7,6 +7,7 @@ import { getClientIp } from '@/lib/request-ip';
 import { getCurrentTenantContext } from '@/lib/domain/session';
 import { normalizePhoneNumber } from '@/lib/domain/phone';
 import { recordReferralIfPresent } from '@/lib/domain/referrals';
+import { capitalizeWords } from '@/lib/domain/names';
 
 export interface ActionResult {
   error?: string;
@@ -72,9 +73,9 @@ export async function signUpAction(locale: string, formData: FormData): Promise<
   // project, create_tenant will simply run the next time they verify and
   // sign in, since it is idempotent on the profile row.
   const { data: newTenantId, error: rpcError } = await supabase.rpc('create_tenant', {
-    tenant_name: orgName,
+    tenant_name: capitalizeWords(orgName),
     tenant_slug: tenantSlugFrom(orgName),
-    owner_full_name: fullName,
+    owner_full_name: capitalizeWords(fullName),
   });
   if (rpcError) {
     return { error: rpcError.message };
@@ -184,9 +185,9 @@ export async function verifyNurserySignUpOtpAction(locale: string, formData: For
       return { error: 'Missing your organisation name — go back and try again.' };
     }
     const { data: newTenantId, error: rpcError } = await supabase.rpc('create_tenant', {
-      tenant_name: orgName,
+      tenant_name: capitalizeWords(orgName),
       tenant_slug: tenantSlugFrom(orgName),
-      owner_full_name: fullName,
+      owner_full_name: capitalizeWords(fullName),
     });
     if (rpcError) {
       return { error: rpcError.message };

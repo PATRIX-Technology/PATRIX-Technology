@@ -6,6 +6,7 @@ import { getClientIp } from '@/lib/request-ip';
 import { getCurrentTenantContext } from '@/lib/domain/session';
 import { normalizePhoneNumber } from '@/lib/domain/phone';
 import { recordReferralIfPresent } from '@/lib/domain/referrals';
+import { capitalizeWords } from '@/lib/domain/names';
 import type { ActionResult } from './auth';
 
 const AUTH_RATE_LIMIT = { limit: 10, windowMs: 5 * 60 * 1000 };
@@ -50,10 +51,11 @@ export async function familySignUpAction(locale: string, formData: FormData): Pr
     return { error: signUpError.message };
   }
 
-  const familyDisplayName = `${fullName}'s Family`;
+  const capitalizedFullName = capitalizeWords(fullName);
+  const familyDisplayName = `${capitalizedFullName}'s Family`;
   const { data: newTenantId, error: rpcError } = await supabase.rpc('create_family_tenant', {
     family_display_name: familyDisplayName,
-    owner_full_name: fullName,
+    owner_full_name: capitalizedFullName,
   });
   if (rpcError) {
     return { error: rpcError.message };
@@ -125,9 +127,10 @@ export async function verifyFamilySignUpOtpAction(locale: string, formData: Form
     if (!fullName) {
       return { error: 'Missing your name — go back and try again.' };
     }
+    const capitalizedFullName = capitalizeWords(fullName);
     const { data: newTenantId, error: rpcError } = await supabase.rpc('create_family_tenant', {
-      family_display_name: `${fullName}'s Family`,
-      owner_full_name: fullName,
+      family_display_name: `${capitalizedFullName}'s Family`,
+      owner_full_name: capitalizedFullName,
     });
     if (rpcError) {
       return { error: rpcError.message };

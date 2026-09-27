@@ -6,6 +6,7 @@ import { enforceRateLimit, RateLimitExceededError } from '@/lib/rate-limit';
 import { getClientIp } from '@/lib/request-ip';
 import { getCurrentTenantContext } from '@/lib/domain/session';
 import { normalizePhoneNumber } from '@/lib/domain/phone';
+import { recordReferralIfPresent } from '@/lib/domain/referrals';
 
 export interface ActionResult {
   error?: string;
@@ -51,6 +52,7 @@ export async function signUpAction(locale: string, formData: FormData): Promise<
   const password = String(formData.get('password') ?? '');
   const fullName = String(formData.get('fullName') ?? '').trim();
   const orgName = String(formData.get('orgName') ?? '').trim();
+  const referralCode = String(formData.get('referralCode') ?? '').trim();
 
   if (!email || !password || !fullName || !orgName) {
     return { error: 'All fields are required.' };
@@ -69,7 +71,7 @@ export async function signUpAction(locale: string, formData: FormData): Promise<
   // user in immediately; if confirmation is required in this Supabase
   // project, create_tenant will simply run the next time they verify and
   // sign in, since it is idempotent on the profile row.
-  const { error: rpcError } = await supabase.rpc('create_tenant', {
+  const { data: newTenantId, error: rpcError } = await supabase.rpc('create_tenant', {
     tenant_name: orgName,
     tenant_slug: tenantSlugFrom(orgName),
     owner_full_name: fullName,
@@ -77,6 +79,8 @@ export async function signUpAction(locale: string, formData: FormData): Promise<
   if (rpcError) {
     return { error: rpcError.message };
   }
+
+  await recordReferralIfPresent(supabase, referralCode, newTenantId);
 
   return { redirectTo: `/${locale}/dashboard` };
 }
@@ -161,6 +165,7 @@ export async function verifyNurserySignUpOtpAction(locale: string, formData: For
   const token = String(formData.get('token') ?? '').trim();
   const orgName = String(formData.get('orgName') ?? '').trim();
   const fullName = String(formData.get('fullName') ?? '').trim();
+  const referralCode = String(formData.get('referralCode') ?? '').trim();
 
   const phone = normalizePhoneNumber(phoneInput);
   if (!phone || !token) {
@@ -178,7 +183,7 @@ export async function verifyNurserySignUpOtpAction(locale: string, formData: For
     if (!orgName || !fullName) {
       return { error: 'Missing your organisation name — go back and try again.' };
     }
-    const { error: rpcError } = await supabase.rpc('create_tenant', {
+    const { data: newTenantId, error: rpcError } = await supabase.rpc('create_tenant', {
       tenant_name: orgName,
       tenant_slug: tenantSlugFrom(orgName),
       owner_full_name: fullName,
@@ -186,6 +191,7 @@ export async function verifyNurserySignUpOtpAction(locale: string, formData: For
     if (rpcError) {
       return { error: rpcError.message };
     }
+    await recordReferralIfPresent(supabase, referralCode, newTenantId);
   }
 
   return { redirectTo: `/${locale}/dashboard` };

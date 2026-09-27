@@ -5,11 +5,18 @@ import { PhoneNurserySignUpForm } from '@/components/auth/PhoneNurserySignUpForm
 import { AuthMethodTabs } from '@/components/auth/AuthMethodTabs';
 import { AuthShell } from '@/components/auth/AuthShell';
 
-export default function SignUpPage({ params }: { params: { locale: string } }) {
+export default function SignUpPage({
+  params,
+  searchParams,
+}: {
+  params: { locale: string };
+  searchParams: { ref?: string };
+}) {
   const t = useTranslations('auth.signUp');
   const tPhone = useTranslations('auth.phone');
   const marketing = useTranslations('marketing');
   const brand = useTranslations('brand');
+  const referralCode = typeof searchParams.ref === 'string' ? searchParams.ref : undefined;
 
   return (
     <AuthShell locale={params.locale} eyebrow={marketing('hero.eyebrow')} tagline={brand('tagline')}>
@@ -17,8 +24,8 @@ export default function SignUpPage({ params }: { params: { locale: string } }) {
       <AuthMethodTabs
         emailLabel={tPhone('emailTab')}
         phoneLabel={tPhone('phoneTab')}
-        emailContent={<SignUpForm locale={params.locale} />}
-        phoneContent={<PhoneNurserySignUpForm locale={params.locale} />}
+        emailContent={<SignUpForm locale={params.locale} referralCode={referralCode} />}
+        phoneContent={<PhoneNurserySignUpForm locale={params.locale} referralCode={referralCode} />}
       />
       <p className="mt-6 text-center text-sm text-ink-500">
         {t('haveAccount')}{' '}

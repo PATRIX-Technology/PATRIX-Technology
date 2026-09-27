@@ -75,8 +75,12 @@ even with the added labour.
 
 - **Founding partner** — 50% off for 3 months, locked to a 12-month
   term, for the first 10 nurseries who sign.
-- **Referral credit** — a nursery that refers another paying nursery
-  gets 1 month free.
+- **Referral credit** — a manual sales concession: a nursery that
+  refers another paying nursery gets 1 month free, applied by hand.
+  Distinct from the automated "Invite & earn free stories" mechanic
+  under "Individuals & families" below (that one runs itself, in
+  stories, for any tenant) and from the not-yet-built "Nursery Partner
+  Program" cash commission further down this doc.
 - **Pilot branch** — a nursery group can trial Starter on one branch
   for 30 days before committing group-wide.
 
@@ -91,12 +95,18 @@ even with the added labour.
   farmed by creating new accounts repeatedly. The
   `subscriptions.trial_story_used` column still exists in the schema
   but nothing reads or writes it — harmless, just not the mechanism.
-- **Story packs** (already built — `src/lib/domain/gifts.ts`, live in
-  Stripe checkout): 1 story/$15, 3 stories/$39 ($13 each), 6
-  stories/$69 ($11.50 each).
+- **Invite & earn free stories** (built — replaces the earlier "buy a
+  story pack as a gift" idea; see `docs/DECISIONS.md` "Referral program
+  replaces gifting"): every tenant gets a shareable invite link. When
+  someone signs up with it and subscribes, the referrer gets free
+  stories added to their own quota, one-time, matching whatever plan
+  the new subscriber picked — no separate price list to maintain. Not
+  to be confused with the cash-commission "Nursery Partner Program"
+  below — this one pays in stories, to whoever did the inviting
+  (nursery or family alike), not cash to a nursery specifically.
 - **Family** (built — `plans.key = 'family'`, `audience = 'family'`):
-  $9/month for 1 story/month — cheaper per-story than a single pack,
-  for recurring use rather than one-off gifting.
+  $9/month for 1 story/month — cheaper per-story than a one-off
+  purchase would be, for recurring use.
 - **Family Plus** (built — `plans.key = 'family_plus'`): $19/month for
   3 stories/month.
 

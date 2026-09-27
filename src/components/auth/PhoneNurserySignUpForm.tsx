@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/Button';
 import { TextField } from '@/components/ui/Input';
 import { CountryPhoneField } from '@/components/auth/CountryPhoneField';
 
-export function PhoneNurserySignUpForm({ locale }: { locale: string }) {
+export function PhoneNurserySignUpForm({ locale, referralCode }: { locale: string; referralCode?: string }) {
   const t = useTranslations('auth.phone');
   const tSignUp = useTranslations('auth.signUp');
   const router = useRouter();
@@ -74,6 +74,7 @@ export function PhoneNurserySignUpForm({ locale }: { locale: string }) {
       <input type="hidden" name="phone" value={phone ?? ''} />
       <input type="hidden" name="orgName" value={orgName} />
       <input type="hidden" name="fullName" value={fullName} />
+      <input type="hidden" name="referralCode" value={referralCode ?? ''} />
       <p className="text-sm text-ink-600">{t('codeSentTo', { phone: phone ?? '' })}</p>
       <TextField
         name="token"

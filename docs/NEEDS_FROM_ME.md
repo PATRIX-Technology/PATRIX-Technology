@@ -156,9 +156,10 @@ else has already been built and is documented in `docs/HANDOFF.md`.
    handler (with signature verification and idempotency) are fully
    implemented and unit/integration tested — see `docs/DECISIONS.md`
    "Phase 3 additions". Set `FEATURE_BILLING=on` once the above exists;
-   until then the billing section on the settings page, and the gift
-   purchase page (`/gift`, Phase 4), both stay hidden behind the same
-   flag.
+   until then the billing section on the settings page stays hidden
+   behind the same flag. (The invite-and-earn-free-stories card is not
+   gated by this flag — it needs no Stripe checkout of its own, only
+   the referred person's own subscription checkout, which already is.)
 
 6b. **Pick the two sample stories** shown on the dashboard Home tab —
    for a family account this replaced the free trial story you asked
@@ -185,15 +186,15 @@ else has already been built and is documented in `docs/HANDOFF.md`.
    story later the same way (just flip the old one back to `false`
    first, or the unique-per-locale check will refuse the new one).
 
-## Before family accounts / gifting feel complete (Phase 4)
+## Before family accounts feel complete (Phase 4)
 
-6a. **A transactional email provider** (Resend, Postmark, SendGrid, or
-   Supabase's own SMTP integration) if you want gift codes emailed to
-   the purchaser automatically. Right now the redemption code is shown
-   on-screen and in a shareable link after payment — real and working,
-   just manual: the purchaser has to copy and send it themselves. This
-   is a contained addition once you've picked a provider and I have an
-   API key for it.
+Gifting (buy a story pack, redeem a code) has been removed and
+replaced with a referral program — every tenant now has an invite
+link on their Settings page, and earns free stories when someone who
+signs up with it subscribes. No transactional email provider is
+needed for this: nothing is emailed to a recipient, the referrer just
+shares their own link directly. See `docs/DECISIONS.md` "Referral
+program replaces gifting".
 
 ## Legal / compliance (do not treat any of this as done)
 

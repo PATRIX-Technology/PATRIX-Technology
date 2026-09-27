@@ -1664,6 +1664,86 @@ saved file keeps its real name. Regression-tested in
 user-facing string will hit the exact same class of bug the moment
 that string contains anything outside Latin1 — not just Arabic.
 
+## Referral program replaces gifting
+
+Founder decision: replace the gift-purchase/redemption feature (buy a
+story-credit pack for someone else, they redeem a code) with a
+referral program — any existing tenant can invite people to subscribe,
+and is rewarded with free stories once the invitee's subscription
+first goes active. Chosen over gifting because it drives new paying
+signups directly rather than moving story credits between two people
+who may already both be customers.
+
+Not to be confused with `docs/en/pricing.md`'s "Nursery Partner
+Program (referral commission)" — an already-documented but genuinely
+**not built** idea for a nursery-specific cash commission (paid via
+Stripe Connect or manual tracking) when a family subscribes through
+that nursery's link. This feature is a different, simpler mechanic
+that IS built: any tenant (nursery or family) invites any other, and
+the reward is free stories credited to the referrer's own quota, never
+cash. The two could coexist later; this session only built the
+stories-based one.
+
+Reward size **matches the invitee's plan allowance** (their
+`plans.stories_per_month`) rather than a flat number — inviting someone
+into Network naturally earns more than inviting them into Starter,
+with no separate table of reward tiers to keep in sync as plans
+change. The reward is **one-time, on first successful checkout only**:
+`reward_referral()`'s `where status = 'pending'` guard means a later
+upgrade or renewal checkout for the same invitee is a no-op, since
+their referral row already flipped to `'rewarded'`. This mirrors the
+same additive-credit pattern gifts used (`quotas.stories_included_this_period
++= reward_stories`) and inherits the same known limitation: a tenant's
+next real plan checkout calls `sync_quota_to_plan()`, which *overwrites*
+`stories_included_this_period` rather than adding to it, so an earned
+referral bonus can get wiped out by the referrer's own next
+subscription cycle. Pre-existing behaviour (gifts had the exact same
+issue), not something this feature introduces — flagging it here
+rather than silently carrying it forward.
+
+Implementation, deliberately decoupled from tenant creation itself:
+- `tenants.referral_code` — a short, unique, shareable code generated
+  by a new `before insert` trigger (`generate_tenant_referral_code`),
+  not threaded through `create_tenant()`/`create_family_tenant()`'s own
+  signatures. Lower risk than changing either function, since referral
+  bookkeeping now has zero coupling to how a tenant gets created.
+- `record_referral(referral_code_used, new_tenant_id)` — called right
+  after tenant creation from all four sign-up action functions (email
+  × phone, nursery × family). A silent no-op for an empty/unknown code
+  or a self-referral; `invitee_tenant_id unique` on the `referrals`
+  table means a tenant can only ever be referred once.
+- `reward_referral(target_tenant_id, target_plan_id)` — called from
+  the Stripe webhook's `checkout.session.completed` handler, right
+  after `sync_quota_to_plan`. `service_role`-only, mirroring
+  `sync_quota_to_plan` (0016) exactly.
+- `get_referral_summary(target_tenant_id)` — backs the new "Invite
+  friends, earn free stories" settings card
+  (`src/components/dashboard/InviteFriendsCard.tsx`), which replaced
+  the "Redeem a gift code" card in the same spot. Points the shareable
+  link at whichever sign-up flow (`/sign-up` or `/family/sign-up`)
+  matches the referring tenant's own type, since that's realistically
+  who they're inviting.
+
+The `?ref=CODE` query param is read server-side on both sign-up pages
+and threaded into each sign-up form as a hidden field — for the
+phone-OTP flows specifically, only into the second (verify/create)
+step's form, since that's the only step that actually creates a
+tenant.
+
+No real gift was ever purchased (Stripe has never gone live), so
+removing the `gifts` table, `redeem_gift()`, and `get_gift_status()` in
+the same migration (`0022_referrals_replace_gifts.sql`) was a clean
+drop, not a data migration. Deleted alongside it: `/gift`,
+`/gift/redeem/[code]`, `/gift/success`, `GiftPurchaseForm`,
+`RedeemGiftButton`, `RedeemGiftCodeForm`, `GiftSuccessStatus`,
+`src/lib/domain/gifts.ts`, `src/lib/domain/gift-tokens.ts`,
+`src/lib/actions/gifts.ts`, `src/app/api/gifts/checkout/route.ts`, and
+`tests/integration/gift-redemption.test.ts` (replaced by
+`tests/integration/referrals.test.ts`). `docs/HANDOFF.md` and
+`docs/ar/HANDOFF.md`'s Phase 4 sections are left as the historical
+record of what a prior session built, marked superseded rather than
+rewritten.
+
 ## Not yet built (explicitly out of scope for this build session)
 
 - Vendor moderation integration for image safety checks

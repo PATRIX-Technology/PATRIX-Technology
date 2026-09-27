@@ -5,6 +5,7 @@ import { enforceRateLimit, RateLimitExceededError } from '@/lib/rate-limit';
 import { getClientIp } from '@/lib/request-ip';
 import { getCurrentTenantContext } from '@/lib/domain/session';
 import { normalizePhoneNumber } from '@/lib/domain/phone';
+import { recordReferralIfPresent } from '@/lib/domain/referrals';
 import type { ActionResult } from './auth';
 
 const AUTH_RATE_LIMIT = { limit: 10, windowMs: 5 * 60 * 1000 };
@@ -34,6 +35,7 @@ export async function familySignUpAction(locale: string, formData: FormData): Pr
   const email = String(formData.get('email') ?? '').trim();
   const password = String(formData.get('password') ?? '');
   const fullName = String(formData.get('fullName') ?? '').trim();
+  const referralCode = String(formData.get('referralCode') ?? '').trim();
 
   if (!email || !password || !fullName) {
     return { error: 'All fields are required.' };
@@ -49,13 +51,15 @@ export async function familySignUpAction(locale: string, formData: FormData): Pr
   }
 
   const familyDisplayName = `${fullName}'s Family`;
-  const { error: rpcError } = await supabase.rpc('create_family_tenant', {
+  const { data: newTenantId, error: rpcError } = await supabase.rpc('create_family_tenant', {
     family_display_name: familyDisplayName,
     owner_full_name: fullName,
   });
   if (rpcError) {
     return { error: rpcError.message };
   }
+
+  await recordReferralIfPresent(supabase, referralCode, newTenantId);
 
   return { redirectTo: `/${locale}/dashboard` };
 }
@@ -103,6 +107,7 @@ export async function verifyFamilySignUpOtpAction(locale: string, formData: Form
   const phoneInput = String(formData.get('phone') ?? '').trim();
   const token = String(formData.get('token') ?? '').trim();
   const fullName = String(formData.get('fullName') ?? '').trim();
+  const referralCode = String(formData.get('referralCode') ?? '').trim();
 
   const phone = normalizePhoneNumber(phoneInput);
   if (!phone || !token) {
@@ -120,13 +125,14 @@ export async function verifyFamilySignUpOtpAction(locale: string, formData: Form
     if (!fullName) {
       return { error: 'Missing your name — go back and try again.' };
     }
-    const { error: rpcError } = await supabase.rpc('create_family_tenant', {
+    const { data: newTenantId, error: rpcError } = await supabase.rpc('create_family_tenant', {
       family_display_name: `${fullName}'s Family`,
       owner_full_name: fullName,
     });
     if (rpcError) {
       return { error: rpcError.message };
     }
+    await recordReferralIfPresent(supabase, referralCode, newTenantId);
   }
 
   return { redirectTo: `/${locale}/dashboard` };

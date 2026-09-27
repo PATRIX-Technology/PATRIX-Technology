@@ -47,6 +47,13 @@ Chromium's PDFium), not just by re-running the test suite.
 
 ## Phase 4 scaffolding (families + gifting) — prior session
 
+**Superseded**: the gift-purchase/redemption feature described in this
+section was removed in a later session and replaced with a referral
+program (invite others, earn free stories) — see `docs/DECISIONS.md`
+"Referral program replaces gifting". Left below as the historical
+record of what this session actually built, not as a description of
+what exists today.
+
 Per the product brief, Phase 4 (consumer/family expansion) only starts
 once the B2B core is complete — it now is, so this session scaffolded
 the two web-buildable parts of Phase 4:

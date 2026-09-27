@@ -80,22 +80,6 @@ async function handleEvent(
     case 'checkout.session.completed': {
       const session = event.data.object as Stripe.Checkout.Session;
 
-      if (session.mode === 'payment' && session.metadata?.purpose === 'gift') {
-        const giftId = session.metadata.gift_id;
-        if (!giftId) throw new Error('Gift checkout session is missing gift_id metadata.');
-
-        const paymentIntentId =
-          typeof session.payment_intent === 'string' ? session.payment_intent : session.payment_intent?.id;
-
-        const { error } = await serviceClient
-          .from('gifts')
-          .update({ status: 'paid', stripe_payment_intent_id: paymentIntentId ?? null })
-          .eq('id', giftId)
-          .eq('status', 'pending_payment');
-        if (error) throw error;
-        break;
-      }
-
       const { tenantId, planId } = extractCheckoutMetadata(session);
       if (!session.subscription) return;
 
@@ -125,6 +109,17 @@ async function handleEvent(
         new_period_end: periodEnd,
       });
       if (quotaError) throw quotaError;
+
+      // Referral reward — see docs/DECISIONS.md "Referral program
+      // replaces gifting". reward_referral is a no-op unless this
+      // tenant was referred and hasn't been rewarded yet, so this is
+      // safe to call on every checkout (first subscription, a later
+      // upgrade, or a renewal that goes through a fresh session).
+      const { error: referralError } = await serviceClient.rpc('reward_referral', {
+        target_tenant_id: tenantId,
+        target_plan_id: planId,
+      });
+      if (referralError) throw referralError;
       break;
     }
 

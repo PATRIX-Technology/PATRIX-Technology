@@ -8,7 +8,7 @@ import { signUpAction, type ActionResult } from '@/lib/actions/auth';
 import { Button } from '@/components/ui/Button';
 import { TextField } from '@/components/ui/Input';
 
-export function SignUpForm({ locale }: { locale: string }) {
+export function SignUpForm({ locale, referralCode }: { locale: string; referralCode?: string }) {
   const t = useTranslations('auth.signUp');
   const router = useRouter();
   const action = signUpAction.bind(null, locale);
@@ -22,6 +22,7 @@ export function SignUpForm({ locale }: { locale: string }) {
 
   return (
     <form action={formAction} className="flex flex-col gap-4">
+      <input type="hidden" name="referralCode" value={referralCode ?? ''} />
       <TextField name="orgName" label={t('orgName')} hint={t('orgNameHint')} required />
       <TextField name="fullName" label={t('fullName')} required />
       <TextField name="email" type="email" label={t('email')} required />

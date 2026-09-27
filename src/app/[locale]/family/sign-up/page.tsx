@@ -5,8 +5,15 @@ import { PhoneFamilySignUpForm } from '@/components/auth/PhoneFamilySignUpForm';
 import { AuthMethodTabs } from '@/components/auth/AuthMethodTabs';
 import { Card } from '@/components/ui/Card';
 
-export default function FamilySignUpPage({ params }: { params: { locale: string } }) {
+export default function FamilySignUpPage({
+  params,
+  searchParams,
+}: {
+  params: { locale: string };
+  searchParams: { ref?: string };
+}) {
   const tPhone = useTranslations('auth.phone');
+  const referralCode = typeof searchParams.ref === 'string' ? searchParams.ref : undefined;
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-[rgb(var(--color-surface))] px-4 py-12">
@@ -23,8 +30,8 @@ export default function FamilySignUpPage({ params }: { params: { locale: string 
         <AuthMethodTabs
           emailLabel={tPhone('emailTab')}
           phoneLabel={tPhone('phoneTab')}
-          emailContent={<FamilySignUpForm locale={params.locale} />}
-          phoneContent={<PhoneFamilySignUpForm locale={params.locale} />}
+          emailContent={<FamilySignUpForm locale={params.locale} referralCode={referralCode} />}
+          phoneContent={<PhoneFamilySignUpForm locale={params.locale} referralCode={referralCode} />}
         />
         <p className="mt-6 text-center text-sm text-ink-500">
           Already have an account?{' '}

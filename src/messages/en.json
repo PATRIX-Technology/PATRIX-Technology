@@ -23,7 +23,7 @@
     "trustBar": "Built for Dubai nurseries, schools, clinics and children's brands",
     "familyCallout": {
       "title": "A parent yourself?",
-      "body": "Create a free family account and make a personalised story for your own child, or send one as a gift.",
+      "body": "Create a free family account and make a personalised story for your own child — then invite friends and earn free stories when they subscribe.",
       "cta": "Create a family account"
     },
     "useCases": {
@@ -212,6 +212,14 @@
     "bulkZipFailedBody": "The file isn't ready yet, or something went wrong. Try again in a moment.",
     "storyCount": "{count} stories",
     "noChildName": "Unnamed child"
+  },
+  "referrals": {
+    "title": "Invite friends, earn free stories",
+    "body": "Share your invite link. When someone signs up with it and subscribes, you get free stories added to your account — matching whatever plan they choose.",
+    "copyLink": "Copy link",
+    "copied": "Copied!",
+    "loading": "Loading your invite link…",
+    "stats": "{pending} invite(s) pending, {rewarded} completed — you've earned {stories} free stories so far."
   },
   "common": {
     "loading": "Loading…",

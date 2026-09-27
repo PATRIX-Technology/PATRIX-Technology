@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/Button';
 import { TextField } from '@/components/ui/Input';
 import { CountryPhoneField } from '@/components/auth/CountryPhoneField';
 
-export function PhoneFamilySignUpForm({ locale }: { locale: string }) {
+export function PhoneFamilySignUpForm({ locale, referralCode }: { locale: string; referralCode?: string }) {
   const t = useTranslations('auth.phone');
   const router = useRouter();
   const [step, setStep] = useState<'details' | 'code'>('details');
@@ -60,6 +60,7 @@ export function PhoneFamilySignUpForm({ locale }: { locale: string }) {
     <form action={verifyFormAction} className="flex flex-col gap-4">
       <input type="hidden" name="phone" value={phone ?? ''} />
       <input type="hidden" name="fullName" value={fullName} />
+      <input type="hidden" name="referralCode" value={referralCode ?? ''} />
       <p className="text-sm text-ink-600">{t('codeSentTo', { phone: phone ?? '' })}</p>
       <TextField
         name="token"

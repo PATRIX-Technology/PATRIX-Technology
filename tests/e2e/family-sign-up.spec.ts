@@ -20,13 +20,3 @@ test.describe('Family sign-up (Phase 4)', () => {
     await expect(page).toHaveURL(/\/en\/family\/sign-up$/);
   });
 });
-
-test.describe('Gift page (Phase 4)', () => {
-  test('renders with billing disabled by default', async ({ page }) => {
-    await page.goto('/en/gift');
-    await expect(page.getByRole('heading', { name: /give a personalised story/i })).toBeVisible();
-    // FEATURE_BILLING defaults to off, so the purchase form is replaced by
-    // an explanatory message rather than a non-functional payment form.
-    await expect(page.getByText(/enabled on this deployment/i)).toBeVisible();
-  });
-});

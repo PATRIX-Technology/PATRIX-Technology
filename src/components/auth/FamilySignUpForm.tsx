@@ -8,7 +8,7 @@ import type { ActionResult } from '@/lib/actions/auth';
 import { Button } from '@/components/ui/Button';
 import { TextField } from '@/components/ui/Input';
 
-export function FamilySignUpForm({ locale }: { locale: string }) {
+export function FamilySignUpForm({ locale, referralCode }: { locale: string; referralCode?: string }) {
   const router = useRouter();
   const action = familySignUpAction.bind(null, locale);
   const [state, formAction] = useFormState<ActionResult, FormData>(async (_prev, formData) => {
@@ -21,6 +21,7 @@ export function FamilySignUpForm({ locale }: { locale: string }) {
 
   return (
     <form action={formAction} className="flex flex-col gap-4">
+      <input type="hidden" name="referralCode" value={referralCode ?? ''} />
       <TextField name="fullName" label="Your full name" required />
       <TextField name="email" type="email" label="Email address" required />
       <TextField name="password" type="password" label="Password" required minLength={8} />

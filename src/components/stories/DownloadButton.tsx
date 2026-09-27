@@ -40,9 +40,13 @@ export function DownloadButton({
         throw new Error(detail?.error || `Download failed with status ${response.status}`);
       }
 
+      // Prefer the RFC 5987 filename* (the real Unicode name, e.g. an
+      // Arabic child's name) over the plain filename="..." fallback,
+      // which is ASCII-only — see src/lib/http/content-disposition.ts.
       const disposition = response.headers.get('Content-Disposition') ?? '';
-      const match = /filename="([^"]+)"/.exec(disposition);
-      const fileName = match?.[1] ?? fallbackFileName;
+      const utf8Match = /filename\*=UTF-8''([^;]+)/.exec(disposition);
+      const plainMatch = /filename="([^"]+)"/.exec(disposition);
+      const fileName = (utf8Match && decodeURIComponent(utf8Match[1]!)) || plainMatch?.[1] || fallbackFileName;
 
       const blob = await response.blob();
       const blobUrl = URL.createObjectURL(blob);

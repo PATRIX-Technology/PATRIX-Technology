@@ -3,8 +3,9 @@ import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { createSupabaseServiceRoleClient } from '@/lib/supabase/service-role';
 import { getCurrentTenantContext } from '@/lib/domain/session';
 import { renderApprovedStoryPdf } from '@/lib/domain/story-pdf';
-import { buildBulkZip, buildExportPlan, sanitizeFileNamePart } from '@/lib/providers/pdf/bulk-zip';
+import { buildBulkZip, buildExportPlan } from '@/lib/providers/pdf/bulk-zip';
 import { errorMessage } from '@/lib/errors';
+import { contentDispositionHeader } from '@/lib/http/content-disposition';
 
 export const runtime = 'nodejs';
 // 60 is the Hobby plan's ceiling for this config value — see
@@ -65,7 +66,7 @@ export async function GET(): Promise<NextResponse | Response> {
     status: 200,
     headers: {
       'Content-Type': 'application/zip',
-      'Content-Disposition': `attachment; filename="${sanitizeFileNamePart(context.tenantName)}-stories.zip"`,
+      'Content-Disposition': contentDispositionHeader(`${context.tenantName}-stories.zip`),
       'Cache-Control': 'private, no-store',
     },
   });

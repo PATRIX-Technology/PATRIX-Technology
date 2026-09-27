@@ -4,6 +4,7 @@ import { createSupabaseServiceRoleClient } from '@/lib/supabase/service-role';
 import { getCurrentTenantContext } from '@/lib/domain/session';
 import { PdfPreflightFailedError, renderApprovedStoryPdf } from '@/lib/domain/story-pdf';
 import { errorMessage } from '@/lib/errors';
+import { contentDispositionHeader } from '@/lib/http/content-disposition';
 
 export const runtime = 'nodejs';
 // 60 is the Hobby plan's ceiling for this config value — see
@@ -28,7 +29,7 @@ export async function GET(_request: Request, { params }: { params: { storyId: st
         // "attachment" so the browser saves the file straight away
         // instead of opening its own (often low-quality) inline PDF
         // viewer — a nursery printing these wants the actual file.
-        'Content-Disposition': `attachment; filename="${result.fileName}"`,
+        'Content-Disposition': contentDispositionHeader(result.fileName),
         'Cache-Control': 'private, no-store',
       },
     });

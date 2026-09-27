@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { signOutAction } from '@/lib/actions/auth';
 import type { TenantRole, TenantType } from '@/types/database';
 import { Badge } from '@/components/ui/Badge';
@@ -35,6 +36,7 @@ export function DashboardNav({
   labels: Labels;
 }) {
   const pathname = usePathname();
+  const brand = useTranslations('brand');
   const base = `/${locale}/dashboard`;
 
   const links = [
@@ -55,8 +57,9 @@ export function DashboardNav({
   return (
     <nav className="flex w-full flex-col justify-between border-b border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface-raised))] p-6 md:w-64 md:border-b-0 md:border-e">
       <div>
-        <div className="mb-5 flex items-center gap-2">
+        <div className="mb-5 flex items-center gap-2.5 font-display text-lg text-ink-900">
           <Logo size={24} />
+          {brand('name')}
         </div>
         <p className="font-display text-lg text-ink-900">{tenantName}</p>
         <Badge tone="info" className="mt-1">

@@ -27,7 +27,16 @@ export default function SignUpPage({
         emailContent={<SignUpForm locale={params.locale} referralCode={referralCode} />}
         phoneContent={<PhoneNurserySignUpForm locale={params.locale} referralCode={referralCode} />}
       />
-      <p className="mt-6 text-center text-sm text-ink-500">
+      <p className="mt-4 text-center text-sm text-ink-500">
+        {t('familyPrompt')}{' '}
+        <Link
+          href={`/${params.locale}/family/sign-up${referralCode ? `?ref=${referralCode}` : ''}`}
+          className="font-medium text-lagoon-600"
+        >
+          {t('familyLink')}
+        </Link>
+      </p>
+      <p className="mt-2 text-center text-sm text-ink-500">
         {t('haveAccount')}{' '}
         <Link href={`/${params.locale}/sign-in`} className="font-medium text-lagoon-600">
           {t('signInInstead')}

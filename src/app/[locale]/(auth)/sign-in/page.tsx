@@ -20,12 +20,15 @@ export default function SignInPage({ params }: { params: { locale: string } }) {
         emailContent={<SignInForm locale={params.locale} />}
         phoneContent={<PhoneSignInForm locale={params.locale} />}
       />
-      <p className="mt-6 text-center text-sm text-ink-500">
-        {t('noAccount')}{' '}
-        <Link href={`/${params.locale}/sign-up`} className="font-medium text-lagoon-600">
-          {t('createOne')}
+      <p className="mt-6 text-center text-sm text-ink-500">{t('noAccount')}</p>
+      <div className="mt-2 flex flex-col items-center gap-1">
+        <Link href={`/${params.locale}/sign-up`} className="text-sm font-medium text-lagoon-600">
+          {t('createOrgAccount')}
         </Link>
-      </p>
+        <Link href={`/${params.locale}/family/sign-up`} className="text-sm font-medium text-lagoon-600">
+          {t('createFamilyAccount')}
+        </Link>
+      </div>
     </AuthShell>
   );
 }

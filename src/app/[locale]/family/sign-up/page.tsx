@@ -12,18 +12,22 @@ export default function FamilySignUpPage({
   params: { locale: string };
   searchParams: { ref?: string };
 }) {
+  const t = useTranslations('auth.familySignUp');
+  const tSignUp = useTranslations('auth.signUp');
   const tPhone = useTranslations('auth.phone');
   const referralCode = typeof searchParams.ref === 'string' ? searchParams.ref : undefined;
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-[rgb(var(--color-surface))] px-4 py-12">
       <Card className="w-full max-w-md">
-        <h1 className="mb-2 font-display text-2xl text-ink-900">Create your family account</h1>
+        <h1 className="mb-2 font-display text-2xl text-ink-900">{t('title')}</h1>
         <p className="mb-6 text-sm text-ink-600">
-          For parents and guardians creating stories for their own children. Are you a nursery, school,
-          or organisation?{' '}
-          <Link href={`/${params.locale}/sign-up`} className="font-medium text-lagoon-600">
-            Sign up here instead
+          {t('body')}{' '}
+          <Link
+            href={`/${params.locale}/sign-up${referralCode ? `?ref=${referralCode}` : ''}`}
+            className="font-medium text-lagoon-600"
+          >
+            {t('orgLink')}
           </Link>
           .
         </p>
@@ -34,9 +38,9 @@ export default function FamilySignUpPage({
           phoneContent={<PhoneFamilySignUpForm locale={params.locale} referralCode={referralCode} />}
         />
         <p className="mt-6 text-center text-sm text-ink-500">
-          Already have an account?{' '}
+          {tSignUp('haveAccount')}{' '}
           <Link href={`/${params.locale}/sign-in`} className="font-medium text-lagoon-600">
-            Sign in
+            {tSignUp('signInInstead')}
           </Link>
         </p>
       </Card>

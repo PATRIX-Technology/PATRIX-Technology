@@ -36,12 +36,13 @@
   },
   "auth": {
     "signIn": {
-      "title": "Sign in to your organisation",
+      "title": "Sign in",
       "email": "Email address",
       "password": "Password",
       "submit": "Sign in",
       "noAccount": "Don't have an account?",
-      "createOne": "Create one"
+      "createOrgAccount": "Create an organisation account",
+      "createFamilyAccount": "Create a family account"
     },
     "signUp": {
       "title": "Create your organisation",
@@ -52,7 +53,14 @@
       "password": "Password",
       "submit": "Create organisation",
       "haveAccount": "Already have an account?",
-      "signInInstead": "Sign in instead"
+      "signInInstead": "Sign in instead",
+      "familyPrompt": "A parent or guardian creating stories for your own child?",
+      "familyLink": "Create a family account instead"
+    },
+    "familySignUp": {
+      "title": "Create your family account",
+      "body": "For parents and guardians creating stories for their own children. Are you a nursery, school, or organisation?",
+      "orgLink": "Sign up here instead"
     },
     "phone": {
       "emailTab": "Email",

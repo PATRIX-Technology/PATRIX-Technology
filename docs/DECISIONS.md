@@ -1888,6 +1888,27 @@ hidden behind a share sheet that may not appear on every device. The
 plain "Copy link" button from the first version stays as the
 lowest-common-denominator fallback.
 
+## Sign-in and sign-up now cross-link both account types
+
+Founder feedback: "Inside sign in & sign up / Have both options /
+Organization & also family account." Before this, the org sign-up
+page never mentioned the family path at all (asymmetric with the
+family sign-up page, which already linked back to org sign-up), and
+the sign-in page only ever linked to org sign-up — there was no way
+to reach family sign-up from sign-in, and the sign-in page's title
+("Sign in to your organisation") wrongly implied it was org-only even
+though the same page/form handles family accounts too.
+
+Fixed by: (1) neutralising `auth.signIn.title` to just "Sign in"; (2)
+replacing the sign-in page's single "Create one" link with two
+explicit links — "Create an organisation account" and "Create a
+family account"; (3) adding a "Create a family account instead" link
+(with the referral code preserved in the URL) to the org sign-up
+page; (4) translating the family sign-up page's previously hardcoded
+English-only strings into a new `auth.familySignUp` i18n namespace
+(en + ar), reusing `auth.signUp.haveAccount`/`signInInstead` for its
+"already have an account" line instead of duplicating that text.
+
 ## Not yet built (explicitly out of scope for this build session)
 
 - Vendor moderation integration for image safety checks

@@ -31,7 +31,14 @@ export function DownloadButton({
     setLoading(true);
     try {
       const response = await fetch(href);
-      if (!response.ok) throw new Error(`Download failed with status ${response.status}`);
+      if (!response.ok) {
+        // Surface the server's actual reason (e.g. a specific preflight
+        // issue) instead of a one-size-fits-all toast — a nursery seeing
+        // "page 2 has no generated image" can act on that; "something
+        // went wrong" they can only retry blindly.
+        const detail = await response.json().catch(() => null);
+        throw new Error(detail?.error || `Download failed with status ${response.status}`);
+      }
 
       const disposition = response.headers.get('Content-Disposition') ?? '';
       const match = /filename="([^"]+)"/.exec(disposition);

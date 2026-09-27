@@ -92,6 +92,14 @@
     "edit": "Edit",
     "importCsv": "Import from CSV",
     "empty": "No children yet. Add your first child or import a class list.",
+    "csvImport": {
+      "step1Title": "1. Download the sample template",
+      "step1Body": "Download this template, fill in your children's details, then upload the completed file below.",
+      "downloadButton": "Download template",
+      "columnDetails": "CSV column reference",
+      "step2Title": "2. Upload your completed file",
+      "step2Body": "Choose the CSV file you filled in above."
+    },
     "table": {
       "firstNameEn": "First name (EN)",
       "lastNameEn": "Family name (EN)",

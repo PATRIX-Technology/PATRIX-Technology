@@ -196,7 +196,6 @@ export function CreateStoryForm({
             </span>
             <div>
               <p className="font-medium text-ink-800">{template.title}</p>
-              <p className="text-xs capitalize text-ink-500">{template.theme_key.replace(/_/g, ' ')}</p>
             </div>
             <span className="absolute end-3 top-3 text-xs font-semibold text-saffron-400 opacity-0 peer-checked:opacity-100">
               ✓

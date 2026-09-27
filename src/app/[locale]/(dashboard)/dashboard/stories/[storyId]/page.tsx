@@ -23,7 +23,7 @@ export default async function StoryDetailPage({
 
   const { data: story } = await supabase
     .from('stories')
-    .select('*, children(first_name)')
+    .select('*, children(first_name, arabic_first_name)')
     .eq('id', params.storyId)
     .eq('tenant_id', context.tenantId)
     .maybeSingle();
@@ -35,6 +35,20 @@ export default async function StoryDetailPage({
     .eq('story_id', story.id)
     .order('page_number');
 
+  // The story's own title/synopsis are never stored on the row itself —
+  // only the per-page text is baked in at creation time (see
+  // docs/DECISIONS.md) — so the title is read fresh from the live
+  // template every time, by (theme_key, locale). This also means a
+  // template title fix (like the Arabic gender-agreement one) is
+  // reflected immediately on every existing story, with no resync
+  // needed for titles specifically.
+  const { data: templateRow } = await supabase
+    .from('story_theme_templates')
+    .select('title')
+    .eq('theme_key', story.theme_key)
+    .eq('locale', story.locale)
+    .maybeSingle();
+
   const assetPaths = (pages ?? []).map((p) => p.image_asset_path).filter((p): p is string => Boolean(p));
   const signedUrls = await getSignedAssetUrls(supabase, assetPaths);
 
@@ -42,7 +56,13 @@ export default async function StoryDetailPage({
   const stillGenerating = (pages ?? []).some(
     (p) => p.image_status === 'QUEUED' || p.image_status === 'GENERATING',
   );
-  const childName = (story.children as unknown as { first_name: string } | null)?.first_name ?? 'Unknown';
+  const child = story.children as unknown as { first_name: string; arabic_first_name: string | null } | null;
+  // Same rule as story creation: an Arabic story shows the Arabic name,
+  // never the Latin one, and vice versa — see docs/DECISIONS.md "Arabic
+  // name is required, not a silent fallback".
+  const childName =
+    (story.locale === 'ar' ? child?.arabic_first_name : child?.first_name) ?? child?.first_name ?? 'Unknown';
+  const storyTitle = templateRow?.title ?? story.theme_key.replace(/_/g, ' ');
   const status = story.status as StoryStatus;
 
   return (
@@ -51,7 +71,7 @@ export default async function StoryDetailPage({
       <div className="flex items-center justify-between">
         <div>
           <h1 className="font-display text-2xl text-ink-900">
-            {childName} — {story.theme_key.replace(/_/g, ' ')}
+            {childName} — {storyTitle}
           </h1>
           <Badge tone="info" className="mt-2">
             {t(`status.${status}`)}

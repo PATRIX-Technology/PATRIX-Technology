@@ -54,6 +54,12 @@ export default async function ChildDetailPage({
     .eq('child_id', child.id)
     .order('created_at', { ascending: false });
 
+  // The story list below shows each template's real title, not the raw
+  // snake_case theme_key (always English regardless of locale) — see
+  // docs/DECISIONS.md "Arabic gender-agreement audit of the story
+  // templates" for why that distinction matters here specifically.
+  const titleByThemeKey = new Map((templates ?? []).map((tpl) => [tpl.theme_key, tpl.title]));
+
   const { data: tenant } = await supabase
     .from('tenants')
     .select('photo_personalization_opt_in')
@@ -187,7 +193,7 @@ export default async function ChildDetailPage({
                 href={`/${params.locale}/dashboard/stories/${story.id}`}
                 className="focus-ring font-medium text-ink-800 hover:text-lagoon-700"
               >
-                {story.theme_key.replace(/_/g, ' ')}
+                {titleByThemeKey.get(story.theme_key) ?? story.theme_key.replace(/_/g, ' ')}
               </Link>
               <Badge tone="info">{t(`stories.status.${story.status}`)}</Badge>
             </li>

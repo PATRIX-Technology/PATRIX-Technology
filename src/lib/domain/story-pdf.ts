@@ -41,6 +41,19 @@ export async function renderApprovedStoryPdf(
   if (storyError) throw new Error(`Could not load story ${storyId}: ${errorMessage(storyError)}`);
   if (!story) throw new Error(`Story ${storyId} not found or not approved.`);
 
+  // The printed title must be the template's real title — never the raw
+  // snake_case theme_key, which is always English regardless of the
+  // story's own locale (an Arabic booklet printed with an English title
+  // would be exactly the kind of language mismatch this repo has spent
+  // real effort eliminating everywhere else — see docs/DECISIONS.md
+  // "Arabic gender-agreement audit of the story templates").
+  const { data: templateRow } = await supabase
+    .from('story_theme_templates')
+    .select('title')
+    .eq('theme_key', story.theme_key)
+    .eq('locale', story.locale)
+    .maybeSingle();
+
   const { data: pages } = await supabase
     .from('story_pages')
     .select('*')
@@ -74,7 +87,7 @@ export async function renderApprovedStoryPdf(
   const childName = (story.locale === 'ar' && child?.arabic_first_name) || child?.first_name || '';
 
   const pdfBytes = await renderStoryPdf({
-    title: story.theme_key.replace(/_/g, ' '),
+    title: templateRow?.title ?? story.theme_key.replace(/_/g, ' '),
     childName,
     organisationName: context.tenantName,
     locale: story.locale,

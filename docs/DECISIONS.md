@@ -1574,6 +1574,41 @@ reclaimed and retried until it actually runs, for real, at least
 once. Applied live and manually re-queued the one page this had
 already wrongly failed.
 
+## Story titles must use the template's real title, not the raw theme_key
+
+**Bug**: every place a story's title was shown to a real user — the
+story detail page, the stories list, a child's own story list, and
+the printed/downloaded PDF itself — displayed `story.theme_key.replace
+(/_/g, ' ')` (e.g. `"national_day_gratitude"` → `"national day
+gratitude"`) instead of the template's actual title
+(`story_theme_templates.title`, e.g. `"Colours of Gratitude"` /
+`"ألوان الشكر"`). Two problems at once: the raw key is always English
+regardless of the story's own locale (so an Arabic story showed an
+English title), and even when read as English it's lowercase snake
+case, not a real title. The founder caught this from a live
+screenshot showing "Bisan — national day gratitude" on an Arabic
+story.
+
+**Fix**: every one of those four places now fetches the template row
+for `(theme_key, locale)` and shows `template.title` — which is
+already properly cased/localized content, no formatting needed on top
+of it (see `supabase/seed/templates.json`: English titles are already
+real title case like "The Rainbow Plate", Arabic titles are already
+real Arabic like "ألوان الشكر"). Falls back to the old
+snake-case-to-spaces behaviour only if a template row is somehow
+missing, so nothing renders blank. Same pass also fixed the story
+detail page's header to show the child's Arabic name for an Arabic
+story (it was reading only `first_name`, same class of bug as
+"Arabic name is required, not a silent fallback" above) — the PDF
+export path already had this right, so it was the pattern to copy.
+The theme-picker's redundant snake_case caption (the real title was
+already shown right above it) was removed rather than fixed, since it
+added no information and was never correctly localized either.
+Left the owner-only admin page's raw theme_key alone (
+`src/app/[locale]/owner/page.tsx`) — that's an internal template
+management list showing which specific template needs native review,
+not a title a nursery or family ever sees.
+
 ## Not yet built (explicitly out of scope for this build session)
 
 - Vendor moderation integration for image safety checks

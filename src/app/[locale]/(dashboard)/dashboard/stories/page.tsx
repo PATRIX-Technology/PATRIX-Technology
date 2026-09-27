@@ -38,6 +38,25 @@ export default async function StoriesPage({ params }: { params: { locale: string
     .eq('tenant_id', context.tenantId)
     .order('created_at', { ascending: false });
 
+  // Each story's row shows its template's real title (already properly
+  // cased/localized — e.g. "Colours of Gratitude" / "ألوان الشكر"), not
+  // the raw snake_case theme_key, which is always English regardless of
+  // the story's own locale. Fetched once for every (theme_key, locale)
+  // pair actually in use, rather than per row.
+  const themeKeyLocalePairs = [...new Set((stories ?? []).map((s) => `${s.theme_key}:${s.locale}`))];
+  const { data: templateRows } = await supabase
+    .from('story_theme_templates')
+    .select('theme_key, locale, title')
+    .in(
+      'theme_key',
+      [...new Set((stories ?? []).map((s) => s.theme_key))],
+    );
+  const titleByThemeKeyLocale = new Map(
+    (templateRows ?? [])
+      .filter((row) => themeKeyLocalePairs.includes(`${row.theme_key}:${row.locale}`))
+      .map((row) => [`${row.theme_key}:${row.locale}`, row.title]),
+  );
+
   // One folder per child, so a nursery with several stories per kid isn't
   // just a flat, hard-to-scan list. Children with no story left do not
   // appear at all — a folder implies "there's something inside it".
@@ -105,9 +124,10 @@ export default async function StoriesPage({ params }: { params: { locale: string
                         <td className="p-4">
                           <Link
                             href={`/${params.locale}/dashboard/stories/${story.id}`}
-                            className="focus-ring font-medium capitalize text-ink-900 hover:text-lagoon-700"
+                            className="focus-ring font-medium text-ink-900 hover:text-lagoon-700"
                           >
-                            {story.theme_key.replace(/_/g, ' ')}
+                            {titleByThemeKeyLocale.get(`${story.theme_key}:${story.locale}`) ??
+                              story.theme_key.replace(/_/g, ' ')}
                           </Link>
                         </td>
                         <td className="p-4 text-ink-600">{story.locale.toUpperCase()}</td>

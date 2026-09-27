@@ -95,6 +95,7 @@
     "csvImport": {
       "step1Title": "1. Download the sample template",
       "step1Body": "Download this template, fill in your children's details, then upload the completed file below.",
+      "step1Warning": "Important: keep the column names in row 1 exactly as they are — don't rename, remove, or reorder them.",
       "downloadButton": "Download template",
       "columnDetails": "CSV column reference",
       "step2Title": "2. Upload your completed file",

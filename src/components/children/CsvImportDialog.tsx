@@ -25,6 +25,9 @@ export function CsvImportDialog({ locale }: { locale: string }) {
           <div className="rounded-lg bg-ink-50 p-4">
             <p className="font-medium text-ink-800">{t('csvImport.step1Title')}</p>
             <p className="mt-1 text-sm text-ink-600">{t('csvImport.step1Body')}</p>
+            <p className="mt-2 rounded-lg bg-saffron-900/60 px-3 py-2 text-sm font-medium text-saffron-300">
+              {t('csvImport.step1Warning')}
+            </p>
             <a
               href="/templates/children-import-template.csv"
               download

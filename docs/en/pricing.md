@@ -17,12 +17,26 @@ Every story renders exactly 4 illustrated pages
 (`supabase/seed/templates.json`) through Gemini at 2K resolution, at
 **$0.101/image** — the constant the app's own spend tracking already
 uses (`GEMINI_COST_PER_IMAGE_USD` in `.env.local`). A clean 4-image
-story prices at $0.404 (≈ AED 1.48) in raw AI cost. Real observed
-spend runs closer to **$1.00/story (≈ AED 3.67)** once retries,
-regenerations, and testing overhead are counted in — that's the
-founder's own reported number from actual AI Studio billing, and it's
-the conservative figure all planning below uses. For an exact number
-from real data, run this against Supabase:
+story prices at $0.404 (≈ AED 1.48) in raw AI cost — confirmed again
+directly against the founder's live Supabase project: every story that
+finished cleanly (no retries) landed at exactly $0.404. Real observed
+*total* spend runs higher — **$1.00/story (≈ AED 3.67)** is the
+founder's own conservative planning figure from actual AI Studio
+billing, and it's what all planning below uses.
+
+**Why the gap, concretely** (found and fixed the same day): one
+testing session spent $23 in real Google billing but only produced 3
+finished stories — roughly $7.67/story, not $0.404. The cause wasn't
+the AI cost itself; it was two infrastructure bugs that made a single
+requested story cost several retried Gemini calls before finishing (a
+generation job that could get silently stuck forever, and a retry
+mechanism that burned through a job's attempts on bad timing rather
+than a real failure — see `docs/DECISIONS.md`). Both are fixed now.
+The $1.00/story planning figure already has headroom built in above
+the $0.404 floor for legitimate retries (safety-check rejections, a
+rare bad generation) — keep using it, but re-run the query below
+periodically to confirm the gap stays small now that the two bugs
+above are gone, rather than assuming it's permanently settled.
 
 ```sql
 select avg(story_total) as avg_cost_per_story, count(*)
@@ -197,3 +211,57 @@ as payees). This is the plan, not yet the implementation.
 See `docs/en/budget.md` for the full annual operating budget (licence
 renewal, hosting, legal, trademark, accounting) these prices need to
 cover.
+
+## The first paying nursery: what to actually do, in order
+
+Everything above is the pricing model. This is the sequence once
+someone actually says yes — day 1 through the point it's a repeatable
+pattern, not a one-off.
+
+**Week 1 — get them to real usage fast, personally.**
+Don't send a self-serve signup link and wait. Sit with their staff (in
+person or on a call) for the first CSV import and the first 2-3
+stories, in both languages if they serve both. The goal isn't just
+"it works" — it's watching a real staff member hit a real confusion
+point, because that's the thing you'll fix before nursery #2. Confirm
+their invoice/PO process now if they're not paying by card
+immediately (Network-tier accounts often need one — see "Payment
+terms" above).
+
+**Week 2-4 — turn their usage into your safety numbers.**
+Once they're actively generating, this is the first month real
+non-founder usage will actually test the Gemini spend cap and the
+per-tenant quota, not test data. Watch `global_spend_cap` and this
+nursery's `quotas` row directly in Supabase daily for the first two
+weeks — don't wait for the app to tell you something's wrong. If
+their real usage pattern doesn't match the plan you sold them (e.g.
+they're a Starter account burning through 25 stories in the first
+week), that's a signal to have the upsell conversation early, not
+wait for them to hit the wall.
+
+**Month 1 close — recompute, don't assume.**
+Re-run the cost-basis query above against *their* actual `story_pages`
+rows specifically. This is the first real-world data point that isn't
+founder test data — it either confirms the $1.00/story planning
+figure or tells you it needs revising before nursery #2 signs at the
+same price. Also recheck the AI Studio spend cap sizing math (above)
+against combined real usage, not the Year 1 estimate.
+
+**Ongoing — build the reference before you build the next sale.**
+A single happy nursery is worth more as a case study than as revenue
+at this stage: ask for a short testimonial or a photo of a printed
+story in use (with consent — see the consent flow already built),
+and ask directly whether they'd introduce you to one other nursery
+owner in their network (see "Sales channel" above — this market runs
+on those introductions far more than outbound). Set up their referral
+link (once built — see "Nursery Partner Program" above) so any family
+they bring in during this period is tracked from day one, not
+retrofitted later.
+
+**What not to do yet.** Don't hire, don't build the not-yet-built
+referral/payout engineering, and don't discount future customers
+based on what you gave the first one to close the deal — a single
+data point is not a trend. Revisit this whole section once there are
+3-5 paying nurseries, not before; the budget and margin numbers above
+already tell you what that milestone should look like financially
+when it arrives.

@@ -212,7 +212,20 @@
     "bulkZipFailedTitle": "تعذّر تحميل ملف ZIP",
     "bulkZipFailedBody": "الملف غير جاهز بعد، أو حدث خطأ ما. حاول مرة أخرى بعد قليل.",
     "storyCount": "{count} قصص",
-    "noChildName": "طفل بلا اسم"
+    "noChildName": "طفل بلا اسم",
+    "suggestIdea": "اقترح فكرة قصة",
+    "suggestIdeaTitle": "اقترح فكرة قصة جديدة",
+    "suggestIdeaBody": "لديك فكرة لعادة أو موضوع جديد نحوّله إلى قصة؟ أخبرنا عنها أدناه.",
+    "suggestIdeaTopicLabel": "الموضوع أو العادة",
+    "suggestIdeaTopicPlaceholder": "مثال: مشاركة الألعاب، إعادة التدوير، تجربة أطعمة جديدة",
+    "suggestIdeaDescriptionQuestion": "لماذا يهم هذا الموضوع أطفالكم؟",
+    "suggestIdeaSubmit": "إرسال الاقتراح",
+    "suggestIdeaClose": "إغلاق",
+    "suggestIdeaSuccessTitle": "شكرًا — استلمنا اقتراحك!",
+    "suggestIdeaSuccessBody": "تم حفظ فكرتك. اضغط أدناه لإرسالها أيضًا مباشرة إلى فريقنا عبر واتساب للحصول على أسرع رد.",
+    "suggestIdeaWhatsappCta": "إرسال عبر واتساب",
+    "suggestIdeaWhatsappPrefix": "اقتراح فكرة قصة جديدة من",
+    "suggestIdeaWhatsappDescriptionLabel": "لماذا يهم"
   },
   "referrals": {
     "title": "ادعُ أصدقاءك واحصل على قصص مجانية",

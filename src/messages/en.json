@@ -212,7 +212,20 @@
     "bulkZipFailedTitle": "Couldn't download the ZIP",
     "bulkZipFailedBody": "The file isn't ready yet, or something went wrong. Try again in a moment.",
     "storyCount": "{count} stories",
-    "noChildName": "Unnamed child"
+    "noChildName": "Unnamed child",
+    "suggestIdea": "Suggest a story idea",
+    "suggestIdeaTitle": "Suggest a new story idea",
+    "suggestIdeaBody": "Have an idea for a new habit or topic we should turn into a story? Tell us about it below.",
+    "suggestIdeaTopicLabel": "Topic or habit",
+    "suggestIdeaTopicPlaceholder": "e.g. Sharing toys, Recycling, Trying new foods",
+    "suggestIdeaDescriptionQuestion": "Why does this matter to your families?",
+    "suggestIdeaSubmit": "Send suggestion",
+    "suggestIdeaClose": "Close",
+    "suggestIdeaSuccessTitle": "Thanks — we've got it!",
+    "suggestIdeaSuccessBody": "Your idea has been saved. Tap below to also send it straight to our team on WhatsApp for the fastest response.",
+    "suggestIdeaWhatsappCta": "Send on WhatsApp",
+    "suggestIdeaWhatsappPrefix": "New story idea suggestion from",
+    "suggestIdeaWhatsappDescriptionLabel": "Why it matters"
   },
   "referrals": {
     "title": "Invite friends, earn free stories",

@@ -45,6 +45,10 @@ anything is created. Nothing here relies on uploading a child's photo.
   isolation proven by automated tests against real database-level
   enforcement, consent tracked and revocable.
 - **Print-ready output**, not just a screen experience — a real keepsake.
+- **Customer-driven theme roadmap**: any nursery or family can suggest
+  a new habit/topic for a future story straight from the Stories page
+  — a direct line from what they actually need to what gets built
+  next, not a fixed catalog they're stuck with.
 
 ## Objection handling
 

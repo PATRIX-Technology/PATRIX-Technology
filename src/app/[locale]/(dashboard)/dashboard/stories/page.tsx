@@ -6,6 +6,7 @@ import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { DownloadButton } from '@/components/stories/DownloadButton';
+import { SuggestTemplateDialog } from '@/components/stories/SuggestTemplateDialog';
 import { ClickableRow } from '@/components/ui/ClickableRow';
 import type { StoryStatus } from '@/types/database';
 
@@ -77,18 +78,21 @@ export default async function StoriesPage({ params }: { params: { locale: string
     <div>
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <h1 className="font-display text-2xl text-ink-900">{t('title')}</h1>
-        {Boolean(approvedCount) && (
-          <DownloadButton
-            href="/api/stories/export-zip"
-            fallbackFileName="stories.zip"
-            failedTitle={t('bulkZipFailedTitle')}
-            failedBody={t('bulkZipFailedBody')}
-            variant="secondary"
-            size="sm"
-          >
-            {t('bulkZip')}
-          </DownloadButton>
-        )}
+        <div className="flex flex-wrap items-center gap-2">
+          <SuggestTemplateDialog tenantName={context.tenantName} fullName={context.fullName} />
+          {Boolean(approvedCount) && (
+            <DownloadButton
+              href="/api/stories/export-zip"
+              fallbackFileName="stories.zip"
+              failedTitle={t('bulkZipFailedTitle')}
+              failedBody={t('bulkZipFailedBody')}
+              variant="secondary"
+              size="sm"
+            >
+              {t('bulkZip')}
+            </DownloadButton>
+          )}
+        </div>
       </div>
       {!stories || stories.length === 0 ? (
         <EmptyState title="No stories yet" body="Create one from a child's profile page." />

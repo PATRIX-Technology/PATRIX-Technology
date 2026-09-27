@@ -1762,6 +1762,48 @@ drop, not a data migration. Deleted alongside it: `/gift`,
 record of what a prior session built, marked superseded rather than
 rewritten.
 
+## Story template suggestions
+
+Founder-requested feature: a "💡 Suggest a story idea" button on the
+Stories page, for any nursery or family to propose a new habit/topic
+for a future story theme. Two deliberately separate halves:
+
+1. **Durable record** — always saved to a new
+   `story_template_suggestions` table (migration 0024) via plain RLS
+   policies, no SECURITY DEFINER RPC needed: a tenant member can
+   insert only for their own tenant and as themselves
+   (`submitted_by = auth.uid()`), can select their own tenant's rows,
+   and the platform owner can select and update every tenant's rows
+   (to move a suggestion from `'new'` through `'reviewed'` /
+   `'added'` / `'declined'` — set manually via SQL for now, same
+   "founder does it by hand, no admin UI" call as
+   `stories.is_platform_sample` in migration 0019). This is the
+   record that can never be lost, whatever happens to the WhatsApp
+   step below.
+2. **Optional WhatsApp fast-path** — after a successful save, the
+   dialog (`src/components/stories/SuggestTemplateDialog.tsx`) shows a
+   "Send on WhatsApp" button built from `whatsappLink()`
+   (`src/lib/config/contact.ts`, the same +971 55 599 0694 number
+   already used by the Contact page), pre-filled with the topic,
+   description, and the submitter's tenant/name. **This is a `wa.me`
+   link the submitter taps themselves — not a message this app sends
+   on its own.** There is no WhatsApp Business API integration here
+   (Meta Cloud API or Twilio, needing a verified business account, API
+   keys, and per-message cost — a founder-side setup step, not
+   something to wire up without those credentials), so a one-tap
+   pre-filled link is the only zero-setup way to land a message on the
+   founder's *personal* WhatsApp. Told to the founder plainly rather
+   than silently building something less automatic than what was
+   asked for.
+
+Intentionally *not* built: the suggestion never becomes a template on
+its own. The founder reviews suggestions (via WhatsApp and/or a direct
+`select * from story_template_suggestions order by created_at desc`
+in Supabase) and, for any he wants to run with, brings it to a session
+for the actual template-building work — writing the page-by-page
+story content, choosing art direction, Arabic native review, etc. —
+the same way every existing theme was built.
+
 ## Not yet built (explicitly out of scope for this build session)
 
 - Vendor moderation integration for image safety checks

@@ -2379,6 +2379,43 @@ other real file — this app just no longer tries to shortcut that
 into one JS-triggered action on the web, since that shortcut was the
 thing breaking.
 
+## A dedicated tab for tracking new story idea suggestions
+
+Founder feedback: "I want tab to track new ideas." Story idea
+suggestions (see "Story template suggestions") already had a card on
+the owner dashboard, but it was buried halfway down one long
+single-page dashboard alongside tenants, Arabic template review
+status, and AI spend — nothing that actually let the founder jump
+straight to "what's new" or see at a glance whether anything needed
+attention.
+
+Split the owner dashboard into two tabs via a new `OwnerTabs`
+component (same segmented-pill styling as `AuthMethodTabs`/
+`AccountTypeTabs` elsewhere in the app): "Overview" (everything else,
+unchanged) and "Story Ideas" — its own page,
+`src/app/[locale]/owner/suggestions/page.tsx` — with a live badge on
+the tab itself showing how many suggestions are still `new`
+(unreviewed), so that count is visible the moment the founder opens
+either owner page, not just after clicking into the suggestions list.
+The dedicated page sorts `new` suggestions to the top (then
+`reviewed`/`added`/`declined` by recency within each), tags each
+still-`new` row with its own badge, and reuses the existing
+`SuggestionStatusControl` for changing status inline — same
+mechanism as before, just given its own page instead of one card in a
+long scroll.
+
+Each of the two owner pages duplicates the same `is_platform_owner` +
+MFA-gate check at its own top, rather than sharing a layout — a
+shared `layout.tsx` under `src/app/[locale]/owner/` would also wrap
+the sibling `/owner/mfa-enroll` and `/owner/mfa-challenge` pages,
+which would then hit that same gate check and redirect to themselves.
+Matches the duplication pattern the original single owner page
+already used for this exact reason.
+
+Verified against the live database: 2 suggestions currently sit at
+`status = 'new'`, so the new tab's badge has something real to show
+immediately rather than starting from zero.
+
 ## Not yet built (explicitly out of scope for this build session)
 
 - Vendor moderation integration for image safety checks

@@ -1909,6 +1909,34 @@ English-only strings into a new `auth.familySignUp` i18n namespace
 (en + ar), reusing `auth.signUp.haveAccount`/`signInInstead` for its
 "already have an account" line instead of duplicating that text.
 
+## Organisation/family switch became actual tabs, not stacked links
+
+Follow-up founder feedback on the cross-linking above: "I need them
+like tabs inside the sign in & sign up pages." Added a new shared
+`AccountTypeTabs` component, styled to match the existing Email/Phone
+`AuthMethodTabs` segmented control (same pill shape, same active-state
+colour), and used it on all three auth pages:
+
+- Org sign-up: "Organisation" tab active, "Family account" tab links
+  to `/family/sign-up` (referral code preserved).
+- Family sign-up: same control with "Family account" active.
+- Sign-in: same control but with neither tab visually "active" —
+  `signInAction` is identical regardless of account type, so there's
+  nothing to switch; the tabs here are purely a styled way to jump to
+  the right sign-up flow, replacing the two stacked plain-text links.
+
+These are real `<Link>`s under the hood (not client-side state) —
+org and family sign-up are separate routes with separate server
+actions and forms, so a true single-page tab switch would mean
+merging both forms' server actions into one page. Next.js client-side
+routing between two adjacent routes is visually indistinguishable
+from an in-page tab switch, so this gets the "like tabs" look asked
+for without that merge. Removed the now-redundant
+`auth.signUp.familyPrompt`/`familyLink`, `auth.familySignUp.orgLink`,
+and `auth.signIn.createOrgAccount`/`createFamilyAccount` translation
+keys the tabs replaced; added `auth.accountType.organisation`/`family`
+(en + ar) as the tab labels.
+
 ## Not yet built (explicitly out of scope for this build session)
 
 - Vendor moderation integration for image safety checks

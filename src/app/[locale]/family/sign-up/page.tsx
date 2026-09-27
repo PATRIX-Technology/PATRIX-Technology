@@ -3,6 +3,7 @@ import { useTranslations } from 'next-intl';
 import { FamilySignUpForm } from '@/components/auth/FamilySignUpForm';
 import { PhoneFamilySignUpForm } from '@/components/auth/PhoneFamilySignUpForm';
 import { AuthMethodTabs } from '@/components/auth/AuthMethodTabs';
+import { AccountTypeTabs } from '@/components/auth/AccountTypeTabs';
 import { Card } from '@/components/ui/Card';
 
 export default function FamilySignUpPage({
@@ -15,22 +16,23 @@ export default function FamilySignUpPage({
   const t = useTranslations('auth.familySignUp');
   const tSignUp = useTranslations('auth.signUp');
   const tPhone = useTranslations('auth.phone');
+  const tAccountType = useTranslations('auth.accountType');
   const referralCode = typeof searchParams.ref === 'string' ? searchParams.ref : undefined;
+  const refQuery = referralCode ? `?ref=${referralCode}` : '';
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-[rgb(var(--color-surface))] px-4 py-12">
       <Card className="w-full max-w-md">
+        <AccountTypeTabs
+          active="family"
+          orgHref={`/${params.locale}/sign-up${refQuery}`}
+          familyHref={`/${params.locale}/family/sign-up${refQuery}`}
+          orgLabel={tAccountType('organisation')}
+          familyLabel={tAccountType('family')}
+          className="mb-6"
+        />
         <h1 className="mb-2 font-display text-2xl text-ink-900">{t('title')}</h1>
-        <p className="mb-6 text-sm text-ink-600">
-          {t('body')}{' '}
-          <Link
-            href={`/${params.locale}/sign-up${referralCode ? `?ref=${referralCode}` : ''}`}
-            className="font-medium text-lagoon-600"
-          >
-            {t('orgLink')}
-          </Link>
-          .
-        </p>
+        <p className="mb-6 text-sm text-ink-600">{t('body')}</p>
         <AuthMethodTabs
           emailLabel={tPhone('emailTab')}
           phoneLabel={tPhone('phoneTab')}

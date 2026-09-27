@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { SignUpForm } from '@/components/auth/SignUpForm';
 import { PhoneNurserySignUpForm } from '@/components/auth/PhoneNurserySignUpForm';
 import { AuthMethodTabs } from '@/components/auth/AuthMethodTabs';
+import { AccountTypeTabs } from '@/components/auth/AccountTypeTabs';
 import { AuthShell } from '@/components/auth/AuthShell';
 
 export default function SignUpPage({
@@ -14,12 +15,22 @@ export default function SignUpPage({
 }) {
   const t = useTranslations('auth.signUp');
   const tPhone = useTranslations('auth.phone');
+  const tAccountType = useTranslations('auth.accountType');
   const marketing = useTranslations('marketing');
   const brand = useTranslations('brand');
   const referralCode = typeof searchParams.ref === 'string' ? searchParams.ref : undefined;
+  const refQuery = referralCode ? `?ref=${referralCode}` : '';
 
   return (
     <AuthShell locale={params.locale} eyebrow={marketing('hero.eyebrow')} tagline={brand('tagline')}>
+      <AccountTypeTabs
+        active="org"
+        orgHref={`/${params.locale}/sign-up${refQuery}`}
+        familyHref={`/${params.locale}/family/sign-up${refQuery}`}
+        orgLabel={tAccountType('organisation')}
+        familyLabel={tAccountType('family')}
+        className="mb-6"
+      />
       <h1 className="mb-6 font-display text-2xl text-ink-900">{t('title')}</h1>
       <AuthMethodTabs
         emailLabel={tPhone('emailTab')}
@@ -27,16 +38,7 @@ export default function SignUpPage({
         emailContent={<SignUpForm locale={params.locale} referralCode={referralCode} />}
         phoneContent={<PhoneNurserySignUpForm locale={params.locale} referralCode={referralCode} />}
       />
-      <p className="mt-4 text-center text-sm text-ink-500">
-        {t('familyPrompt')}{' '}
-        <Link
-          href={`/${params.locale}/family/sign-up${referralCode ? `?ref=${referralCode}` : ''}`}
-          className="font-medium text-lagoon-600"
-        >
-          {t('familyLink')}
-        </Link>
-      </p>
-      <p className="mt-2 text-center text-sm text-ink-500">
+      <p className="mt-6 text-center text-sm text-ink-500">
         {t('haveAccount')}{' '}
         <Link href={`/${params.locale}/sign-in`} className="font-medium text-lagoon-600">
           {t('signInInstead')}

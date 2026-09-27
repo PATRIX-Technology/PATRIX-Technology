@@ -1520,6 +1520,34 @@ same cascade to its page/story that `handleJobFailure()` already does
 (if attempts are exhausted). Applied directly to the live database and
 run once immediately, which reclaimed the 21 stuck jobs.
 
+## Arabic name is required, not a silent fallback
+
+**Decision: `createStoryAction` now refuses to create an Arabic story
+for a child with no `arabic_first_name` on file**, instead of silently
+falling back to their Latin name (`src/lib/actions/stories.ts`). The
+founder asked explicitly: Arabic stories MUST use the Arabic name,
+English stories MUST use the Latin name, no exceptions. The fallback
+was the exact mechanism that put "Hala" (a child's old Latin name)
+into several already-generated Arabic stories, mid-sentence in Arabic
+prose, before her Arabic name was ever added to her profile — a real
+instance found while investigating the Arabic gender-agreement bug.
+English story creation was never affected (it only ever reads
+`first_name`), so this only tightens the Arabic path. The error
+message names the child and says exactly what to do (e.g. "Hala needs
+an Arabic name on file before an Arabic story can be created").
+
+`regeneratePageAction`'s own best-effort text-refresh (added for the
+gender-agreement fix above) deliberately keeps its softer fallback
+rather than adopting this hard block — it's re-rendering an *existing*
+page, not creating a new story, and failing a regeneration outright
+over a still-missing Arabic name would be a worse outcome than
+leaving that one page's text unchanged. In practice this fallback
+should no longer trigger for real, since story creation itself now
+guarantees the Arabic name exists before any Arabic story — including
+this one child's own already-existing "Hala" stories, fixed
+retroactively the same way as the gender-agreement bug (see
+`docs/NEEDS_FROM_ME.md` if any founder action was needed).
+
 ## Not yet built (explicitly out of scope for this build session)
 
 - Vendor moderation integration for image safety checks

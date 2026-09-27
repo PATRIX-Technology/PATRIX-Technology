@@ -53,12 +53,18 @@ export async function createStoryAction(
 
   const template = StoryThemeTemplateSchema.parse(templateRow);
 
-  // An Arabic story reads oddly with a Latin name sitting mid-sentence
-  // ("...جلست بجانب Hala...") — use the Arabic spelling when one is on
-  // file for this child, falling back to the Latin first name otherwise.
-  // See docs/DECISIONS.md "Arabic name field for children".
-  const childName =
-    template.locale === 'ar' && child.arabic_first_name ? child.arabic_first_name : child.first_name;
+  // An Arabic story must use the child's Arabic name, never the Latin
+  // one sitting mid-sentence ("...جلست بجانب Hala...") — this used to
+  // silently fall back to the Latin name when none was on file, which
+  // is exactly how that happened for real; see docs/DECISIONS.md
+  // "Arabic name is required, not a silent fallback". Hard-block
+  // instead, so this can never happen again for any child.
+  if (template.locale === 'ar' && !child.arabic_first_name) {
+    return {
+      error: `${child.first_name} needs an Arabic name on file before an Arabic story can be created — add it on the child's profile first.`,
+    };
+  }
+  const childName = template.locale === 'ar' ? child.arabic_first_name : child.first_name;
 
   let story: { id: string };
   try {

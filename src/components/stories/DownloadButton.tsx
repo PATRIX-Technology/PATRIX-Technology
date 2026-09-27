@@ -53,8 +53,16 @@ export function DownloadButton({
       link.click();
       link.remove();
       URL.revokeObjectURL(blobUrl);
-    } catch {
-      showToast({ title: failedTitle, description: failedBody, tone: 'error' });
+    } catch (err) {
+      // A server-provided reason (a specific preflight issue, a real
+      // exception) is more useful than the generic fallback below, which
+      // only fires for network failures that never reached the server.
+      const serverReason = err instanceof Error ? err.message : '';
+      showToast({
+        title: failedTitle,
+        description: serverReason || failedBody,
+        tone: 'error',
+      });
     } finally {
       setLoading(false);
     }

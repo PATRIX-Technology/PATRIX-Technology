@@ -1844,6 +1844,34 @@ bot is never configured or a notification is missed — the database
 row this whole feature is built on was always the source of truth;
 this just makes it visible without SQL.
 
+## Invite link shares to WhatsApp/Telegram/Email in one tap
+
+Founder feedback, after noticing the invite link on the new page was
+just a plain copy-box: "I believe the much better that to click
+directly on it then will open for them the communications apps like
+whatsapp, email, messanger, telegram." `InviteLinkBox` now has a
+primary "Share invite" button that calls the Web Share API
+(`navigator.share({ title, text, url })`) — the browser hands off to
+the device's own native share sheet, showing whatever the person
+actually has installed (WhatsApp, Messenger, Telegram, Mail, SMS,
+AirDrop, etc.) with zero per-app integration code. This is exactly
+the "one tap, pick an app" flow asked for, and it's the only way to
+cover an arbitrary, per-device set of apps (including Messenger,
+which has no public web-share link that works without a registered
+Facebook App ID — not worth building given Web Share already covers
+it on any phone with Messenger installed).
+
+Web Share needs a real user gesture and HTTPS (both true for a button
+click on the deployed app) and isn't supported on every desktop
+browser (notably Firefox) — there, `handleShare()` falls back to
+copying the link instead of doing nothing. Alongside the Share button,
+three explicit direct links (WhatsApp, Telegram, Email — the tools the
+founder named) are always shown too via plain `wa.me` / `t.me/share` /
+`mailto:` URLs, so the option is visible immediately rather than
+hidden behind a share sheet that may not appear on every device. The
+plain "Copy link" button from the first version stays as the
+lowest-common-denominator fallback.
+
 ## Not yet built (explicitly out of scope for this build session)
 
 - Vendor moderation integration for image safety checks

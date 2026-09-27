@@ -244,7 +244,11 @@
     "yourStats": "Your stats",
     "pendingLabel": "Pending",
     "rewardedLabel": "Completed",
-    "storiesEarnedLabel": "Stories earned"
+    "storiesEarnedLabel": "Stories earned",
+    "shareButton": "Share invite",
+    "shareTitle": "Join me on Khayali",
+    "shareText": "Join me on Khayali and create a free personalised storybook for your child!",
+    "emailButton": "Email"
   },
   "common": {
     "loading": "Loading…",

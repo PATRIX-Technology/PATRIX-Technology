@@ -244,7 +244,11 @@
     "yourStats": "إحصائياتك",
     "pendingLabel": "قيد الانتظار",
     "rewardedLabel": "مكتملة",
-    "storiesEarnedLabel": "القصص المكتسبة"
+    "storiesEarnedLabel": "القصص المكتسبة",
+    "shareButton": "مشاركة الدعوة",
+    "shareTitle": "انضم إليّ في خيالي",
+    "shareText": "انضم إليّ في خيالي واصنع قصة مصوّرة مجانية ومخصصة لطفلك!",
+    "emailButton": "البريد الإلكتروني"
   },
   "common": {
     "loading": "جارٍ التحميل…",

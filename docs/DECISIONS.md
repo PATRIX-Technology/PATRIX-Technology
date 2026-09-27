@@ -2068,6 +2068,54 @@ worldwide" (en) and the equivalent Arabic. Marketing/pitch documents
 in `docs/` weren't touched — the founder's ask was specifically the
 landing page.
 
+## Fixed: signed-in users were losing their session and being forced to log in again
+
+Founder feedback: "Needs to save cookies when login as well not when
+close page to back login again." Cookies were never actually being
+cleared — the real bug is a classic Supabase + Next.js SSR footgun.
+Supabase's access token expires after an hour and is refreshed using a
+refresh token that **rotates on every use**: the moment a new refresh
+token is issued, the old one stops working. Server Components cannot
+set cookies at all (a hard Next.js platform constraint — see the
+`setAll` try/catch in `src/lib/supabase/server.ts`, which was already
+silently swallowing this), and almost every dashboard page is a Server
+Component calling `createSupabaseServerClient()`. So any time the SDK
+refreshed the session while rendering one of those pages, the rotated
+refresh token was computed in memory for that one request and then
+simply discarded — never written back into the browser's cookie. The
+next request replayed the now-dead old refresh token, Supabase's auth
+server rejected it outright, and the whole session became
+unrecoverable — not "expired", genuinely invalidated. That's why it
+looked like closing the tab was the trigger: it's really "however long
+it takes for one refresh to happen while browsing," which just
+happens to often land around the point someone comes back after a
+break.
+
+`src/lib/supabase/server.ts`'s own comment already named the intended
+fix ("middleware refreshes the session") but `src/middleware.ts` never
+actually did this — it only ran next-intl's locale routing. Middleware
+is the *only* place per request that can both read and rewrite cookies
+before any Server Component renders, so it's the one reliable place
+to keep the refresh in sync. Rewrote `src/middleware.ts` to run
+next-intl's middleware first (to get the response it wants to return —
+a locale redirect/rewrite or a plain pass-through), then create a
+Supabase server client bound to that same request/response, call
+`supabase.auth.getUser()` (which transparently refreshes if needed),
+and write any resulting Set-Cookie headers directly onto next-intl's
+response — so a locale redirect never drops a freshly rotated session.
+This is the officially documented Supabase Next.js SSR pattern,
+adapted to run alongside next-intl instead of replacing it.
+
+Verified: type-checks and lints clean; a fresh dev server still
+redirects `/` → `/en` correctly, still redirects an unauthenticated
+`/dashboard` visit to `/sign-in`, and the middleware itself never
+throws even when the Supabase auth call fails (this sandbox's network
+egress allowlist blocks the dev server's *own* outbound calls to the
+live Supabase project — same limitation hit earlier this session with
+`get_staff_invite_info` — so a full sign-in-then-reload round trip
+couldn't be exercised live here; the fix takes real effect once
+deployed, where that restriction doesn't apply).
+
 ## Not yet built (explicitly out of scope for this build session)
 
 - Vendor moderation integration for image safety checks

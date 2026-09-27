@@ -30,38 +30,31 @@ function blobToBase64(blob: Blob): Promise<string> {
  * on any site. Same-tab, not `window.open(..., '_blank')`: many mobile
  * browsers and in-app/WebView contexts (Capacitor's included) either
  * block a JS-initiated new tab outright or simply don't support opening
- * one at all, in which case `window.open` just does nothing —
- * confirmed on a real device, worse than the blob-URL fallback it
- * replaced. Same-tab navigation has no such requirement: when the
- * response really is `Content-Disposition: attachment`, the browser
- * intercepts it as a pure download and the current page never actually
- * changes — no popup blocker involved, and nothing to be unsupported.
- * The one tradeoff is the (rare) error case, where the response is a
- * plain JSON error with no attachment header and the tab genuinely
- * navigates to show it — recoverable via the dashboard's own corner
- * back button.
+ * one at all, in which case `window.open` just does nothing.
  */
 function downloadDirectly(href: string) {
   window.location.assign(href);
 }
 
 /**
- * Saves/shares an already-fetched file via the OS's native share sheet
- * where one is available — letting the person pick WhatsApp/Telegram/
- * Messenger/"Save to Files" from a single action — falling back to
- * downloadDirectly() (see above) wherever it isn't:
+ * Saves/shares an already-fetched file via the Capacitor native share
+ * sheet where one is available, falling back to downloadDirectly()
+ * (see above) everywhere else:
  *
- * 1. Inside the Capacitor-wrapped native app (Android/iOS), write the
- *    bytes to disk with @capacitor/filesystem and hand the real
- *    file:// path to @capacitor/share's native share sheet — an actual
- *    file, never a link of any kind.
- * 2. A mobile browser that supports the Web Share API's file payload
- *    (iOS Safari 15+, Android Chrome) gets the same real-file share
- *    sheet via `navigator.share({ files })`. Sharing actual `File`
- *    bytes this way is also what stops a bare, unopenable `blob:` URL
- *    (only valid inside the tab that created it) from ending up in
- *    WhatsApp/Telegram if the browser's own inline PDF viewer's Share
- *    button gets used instead of this one.
+ * Inside the Capacitor-wrapped native app (Android/iOS), write the
+ * bytes to disk with @capacitor/filesystem and hand the real file://
+ * path to @capacitor/share's native share sheet — a real OS API call,
+ * not a browser one.
+ *
+ * Deliberately NOT using the browser's own Web Share API
+ * (`navigator.share({ files })`) for this: it looked like the right
+ * tool (a real `File`, not a blob: link), but on a real iPhone its
+ * "Save to Files" option silently failed to save anything at all —
+ * this is a known, still-unreliable WebKit implementation of Web
+ * Share's file support, not something this app's own code can fix.
+ * downloadDirectly()'s plain navigation, relying on the server's own
+ * `Content-Disposition: attachment` header, is the one path that's
+ * actually held up across real desktop and mobile testing so far.
  */
 async function saveOrShareFile(blob: Blob, fileName: string, title: string, href: string): Promise<void> {
   if (Capacitor.isNativePlatform()) {
@@ -73,18 +66,6 @@ async function saveOrShareFile(blob: Blob, fileName: string, title: string, href
     } catch {
       downloadDirectly(href);
       return;
-    }
-  }
-
-  const file = new File([blob], fileName, { type: blob.type || 'application/pdf' });
-  if (typeof navigator !== 'undefined' && navigator.canShare?.({ files: [file] })) {
-    try {
-      await navigator.share({ title, files: [file] });
-      return;
-    } catch (err) {
-      // AbortError (the person cancelled the share sheet) is not a
-      // failure -- nothing more to do.
-      if (err instanceof Error && err.name === 'AbortError') return;
     }
   }
 
@@ -100,14 +81,11 @@ async function saveOrShareFile(blob: Blob, fileName: string, title: string, href
  *
  * That fetch-first approach is only worth its cost (an extra full
  * request, since this route re-renders the PDF/ZIP each call) when the
- * file bytes are actually needed for one of the share tiers above.
- * Otherwise — no Capacitor, no Web Share file support, which is most
- * desktop browsers and evidently some mobile ones too — it's skipped
+ * file bytes are actually needed — i.e. only inside the Capacitor
+ * native app. Every ordinary browser, mobile included, skips it
  * entirely in favour of downloadDirectly() straight away, fired
  * synchronously inside this click handler so it's never at risk of
- * losing "user activation" the way an async fetch-then-share sequence
- * can (some browsers silently refuse navigator.share() once that
- * window has passed).
+ * losing "user activation".
  */
 export function DownloadButton({
   href,
@@ -126,12 +104,7 @@ export function DownloadButton({
   const [loading, setLoading] = useState(false);
 
   async function handleClick() {
-    const probeFile = new File([], fallbackFileName, { type: 'application/pdf' });
-    const canUseFileShare =
-      Capacitor.isNativePlatform() ||
-      (typeof navigator !== 'undefined' && navigator.canShare?.({ files: [probeFile] }));
-
-    if (!canUseFileShare) {
+    if (!Capacitor.isNativePlatform()) {
       downloadDirectly(href);
       return;
     }

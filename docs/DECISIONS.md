@@ -2343,6 +2343,42 @@ fix and still correct; `window.location.assign` itself is a standard
 platform primitive, not something this app invented, so no further
 verification of the navigation mechanism itself was needed.
 
+## Dropped the Web Share files tier — iOS Safari's "Save to Files" from it just silently failed
+
+Founder feedback on a real iPhone, tested right after the previous
+fix: the PDF now opened, but choosing "Save to Files" from the share
+sheet that came up didn't save anything at all — confirmed (asked
+directly): nothing landed in Files > Downloads either. Not a UX
+surprise this time, a genuine save failure.
+
+That share sheet was `navigator.share({ files: [file] })` — the
+browser-side tier from two fixes ago, meant to hand WhatsApp/Telegram/
+"Save to Files" a real `File` object instead of a blob link. In
+hindsight this was the wrong bet for reliability: iOS Safari's Web
+Share Level 2 *file* support is still genuinely flaky across iOS
+versions — "share sheet opens, Save to Files silently does nothing"
+is a known, documented WebKit issue, not something fixable from this
+app's own code. Two fixes in a row have now failed specifically
+inside this "try to be clever about mobile file sharing" tier
+(`window.open` for a new tab, then `navigator.share` for files),
+while the plain `downloadDirectly()` fallback — a same-tab navigation
+that lets the server's own `Content-Disposition: attachment` header
+do the work — has held up in every real test so far.
+
+Removed the browser-side Web Share tier entirely. Every non-native
+browser, mobile included, now always uses `downloadDirectly()`
+straight away, with no `fetch()` first (nothing left that needs the
+file bytes client-side outside Capacitor). The Capacitor-native tier
+is untouched — it writes bytes with `@capacitor/filesystem` and calls
+`@capacitor/share`'s *native OS* share API directly, which is a
+genuinely different, more controlled mechanism than the browser's
+Web Share API and isn't implicated in this bug. Once a file is
+actually saved via `downloadDirectly()`, sharing it to WhatsApp/
+Telegram from Files/Downloads afterward works the same as sharing any
+other real file — this app just no longer tries to shortcut that
+into one JS-triggered action on the web, since that shortcut was the
+thing breaking.
+
 ## Not yet built (explicitly out of scope for this build session)
 
 - Vendor moderation integration for image safety checks

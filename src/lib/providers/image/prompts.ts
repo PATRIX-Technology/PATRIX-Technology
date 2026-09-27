@@ -74,13 +74,18 @@ export function buildIllustrationPrompt(input: IllustrationPromptInput): string 
         'banner across the bottom of the frame (covering roughly the bottom 15-20%): right-to-left, ' +
         'correctly joined Arabic calligraphy, perfectly legible, like real printed book typography. ' +
         `The caption text is: "${input.captionText}". ` +
-        'Reproduce it exactly, word for word — do not paraphrase, translate, shorten, or add to it.',
+        'Reproduce it exactly, word for word, in plain undiacritized script exactly as given — do ' +
+        'NOT add tashkeel or harakat (fatha, damma, kasra, shadda, tanwin, or any vowel marks), and ' +
+        'do not paraphrase, translate, shorten, or add to it. Do not render any other text, letters, ' +
+        'words, numbers, logos, or writing anywhere else in the image — no signs, labels, book covers, ' +
+        'clothing text, or watermarks — only this one caption band.',
     );
   } else {
     parts.push(
-      'Absolutely no text, letters, words, or writing anywhere in the image — the caption is added ' +
-        'separately afterwards. Leave the very top and very bottom 15% of the frame free of important ' +
-        'detail for that text overlay.',
+      'Absolutely no text, letters, words, numbers, logos, or writing anywhere in the image — no ' +
+        'signs, labels, book covers, clothing text, or watermarks. The caption is added separately ' +
+        'afterwards; the illustration itself must be text-free. Leave the very top and very bottom ' +
+        '15% of the frame free of important detail for that text overlay.',
     );
   }
 

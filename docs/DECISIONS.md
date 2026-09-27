@@ -1609,6 +1609,30 @@ Left the owner-only admin page's raw theme_key alone (
 management list showing which specific template needs native review,
 not a title a nursery or family ever sees.
 
+## No diacritics and no stray text in the Gemini-baked Arabic caption
+
+Founder feedback: Gemini was adding tashkeel/harakat (fatha, damma,
+kasra, shadda, tanwin — Arabic vowel marks) to the caption it bakes
+into Arabic illustrations, and was liable to add other stray text on
+objects in the scene (the reported example: a "test"-like word showing
+up somewhere in the image) that has nothing to do with the child, the
+words, or the story. Neither behaviour was explicitly forbidden in
+`buildIllustrationPrompt()` (`src/lib/providers/image/prompts.ts`) —
+the prompt asked for "real printed book typography" (which, for a
+children's book, plausibly reads to the model as "add the vowel marks
+early readers use") and only forbade extra text for English pages, not
+Arabic ones. Fixed by explicitly telling Gemini, for every locale: (1)
+reproduce the caption in plain undiacritized script exactly as given,
+with tashkeel/harakat explicitly named and forbidden; (2) render no
+other text, letters, numbers, logos, or writing anywhere else in the
+image — no signs, labels, book covers, clothing text, or watermarks —
+for both Arabic (beyond the one caption band) and English (which
+already forbade a caption, but not incidental object text). This is a
+prompt-only change — Gemini can still ignore instructions on any given
+generation, so it reduces rather than guarantees against both failure
+modes; there's no code-side way to verify or strip diacritics or stray
+text from an already-generated raster image.
+
 ## PDF download crashing for every Arabic-named child
 
 Reported live: "not able to download pdf" on an otherwise fully

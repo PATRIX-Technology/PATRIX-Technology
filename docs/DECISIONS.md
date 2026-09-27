@@ -1548,6 +1548,32 @@ this one child's own already-existing "Hala" stories, fixed
 retroactively the same way as the gender-agreement bug (see
 `docs/NEEDS_FROM_ME.md` if any founder action was needed).
 
+## Reclaim must not burn a job's retry attempts
+
+**Found live, while actually draining the backlog rather than just
+building the reclaim mechanism**: `reclaim_stale_story_jobs()`
+(migration 0020) incremented `attempts` on every reclaim, on the
+reasoning that eventually a truly broken job should stop retrying
+forever. In practice, under a real backlog, a job can get claimed
+right before one 60-second batch's Vercel limit, get orphaned,
+reclaimed, claimed again right before the *next* batch's limit, and
+so on — burning through all 4 attempts purely from unlucky timing,
+with `max_attempts` reached before the job ever got a real chance to
+actually run to completion. Confirmed live: exactly this happened to
+one page, permanently `FAILED` with no real generation error behind
+it at all.
+
+**Fix** (migration `0021_reclaim_should_not_burn_attempts.sql`):
+reclaim now only resets `status`/`claimed_at`/`next_retry_at` and
+leaves `attempts` untouched. Being orphaned by an infrastructure
+timeout is not the job's fault, so it no longer costs a retry — only
+a real failure inside `generatePageImage()` itself (handled by
+`handleJobFailure()`, unrelated to reclaim) can now exhaust a job's
+attempts and mark it permanently `FAILED`. A job keeps getting
+reclaimed and retried until it actually runs, for real, at least
+once. Applied live and manually re-queued the one page this had
+already wrongly failed.
+
 ## Not yet built (explicitly out of scope for this build session)
 
 - Vendor moderation integration for image safety checks

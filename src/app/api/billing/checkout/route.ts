@@ -83,8 +83,12 @@ export async function POST(request: Request) {
     client_reference_id: context.tenantId,
     metadata: { tenant_id: context.tenantId, plan_id: plan.id },
     subscription_data: { metadata: { tenant_id: context.tenantId, plan_id: plan.id } },
-    success_url: `${appUrl}/en/dashboard/settings?billing=success`,
-    cancel_url: `${appUrl}/en/dashboard/settings?billing=cancelled`,
+    // Billing lives on its own dashboard tab now, not inside Settings --
+    // see docs/DECISIONS.md "Billing moved out of Settings into its own
+    // tab". Found this pointing at the old /settings path while adding
+    // USD pricing; fixed as part of the same pass.
+    success_url: `${appUrl}/en/dashboard/billing?billing=success`,
+    cancel_url: `${appUrl}/en/dashboard/billing?billing=cancelled`,
   });
 
   return NextResponse.json({ url: session.url });

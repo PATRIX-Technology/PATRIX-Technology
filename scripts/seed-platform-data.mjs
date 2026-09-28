@@ -60,6 +60,49 @@ const plans = [
     seats_included: 50,
     audience: 'nursery',
   },
+  // USD twins of the three AED nursery tiers above, for a nursery outside
+  // the UAE -- see docs/DECISIONS.md "USD pricing for nursery plans".
+  // Same key prefix + `_usd` suffix as the AED row, same
+  // stories_per_month/seats_included, converted from the AED price at
+  // the UAE's pegged rate (~3.6725 AED/USD) and rounded to a clean
+  // number rather than kept as an odd converted decimal -- a provisional
+  // number, not a researched international price point; flagged for the
+  // founder to revisit once real market/competitor pricing is looked
+  // into. Annual price applies the same ~20% discount the AED tiers
+  // already use.
+  {
+    key: 'starter_usd',
+    name: 'Starter',
+    price_monthly_cents: 13500,
+    price_annual_cents: 129900,
+    currency: 'USD',
+    vat_inclusive: true,
+    stories_per_month: 25,
+    seats_included: 3,
+    audience: 'nursery',
+  },
+  {
+    key: 'growth_usd',
+    name: 'Growth',
+    price_monthly_cents: 34900,
+    price_annual_cents: 334900,
+    currency: 'USD',
+    vat_inclusive: true,
+    stories_per_month: 100,
+    seats_included: 10,
+    audience: 'nursery',
+  },
+  {
+    key: 'network_usd',
+    name: 'Network',
+    price_monthly_cents: 94900,
+    price_annual_cents: 910900,
+    currency: 'USD',
+    vat_inclusive: true,
+    stories_per_month: 500,
+    seats_included: 50,
+    audience: 'nursery',
+  },
   {
     key: 'family',
     name: 'Family',

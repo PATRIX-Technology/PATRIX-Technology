@@ -2949,6 +2949,61 @@ key resolved. Also wrote a small script cross-checking every
 touched files against the actual `en.json` structure, to catch a typo'd
 key path before it could ship as a silent runtime fallback.
 
+## USD pricing for nursery plans
+
+Founder request: "keep in mind to have the prices also for subscriptions
+in USD not only AED to be globally as well."
+
+Nursery plans (Starter/Growth/Network) only ever existed priced in AED;
+family plans were already USD-only (see "Family monthly subscription
+plans"). Rather than add a currency dimension to the schema, followed
+the pattern the family plans already established: a separate `plans`
+row per currency, sharing the same `stories_per_month`/`seats_included`
+as its AED counterpart. Added `starter_usd`/`growth_usd`/`network_usd`
+(same `audience: 'nursery'`, `currency: 'USD'`) to
+`scripts/seed-platform-data.mjs` and upserted the matching rows into
+the live project directly — confirmed live afterward (8 total plan
+rows: 3 AED + 3 USD nursery, 2 USD family). This needed no schema
+migration and no change to `planIsAvailableForTenant` (audience-only
+check, currency-blind already) or the checkout route
+(`stripe.checkout.sessions.create` already looks a plan up by its
+unique `key`, and `starter`/`starter_usd` are already different keys —
+currency was never actually threaded through checkout logic at all).
+
+USD prices are a straightforward AED→USD conversion at the UAE's
+pegged rate (~3.6725), rounded to a clean number, with the same ~20%
+annual-vs-monthly discount the AED tiers already use — a provisional
+placeholder to unblock a global signup, not researched international
+pricing; flagged in `docs/en/pricing.md` for the founder to revisit
+once there's real market/competitor data. `vat_inclusive` stayed `true`
+on the new USD rows, matching the existing (already-USD) family plans'
+precedent rather than inventing a new "USD means no VAT" rule in code —
+whether VAT actually applies to a USD sale to a non-UAE nursery is an
+accountant/merchant-of-record question, not something to guess at in a
+seed script (same posture as the pre-existing VAT-inclusive flag
+itself, per `docs/NEEDS_FROM_ME.md`).
+
+`BillingSection.tsx` now shows a currency toggle (same pill pattern as
+the existing monthly/annual one) whenever a tenant's `plans` span more
+than one currency — true for nursery now, still false for family, so a
+family tenant's UI is pixel-identical to before, no toggle appears for
+a single-currency audience. Defaults to whatever currency the tenant is
+already subscribed in (so switching currency can never make an existing
+subscriber's own plan disappear from view), else AED as this business's
+home-market currency.
+
+**Found and fixed two stale redirects while in here**: the Stripe
+checkout success/cancel URLs and the billing-portal return URL both
+still pointed at `/dashboard/settings`, left over from moving the
+billing card to its own `/dashboard/billing` tab earlier in this
+session (see "Billing moved out of Settings into its own tab") — that
+change updated the in-app nav link but missed these two server-side
+redirect targets. Fixed both. Low real-world impact today since Stripe
+has no live keys/Price IDs configured yet (see `docs/NEEDS_FROM_ME.md`
+item 6 — nothing has ever actually redirected through either path for
+real), but would have sent a real subscriber back to the wrong tab the
+moment Stripe goes live.
+
 ## Not yet built (explicitly out of scope for this build session)
 
 - Vendor moderation integration for image safety checks

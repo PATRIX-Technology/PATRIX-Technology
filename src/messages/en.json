@@ -143,7 +143,8 @@
       "storiesPerMonth": "{count} stories/month",
       "currentPlan": "Current plan",
       "subscribe": "Subscribe",
-      "couponLabel": "Coupon code (optional)"
+      "couponLabel": "Coupon code (optional)",
+      "currencyLabel": "Currency"
     }
   },
   "children": {

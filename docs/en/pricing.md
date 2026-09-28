@@ -124,9 +124,30 @@ match its own type, and the checkout route rejects a cross-type
 purchase server-side (`planIsAvailableForTenant` in
 `src/lib/domain/billing.ts`) even if the UI were bypassed.
 
-Gift packs and family plans are priced in USD, nursery plans in AED —
-worth aligning to one currency once a merchant-of-record setup is
-chosen; not urgent before launch.
+Gift packs and family plans are priced in USD; nursery plans now have
+both an AED row and a USD row per tier (`starter`/`starter_usd`,
+`growth`/`growth_usd`, `network`/`network_usd`) so a nursery outside
+the UAE can subscribe in USD — the dashboard billing tab shows a
+currency toggle whenever more than one currency exists for that
+tenant's audience, defaulting to whatever currency an existing
+subscriber is already on, else AED. The USD nursery prices below are a
+straightforward AED→USD conversion at the UAE's pegged rate, rounded
+to a clean number — a provisional placeholder, not researched
+international pricing, worth revisiting once there's real
+market/competitor data for nurseries outside the UAE:
+
+| Tier | AED/mo | USD/mo | AED/yr | USD/yr |
+|---|---|---|---|---|
+| Starter | 499 | 135 | 4,790 | 1,299 |
+| Growth | 1,299 | 349 | 12,490 | 3,349 |
+| Network | 3,499 | 949 | 33,490 | 9,109 |
+
+Still worth resolving once a merchant-of-record setup is chosen: which
+entity is actually the seller of record for a USD sale to a nursery
+outside the UAE (affects VAT applicability — see the VAT-inclusive
+note above, currently left `true` on the USD rows too, matching how
+the existing USD family plans were already set, pending an accountant's
+read on this rather than a guess made in code).
 
 ## Sizing the Gemini spend cap
 

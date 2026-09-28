@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
@@ -21,6 +21,22 @@ export function BillingSection({
   const [couponCode, setCouponCode] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [billingInterval, setBillingInterval] = useState<BillingInterval>('monthly');
+
+  // `plans` can carry more than one currency for the same audience now
+  // (nursery tiers exist in both AED and USD -- see docs/DECISIONS.md
+  // "USD pricing for nursery plans"); a family tenant's plans are still
+  // USD-only, so this stays a single currency there with no toggle shown,
+  // unchanged from before. Default to whichever currency the tenant is
+  // already subscribed in, so switching currency is never how an
+  // existing subscriber's own plan disappears from view; otherwise AED
+  // as this business's home-market currency, falling back to whatever's
+  // actually available if AED isn't offered for this audience.
+  const availableCurrencies = useMemo(() => Array.from(new Set(plans.map((p) => p.currency))), [plans]);
+  const subscribedCurrency = plans.find((p) => p.id === subscription?.plan_id)?.currency;
+  const [currency, setCurrency] = useState<string>(
+    () => subscribedCurrency ?? (availableCurrencies.includes('AED') ? 'AED' : (availableCurrencies[0] ?? 'AED')),
+  );
+  const visiblePlans = plans.filter((p) => p.currency === currency);
 
   async function subscribe(planKey: string) {
     setLoadingPlanKey(planKey);
@@ -63,28 +79,52 @@ export function BillingSection({
         </div>
       )}
 
-      <div
-        className="inline-flex rounded-xl border border-[rgb(var(--color-border))] p-1"
-        role="group"
-        aria-label={t('intervalLabel')}
-      >
-        {(['monthly', 'annual'] as const).map((interval) => (
-          <button
-            key={interval}
-            type="button"
-            onClick={() => setBillingInterval(interval)}
-            aria-pressed={billingInterval === interval}
-            className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
-              billingInterval === interval ? 'bg-lagoon-600 text-white' : 'text-ink-600 hover:bg-ink-100'
-            }`}
+      <div className="flex flex-wrap items-center gap-3">
+        <div
+          className="inline-flex rounded-xl border border-[rgb(var(--color-border))] p-1"
+          role="group"
+          aria-label={t('intervalLabel')}
+        >
+          {(['monthly', 'annual'] as const).map((interval) => (
+            <button
+              key={interval}
+              type="button"
+              onClick={() => setBillingInterval(interval)}
+              aria-pressed={billingInterval === interval}
+              className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
+                billingInterval === interval ? 'bg-lagoon-600 text-white' : 'text-ink-600 hover:bg-ink-100'
+              }`}
+            >
+              {intervalLabel[interval]}
+            </button>
+          ))}
+        </div>
+
+        {availableCurrencies.length > 1 && (
+          <div
+            className="inline-flex rounded-xl border border-[rgb(var(--color-border))] p-1"
+            role="group"
+            aria-label={t('currencyLabel')}
           >
-            {intervalLabel[interval]}
-          </button>
-        ))}
+            {availableCurrencies.map((c) => (
+              <button
+                key={c}
+                type="button"
+                onClick={() => setCurrency(c)}
+                aria-pressed={currency === c}
+                className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
+                  currency === c ? 'bg-lagoon-600 text-white' : 'text-ink-600 hover:bg-ink-100'
+                }`}
+              >
+                {c}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       <div className="grid gap-4 sm:grid-cols-3">
-        {plans.map((plan) => {
+        {visiblePlans.map((plan) => {
           const priceCents = billingInterval === 'annual' ? plan.price_annual_cents : plan.price_monthly_cents;
           const savings = annualSavingsPercent(plan);
           return (

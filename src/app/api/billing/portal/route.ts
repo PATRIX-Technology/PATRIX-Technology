@@ -35,7 +35,11 @@ export async function GET() {
   const stripe = getStripeClient();
   const portalSession = await stripe.billingPortal.sessions.create({
     customer: subscription.stripe_customer_id,
-    return_url: `${appUrl}/en/dashboard/settings`,
+    // Billing lives on its own dashboard tab now, not inside Settings --
+    // see docs/DECISIONS.md "Billing moved out of Settings into its own
+    // tab". Found this pointing at the old /settings path too, same pass
+    // as the checkout route's success/cancel URLs.
+    return_url: `${appUrl}/en/dashboard/billing`,
   });
 
   return NextResponse.redirect(portalSession.url);

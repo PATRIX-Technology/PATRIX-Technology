@@ -404,6 +404,10 @@
       "descriptionRecommended": "Use an authenticator app (Google Authenticator, 1Password, Authy, etc.) to add a second step to signing in.",
       "descriptionMandatory": "Platform owner accounts require an authenticator app (Google Authenticator, 1Password, Authy, etc.) before accessing the owner dashboard.",
       "startSetup": "Start setup",
+      "scanHint": "Open your authenticator app and use its own \"scan QR code\" option — not your phone's regular camera app, which won't know what to do with it.",
+      "cantScan": "Can't scan it? Enter this key manually in your app instead:",
+      "copyKey": "Copy key",
+      "copied": "Copied!",
       "codeLabel": "Enter the 6-digit code from your app",
       "verifyAndEnable": "Verify and enable"
     },

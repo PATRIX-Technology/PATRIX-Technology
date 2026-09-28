@@ -32,10 +32,12 @@ export function MfaEnrollForm({
 
   const [step, setStep] = useState<Step>('start');
   const [qrCode, setQrCode] = useState<string | null>(null);
+  const [secret, setSecret] = useState<string | null>(null);
   const [factorId, setFactorId] = useState<string | null>(null);
   const [code, setCode] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [justCopied, setJustCopied] = useState(false);
 
   async function startEnrollment() {
     setError(null);
@@ -46,8 +48,22 @@ export function MfaEnrollForm({
       return;
     }
     setQrCode(data.totp.qr_code);
+    setSecret(data.totp.secret);
     setFactorId(data.id);
     setStep('scan');
+  }
+
+  async function copySecret() {
+    if (!secret) return;
+    try {
+      await navigator.clipboard.writeText(secret);
+      setJustCopied(true);
+      setTimeout(() => setJustCopied(false), 2000);
+    } catch {
+      // Clipboard access can be denied (older browsers, some app webviews) —
+      // the secret is already shown as selectable text, so the user can
+      // still select-and-copy it manually.
+    }
   }
 
   async function verifyCode(event: React.FormEvent) {
@@ -90,6 +106,26 @@ export function MfaEnrollForm({
         <form onSubmit={verifyCode} className="flex flex-col gap-4">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={qrCode} alt="Scan this QR code with your authenticator app" className="h-48 w-48 self-center" />
+          <p className="text-center text-xs text-ink-500">{t('scanHint')}</p>
+
+          {secret && (
+            <div className="flex flex-col gap-2 rounded-lg border border-[rgb(var(--color-border))] p-3">
+              <p className="text-xs text-ink-500">{t('cantScan')}</p>
+              <div className="flex items-center gap-2">
+                <code className="flex-1 select-all break-all rounded bg-[rgb(var(--color-surface))] px-2 py-1.5 text-sm tracking-wider text-ink-800">
+                  {secret}
+                </code>
+                <button
+                  type="button"
+                  onClick={copySecret}
+                  className="focus-ring shrink-0 rounded-lg border border-[rgb(var(--color-border))] px-2.5 py-1.5 text-xs font-medium text-ink-700 hover:bg-ink-100"
+                >
+                  {justCopied ? t('copied') : t('copyKey')}
+                </button>
+              </div>
+            </div>
+          )}
+
           <label htmlFor="mfa-code" className="text-sm font-medium text-ink-700">
             {t('codeLabel')}
           </label>

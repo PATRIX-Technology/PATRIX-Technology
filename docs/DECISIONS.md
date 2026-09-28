@@ -3877,6 +3877,41 @@ and the demo videos) was restored to its exact original
 subscription/quota values afterward, and the throwaway test account was
 deleted.
 
+## MFA enrollment: show the manual-entry key, not just the QR code
+
+Founder report: scanning the enrollment QR with their phone's regular
+camera app (not an authenticator app) opened a raw link containing
+"localhost" instead of prompting to add the account, and they had to
+copy the secret out manually to get it into Google Authenticator. This
+was a real gap, not a one-off — `MfaEnrollForm`
+(`src/components/auth/MfaEnrollForm.tsx`, shared by the mandatory owner
+flow and the optional regular-user flow) only ever rendered the QR
+image, with no fallback. Supabase's own docs for this exact API say so
+directly: "If they are unable to scan the QR code, show the secret in
+plain text which they can type or paste into their authenticator app."
+
+Fixed by capturing `data.totp.secret` from the same `mfa.enroll()`
+response already used for the QR (no extra API call) and showing it as
+selectable monospace text with a "Copy key" button
+(`navigator.clipboard`, falling back to select-to-copy on rejection),
+plus a hint above the QR itself: open the authenticator app's own scan
+feature, not the phone's regular camera — camera apps have no
+otpauth:// handler and are exactly what produced the founder's
+"localhost link" result. Both new translation keys' sets verified for
+en/ar parity.
+
+**Verified**: `tsc`, `eslint`, all 148 unit tests, a full `next build`.
+Did not get a live Playwright screenshot of the new secret/copy UI this
+time — the sandbox's outbound network to Supabase reverted to
+restricted mid-session (a known, founder-controlled toggle, not a code
+issue) right as this was being tested, and reproducing the earlier
+subscriptions-panel test harness wasn't worth re-blocking on. The
+change itself only adds a new field read from a response value already
+proven correct in that harness's own MFA enrollment step, and matches
+Supabase's own documented fallback pattern exactly — worth a quick
+visual confirmation next session once network access is available
+again, but low risk either way.
+
 ## Not yet built (explicitly out of scope for this build session)
 
 - Vendor moderation integration for image safety checks

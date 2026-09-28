@@ -2480,6 +2480,52 @@ on the regenerate button itself
 double-clicked while a request is in flight — a UX nicety only; the
 server-side limit above is the actual enforcement.
 
+## Cap manual page regeneration per page and block it after approval
+
+Follow-up founder feedback after the rate limit above: "I don't think
+regenerate is a good thing right? it's costly." Regeneration itself
+stays — without it a single bad AI illustration would permanently
+block a story from ever being approved, since there was no other way
+to fix one page before approving. But two real gaps in the existing
+10-per-10-minutes rate limit remained: it only slows a burst of
+clicks, not a page regenerated many times across a longer session;
+and the button stayed clickable even after a story was already
+`APPROVED`, where a further regenerate buys nothing (the story is
+already finalized and downloadable) but still costs a real Gemini
+call.
+
+Added `story_pages.regenerate_count`
+(`supabase/migrations/0026_regenerate_caps.sql`) — a dedicated,
+never-reset counter, deliberately separate from the pre-existing
+`story_pages.attempts` column, which the worker owns for its own
+automatic retry/backoff on genuine generation failures (see
+`src/lib/jobs/worker.ts`) and which `regeneratePageAction` already
+resets to 0 on every manual regenerate. Reusing `attempts` for a
+human-click counter would have meant an automatic worker retry
+silently eating into a human's limit, or a manual regenerate silently
+resetting it — so the two stay independent: `attempts` for the
+worker's own retries, `regenerate_count` for what a human has
+deliberately clicked.
+
+`regeneratePageAction` (`src/lib/actions/stories.ts`) now: (1) rejects
+with a clear message if the story's `status` is already `APPROVED`;
+(2) rejects once a page's `regenerate_count` reaches
+`MAX_MANUAL_REGENERATIONS_PER_PAGE` (3), pointing the user to contact
+support for a manual fix if a page is still genuinely stuck; (3)
+increments `regenerate_count` on every successful regenerate. The cap
+lives in `src/lib/domain/stories.ts` (a plain module, not a `'use
+server'` action file, so it can export a constant reused by both the
+enforcing action and the UI) rather than duplicated as a magic number
+in two places.
+
+The story detail page
+(`src/app/[locale]/(dashboard)/dashboard/stories/[storyId]/page.tsx`)
+now hides the regenerate button entirely once a story is `APPROVED`,
+and otherwise shows how many regenerations a page has left, so the
+limit isn't a surprise the user only discovers after clicking — the
+server-side checks above are still the actual enforcement, this is
+just not making the user find the wall by hitting it blind.
+
 ## Not yet built (explicitly out of scope for this build session)
 
 - Vendor moderation integration for image safety checks

@@ -4,7 +4,12 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { getCurrentTenantContext } from '@/lib/domain/session';
-import { createStory, ConsentRequiredError, QuotaExceededError } from '@/lib/domain/stories';
+import {
+  createStory,
+  ConsentRequiredError,
+  QuotaExceededError,
+  MAX_MANUAL_REGENERATIONS_PER_PAGE,
+} from '@/lib/domain/stories';
 import { renderTemplate, StoryThemeTemplateSchema } from '@/lib/domain/templates';
 import { parseAvatarConfig } from '@/lib/domain/avatar';
 import { enforceRateLimit, RateLimitExceededError } from '@/lib/rate-limit';
@@ -133,13 +138,6 @@ export async function regeneratePageAction(locale: string, storyId: string, page
   const context = await getCurrentTenantContext(supabase);
   if (!context) return { error: 'Not signed in.' };
 
-  try {
-    await enforceRateLimit(`regenerate:${context.userId}`, REGENERATE_RATE_LIMIT.limit, REGENERATE_RATE_LIMIT.windowMs);
-  } catch (error) {
-    if (error instanceof RateLimitExceededError) return { error: error.message };
-    throw error;
-  }
-
   // Re-render this page's caption text from the live template before
   // regenerating its image, rather than reusing whatever text was
   // stored at the story's original creation time. Templates get fixed
@@ -150,43 +148,63 @@ export async function regeneratePageAction(locale: string, storyId: string, page
   // with the existing text rather than blocking the whole action.
   const { data: page } = await supabase
     .from('story_pages')
-    .select('page_number, text')
+    .select('page_number, text, regenerate_count')
     .eq('id', pageId)
     .eq('story_id', storyId)
     .maybeSingle();
   const { data: story } = await supabase
     .from('stories')
-    .select('theme_key, locale, pronoun_snapshot, tenant_id, child_id')
+    .select('theme_key, locale, pronoun_snapshot, tenant_id, child_id, status')
     .eq('id', storyId)
     .maybeSingle();
+  if (!page || !story) return { error: 'Page not found.' };
+
+  // A story is finalized once approved -- see docs/DECISIONS.md "Cap
+  // manual page regeneration per page and block it after approval". The
+  // button is already hidden once a story reaches this status; this is
+  // the defense-in-depth check for a stale page or cached form.
+  if (story.status === 'APPROVED') {
+    return { error: 'This story has already been approved and can no longer be regenerated.' };
+  }
+
+  if (page.regenerate_count >= MAX_MANUAL_REGENERATIONS_PER_PAGE) {
+    return {
+      error: `This page has already been regenerated ${MAX_MANUAL_REGENERATIONS_PER_PAGE} times, the limit per page. Contact support if it still needs fixing.`,
+    };
+  }
+
+  try {
+    await enforceRateLimit(`regenerate:${context.userId}`, REGENERATE_RATE_LIMIT.limit, REGENERATE_RATE_LIMIT.windowMs);
+  } catch (error) {
+    if (error instanceof RateLimitExceededError) return { error: error.message };
+    throw error;
+  }
 
   let refreshedText: string | undefined;
-  if (page && story) {
-    const [{ data: templateRow }, { data: child }, { data: tenant }] = await Promise.all([
-      supabase
-        .from('story_theme_templates')
-        .select('*')
-        .eq('theme_key', story.theme_key)
-        .eq('locale', story.locale)
-        .maybeSingle(),
-      supabase.from('children').select('first_name, arabic_first_name').eq('id', story.child_id).maybeSingle(),
-      supabase.from('tenants').select('name').eq('id', story.tenant_id).maybeSingle(),
-    ]);
-    if (templateRow && child) {
-      try {
-        const template = StoryThemeTemplateSchema.parse(templateRow);
-        const childName =
-          story.locale === 'ar' && child.arabic_first_name ? child.arabic_first_name : child.first_name;
-        const rendered = renderTemplate(template, {
-          childName,
-          pronoun: story.pronoun_snapshot ?? 'they',
-          organisation: tenant?.name ?? context.tenantName,
-        });
-        refreshedText = rendered.find((p) => p.order === page.page_number)?.text;
-      } catch {
-        // Template failed validation/rendering — regenerate with the
-        // existing text rather than blocking the user's request.
-      }
+  const [{ data: templateRow }, { data: child }, { data: tenant }] = await Promise.all([
+    supabase
+      .from('story_theme_templates')
+      .select('*')
+      .eq('theme_key', story.theme_key)
+      .eq('locale', story.locale)
+      .maybeSingle(),
+    supabase.from('children').select('first_name, arabic_first_name').eq('id', story.child_id).maybeSingle(),
+    supabase.from('tenants').select('name').eq('id', story.tenant_id).maybeSingle(),
+  ]);
+  if (templateRow && child) {
+    try {
+      const template = StoryThemeTemplateSchema.parse(templateRow);
+      const childName =
+        story.locale === 'ar' && child.arabic_first_name ? child.arabic_first_name : child.first_name;
+      const rendered = renderTemplate(template, {
+        childName,
+        pronoun: story.pronoun_snapshot ?? 'they',
+        organisation: tenant?.name ?? context.tenantName,
+      });
+      refreshedText = rendered.find((p) => p.order === page.page_number)?.text;
+    } catch {
+      // Template failed validation/rendering — regenerate with the
+      // existing text rather than blocking the user's request.
     }
   }
 
@@ -195,6 +213,7 @@ export async function regeneratePageAction(locale: string, storyId: string, page
     .update({
       image_status: 'QUEUED',
       attempts: 0,
+      regenerate_count: page.regenerate_count + 1,
       last_error: null,
       ...(refreshedText ? { text: refreshedText } : {}),
     })

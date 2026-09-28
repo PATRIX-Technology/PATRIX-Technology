@@ -2,6 +2,15 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { renderTemplate, type StoryThemeTemplate } from './templates';
 import type { AppLocale, AvatarConfig, Pronoun } from '@/types/database';
 
+/** How many times a human can manually click "regenerate this page" for
+ * any one page — each click is a real, paid Gemini image call. Shared
+ * between the enforcing Server Action (regeneratePageAction) and the
+ * story detail page, which uses it to grey out the button once a page
+ * hits the limit rather than only finding out after clicking. See
+ * docs/DECISIONS.md "Cap manual page regeneration per page and block it
+ * after approval". */
+export const MAX_MANUAL_REGENERATIONS_PER_PAGE = 3;
+
 export class QuotaExceededError extends Error {
   constructor() {
     super('This organisation has used all the stories included in its current plan period.');

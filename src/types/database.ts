@@ -182,6 +182,7 @@ export interface StoryPage {
   provider: string | null;
   cost_usd: number;
   attempts: number;
+  regenerate_count: number;
   last_error: string | null;
   created_at: string;
   updated_at: string;

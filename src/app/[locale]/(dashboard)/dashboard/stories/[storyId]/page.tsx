@@ -5,6 +5,7 @@ import { createSupabaseServiceRoleClient } from '@/lib/supabase/service-role';
 import { getCurrentTenantContext } from '@/lib/domain/session';
 import { getSignedAssetUrls } from '@/lib/domain/storage';
 import { runWorkerOnce } from '@/lib/jobs/worker';
+import { MAX_MANUAL_REGENERATIONS_PER_PAGE } from '@/lib/domain/stories';
 import { Card, CardTitle } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { ApprovalActions } from '@/components/stories/ApprovalActions';
@@ -155,9 +156,16 @@ export default async function StoryDetailPage({
                 {page.image_status}
               </Badge>
               {page.last_error && <p className="mt-2 text-xs text-coral-600">{page.last_error}</p>}
-              <div className="mt-3">
-                <RegeneratePageButton locale={params.locale} storyId={story.id} pageId={page.id} />
-              </div>
+              {status !== 'APPROVED' && (
+                <div className="mt-3">
+                  <RegeneratePageButton
+                    locale={params.locale}
+                    storyId={story.id}
+                    pageId={page.id}
+                    remaining={Math.max(0, MAX_MANUAL_REGENERATIONS_PER_PAGE - page.regenerate_count)}
+                  />
+                </div>
+              )}
             </div>
           </Card>
         ))}

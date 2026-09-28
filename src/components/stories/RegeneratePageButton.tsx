@@ -12,10 +12,17 @@ export function RegeneratePageButton({
   locale,
   storyId,
   pageId,
+  remaining,
 }: {
   locale: string;
   storyId: string;
   pageId: string;
+  /** How many manual regenerations this page has left before hitting
+   * MAX_MANUAL_REGENERATIONS_PER_PAGE (src/lib/domain/stories.ts) — shown
+   * so the limit isn't a surprise, and used to disable the button up
+   * front rather than only after a failed submit. The server action
+   * enforces the real limit either way. */
+  remaining: number;
 }) {
   const t = useTranslations('stories');
   const showToast = useToast();
@@ -41,6 +48,10 @@ export function RegeneratePageButton({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state]);
 
+  if (remaining <= 0) {
+    return <p className="text-xs text-ink-400">Regeneration limit reached for this page.</p>;
+  }
+
   return (
     <form
       action={formAction}
@@ -48,7 +59,7 @@ export function RegeneratePageButton({
         submitCount.current += 1;
       }}
     >
-      <RegenerateSubmitButton label={t('regeneratePage')} />
+      <RegenerateSubmitButton label={t('regeneratePage')} remaining={remaining} />
     </form>
   );
 }
@@ -57,11 +68,14 @@ export function RegeneratePageButton({
  * so this has to be nested inside it — disabling while pending is a
  * quick client-side guard against an accidental double-click; the real
  * limit is the server-side rate check in regeneratePageAction. */
-function RegenerateSubmitButton({ label }: { label: string }) {
+function RegenerateSubmitButton({ label, remaining }: { label: string; remaining: number }) {
   const { pending } = useFormStatus();
   return (
-    <Button type="submit" size="sm" variant="secondary" disabled={pending} isLoading={pending}>
-      {label}
-    </Button>
+    <div className="flex items-center gap-2">
+      <Button type="submit" size="sm" variant="secondary" disabled={pending} isLoading={pending}>
+        {label}
+      </Button>
+      <span className="text-xs text-ink-400">{remaining} left</span>
+    </div>
   );
 }

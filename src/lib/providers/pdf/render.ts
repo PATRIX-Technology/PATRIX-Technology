@@ -60,8 +60,15 @@ export async function renderStoryPdf(input: RenderStoryPdfInput): Promise<Uint8A
     return page;
   };
 
-  const captionSize = 14;
-  const captionLineHeight = 20;
+  // Fraunces (the warm serif already embedded for a display role that
+  // otherwise went unused — no cover/title page draws it any more, see
+  // the docstring above) reads as a real storybook typeface, unlike
+  // Inter's plain UI-sans look — see docs/DECISIONS.md "English caption
+  // font upgraded to Fraunces". Sized and spaced against actual
+  // renders (scripts/gen a sample PDF and inspect at print resolution)
+  // rather than guessed.
+  const captionSize = 16;
+  const captionLineHeight = 23;
   const captionMaxWidth = TRIM_WIDTH_PT - 70;
   const captionBumpRadius = 15;
 
@@ -87,7 +94,7 @@ export async function renderStoryPdf(input: RenderStoryPdfInput): Promise<Uint8A
     if (!isRtl) {
       // Caption band (bottom, flush to the page edge): height grows with
       // wrapped line count so the text never collides with the page number.
-      const captionLines = wrapText(storyPage.text, fonts.latinRegular, captionSize, captionMaxWidth);
+      const captionLines = wrapText(storyPage.text, fonts.latinDisplay, captionSize, captionMaxWidth);
       const captionFirstLineY = pageNumberY + 24 + (captionLines.length - 1) * captionLineHeight;
       const captionTopY = captionFirstLineY + captionSize + 22;
       drawFlatBottomBanner(page, {
@@ -101,12 +108,12 @@ export async function renderStoryPdf(input: RenderStoryPdfInput): Promise<Uint8A
 
       captionLines.forEach((line, index) => {
         const y = captionFirstLineY - index * captionLineHeight;
-        const width = fonts.latinRegular.widthOfTextAtSize(line, captionSize);
+        const width = fonts.latinDisplay.widthOfTextAtSize(line, captionSize);
         page.drawText(line, {
           x: PAGE_WIDTH_PT / 2 - width / 2,
           y,
           size: captionSize,
-          font: fonts.latinRegular,
+          font: fonts.latinDisplay,
           color: INK_COLOR,
         });
       });

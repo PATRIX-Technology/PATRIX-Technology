@@ -14,7 +14,14 @@ let arabicFont: ReturnType<typeof fontkit.create> | null = null;
 
 function getLatinFont() {
   if (!latinFont) {
-    latinFont = fontkit.create(readFileSync(join(FONTS_DIR, 'Inter-Regular-Static.ttf')));
+    // Must match whatever render.ts actually draws English captions with
+    // -- Fraunces (see docs/DECISIONS.md "English caption font upgraded
+    // to Fraunces"), not Inter, which render.ts now only uses for the
+    // small page-number footer (plain digits, never at risk of a missing
+    // glyph). Checking the wrong font here is exactly the bug class this
+    // module's docstring already warns about: preflight would pass a
+    // character that font doesn't actually have a glyph for.
+    latinFont = fontkit.create(readFileSync(join(FONTS_DIR, 'Fraunces-Display-Static.ttf')));
   }
   return latinFont;
 }

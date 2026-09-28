@@ -2689,6 +2689,49 @@ write `'they'` again after the changes above, so the unused enum member
 is inert dead capacity, not a live bug. Not worth the risk of an enum
 migration on a live database for that.
 
+## English caption font upgraded to Fraunces
+
+Founder feedback: "english font of the story when write on photos make
+it more nicely attractive please."
+
+English pages draw their caption directly in this app's own code (in a
+Latin font, on the caption band at the bottom of each page) rather than
+having Gemini bake it into the illustration — see "Arabic captions
+baked into the illustration" for why Arabic pages are the opposite.
+That caption was drawn in `Inter` — a clean UI sans-serif, fine for app
+chrome, but with no storybook character at all.
+
+Found that a second font was already embedded for exactly this kind of
+role and sitting completely unused: `fonts.latinDisplay` (Fraunces, a
+warm serif, semi-bold, with the WONK axis enabled for a slightly
+playful/characterful letterform) — pre-generated as a static instance
+in `assets/fonts/Fraunces-Display-Static.ttf`, properly OFL-licensed
+(`docs/LICENSES.md`), left over from an earlier cover/title-page design
+that was later removed per pilot feedback ("no cover, dedication, or
+repeating title banner... they read as filler"). Switched the caption
+band in `src/lib/providers/pdf/render.ts` to draw with `latinDisplay`
+instead of `latinRegular`, and bumped the caption size from 14pt to
+16pt (Fraunces reads slightly smaller than Inter at the same point
+size) with matching line height — verified by actually rendering
+sample pages (both a short and a long caption) and converting to
+images to inspect, not just changing a font name and hoping. Page
+numbers stay in Inter — a small utilitarian element, not "the story
+text," and plain digits have no font-personality question anyway.
+
+**Caught a real latent bug while doing this**: `font-coverage.ts`
+(used by preflight to reject a caption containing a character the
+render font can't actually draw) was checking glyph coverage against
+`Inter-Regular-Static.ttf` specifically. Once captions draw in Fraunces
+instead, that check was validating the wrong font — preflight could
+have passed a character Inter has but Fraunces doesn't, letting a
+missing-glyph box slip into an approved, "validated" PDF. Updated
+`getLatinFont()` to load the Fraunces file instead. Confirmed via the
+existing `font-coverage.test.ts` (which already asserts real coverage
+for em/en dash, curly quotes, and ellipsis) that Fraunces has every
+glyph that test expects — all green with no test changes needed.
+
+## Not yet built (explicitly out of scope for this build session)
+
 - Vendor moderation integration for image safety checks
   (`VendorModerationSafetyChecker` — needs a chosen moderation vendor;
   `RealImageProvider`'s safety-check hook point exists and Gemini image

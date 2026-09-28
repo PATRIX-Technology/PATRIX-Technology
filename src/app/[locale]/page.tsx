@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/Button';
 import { Logo } from '@/components/brand/Logo';
 import { LocaleSwitcher } from '@/components/ui/LocaleSwitcher';
 import { StoryCarousel } from '@/components/marketing/StoryCarousel';
+import { DemoRequestForm } from '@/components/marketing/DemoRequestForm';
 import { loadSampleStoryManifest } from '@/lib/domain/sample-stories';
 import type { Locale } from '@/i18n/config';
 
@@ -180,6 +181,13 @@ export default function MarketingHome({ params }: { params: { locale: string } }
               </div>
             );
           })()}
+        </div>
+        <div className="mx-auto mt-12 max-w-xl">
+          <h3 className="text-center font-display text-xl text-ink-900">{t('demoRequest.title')}</h3>
+          <p className="mx-auto mt-2 text-center text-ink-600">{t('demoRequest.body')}</p>
+          <div className="mt-6">
+            <DemoRequestForm locale={locale} />
+          </div>
         </div>
       </section>
 

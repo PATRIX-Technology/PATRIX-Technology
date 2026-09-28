@@ -92,6 +92,23 @@ else has already been built and is documented in `docs/HANDOFF.md`.
    plugging in your own SMTP provider under **Authentication → Settings
    → SMTP Settings**, but that's a nice-to-have, not a blocker.
 
+3d. **A free Resend account, so "Book a demo" notifies you by email.**
+   The new "Book a demo" section on the landing page and dashboard home
+   tab (`src/components/marketing/DemoRequestForm.tsx`) always saves
+   the submission to the database first — nothing is ever lost even
+   without this — but to also get pinged by email the moment someone
+   submits, sign up free at **resend.com** (no credit card needed for
+   the free tier — 3,000 emails/month), go to **API Keys → Create API
+   Key**, and give me the key (or set it yourself as `RESEND_API_KEY`
+   in Vercel's environment variables). Every notification goes to
+   `yousefhawwari@gmail.com` (`src/lib/notifications/email.ts`) — tell
+   me if you'd rather it go somewhere else. Until this key is set, the
+   button still works and every submission is still saved — you'd just
+   need to check the `demo_requests` table directly (via Supabase's
+   table editor) instead of getting an email. There's also a "WhatsApp
+   us directly" link right next to the form, using the same number
+   already on the Contact page — that one needs no setup at all.
+
 ## Before enabling real (paid) AI image generation
 
 4. **Provide a Gemini API key.** Google Gemini is now the wired-up image

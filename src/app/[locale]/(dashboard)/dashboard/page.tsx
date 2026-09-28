@@ -6,6 +6,7 @@ import { loadSampleStoryManifest } from '@/lib/domain/sample-stories';
 import { Card, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { StoryCarousel } from '@/components/marketing/StoryCarousel';
+import { DemoRequestForm } from '@/components/marketing/DemoRequestForm';
 import { BillingSection } from '@/components/dashboard/BillingSection';
 import { flags } from '@/lib/flags';
 import type { TenantType } from '@/types/database';
@@ -95,6 +96,7 @@ async function SamplesAndPlans({
 }) {
   const supabase = await createSupabaseServerClient();
   const t = await getTranslations('stories');
+  const tDemo = await getTranslations('marketing.demoRequest');
   const manifest = loadSampleStoryManifest();
 
   const [{ data: plans }, { data: subscription }] = await Promise.all([
@@ -126,6 +128,13 @@ async function SamplesAndPlans({
         ) : (
           <p className="mt-2 text-sm text-ink-500">{t('samplePreviewComingSoon')}</p>
         )}
+      </Card>
+      <Card>
+        <CardTitle>{tDemo('title')}</CardTitle>
+        <p className="mt-1 text-sm text-ink-600">{tDemo('body')}</p>
+        <div className="mt-4">
+          <DemoRequestForm locale={locale} />
+        </div>
       </Card>
       <Card>
         <CardTitle>Choose a plan</CardTitle>

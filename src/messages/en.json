@@ -38,6 +38,18 @@
       "loyalty": "Loyalty & appreciation gifts",
       "education": "Values & habits education",
       "campaigns": "Branded campaigns"
+    },
+    "demoRequest": {
+      "title": "Want to see it in action?",
+      "body": "Book a quick demo and we'll show you how it works for your nursery, school, or brand.",
+      "name": "Your name",
+      "email": "Email address",
+      "phone": "Phone number (optional)",
+      "organisationName": "Organisation (optional)",
+      "message": "Anything you'd like us to know? (optional)",
+      "submit": "Book a demo",
+      "whatsappCta": "Or WhatsApp us directly",
+      "whatsappMessage": "Hi! I would like to book a demo of Ownly."
     }
   },
   "auth": {

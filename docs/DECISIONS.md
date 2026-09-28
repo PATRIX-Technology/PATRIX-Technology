@@ -3673,6 +3673,72 @@ environment — that needs your own Google OAuth client (see
 and the callback route's tenant-lookup/creation logic all exercise real
 code, not a mock.
 
+## Book-a-demo section
+
+Founder request: a "Book a demo" section beside/under the sample-story
+carousel on both the landing page and the dashboard home tab, for both
+account types, delivering to either WhatsApp or email
+(`yousefhawwari@gmail.com`).
+
+**Why email as the automatic channel, WhatsApp as the manual one**:
+true one-click, no-further-action delivery is only possible with
+email. A real WhatsApp message can't be sent server-side without the
+paid WhatsApp Business API and Meta verification — deliberately not
+built (see the existing `whatsappLink()` helper's own comment: "no
+WhatsApp Business API wired into this app... there is no way to send
+an outbound WhatsApp without one"). So the form's "Book a demo" button
+saves the submission and best-effort emails the founder automatically;
+a second, always-visible "Or WhatsApp us directly" link next to it
+opens the same `wa.me` link this app already uses on the Contact page
+and staff-invite flows, for a visitor who wants to reach out right
+now — one manual tap in their own WhatsApp app, the same tradeoff every
+existing wa.me link here already accepts.
+
+**Email delivery** (`src/lib/notifications/email.ts`): Resend's HTTP
+API, called with a plain `fetch()` — no SDK, so no new npm dependency.
+Same "best-effort, never blocks the caller" shape as the existing
+`sendTelegramMessage()`: silently a no-op without `RESEND_API_KEY`,
+swallows any send failure. Considered reviving the existing (already
+partially wired, `TELEGRAM_BOT_TOKEN`-in-Vercel-but-never-finished)
+Telegram path instead, since it's free forever with no per-message
+cost — but the founder asked for email specifically, and Telegram's
+own `TELEGRAM_CHAT_ID` is still unresolved from an earlier session
+("Telegram wasn't responding to any bot on your account"), so building
+on top of an already-stuck integration would just inherit that
+problem. Resend's free tier (3,000 emails/month, no card required) is
+a clean, independent path instead.
+
+**Storage and access** (`supabase/migrations/0028_demo_requests.sql`,
+`src/lib/actions/demo-request.ts`): every submission is written to a
+new `demo_requests` table BEFORE the email is attempted, so nothing is
+ever lost even with no `RESEND_API_KEY` configured yet, or if Resend
+itself is briefly down. This is the first genuinely public
+(unauthenticated) write in this app's schema, which called for a real
+design choice: `createSupabaseServiceRoleClient()`'s own doc comment
+explicitly restricts it to "the job worker, Stripe webhook handlers,
+scripts/*.mjs" — reaching for it here to bypass RLS would have been
+exactly the kind of casual violation that comment exists to prevent.
+The correct tool for a genuinely public write is a scoped RLS policy,
+not the service role: `demo_requests` grants `anon`/`authenticated` an
+INSERT-only policy (`with check (true)`), while SELECT stays restricted
+to `is_platform_owner()` — a visitor can create a row but never read
+any back, including their own or anyone else's. The server action
+layers its own IP rate limit (3 per 15 minutes) on top as the actual
+spam defence, same pattern as every other public-facing action in
+`src/lib/actions/auth.ts`.
+
+**Verified**: `tsc`, `eslint`, all 148 unit tests, `en.json`/`ar.json`
+key-set parity, and a live end-to-end test on a real `next dev`
+server — submitted the form with real (test) data, confirmed the
+success message renders, then confirmed the row actually landed in
+`demo_requests` via a direct SQL query against the live database
+(and deleted that one test row afterward). Checked both `/en` and
+`/ar` visually, including RTL layout of the two-column field grid and
+the WhatsApp link's position. Did not verify an actual received email,
+since no `RESEND_API_KEY` is configured yet — that needs the founder's
+own free Resend signup (see `docs/NEEDS_FROM_ME.md`); the no-op path
+(what happens today, with the key unset) was what was actually tested.
+
 ## Not yet built (explicitly out of scope for this build session)
 
 - Vendor moderation integration for image safety checks

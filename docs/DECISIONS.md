@@ -2526,6 +2526,48 @@ limit isn't a surprise the user only discovers after clicking — the
 server-side checks above are still the actual enforcement, this is
 just not making the user find the wall by hitting it blind.
 
+## PDF "download" on iPhone browser: a genuine WebKit limitation, not an app bug
+
+Founder report: PDF download works fine on a Samsung tablet but "still
+not saving" on an iPhone — after the earlier fix that switched to a
+plain same-tab navigation relying on the server's `Content-Disposition:
+attachment` header (see the crash-investigation entries above).
+
+Researched rather than guessed at another fix this time, given how many
+rounds of mobile download/share fixes this feature has already been
+through. Confirmed via WebKit's own bug tracker and Apple's developer
+forums that this is real, current WebKit behaviour, not something
+introduced by this app or fixable from page code: Safari on iOS (and
+every other iOS browser — Apple requires them all to use WebKit)
+deliberately overrides BOTH `Content-Disposition: attachment` and the
+HTML `download` attribute for any file type it can render itself, PDFs
+included, and always opens its own inline PDF viewer instead. See
+https://bugs.webkit.org/show_bug.cgi?id=167341 and
+https://developer.apple.com/forums/thread/803421 — this is a long-open,
+still-unresolved WebKit limitation, and every website that serves a PDF
+behaves identically on an iPhone; Khayali was never actually broken
+here, it just looked broken next to Android's very different (and
+correct-per-spec) behaviour.
+
+The one thing genuinely fixable from the browser: not leaving the
+person to conclude nothing happened. `DownloadButton.tsx` now detects
+iOS specifically (`isIOS()`, a plain `navigator.userAgent` check) and,
+only on that platform, shows an info toast before navigating: "Opening
+your PDF — tap the Share icon in Safari, then 'Save to Files'." That
+Share-icon path is Safari's own native feature for a PDF it's already
+viewing — a different mechanism entirely from the `navigator.share({
+files })` Web Share API call this app tried and removed earlier for a
+separate, confirmed WebKit bug (see "Saves/shares an already-fetched
+file..." in `DownloadButton.tsx`) — and it does reliably work.
+
+The actual fix for a true one-tap save on iPhone, matching Android's
+behaviour, is the native iOS app: the Capacitor-wrapped tier already in
+`DownloadButton.tsx` writes the PDF straight to the filesystem via a
+real OS API and hands it to the native share sheet, sidestepping
+Safari's in-browser PDF handling entirely — but that only applies once
+the app is actually built and installed from the App Store (Phase
+"Native mobile apps" below), not to someone opening the site in Safari.
+
 ## Not yet built (explicitly out of scope for this build session)
 
 - Vendor moderation integration for image safety checks

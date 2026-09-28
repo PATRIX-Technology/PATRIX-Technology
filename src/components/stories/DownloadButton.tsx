@@ -31,9 +31,26 @@ function blobToBase64(blob: Blob): Promise<string> {
  * browsers and in-app/WebView contexts (Capacitor's included) either
  * block a JS-initiated new tab outright or simply don't support opening
  * one at all, in which case `window.open` just does nothing.
+ *
+ * One confirmed, WebKit-only exception: on iPhone/iPad Safari (and every
+ * other iOS browser — Apple requires all of them to use WebKit under the
+ * hood), Safari deliberately overrides BOTH `Content-Disposition:
+ * attachment` and the HTML `download` attribute for file types it can
+ * render itself, PDFs included — it always opens its own inline PDF
+ * viewer instead. This is a longstanding, still-open WebKit limitation
+ * (see e.g. https://bugs.webkit.org/show_bug.cgi?id=167341 and
+ * https://developer.apple.com/forums/thread/803421), not something
+ * fixable from page code — every website that serves a PDF behaves the
+ * same way on an iPhone. See isIOS()/showIOSSaveHint() below for how
+ * this app tells the user what to do next instead of pretending it
+ * downloaded silently like it does elsewhere.
  */
 function downloadDirectly(href: string) {
   window.location.assign(href);
+}
+
+function isIOS(): boolean {
+  return /iPad|iPhone|iPod/.test(navigator.userAgent);
 }
 
 /**
@@ -105,6 +122,21 @@ export function DownloadButton({
 
   async function handleClick() {
     if (!Capacitor.isNativePlatform()) {
+      // On iOS, Safari (and every other iOS browser, which are all
+      // WebKit under the hood) always opens its own PDF viewer here
+      // instead of downloading — a platform limitation, not a bug in
+      // this app, and true of every website's PDF links on an iPhone.
+      // The one thing genuinely fixable from here is not leaving the
+      // person guessing why nothing landed in Files: telling them the
+      // one working path (Safari's own Share button, not this app's
+      // JS) up front.
+      if (isIOS()) {
+        showToast({
+          title: 'Opening your PDF',
+          description: 'To save it, tap the Share icon in Safari, then "Save to Files".',
+          tone: 'info',
+        });
+      }
       downloadDirectly(href);
       return;
     }

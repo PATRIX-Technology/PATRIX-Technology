@@ -14,6 +14,17 @@ import { DownloadButton } from '@/components/stories/DownloadButton';
 import { AutoRefresh } from '@/components/stories/AutoRefresh';
 import type { StoryStatus } from '@/types/database';
 
+// This page now calls runWorkerOnce (real Gemini image generation) during
+// its own render -- see docs/DECISIONS.md "Story creation no longer waits
+// on the worker before redirecting". Vercel's default function duration is
+// well under 60s unless a route says otherwise, and 60 is the actual
+// ceiling on the current (Hobby) plan regardless of what's requested here
+// -- see docs/DECISIONS.md "maxDuration must not exceed the Hobby
+// ceiling". Every other route in this app doing real generation work
+// already sets this explicitly; this page needs the same now that it does
+// generation work too.
+export const maxDuration = 60;
+
 export default async function StoryDetailPage({
   params,
 }: {

@@ -3135,6 +3135,31 @@ elsewhere in `ar.json`, dual construct-state case endings ("بطلَي
 الفقاعات" correctly dropping the dual's tanween before an idafa), and
 every `{v:...}` token substitution across all 8 Arabic themes.
 
+## Marketing framed as recurring, not a one-time graduation gift
+
+Founder feedback: make sure the sales materials talk about the
+benefit of using this *monthly*, not just once for graduations. The
+existing copy (`docs/en/sales-kit.md`'s "Who buys this" table, the
+pitch deck's "One tool, many occasions" slide) led with one-off
+occasions — graduation keepsakes, National Day — which undersells a
+product that's actually priced and built as a monthly subscription
+(every plan is a story allowance that *resets each period*, not a
+fixed pack). Added an explicit "Why recurring, not one-time" section
+to `docs/en/sales-kit.md` (and a shorter version to `docs/ar/sales-kit.md`),
+reworded the nursery row in "Who buys this" to lead with the ongoing
+monthly curriculum, added a callout to `docs/en/pricing.md` making the
+same point next to the actual plan prices, and reframed the
+"Seasonal calendar" note there so graduation/National Day read as
+moments that *open* a subscription rather than define it. Also edited
+slide 5 of `docs/en/sales/nursery-pitch-deck.pptx` ("One tool, many
+occasions" → "Monthly, not one-time") — a same-length text swap inside
+the existing `<a:t>` run, validated against the original with the pptx
+skill's `validate.py` (all checks passed) and confirmed open cleanly
+with `python-pptx`; LibreOffice headless couldn't render *any* pptx in
+this sandbox, including the untouched original, so a rendered visual
+check wasn't possible here — worth a quick look in real PowerPoint
+before the next pitch.
+
 ## Not yet built (explicitly out of scope for this build session)
 
 - Vendor moderation integration for image safety checks

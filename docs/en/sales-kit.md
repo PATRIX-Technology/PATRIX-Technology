@@ -22,11 +22,36 @@ around a values-based theme the organisation picks. Staff review and
 approve every story before a parent ever sees it. Parents consent before
 anything is created. Nothing here relies on uploading a child's photo.
 
+## Why recurring, not one-time
+
+The easy pitch is "a graduation keepsake" — don't let it stop there.
+That framing caps the product at a single moment a year and misses
+why it's actually priced and built as a subscription:
+
+- **Nurseries** get a *new* personalised story added every month, each
+  one matched to whatever's on the curriculum that month (hand-washing
+  in flu season, honesty after a classroom incident, saving money
+  before Eid, National Day in December). That's a running values
+  curriculum a parent sees land every month, not a single souvenir
+  handed out once a year — graduation and National Day are good
+  moments to *start* the conversation, not the reason a nursery keeps
+  paying.
+- **Families** build an evolving personal library as their child grows
+  — this month's story is always new, so unlike a one-off printed gift
+  the product never gets "used up," and there's a fresh reason to open
+  the app every month.
+- **The pricing already reflects this**: every plan (`family`,
+  `family_plus`, and the nursery `starter`/`growth`/`network` tiers) is
+  a monthly (or annual) story *allowance that resets every period* —
+  not a one-time story pack. See `docs/en/pricing.md` for the plans and
+  its "Seasonal calendar" note on using the school year's key moments
+  to open a subscription, not to define it.
+
 ## Who buys this
 
 | Segment | Use case |
 |---|---|
-| Nurseries & schools | Graduation keepsakes, values curriculum, parent engagement |
+| Nurseries & schools | An ongoing monthly values curriculum + parent engagement — graduation/National Day keepsakes are a bonus moment, not the product |
 | Clinics & dentists | Take-home education (hand-washing, brushing teeth) after a visit |
 | Children's hospitals | Comfort/education material for young patients |
 | Banks | Financial-literacy campaigns, family loyalty gifts |

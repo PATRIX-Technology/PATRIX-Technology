@@ -110,6 +110,16 @@ even with the added labour.
 - **Family Plus** (built — `plans.key = 'family_plus'`): $19/month for
   3 stories/month.
 
+**Why this is monthly, not a one-off pack**: every plan here — family
+and nursery alike — is a story *allowance that resets each period*,
+not a fixed pack of stories you buy once and run out. The pitch to a
+customer should match that: a family isn't buying "a storybook," it's
+subscribing to a new personalised story every month as their child
+grows, and a nursery isn't buying "graduation keepsakes," it's running
+an ongoing monthly values curriculum. See `docs/en/sales-kit.md` "Why
+recurring, not one-time" for the framing to use with a customer who
+only asks for a single one-time story.
+
 Both family plans use the same period-based quota model as the nursery
 tiers (a flat monthly allowance, reset each period) — the "rolls over
 up to 3" rollover-credit idea from an earlier draft of this doc is
@@ -237,7 +247,12 @@ as payees). This is the plan, not yet the implementation.
 - **Seasonal calendar**: align sales pushes with the academic year —
   September (First Day of School), December 2 (National Day
   Gratitude), Ramadan, June (graduation) — these map directly onto
-  themes already in the catalog.
+  themes already in the catalog. Use each one to *open* a
+  subscription conversation, not to frame the whole product: a
+  nursery that signs up "for graduation" and never sees another story
+  until next June is a churn risk, not a retained customer — the
+  value case is the other 11 months of monthly stories tied to
+  whatever's actually on the curriculum that month.
 
 See `docs/en/budget.md` for the full annual operating budget (licence
 renewal, hosting, legal, trademark, accounting) these prices need to

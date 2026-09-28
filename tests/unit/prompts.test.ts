@@ -48,4 +48,11 @@ describe('buildIllustrationPrompt', () => {
     const prompt = buildIllustrationPrompt({ ...baseInput, locale: 'en' });
     expect(prompt).toMatch(/no signs, labels, book covers, clothing text, or watermarks/i);
   });
+
+  it('tells Gemini to never render the nursery/organisation/family name, in either locale', () => {
+    const enPrompt = buildIllustrationPrompt({ ...baseInput, locale: 'en' });
+    const arPrompt = buildIllustrationPrompt({ ...baseInput, locale: 'ar', captionText: 'الثعلب في الحديقة' });
+    expect(enPrompt).toMatch(/nursery|organisation|family.*name/i);
+    expect(arPrompt).toMatch(/nursery|organisation|family.*name/i);
+  });
 });

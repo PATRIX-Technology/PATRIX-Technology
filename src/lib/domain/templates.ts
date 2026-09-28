@@ -25,6 +25,16 @@ export type StoryThemeTemplate = z.infer<typeof StoryThemeTemplateSchema>;
 export interface TokenContext {
   childName: string;
   pronoun: Pronoun;
+  /** Founder directive: no template should put the real organisation/family
+   * name into a page's `text` any more — see docs/DECISIONS.md
+   * "Organisation/family name must never reach a generated image". For an
+   * Arabic page, `text` is also the exact caption Gemini bakes as pixel
+   * text into the illustration (see prompts.ts), so anything placed here
+   * ends up literally drawn into the image, not just displayed. Every
+   * current template uses a generic "nursery"/"الحضانة" instead of this
+   * token now. Kept on TokenContext only in case a genuinely
+   * non-image-facing future use needs it (e.g. a PDF footer credit line) —
+   * do not reintroduce it into any page's `text` or `image_prompt`. */
   organisation: string;
   mascot: string;
   locale: Locale;

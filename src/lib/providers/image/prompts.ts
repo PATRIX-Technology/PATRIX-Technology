@@ -21,6 +21,21 @@ export const BRAND_STYLE_PROMPT =
   'lighting, cozy detailed background, an anime-influenced but wholesome children\'s-book art ' +
   'style, culturally appropriate for a UAE/Gulf audience. Portrait orientation, centred composition.';
 
+/** Founder directive: the nursery/organisation's or family's real name must
+ * never appear inside a generated image, as a name, sign, or logo of any
+ * kind. Nothing currently feeds that name into a prompt (see
+ * docs/DECISIONS.md "Organisation/family name must never reach a generated
+ * image" — template captions that used to reference it were rewritten to a
+ * generic "nursery"/"الحضانة"), but this stays as an explicit, unconditional
+ * instruction to Gemini itself, appended to every prompt regardless of
+ * locale, so it holds even if a future template or scene description ever
+ * reintroduces one. */
+const NO_ORGANISATION_NAME_INSTRUCTION =
+  'Under no circumstances render the nursery\'s, school\'s, organisation\'s, or family\'s real ' +
+  'name anywhere in the image — not as text, not on a sign, book cover, uniform, or logo. If a ' +
+  'name like that appears anywhere in this prompt or the caption text below, treat it as ' +
+  'forbidden and omit it entirely; it must never appear as pixels in the image.';
+
 export interface IllustrationPromptInput {
   sceneDescription: string;
   avatarConfig: { hair?: string; skinTone?: string; outfitColor?: string; accessory?: string };
@@ -44,7 +59,7 @@ const GENDER_DESCRIPTOR: Record<'she' | 'he' | 'they', string> = {
 };
 
 export function buildIllustrationPrompt(input: IllustrationPromptInput): string {
-  const parts = [BRAND_STYLE_PROMPT, `Scene: ${input.sceneDescription}`];
+  const parts = [BRAND_STYLE_PROMPT, NO_ORGANISATION_NAME_INSTRUCTION, `Scene: ${input.sceneDescription}`];
 
   if (input.hasReferencePhoto) {
     parts.push(

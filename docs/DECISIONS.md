@@ -2568,6 +2568,60 @@ Safari's in-browser PDF handling entirely — but that only applies once
 the app is actually built and installed from the App Store (Phase
 "Native mobile apps" below), not to someone opening the site in Safari.
 
+## Organisation/family name must never reach a generated image
+
+Founder directive: "I don't want the user name of the organization or
+family to be generated in the story, please tell Gemini MUST NOT DO
+IT."
+
+Found a real, live path for this: 5 of the 8 story theme templates
+(`healthy_eating`, `first_day_school`, `honesty`, `hand_washing`,
+`national_day_gratitude`, both `en`/`ar`) had a `{organisation}` token
+in their page `text` (e.g. "At {organisation}, {child_name} looked at
+..."), rendered at story-creation/regeneration time to the real
+tenant name (`context.tenantName`/`tenant.name` — a nursery's actual
+name, or a family's auto-generated "X's Family"). For an English page
+this only ever reached the stored/displayed caption text — never the
+illustration itself, since English captions are drawn separately by
+this app's own code (see "Arabic captions baked into the
+illustration"). For an **Arabic** page, though, that same `text` field
+*is* the exact caption Gemini is instructed to bake as pixel text
+directly into the generated image — so the org/family name really was
+ending up rendered inside illustrations, not just displayed as text
+elsewhere.
+
+Fixed at the root: updated all 10 affected template rows directly in
+the live database (`story_theme_templates.pages`, via
+`mcp__Supabase__execute_sql` — this table's seed content has never
+lived in a repo migration; see migration 0003, schema only) to use a
+generic "nursery" / "الحضانة" instead of the token, e.g. "At nursery,
+{child_name} looked at ..." Verified afterward that no template row
+still contains `{organisation}` anywhere. The `{organisation}` token
+mechanism itself (`SIMPLE_TOKEN` regex, `TokenContext.organisation` in
+`src/lib/domain/templates.ts`) is left in place rather than deleted —
+harmless while unused, and a legitimate non-image-facing use (e.g. a
+PDF footer credit line) might want it later — but its docstring now
+explicitly warns against ever putting it back into a page's `text` or
+`image_prompt`.
+
+Added the second, explicit layer the founder actually asked for:
+`NO_ORGANISATION_NAME_INSTRUCTION` in
+`src/lib/providers/image/prompts.ts`, appended to every illustration
+prompt regardless of locale, unconditionally telling Gemini to never
+render a nursery/organisation/family name as text, a sign, or a logo,
+"even if it appears anywhere in this prompt or the caption text
+below." The template fix above is the load-bearing, deterministic
+guarantee; this is the belt-and-suspenders instruction that holds even
+if a future template or scene description ever reintroduces a name by
+mistake. Covered by a new test in `tests/unit/prompts.test.ts`.
+
+Not done as part of this fix: the 5 edited Arabic templates were
+already past native review (`native_review_status = 'reviewed'`) —
+only a few words changed (a preposition phrase swapped for "في
+الحضانة"), not the sentence's grammar/agreement, but a native speaker
+should still glance over the 5 edited Arabic sentences listed above at
+some point as a sanity check, same as any other content edit.
+
 ## Not yet built (explicitly out of scope for this build session)
 
 - Vendor moderation integration for image safety checks

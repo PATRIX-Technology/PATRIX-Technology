@@ -55,7 +55,11 @@
     },
     "familySignUp": {
       "title": "Create your family account",
-      "body": "For parents and guardians creating stories for their own children."
+      "body": "For parents and guardians creating stories for their own children.",
+      "fullName": "Your full name",
+      "email": "Email address",
+      "password": "Password",
+      "submit": "Create my family account"
     },
     "accountType": {
       "organisation": "Organisation",
@@ -71,7 +75,8 @@
       "codeLabel": "6-digit code",
       "verify": "Verify & continue",
       "changeNumber": "Use a different number"
-    }
+    },
+    "passwordHint": "At least {min} characters, with a mix of letters and numbers."
   },
   "dashboard": {
     "nav": {
@@ -93,6 +98,52 @@
       "storiesGenerated": "Stories created",
       "pendingApproval": "Awaiting your approval",
       "consentPending": "Consent pending"
+    },
+    "settings": {
+      "title": "Settings",
+      "orgBranding": "Organisation & branding",
+      "familySettings": "Family settings",
+      "orgNameLabel": "Organisation name",
+      "familyNameLabel": "Family name",
+      "brandColorLabel": "Brand colour",
+      "retentionLabel": "Data retention (days)",
+      "retentionHint": "How long child and story data is kept before scheduled deletion.",
+      "privacyTitle": "Privacy",
+      "privacyBody": "Every child's data is kept private to your own account, stored securely, and never shared with other families or organisations. Photos and images are only ever accessible through short-lived, private links."
+    },
+    "security": {
+      "title": "Security",
+      "twoFactorLabel": "Two-factor authentication",
+      "statusOn": "On",
+      "statusRecommended": "Recommended",
+      "enabledDescription": "You'll be asked for a 6-digit code from your authenticator app each time you sign in on a new device.",
+      "disabledDescription": "Not required, but strongly recommended — add a code from an authenticator app (Google Authenticator, 1Password, Authy, etc.) as a second step when signing in.",
+      "enableButton": "Enable two-factor authentication",
+      "changePasswordHeading": "Change password"
+    },
+    "changePassword": {
+      "currentPasswordLabel": "Current password",
+      "newPasswordLabel": "New password",
+      "submit": "Update password",
+      "successTitle": "Password updated",
+      "errorTitle": "Could not update password"
+    },
+    "billing": {
+      "pageTitle": "Usage & plan",
+      "cardTitle": "Plan & billing",
+      "notAvailable": "Billing isn't available yet — check back soon.",
+      "currentStatus": "Current status:",
+      "manageBilling": "Manage billing",
+      "intervalLabel": "Billing interval",
+      "monthly": "Monthly",
+      "annual": "Annual",
+      "savePercent": "Save {percent}% vs. monthly",
+      "vatIncluded": "VAT included",
+      "vatExcluded": "VAT excluded",
+      "storiesPerMonth": "{count} stories/month",
+      "currentPlan": "Current plan",
+      "subscribe": "Subscribe",
+      "couponLabel": "Coupon code (optional)"
     }
   },
   "children": {
@@ -290,5 +341,20 @@
     "delete": "Delete",
     "confirm": "Confirm",
     "needsNativeReview": "Needs native review"
+  },
+  "mfa": {
+    "enroll": {
+      "title": "Set up two-factor authentication",
+      "descriptionRecommended": "Use an authenticator app (Google Authenticator, 1Password, Authy, etc.) to add a second step to signing in.",
+      "descriptionMandatory": "Platform owner accounts require an authenticator app (Google Authenticator, 1Password, Authy, etc.) before accessing the owner dashboard.",
+      "startSetup": "Start setup",
+      "codeLabel": "Enter the 6-digit code from your app",
+      "verifyAndEnable": "Verify and enable"
+    },
+    "challenge": {
+      "title": "Verify your identity",
+      "description": "Enter the 6-digit code from your authenticator app.",
+      "verify": "Verify"
+    }
   }
 }

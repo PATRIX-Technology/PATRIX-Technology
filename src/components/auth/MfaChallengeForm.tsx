@@ -2,11 +2,13 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { createSupabaseBrowserClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 
 export function MfaChallengeForm({ redirectTo }: { redirectTo: string }) {
+  const t = useTranslations('mfa.challenge');
   const router = useRouter();
   const supabase = createSupabaseBrowserClient();
 
@@ -48,8 +50,8 @@ export function MfaChallengeForm({ redirectTo }: { redirectTo: string }) {
 
   return (
     <Card className="mx-auto max-w-md">
-      <h1 className="mb-2 font-display text-xl text-ink-900">Verify your identity</h1>
-      <p className="mb-6 text-sm text-ink-600">Enter the 6-digit code from your authenticator app.</p>
+      <h1 className="mb-2 font-display text-xl text-ink-900">{t('title')}</h1>
+      <p className="mb-6 text-sm text-ink-600">{t('description')}</p>
       <form onSubmit={verify} className="flex flex-col gap-4">
         <input
           value={code}
@@ -63,7 +65,7 @@ export function MfaChallengeForm({ redirectTo }: { redirectTo: string }) {
         />
         {error && <p className="text-sm text-coral-600">{error}</p>}
         <Button type="submit" isLoading={isSubmitting}>
-          Verify
+          {t('verify')}
         </Button>
       </form>
     </Card>

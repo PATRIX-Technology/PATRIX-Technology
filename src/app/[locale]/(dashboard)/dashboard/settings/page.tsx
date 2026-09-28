@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { getTranslations } from 'next-intl/server';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { getCurrentTenantContext } from '@/lib/domain/session';
 import { getMfaStatus } from '@/lib/domain/mfa';
@@ -11,6 +12,9 @@ export default async function SettingsPage({ params }: { params: { locale: strin
   const supabase = await createSupabaseServerClient();
   const context = await getCurrentTenantContext(supabase);
   if (!context) return null;
+
+  const t = await getTranslations('dashboard.settings');
+  const tSecurity = await getTranslations('dashboard.security');
 
   const { data: tenant } = await supabase.from('tenants').select('*').eq('id', context.tenantId).single();
 
@@ -27,38 +31,38 @@ export default async function SettingsPage({ params }: { params: { locale: strin
 
   return (
     <div className="space-y-6">
-      <h1 className="font-display text-2xl text-ink-900">Settings</h1>
+      <h1 className="font-display text-2xl text-ink-900">{t('title')}</h1>
       <Card>
-        <CardTitle>{context.tenantType === 'nursery' ? 'Organisation & branding' : 'Family settings'}</CardTitle>
+        <CardTitle>{context.tenantType === 'nursery' ? t('orgBranding') : t('familySettings')}</CardTitle>
         <div className="mt-4">
           <SettingsForm locale={params.locale} tenant={tenant} tenantType={context.tenantType} />
         </div>
       </Card>
       <Card>
-        <CardTitle>Security</CardTitle>
+        <CardTitle>{tSecurity('title')}</CardTitle>
         <div className="mt-4 flex flex-col gap-6">
           <div>
             <div className="flex items-center gap-2">
-              <p className="text-sm font-medium text-ink-700">Two-factor authentication</p>
-              <Badge tone={mfaEnabled ? 'success' : 'warning'}>{mfaEnabled ? 'On' : 'Recommended'}</Badge>
+              <p className="text-sm font-medium text-ink-700">{tSecurity('twoFactorLabel')}</p>
+              <Badge tone={mfaEnabled ? 'success' : 'warning'}>
+                {mfaEnabled ? tSecurity('statusOn') : tSecurity('statusRecommended')}
+              </Badge>
             </div>
             <p className="mt-1 max-w-xl text-sm text-ink-600">
-              {mfaEnabled
-                ? "You'll be asked for a 6-digit code from your authenticator app each time you sign in on a new device."
-                : "Not required, but strongly recommended — add a code from an authenticator app (Google Authenticator, 1Password, Authy, etc.) as a second step when signing in."}
+              {mfaEnabled ? tSecurity('enabledDescription') : tSecurity('disabledDescription')}
             </p>
             {!mfaEnabled && (
               <Link
                 href={`/${params.locale}/mfa/enroll`}
                 className="focus-ring mt-3 inline-flex items-center justify-center gap-2 rounded-lg bg-lagoon-600 px-3 py-1.5 text-sm font-medium text-white transition-colors duration-150 hover:bg-lagoon-700 active:bg-lagoon-800"
               >
-                Enable two-factor authentication
+                {tSecurity('enableButton')}
               </Link>
             )}
           </div>
           {hasPasswordIdentity && (
             <div>
-              <p className="mb-1 text-sm font-medium text-ink-700">Change password</p>
+              <p className="mb-1 text-sm font-medium text-ink-700">{tSecurity('changePasswordHeading')}</p>
               <div className="mt-3">
                 <ChangePasswordForm />
               </div>
@@ -67,12 +71,8 @@ export default async function SettingsPage({ params }: { params: { locale: strin
         </div>
       </Card>
       <Card>
-        <CardTitle>Privacy</CardTitle>
-        <p className="mt-2 max-w-xl text-sm text-ink-600">
-          Every child&apos;s data is kept private to your own account, stored securely, and never shared
-          with other families or organisations. Photos and images are only ever accessible through
-          short-lived, private links.
-        </p>
+        <CardTitle>{t('privacyTitle')}</CardTitle>
+        <p className="mt-2 max-w-xl text-sm text-ink-600">{t('privacyBody')}</p>
       </Card>
     </div>
   );

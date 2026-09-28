@@ -1,4 +1,5 @@
 import { redirect } from 'next/navigation';
+import { getTranslations } from 'next-intl/server';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { getCurrentTenantContext } from '@/lib/domain/session';
 import { Card, CardTitle } from '@/components/ui/Card';
@@ -21,6 +22,8 @@ export default async function BillingPage({ params }: { params: { locale: string
     redirect(`/${params.locale}/dashboard`);
   }
 
+  const t = await getTranslations('dashboard.billing');
+
   const [{ data: plans }, { data: subscription }] = await Promise.all([
     supabase
       .from('plans')
@@ -33,15 +36,15 @@ export default async function BillingPage({ params }: { params: { locale: string
 
   return (
     <div className="space-y-6">
-      <h1 className="font-display text-2xl text-ink-900">Usage &amp; plan</h1>
+      <h1 className="font-display text-2xl text-ink-900">{t('pageTitle')}</h1>
       <Card>
-        <CardTitle>Plan &amp; billing</CardTitle>
+        <CardTitle>{t('cardTitle')}</CardTitle>
         {flags.billing ? (
           <div className="mt-4">
             <BillingSection plans={plans ?? []} subscription={subscription ?? null} />
           </div>
         ) : (
-          <p className="mt-2 text-sm text-ink-500">Billing isn&apos;t available yet — check back soon.</p>
+          <p className="mt-2 text-sm text-ink-500">{t('notAvailable')}</p>
         )}
       </Card>
     </div>

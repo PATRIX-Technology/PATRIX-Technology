@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { createSupabaseBrowserClient } from '@/lib/supabase/client';
 import { markMfaEnrolledAction } from '@/lib/actions/mfa';
 import { Button } from '@/components/ui/Button';
@@ -11,17 +12,21 @@ type Step = 'start' | 'scan' | 'error';
 
 export function MfaEnrollForm({
   redirectTo,
-  title,
-  description,
+  mandatory,
 }: {
   /** Where to send the user once enrollment is verified — the owner
    * dashboard for the mandatory owner flow, the regular dashboard for
    * the optional one. See docs/DECISIONS.md "Optional-but-recommended
    * MFA for regular users". */
   redirectTo: string;
-  title?: string;
-  description?: string;
+  /** Swaps only the description between the "this is required" (owner)
+   * and "this is recommended" (regular user) framing — both are proper
+   * translation keys, not hardcoded English, unlike the props this
+   * replaced. See docs/DECISIONS.md "Dashboard settings/billing/
+   * security/MFA screens translated into Arabic". */
+  mandatory?: boolean;
 }) {
+  const t = useTranslations('mfa.enroll');
   const router = useRouter();
   const supabase = createSupabaseBrowserClient();
 
@@ -74,20 +79,19 @@ export function MfaEnrollForm({
 
   return (
     <Card className="mx-auto max-w-md">
-      <h1 className="mb-2 font-display text-xl text-ink-900">{title ?? 'Set up two-factor authentication'}</h1>
+      <h1 className="mb-2 font-display text-xl text-ink-900">{t('title')}</h1>
       <p className="mb-6 text-sm text-ink-600">
-        {description ??
-          'Use an authenticator app (Google Authenticator, 1Password, Authy, etc.) to add a second step to signing in.'}
+        {mandatory ? t('descriptionMandatory') : t('descriptionRecommended')}
       </p>
 
-      {step === 'start' && <Button onClick={startEnrollment}>Start setup</Button>}
+      {step === 'start' && <Button onClick={startEnrollment}>{t('startSetup')}</Button>}
 
       {step === 'scan' && qrCode && (
         <form onSubmit={verifyCode} className="flex flex-col gap-4">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={qrCode} alt="Scan this QR code with your authenticator app" className="h-48 w-48 self-center" />
           <label htmlFor="mfa-code" className="text-sm font-medium text-ink-700">
-            Enter the 6-digit code from your app
+            {t('codeLabel')}
           </label>
           <input
             id="mfa-code"
@@ -101,7 +105,7 @@ export function MfaEnrollForm({
           />
           {error && <p className="text-sm text-coral-600">{error}</p>}
           <Button type="submit" isLoading={isSubmitting}>
-            Verify and enable
+            {t('verifyAndEnable')}
           </Button>
         </form>
       )}

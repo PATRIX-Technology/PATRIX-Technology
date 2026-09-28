@@ -55,7 +55,11 @@
     },
     "familySignUp": {
       "title": "أنشئ حساب عائلتك",
-      "body": "للآباء والأمهات وأولياء الأمور الذين يُنشئون قصصًا لأطفالهم."
+      "body": "للآباء والأمهات وأولياء الأمور الذين يُنشئون قصصًا لأطفالهم.",
+      "fullName": "اسمك الكامل",
+      "email": "البريد الإلكتروني",
+      "password": "كلمة المرور",
+      "submit": "إنشاء حساب العائلة"
     },
     "accountType": {
       "organisation": "مؤسسة",
@@ -71,7 +75,8 @@
       "codeLabel": "رمز مكوّن من ٦ أرقام",
       "verify": "تحقق ومتابعة",
       "changeNumber": "استخدام رقم آخر"
-    }
+    },
+    "passwordHint": "يجب أن تتكوّن من {min} حرفًا على الأقل، وتحتوي على مزيج من الحروف والأرقام."
   },
   "dashboard": {
     "nav": {
@@ -93,6 +98,52 @@
       "storiesGenerated": "القصص المُنشأة",
       "pendingApproval": "في انتظار موافقتك",
       "consentPending": "موافقة معلّقة"
+    },
+    "settings": {
+      "title": "الإعدادات",
+      "orgBranding": "المؤسسة والهوية البصرية",
+      "familySettings": "إعدادات العائلة",
+      "orgNameLabel": "اسم المؤسسة",
+      "familyNameLabel": "اسم العائلة",
+      "brandColorLabel": "لون العلامة",
+      "retentionLabel": "مدة الاحتفاظ بالبيانات (بالأيام)",
+      "retentionHint": "المدة التي تُحفظ خلالها بيانات الأطفال والقصص قبل حذفها تلقائيًا.",
+      "privacyTitle": "الخصوصية",
+      "privacyBody": "تبقى بيانات كل طفل خاصة بحسابك فقط، ومحفوظة بأمان، ولا تُشارَك مع أي عائلة أو مؤسسة أخرى. لا يمكن الوصول إلى الصور إلا عبر روابط خاصة ومؤقتة."
+    },
+    "security": {
+      "title": "الأمان",
+      "twoFactorLabel": "التحقق بخطوتين",
+      "statusOn": "مفعّل",
+      "statusRecommended": "موصى به",
+      "enabledDescription": "سنطلب منك رمزًا مكوّنًا من 6 أرقام من تطبيق المصادقة كل مرة تسجّل الدخول من جهاز جديد.",
+      "disabledDescription": "غير مطلوب، لكننا ننصح به بشدة — أضف رمزًا من تطبيق مصادقة (مثل Google Authenticator أو 1Password أو Authy) كخطوة ثانية عند تسجيل الدخول.",
+      "enableButton": "تفعيل التحقق بخطوتين",
+      "changePasswordHeading": "تغيير كلمة المرور"
+    },
+    "changePassword": {
+      "currentPasswordLabel": "كلمة المرور الحالية",
+      "newPasswordLabel": "كلمة المرور الجديدة",
+      "submit": "تحديث كلمة المرور",
+      "successTitle": "تم تحديث كلمة المرور",
+      "errorTitle": "تعذّر تحديث كلمة المرور"
+    },
+    "billing": {
+      "pageTitle": "الاستخدام والباقة",
+      "cardTitle": "الباقة والفواتير",
+      "notAvailable": "الفوترة غير متاحة بعد — يرجى المراجعة قريبًا.",
+      "currentStatus": "الحالة الحالية:",
+      "manageBilling": "إدارة الفوترة",
+      "intervalLabel": "دورة الفوترة",
+      "monthly": "شهري",
+      "annual": "سنوي",
+      "savePercent": "وفّر {percent}% مقارنة بالاشتراك الشهري",
+      "vatIncluded": "شامل ضريبة القيمة المضافة",
+      "vatExcluded": "غير شامل ضريبة القيمة المضافة",
+      "storiesPerMonth": "{count} قصة شهريًا",
+      "currentPlan": "الباقة الحالية",
+      "subscribe": "اشترك",
+      "couponLabel": "رمز الخصم (اختياري)"
     }
   },
   "children": {
@@ -290,5 +341,20 @@
     "delete": "حذف",
     "confirm": "تأكيد",
     "needsNativeReview": "يحتاج مراجعة من متحدث أصلي"
+  },
+  "mfa": {
+    "enroll": {
+      "title": "إعداد التحقق بخطوتين",
+      "descriptionRecommended": "استخدم تطبيق مصادقة (مثل Google Authenticator أو 1Password أو Authy) لإضافة خطوة ثانية عند تسجيل الدخول.",
+      "descriptionMandatory": "تتطلب حسابات مالك المنصة استخدام تطبيق مصادقة (مثل Google Authenticator أو 1Password أو Authy) قبل الوصول إلى لوحة تحكم المالك.",
+      "startSetup": "بدء الإعداد",
+      "codeLabel": "أدخل الرمز المكوّن من 6 أرقام من التطبيق",
+      "verifyAndEnable": "تحقّق وفعّل"
+    },
+    "challenge": {
+      "title": "تحقّق من هويتك",
+      "description": "أدخل الرمز المكوّن من 6 أرقام من تطبيق المصادقة.",
+      "verify": "تحقّق"
+    }
   }
 }

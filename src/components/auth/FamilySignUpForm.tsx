@@ -3,13 +3,16 @@
 import { useEffect } from 'react';
 import { useFormState } from 'react-dom';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { familySignUpAction } from '@/lib/actions/family';
 import type { ActionResult } from '@/lib/actions/auth';
-import { PASSWORD_MIN_LENGTH, PASSWORD_PATTERN, PASSWORD_REQUIREMENT_HINT } from '@/lib/domain/password';
+import { PASSWORD_MIN_LENGTH, PASSWORD_PATTERN } from '@/lib/domain/password';
 import { Button } from '@/components/ui/Button';
 import { TextField } from '@/components/ui/Input';
 
 export function FamilySignUpForm({ locale, referralCode }: { locale: string; referralCode?: string }) {
+  const t = useTranslations('auth.familySignUp');
+  const tAuth = useTranslations('auth');
   const router = useRouter();
   const action = familySignUpAction.bind(null, locale);
   const [state, formAction] = useFormState<ActionResult, FormData>(async (_prev, formData) => {
@@ -23,17 +26,17 @@ export function FamilySignUpForm({ locale, referralCode }: { locale: string; ref
   return (
     <form action={formAction} className="flex flex-col gap-4">
       <input type="hidden" name="referralCode" value={referralCode ?? ''} />
-      <TextField name="fullName" label="Your full name" required />
-      <TextField name="email" type="email" label="Email address" required />
+      <TextField name="fullName" label={t('fullName')} required />
+      <TextField name="email" type="email" label={t('email')} required />
       <TextField
         name="password"
         type="password"
-        label="Password"
-        hint={PASSWORD_REQUIREMENT_HINT}
+        label={t('password')}
+        hint={tAuth('passwordHint', { min: PASSWORD_MIN_LENGTH })}
         required
         minLength={PASSWORD_MIN_LENGTH}
         pattern={PASSWORD_PATTERN}
-        title={PASSWORD_REQUIREMENT_HINT}
+        title={tAuth('passwordHint', { min: PASSWORD_MIN_LENGTH })}
       />
       {state?.error && (
         <p role="alert" className="text-sm text-coral-600">
@@ -41,7 +44,7 @@ export function FamilySignUpForm({ locale, referralCode }: { locale: string; ref
         </p>
       )}
       <Button type="submit" size="lg">
-        Create my family account
+        {t('submit')}
       </Button>
     </form>
   );

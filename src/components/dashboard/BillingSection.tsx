@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { annualSavingsPercent } from '@/lib/domain/billing';
@@ -15,6 +16,7 @@ export function BillingSection({
   plans: Plan[];
   subscription: Subscription | null;
 }) {
+  const t = useTranslations('dashboard.billing');
   const [loadingPlanKey, setLoadingPlanKey] = useState<string | null>(null);
   const [couponCode, setCouponCode] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -41,16 +43,21 @@ export function BillingSection({
   }
 
   const currentPlanId = subscription?.plan_id;
+  const intervalLabel: Record<BillingInterval, string> = { monthly: t('monthly'), annual: t('annual') };
 
   return (
     <div className="space-y-4">
       {subscription && (
         <div className="flex items-center gap-2">
-          <span className="text-sm text-ink-600">Current status:</span>
+          <span className="text-sm text-ink-600">{t('currentStatus')}</span>
+          {/* subscription.status is a raw DB enum ('active'/'trialing'/...),
+              shown as-is rather than translated -- same convention as
+              every other status badge in the app (e.g. a story page's
+              image_status). */}
           <Badge tone={subscription.status === 'active' ? 'success' : 'warning'}>{subscription.status}</Badge>
           {subscription.stripe_customer_id && (
             <a href="/api/billing/portal" className="text-sm font-medium text-lagoon-600 underline">
-              Manage billing
+              {t('manageBilling')}
             </a>
           )}
         </div>
@@ -59,7 +66,7 @@ export function BillingSection({
       <div
         className="inline-flex rounded-xl border border-[rgb(var(--color-border))] p-1"
         role="group"
-        aria-label="Billing interval"
+        aria-label={t('intervalLabel')}
       >
         {(['monthly', 'annual'] as const).map((interval) => (
           <button
@@ -67,11 +74,11 @@ export function BillingSection({
             type="button"
             onClick={() => setBillingInterval(interval)}
             aria-pressed={billingInterval === interval}
-            className={`rounded-lg px-3 py-1.5 text-sm font-medium capitalize transition-colors ${
+            className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
               billingInterval === interval ? 'bg-lagoon-600 text-white' : 'text-ink-600 hover:bg-ink-100'
             }`}
           >
-            {interval}
+            {intervalLabel[interval]}
           </button>
         ))}
       </div>
@@ -95,12 +102,10 @@ export function BillingSection({
                 </span>
               </p>
               {billingInterval === 'annual' && savings > 0 && (
-                <p className="mt-0.5 text-xs font-medium text-lagoon-600">Save {savings}% vs. monthly</p>
+                <p className="mt-0.5 text-xs font-medium text-lagoon-600">{t('savePercent', { percent: savings })}</p>
               )}
-              <p className="mt-1 text-xs text-ink-500">
-                {plan.vat_inclusive ? 'VAT included' : 'VAT excluded'}
-              </p>
-              <p className="mt-2 text-sm text-ink-600">{plan.stories_per_month} stories/month</p>
+              <p className="mt-1 text-xs text-ink-500">{plan.vat_inclusive ? t('vatIncluded') : t('vatExcluded')}</p>
+              <p className="mt-2 text-sm text-ink-600">{t('storiesPerMonth', { count: plan.stories_per_month })}</p>
               <Button
                 className="mt-4 w-full"
                 variant={plan.id === currentPlanId ? 'secondary' : 'primary'}
@@ -108,7 +113,7 @@ export function BillingSection({
                 onClick={() => subscribe(plan.key)}
                 disabled={plan.id === currentPlanId}
               >
-                {plan.id === currentPlanId ? 'Current plan' : 'Subscribe'}
+                {plan.id === currentPlanId ? t('currentPlan') : t('subscribe')}
               </Button>
             </div>
           );
@@ -118,7 +123,7 @@ export function BillingSection({
       <div className="flex items-end gap-2">
         <div>
           <label htmlFor="coupon" className="mb-1.5 block text-sm font-medium text-ink-700">
-            Coupon code (optional)
+            {t('couponLabel')}
           </label>
           <input
             id="coupon"

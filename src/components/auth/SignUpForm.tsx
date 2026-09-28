@@ -5,12 +5,13 @@ import { useFormState } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { signUpAction, type ActionResult } from '@/lib/actions/auth';
-import { PASSWORD_MIN_LENGTH, PASSWORD_PATTERN, PASSWORD_REQUIREMENT_HINT } from '@/lib/domain/password';
+import { PASSWORD_MIN_LENGTH, PASSWORD_PATTERN } from '@/lib/domain/password';
 import { Button } from '@/components/ui/Button';
 import { TextField } from '@/components/ui/Input';
 
 export function SignUpForm({ locale, referralCode }: { locale: string; referralCode?: string }) {
   const t = useTranslations('auth.signUp');
+  const tAuth = useTranslations('auth');
   const router = useRouter();
   const action = signUpAction.bind(null, locale);
   const [state, formAction] = useFormState<ActionResult, FormData>(async (_prev, formData) => {
@@ -31,11 +32,11 @@ export function SignUpForm({ locale, referralCode }: { locale: string; referralC
         name="password"
         type="password"
         label={t('password')}
-        hint={PASSWORD_REQUIREMENT_HINT}
+        hint={tAuth('passwordHint', { min: PASSWORD_MIN_LENGTH })}
         required
         minLength={PASSWORD_MIN_LENGTH}
         pattern={PASSWORD_PATTERN}
-        title={PASSWORD_REQUIREMENT_HINT}
+        title={tAuth('passwordHint', { min: PASSWORD_MIN_LENGTH })}
       />
       {state?.error && (
         <p role="alert" className="text-sm text-coral-600">

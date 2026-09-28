@@ -1,6 +1,7 @@
 'use client';
 
 import { useFormState } from 'react-dom';
+import { useTranslations } from 'next-intl';
 import { updateTenantBrandingAction } from '@/lib/actions/tenant';
 import type { ActionResult } from '@/lib/actions/auth';
 import { Button } from '@/components/ui/Button';
@@ -16,6 +17,8 @@ export function SettingsForm({
   tenant: Tenant;
   tenantType: TenantType;
 }) {
+  const t = useTranslations('dashboard.settings');
+  const tCommon = useTranslations('common');
   const action = updateTenantBrandingAction.bind(null, locale);
   const [state, formAction] = useFormState<ActionResult, FormData>(async (_prev, formData) => {
     return action(formData);
@@ -26,7 +29,7 @@ export function SettingsForm({
     <form action={formAction} className="flex max-w-md flex-col gap-4">
       <TextField
         name="name"
-        label={isNursery ? 'Organisation name' : 'Family name'}
+        label={isNursery ? t('orgNameLabel') : t('familyNameLabel')}
         defaultValue={tenant.name}
         required
       />
@@ -40,7 +43,7 @@ export function SettingsForm({
         <>
           <div>
             <label htmlFor="brandColor" className="mb-1.5 block text-sm font-medium text-ink-700">
-              Brand colour
+              {t('brandColorLabel')}
             </label>
             <input
               id="brandColor"
@@ -55,15 +58,15 @@ export function SettingsForm({
             type="number"
             min={30}
             max={3650}
-            label="Data retention (days)"
-            hint="How long child and story data is kept before scheduled deletion."
+            label={t('retentionLabel')}
+            hint={t('retentionHint')}
             defaultValue={tenant.data_retention_days}
           />
         </>
       )}
       {state?.error && <p className="text-sm text-coral-600">{state.error}</p>}
       <Button type="submit" className="self-start">
-        Save
+        {tCommon('save')}
       </Button>
     </form>
   );

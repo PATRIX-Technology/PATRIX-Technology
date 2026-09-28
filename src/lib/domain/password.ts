@@ -13,7 +13,12 @@ export const PASSWORD_MIN_LENGTH = 10;
  * minimum length via `{N,}`. */
 export const PASSWORD_PATTERN = `(?=.*[A-Za-z])(?=.*\\d).{${PASSWORD_MIN_LENGTH},}`;
 
-export const PASSWORD_REQUIREMENT_HINT = `At least ${PASSWORD_MIN_LENGTH} characters, with a mix of letters and numbers.`;
+/** The matching user-facing hint text lives in the `auth.passwordHint`
+ * translation key (interpolating PASSWORD_MIN_LENGTH), not here — every
+ * form that shows it is customer-facing and needs the Arabic version
+ * too, so it goes through next-intl at each call site rather than being
+ * a hardcoded English constant. See docs/DECISIONS.md "Dashboard
+ * settings/billing/security/MFA screens translated into Arabic". */
 
 /** Returns a user-facing error message, or null if the password satisfies
  * the rule. Deliberately does not require a specific case or a symbol —

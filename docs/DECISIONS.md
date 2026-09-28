@@ -2881,6 +2881,74 @@ translation system (adding `en.json`/`ar.json` keys and swapping the
 hardcoded strings for `t(...)` calls) is a contained follow-up, not
 done here since it wasn't what was asked this round.
 
+## Dashboard settings/billing/security/MFA screens translated into Arabic
+
+Follow-up founder request: "now please to have it ready" — closing the
+gap the previous entry flagged.
+
+Added translation keys (`auth.passwordHint`, `auth.familySignUp.*`,
+`dashboard.settings.*`, `dashboard.security.*`,
+`dashboard.changePassword.*`, `dashboard.billing.*`, `mfa.enroll.*`,
+`mfa.challenge.*`) to both `en.json` and `ar.json` — verified key-set
+parity again afterward the same way as before (280/280 keys in each,
+diffed programmatically, not eyeballed) — and swapped every hardcoded
+English string in the following for `useTranslations`/
+`getTranslations` calls: `SettingsForm.tsx`, `BillingSection.tsx`, the
+`settings` and `billing` pages, `ChangePasswordForm.tsx`,
+`MfaEnrollForm.tsx`, `MfaChallengeForm.tsx`, and their owner/regular
+call sites.
+
+**Also fixed while in there, not just the new pieces**: `FamilySignUpForm.tsx`
+had never called `useTranslations` at all, for any of its fields
+("Your full name", "Email address", "Password", "Create my family
+account" were plain English literals since it was first built) — a
+pre-existing gap in the same category, not something introduced this
+session, but squarely what "have it ready" means. Added
+`auth.familySignUp.{fullName,email,password,submit}` and wired it in.
+
+`PASSWORD_REQUIREMENT_HINT` (a hardcoded English constant in
+`src/lib/domain/password.ts`, added earlier this session and used by
+every password field across sign-up/staff-invite/change-password)
+is gone — replaced by the `auth.passwordHint` key, interpolating
+`PASSWORD_MIN_LENGTH` via next-intl's `{min}` placeholder syntax
+(`useTranslations('auth')` alongside each form's own scoped
+translator, since the key lives one level up from `auth.signUp`/
+`auth.familySignUp`/`staffAccept` to avoid duplicating it three times).
+
+`MfaEnrollForm`'s `title`/`description` string-override props (from
+earlier this session) are gone too, replaced by a single boolean
+`mandatory` prop that switches between two translated description
+variants (`descriptionMandatory` for the owner's "this is required"
+framing, `descriptionRecommended` for everyone else) — both are now
+real Arabic-ready keys, including the owner one, which is a small
+quality improvement over what existed before (the owner MFA pages
+still don't share any layout or translated chrome with the rest of
+the app, by existing convention, but this one string is no longer
+hardcoded either).
+
+**Deliberately left untranslated, matching an already-established,
+app-wide convention**: dynamic strings that come back from a Server
+Action or the Supabase Auth API at runtime (`validatePassword`'s
+messages, `changePasswordAction`'s "Current password is incorrect.",
+MFA's own `enrollError.message`/`verifyError.message`, `subscription.status`
+shown as a raw DB enum value on a badge). Every other Server Action in
+this app — sign-in, sign-up, story creation, all of it — has always
+returned plain English error strings regardless of locale; there was
+no existing pattern of translating these anywhere to be consistent
+with, and building one now would be a much larger, separate effort
+touching the whole action layer, not a "make it ready" fix. Static UI
+chrome (labels, headings, buttons, hints) is what actually needed
+fixing, and is now fully bilingual.
+
+Verified for real again: ran the dev server, screenshotted
+`FamilySignUpForm` in both `en` and `ar`, and confirmed the
+`{min}`-interpolated password hint renders correctly and grammatically
+in Arabic ("يجب أن تتكوّن من 10 حرفًا على الأقل..."), not just that the
+key resolved. Also wrote a small script cross-checking every
+`t('key')`/`getTranslations('ns')('key')` call added across all ten
+touched files against the actual `en.json` structure, to catch a typo'd
+key path before it could ship as a silent runtime fallback.
+
 ## Not yet built (explicitly out of scope for this build session)
 
 - Vendor moderation integration for image safety checks

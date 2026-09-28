@@ -11,10 +11,7 @@ export default async function MfaEnrollPage({ params }: { params: { locale: stri
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-[rgb(var(--color-surface))] px-4 py-12">
-      <MfaEnrollForm
-        redirectTo={`/${params.locale}/owner`}
-        description="Platform owner accounts require an authenticator app (Google Authenticator, 1Password, Authy, etc.) before accessing the owner dashboard."
-      />
+      <MfaEnrollForm redirectTo={`/${params.locale}/owner`} mandatory />
     </main>
   );
 }

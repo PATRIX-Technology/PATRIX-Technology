@@ -224,7 +224,7 @@
       },
       {
         "order": 2,
-        "text": "قالت {mascot}: «أن تكون أخاً كبيراً فهذه قوة خاصة، ستُعلّم الطفل الجديد كل ما تعرفه.»",
+        "text": "قالت {mascot}: «أن {v:older_sibling_copula} {v:older_sibling_noun} فهذه قوة خاصة، ستُعلّم الطفل الجديد كل ما تعرفه.»",
         "image_prompt": "الثعلب الكرتوني يتحدث إلى شخصية {child_name} بجانب سرير الطفل، عباءة صغيرة تظهر بشكل مرح على كتفي {child_name}، أسلوب رسوم كتاب قصص."
       },
       {
@@ -354,7 +354,7 @@
       },
       {
         "order": 4,
-        "text": "بيدين نظيفتين وابتسامة كبيرة، {v:sat_down} {child_name} {v:to_eat_snack} وجبت{ps} الخفيفة.. {v:true_bubble_hero}!",
+        "text": "بيدين نظيفتين وابتسامة كبيرة، {v:sat_down} {child_name} {v:to_eat_snack} وجبت{ps} الخفيفة. {v:true_bubble_hero}!",
         "image_prompt": "شخصية {child_name} تجلس بسعادة على طاولة الوجبة الخفيفة بيدين نظيفتين، الثعلب الكرتوني يرتدي عباءة الفقاعات يجلس قريبًا، أسلوب رسوم كتاب قصص."
       }
     ]
@@ -393,7 +393,7 @@
     "theme_key": "saving_money",
     "locale": "ar",
     "title": "وعد الحصّالة",
-    "synopsis": "يتعلّم {child_name} أن توفير القليل شيئًا فشيئًا يكبر ليصبح شيئًا رائعًا.",
+    "synopsis": "{v:learns_present} {child_name} أن توفير القليل شيئًا فشيئًا يكبر ليصبح شيئًا رائعًا.",
     "mascot_name": "ماريا الثعلبة",
     "native_review_status": "reviewed",
     "pages": [

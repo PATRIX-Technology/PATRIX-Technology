@@ -76,7 +76,7 @@
       "verify": "تحقق ومتابعة",
       "changeNumber": "استخدام رقم آخر"
     },
-    "passwordHint": "يجب أن تتكوّن من {min} حرفًا على الأقل، وتحتوي على مزيج من الحروف والأرقام."
+    "passwordHint": "{min, plural, one {يجب أن تتكوّن من حرف واحد على الأقل} two {يجب أن تتكوّن من حرفين على الأقل} few {يجب أن تتكوّن من # حروف على الأقل} many {يجب أن تتكوّن من # حرفًا على الأقل} other {يجب أن تتكوّن من # حرفًا على الأقل}}، وتحتوي على مزيج من الحروف والأرقام."
   },
   "dashboard": {
     "nav": {
@@ -105,7 +105,7 @@
       "familySettings": "إعدادات العائلة",
       "orgNameLabel": "اسم المؤسسة",
       "familyNameLabel": "اسم العائلة",
-      "brandColorLabel": "لون العلامة",
+      "brandColorLabel": "لون العلامة التجارية",
       "retentionLabel": "مدة الاحتفاظ بالبيانات (بالأيام)",
       "retentionHint": "المدة التي تُحفظ خلالها بيانات الأطفال والقصص قبل حذفها تلقائيًا.",
       "privacyTitle": "الخصوصية",
@@ -116,7 +116,7 @@
       "twoFactorLabel": "التحقق بخطوتين",
       "statusOn": "مفعّل",
       "statusRecommended": "موصى به",
-      "enabledDescription": "سنطلب منك رمزًا مكوّنًا من 6 أرقام من تطبيق المصادقة كل مرة تسجّل الدخول من جهاز جديد.",
+      "enabledDescription": "سنطلب منك رمزًا مكوّنًا من ٦ أرقام من تطبيق المصادقة كل مرة تسجّل الدخول من جهاز جديد.",
       "disabledDescription": "غير مطلوب، لكننا ننصح به بشدة — أضف رمزًا من تطبيق مصادقة (مثل Google Authenticator أو 1Password أو Authy) كخطوة ثانية عند تسجيل الدخول.",
       "enableButton": "تفعيل التحقق بخطوتين",
       "changePasswordHeading": "تغيير كلمة المرور"
@@ -140,7 +140,7 @@
       "savePercent": "وفّر {percent}% مقارنة بالاشتراك الشهري",
       "vatIncluded": "شامل ضريبة القيمة المضافة",
       "vatExcluded": "غير شامل ضريبة القيمة المضافة",
-      "storiesPerMonth": "{count} قصة شهريًا",
+      "storiesPerMonth": "{count, plural, one {قصة واحدة شهريًا} two {قصتان شهريًا} few {# قصص شهريًا} many {# قصة شهريًا} other {# قصة شهريًا}}",
       "currentPlan": "الباقة الحالية",
       "subscribe": "اشترك",
       "couponLabel": "رمز الخصم (اختياري)",
@@ -190,7 +190,7 @@
       "cancel": "إلغاء"
     },
     "consentStatus": {
-      "not_requested": "لم يُطلب",
+      "not_requested": "لم تُطلب",
       "pending": "قيد الانتظار",
       "granted": "تمت الموافقة",
       "withdrawn": "تم سحب الموافقة"
@@ -286,7 +286,7 @@
     "reject": "رفض",
     "regeneratePage": "إعادة إنشاء هذه الصفحة",
     "regenerateStartedTitle": "جارٍ إعادة إنشاء هذه الصفحة",
-    "regenerateStartedBody": "سنستبدلها بالرسمة الجديدة فور جاهزيتها — تتحدّث هذه الصفحة تلقائيًا.",
+    "regenerateStartedBody": "سنستبدلها بالرسمة الجديدة فور جاهزيتها — تُحدَّث هذه الصفحة تلقائيًا.",
     "regenerateFailedTitle": "تعذّر بدء إعادة الإنشاء",
     "downloadPdf": "تحميل PDF",
     "downloadFailedTitle": "تعذّر تحميل ملف PDF",
@@ -294,7 +294,7 @@
     "bulkZip": "تحميل جميع القصص (ZIP)",
     "bulkZipFailedTitle": "تعذّر تحميل ملف ZIP",
     "bulkZipFailedBody": "الملف غير جاهز بعد، أو حدث خطأ ما. حاول مرة أخرى بعد قليل.",
-    "storyCount": "{count} قصص",
+    "storyCount": "{count, plural, zero {لا قصص} one {قصة واحدة} two {قصتان} few {# قصص} many {# قصة} other {# قصة}}",
     "noChildName": "طفل بلا اسم",
     "suggestIdea": "اقترح فكرة قصة",
     "suggestIdeaTitle": "اقترح فكرة قصة جديدة",
@@ -316,7 +316,7 @@
     "copyLink": "نسخ الرابط",
     "copied": "تم النسخ!",
     "loading": "جارٍ تحميل رابط الدعوة…",
-    "stats": "{pending} دعوة قيد الانتظار، {rewarded} مكتملة — حصلت على {stories} قصة مجانية حتى الآن.",
+    "stats": "{pending, plural, zero {لا توجد دعوات قيد الانتظار} one {دعوة واحدة قيد الانتظار} two {دعوتان قيد الانتظار} few {# دعوات قيد الانتظار} many {# دعوة قيد الانتظار} other {# دعوة قيد الانتظار}}، {rewarded, plural, zero {لا دعوات مكتملة} one {دعوة واحدة مكتملة} two {دعوتان مكتملتان} few {# دعوات مكتملة} many {# دعوة مكتملة} other {# دعوة مكتملة}} — {stories, plural, zero {لم تحصل على أي قصة مجانية} one {حصلت على قصة مجانية واحدة} two {حصلت على قصتين مجانيتين} few {حصلت على # قصص مجانية} many {حصلت على # قصة مجانية} other {حصلت على # قصة مجانية}} حتى الآن.",
     "pageTitle": "ادعُ أصدقاءك واحصل على قصص مجانية",
     "pageBody": "كل شخص يسجّل عبر رابطك ويشترك يمنحك قصصًا مجانية — تلقائيًا، بعدد يطابق الباقة التي اختارها. لا حد لعدد الأشخاص الذين تدعوهم.",
     "yourLink": "رابط دعوتك",
@@ -349,12 +349,12 @@
       "descriptionRecommended": "استخدم تطبيق مصادقة (مثل Google Authenticator أو 1Password أو Authy) لإضافة خطوة ثانية عند تسجيل الدخول.",
       "descriptionMandatory": "تتطلب حسابات مالك المنصة استخدام تطبيق مصادقة (مثل Google Authenticator أو 1Password أو Authy) قبل الوصول إلى لوحة تحكم المالك.",
       "startSetup": "بدء الإعداد",
-      "codeLabel": "أدخل الرمز المكوّن من 6 أرقام من التطبيق",
+      "codeLabel": "أدخل الرمز المكوّن من ٦ أرقام من التطبيق",
       "verifyAndEnable": "تحقّق وفعّل"
     },
     "challenge": {
       "title": "تحقّق من هويتك",
-      "description": "أدخل الرمز المكوّن من 6 أرقام من تطبيق المصادقة.",
+      "description": "أدخل الرمز المكوّن من ٦ أرقام من تطبيق المصادقة.",
       "verify": "تحقّق"
     }
   }

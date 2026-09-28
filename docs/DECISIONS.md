@@ -3004,6 +3004,137 @@ item 6 — nothing has ever actually redirected through either path for
 real), but would have sent a real subscriber back to the wrong tab the
 moment Stripe goes live.
 
+## Arabic grammar audit of the UI catalog, mascot dialogue, and number agreement
+
+Founder request, after the language toggle shipped: act as an Arabic
+grammar expert and find every grammar issue in the app, not just spot
+checks. Read all 281 keys of `src/messages/ar.json` line by line, the
+Arabic side of `supabase/seed/templates.json` (8 themes × 4 pages +
+synopses), and re-checked `ARABIC_CONJUGATIONS`/
+`ARABIC_POSSESSIVE_SUFFIX` in `src/lib/domain/pronouns.ts` (already
+audited once — see "Arabic gender-agreement audit of the story
+templates" — so this pass was a lighter re-check, and turned up
+nothing new there).
+
+**`src/messages/ar.json` fixes**:
+- `children.consentStatus.not_requested`: "لم يُطلب" (masc) → "لم
+  تُطلب" (fem) — the implied subject is "الموافقة" (consent,
+  feminine), and the sibling `granted` entry already correctly used
+  the feminine "تمّت الموافقة".
+- `dashboard.settings.brandColorLabel`: "لون العلامة" → "لون العلامة
+  التجارية" — "العلامة" alone means "the mark/sign", not "the brand";
+  "العلامة التجارية" is the actual term, already used correctly
+  elsewhere in the same file (`marketing.useCases.campaigns`).
+- `stories.regenerateStartedBody`: "تتحدّث هذه الصفحة تلقائيًا" →
+  "تُحدَّث هذه الصفحة تلقائيًا" — "تتحدّث" (Form V, from the same
+  root ح-د-ث) means "talks/converses", so the sentence literally read
+  "this page **talks** automatically". The intended meaning ("this
+  page **updates** automatically") is the Form II passive "تُحدَّث".
+- Three instances of a literal Western "6" inside otherwise-Arabic
+  digit-hint text (`dashboard.security.enabledDescription`,
+  `mfa.enroll.codeLabel`, `mfa.challenge.description`) → Arabic-Indic
+  "٦", matching the app's own existing convention (`auth.phone.codeLabel`
+  already reads "رمز مكوّن من ٦ أرقام"). Confirmed first that this
+  doesn't fight how numbers render elsewhere: Node's `Intl.NumberFormat('ar')`
+  (full ICU, confirmed via `process.versions.icu`/`icu_small`) formats
+  1234 as `1,234`, i.e. bare `ar` defaults to Western digits — so every
+  *interpolated* count in this app (including the new ICU plurals
+  below) renders in Western digits regardless, and these three fixes
+  only touch hand-authored static text describing a fixed "6-digit
+  code", not a rendered number.
+- `auth.passwordHint` and three counting keys had a real Arabic
+  number-agreement bug: Arabic requires a different noun form
+  depending on the count's range (1 → singular; 2 → dual; 3–10 →
+  plural; 11–99 → singular accusative "tamyiz"; 100+ → singular), and
+  a single fixed Arabic string can only ever be correct for one of
+  those ranges. `passwordHint` used the 11–99 singular form
+  ("حرفًا") for `PASSWORD_MIN_LENGTH = 10`, which actually needs the
+  3–10 plural ("حروف") — wrong for the one value it's ever shown
+  with. `dashboard.billing.storiesPerMonth` and `stories.storyCount`
+  used a single form regardless of the interpolated plan/story count
+  (right for some plan tiers, wrong for others — e.g. correct for the
+  100/500-story nursery tiers, wrong for the 1-story family plan and
+  wrong for the 3-story Family Plus plan). `referrals.stats` had the
+  same problem across all three of its interpolated numbers, though
+  it turned out to be dead code (see below).
+  Fixed by introducing ICU MessageFormat plural syntax
+  (`{count, plural, one {...} few {...} ...}`) — next-intl already
+  supports this via `intl-messageformat`, including Arabic's full
+  6-category CLDR plural system (zero/one/two/few/many/other), it had
+  simply never been used anywhere in this catalog before. Verified
+  every branch actually renders correct MSA by running each string
+  through `intl-messageformat` directly for representative counts
+  (1, 2, 3, 10, 11, 25, 100, 500) rather than trusting the ICU syntax
+  compiled — e.g. `storiesPerMonth` now correctly renders "قصة واحدة
+  شهريًا" for the 1-story plan, "3 قصص شهريًا" for the 3-story plan,
+  and "25 قصة شهريًا"/"100 قصة شهريًا" for the 25/100-story tiers,
+  where before all four rendered with the same fixed noun form.
+  `en.json`'s matching keys had the identical bug in miniature ("1
+  stories/month") and got the same minimal ICU treatment
+  (`one`/`other` only, since English doesn't need the extra
+  categories) so both locales' interpolation stays in sync.
+- While tracing `referrals.stats`'s call site to confirm its variable
+  names, found it isn't actually called anywhere — the invite page
+  (`src/app/[locale]/(dashboard)/dashboard/invite/page.tsx`) renders
+  the three numbers as separate stat tiles with their own labels
+  (`pendingLabel`/`rewardedLabel`/`storiesEarnedLabel`), not as one
+  combined sentence. Fixed it to the same ICU standard as the others
+  anyway, since it's still shipped translation content and costs
+  nothing to have correct, but it's currently unreachable dead code —
+  flagging here rather than deleting it, since removing a translation
+  key on a hunch it's unused risks guessing wrong.
+
+**`supabase/seed/templates.json` + live `story_theme_templates` fixes**
+(applied to both — the live DB row for each theme was byte-for-byte
+identical to the pre-fix seed content, confirmed by reading both
+before writing):
+- `new_sibling` page 2: "أن تكون أخاً كبيراً فهذه قوة خاصة" was
+  hardcoded literal text instead of using the `{v:older_sibling_copula}`/
+  `{v:older_sibling_noun}` tokens the template already defines and
+  already uses correctly on page 4 and in this theme's own synopsis.
+  Because it was hardcoded, it was wrong for *either* pronoun: the
+  copula "تكون" is only correct for a girl, and the noun "أخاً كبيراً"
+  ("big **brother**") is only correct for a boy — so every rendering
+  had exactly one gender-agreement error in it, just a different one
+  depending on the child. Fixed to use both tokens, matching page 4's
+  and the synopsis's existing pattern.
+- `saving_money` synopsis: "يتعلّم {child_name}..." hardcoded the
+  masculine present-tense verb instead of using the `{v:learns_present}`
+  token every other theme's synopsis uses for the identical phrase
+  ("تتعلّم"/"يتعلّم") — wrong for a girl. Fixed to use the token.
+- `hand_washing` page 4: a stray doubled period ("الخفيفة.. {v:true_bubble_hero}!")
+  — cosmetic typo, fixed to a single period.
+- Checked whether any already-generated live story had baked either
+  of these two wrong page texts into its stored `story_pages.text`
+  (which for Arabic is also already baked into the illustration's
+  pixels — see "Fixing every already-generated Arabic story, live") —
+  none did, so no backfill/regeneration migration was needed this
+  time, unlike the earlier gender-agreement audit.
+- Re-examined the `hand_washing` synopsis number-agreement question
+  the earlier audit ("Arabic gender-agreement audit of the story
+  templates") had deliberately left open as a known issue: "يصبح
+  {child_name} و{mascot} بطلَي الفقاعات، ويطردان الجراثيم..." — a
+  singular verb ("يصبح") with a two-person subject. On closer
+  grammatical analysis this is not actually an error: classical
+  Arabic agreement rule is that a verb *preceding* a compound subject
+  joined by "و" agrees only with the nearer/first conjunct (staying
+  singular), which is exactly what "يصبح {child_name} و{mascot}" does
+  — and the following verb "يطردان", now that the compound subject is
+  established, correctly switches to the dual. Correcting the earlier
+  note here rather than re-flagging or "fixing" already-correct
+  grammar.
+
+**Reviewed and found already correct** (worth recording so a future
+pass doesn't re-litigate the same ground): non-human-plural-takes-
+feminine-singular-adjective agreement throughout both files (e.g. the
+UAE flag colours "الحمراء والخضراء والبيضاء والسوداء" modifying
+"الأعلام"), human-plural-takes-real-plural agreement ("أبطال الفقاعات
+يغسلون أيديهم", correctly *not* using the non-human rule), the
+`تم`/`تمّت` + masdar subject-gender-agreement pattern used consistently
+elsewhere in `ar.json`, dual construct-state case endings ("بطلَي
+الفقاعات" correctly dropping the dual's tanween before an idafa), and
+every `{v:...}` token substitution across all 8 Arabic themes.
+
 ## Not yet built (explicitly out of scope for this build session)
 
 - Vendor moderation integration for image safety checks

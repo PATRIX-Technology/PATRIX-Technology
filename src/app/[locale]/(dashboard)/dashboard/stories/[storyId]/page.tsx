@@ -1,8 +1,10 @@
 import { notFound } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
+import { createSupabaseServiceRoleClient } from '@/lib/supabase/service-role';
 import { getCurrentTenantContext } from '@/lib/domain/session';
 import { getSignedAssetUrls } from '@/lib/domain/storage';
+import { runWorkerOnce } from '@/lib/jobs/worker';
 import { Card, CardTitle } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { ApprovalActions } from '@/components/stories/ApprovalActions';
@@ -29,11 +31,38 @@ export default async function StoryDetailPage({
     .maybeSingle();
   if (!story) notFound();
 
-  const { data: pages } = await supabase
+  const { data: initialPages } = await supabase
     .from('story_pages')
     .select('*')
     .eq('story_id', story.id)
     .order('page_number');
+
+  // Story creation and "regenerate this page" no longer wait on the
+  // worker themselves before returning — see docs/DECISIONS.md "Story
+  // creation no longer waits on the worker before redirecting". This
+  // page picks the resulting queued job(s) up instead: on the very
+  // first load right after creating a story, and again on every
+  // AutoRefresh poll below while anything is still generating, so
+  // watching this page keeps making progress even between the
+  // scheduled worker's own 5-minute cron ticks. A bounded batch size
+  // (not the cron's 25) keeps any one page load's share of the work
+  // modest, since a slow real-provider run here just means a slower
+  // page load, never a vanished redirect.
+  const hasQueuedWork = (initialPages ?? []).some(
+    (p) => p.image_status === 'QUEUED' || p.image_status === 'GENERATING',
+  );
+  if (hasQueuedWork) {
+    try {
+      const serviceClient = createSupabaseServiceRoleClient();
+      await runWorkerOnce(serviceClient, 10);
+    } catch {
+      // Non-fatal: the next auto-refresh or the scheduled worker retries.
+    }
+  }
+
+  const { data: pages } = hasQueuedWork
+    ? await supabase.from('story_pages').select('*').eq('story_id', story.id).order('page_number')
+    : { data: initialPages };
 
   // The story's own title/synopsis are never stored on the row itself —
   // only the per-page text is baked in at creation time (see

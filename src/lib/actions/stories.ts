@@ -6,10 +6,15 @@ import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { getCurrentTenantContext } from '@/lib/domain/session';
 import { createStory, ConsentRequiredError, QuotaExceededError } from '@/lib/domain/stories';
 import { renderTemplate, StoryThemeTemplateSchema } from '@/lib/domain/templates';
-import { runWorkerOnce } from '@/lib/jobs/worker';
-import { createSupabaseServiceRoleClient } from '@/lib/supabase/service-role';
 import { parseAvatarConfig } from '@/lib/domain/avatar';
+import { enforceRateLimit, RateLimitExceededError } from '@/lib/rate-limit';
 import type { ActionResult } from './auth';
+
+/** Each regeneration costs a real Gemini image call — generous enough for
+ * legitimately fixing several pages in one sitting, tight enough to stop
+ * someone hammering the button. Per user, not per page/story, so it
+ * still bites even if they spread clicks across different stories. */
+const REGENERATE_RATE_LIMIT = { limit: 10, windowMs: 10 * 60 * 1000 };
 
 export interface CreateStoryResult extends ActionResult {
   storyId?: string;
@@ -87,24 +92,17 @@ export async function createStoryAction(
     return { error: (error as Error).message };
   }
 
-  // Kick the job worker synchronously so images generate right away
-  // instead of waiting for the scheduled trigger at /api/cron/worker.
-  // With the real provider this can run long enough on a multi-page
-  // story to risk Vercel's function timeout killing the request
-  // mid-generation — see docs/DECISIONS.md "Defending against a
-  // mid-generation function timeout" for why that no longer crashes the
-  // page (CreateStoryForm now tolerates the resolved state coming back
-  // undefined) even though it's left running synchronously here: the
-  // /api/cron/worker safety net only actually runs on a schedule once
-  // one is configured (see docs/NEEDS_FROM_ME.md), and removing this
-  // synchronous call without that in place first would leave a
-  // real-provider story stuck "queued" forever instead of just slow.
-  try {
-    const serviceClient = createSupabaseServiceRoleClient();
-    await runWorkerOnce(serviceClient, 25);
-  } catch {
-    // Non-fatal: the scheduled worker will pick the jobs up on its next run.
-  }
+  // Deliberately NOT kicking the job worker here anymore — see
+  // docs/DECISIONS.md "Story creation no longer waits on the worker
+  // before redirecting". This used to run synchronously so images
+  // started generating right away, but with the real provider that
+  // could take long enough on a multi-page story to hit Vercel's 60s
+  // function timeout — and when it did, the browser never got ANY
+  // response back, so CreateStoryForm's client-side router.push() never
+  // fired: the whole point of returning storyId instead of calling
+  // next/navigation's redirect() from in here. The story page itself
+  // now kicks the worker on load instead, where a slow run just means a
+  // slower page load, not a request that vanishes with no redirect.
 
   revalidatePath(`/${locale}/dashboard/children/${childId}`);
   revalidatePath(`/${locale}/dashboard/stories`);
@@ -134,6 +132,13 @@ export async function regeneratePageAction(locale: string, storyId: string, page
   const supabase = await createSupabaseServerClient();
   const context = await getCurrentTenantContext(supabase);
   if (!context) return { error: 'Not signed in.' };
+
+  try {
+    await enforceRateLimit(`regenerate:${context.userId}`, REGENERATE_RATE_LIMIT.limit, REGENERATE_RATE_LIMIT.windowMs);
+  } catch (error) {
+    if (error instanceof RateLimitExceededError) return { error: error.message };
+    throw error;
+  }
 
   // Re-render this page's caption text from the live template before
   // regenerating its image, rather than reusing whatever text was
@@ -204,13 +209,9 @@ export async function regeneratePageAction(locale: string, storyId: string, page
 
   await supabase.from('stories').update({ status: 'GENERATING' }).eq('id', storyId);
 
-  try {
-    const serviceClient = createSupabaseServiceRoleClient();
-    await runWorkerOnce(serviceClient, 5);
-  } catch {
-    // Picked up by the scheduled worker otherwise.
-  }
-
+  // Not kicking the worker synchronously here either — see the note on
+  // createStoryAction above. The story page itself picks this job up on
+  // its next load/auto-refresh.
   revalidatePath(`/${locale}/dashboard/stories/${storyId}`);
   return {};
 }

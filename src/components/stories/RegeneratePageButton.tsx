@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import { useFormState } from 'react-dom';
+import { useFormState, useFormStatus } from 'react-dom';
 import { useTranslations } from 'next-intl';
 import { regeneratePageAction } from '@/lib/actions/stories';
 import type { ActionResult } from '@/lib/actions/auth';
@@ -48,9 +48,20 @@ export function RegeneratePageButton({
         submitCount.current += 1;
       }}
     >
-      <Button type="submit" size="sm" variant="secondary">
-        {t('regeneratePage')}
-      </Button>
+      <RegenerateSubmitButton label={t('regeneratePage')} />
     </form>
+  );
+}
+
+/** useFormStatus only reports the status of the nearest ancestor <form>,
+ * so this has to be nested inside it — disabling while pending is a
+ * quick client-side guard against an accidental double-click; the real
+ * limit is the server-side rate check in regeneratePageAction. */
+function RegenerateSubmitButton({ label }: { label: string }) {
+  const { pending } = useFormStatus();
+  return (
+    <Button type="submit" size="sm" variant="secondary" disabled={pending} isLoading={pending}>
+      {label}
+    </Button>
   );
 }

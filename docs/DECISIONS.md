@@ -2416,6 +2416,70 @@ Verified against the live database: 2 suggestions currently sit at
 `status = 'new'`, so the new tab's badge has something real to show
 immediately rather than starting from zero.
 
+## Story creation no longer waits on the worker before redirecting
+
+Founder feedback: "when do generate story it doesn't automatically
+refreshed the page and going to story to approve it." — confirmed as
+a real, reproducible failure, not user error.
+
+Root cause: `createStoryAction` used to `await runWorkerOnce(...)`
+synchronously before returning `{ storyId }`, so the browser's
+Server Action request stayed open for the full duration of real
+Gemini image generation across however many pages the story has.
+Live evidence from the GitHub Actions cron log
+(`.github/workflows/story-worker-cron.yml`, which hits the same
+worker via `/api/cron/worker` every 5 minutes as a safety net)
+confirmed this actually times out under real load — a recent run
+logged `Worker responded with HTTP 504` roughly 61 seconds after
+starting, i.e. Vercel's Hobby-plan 60-second serverless function
+ceiling. When the Server Action itself hit that ceiling, the
+platform killed the request with no response at all, so the browser
+never got a resolved `state.storyId` — and `CreateStoryForm`'s
+`router.push()`, which only fires once `useFormState` resolves (see
+"Client-side navigation instead of redirect() inside a
+useFormState action" above), simply never ran. `unstable_after()`
+was considered and ruled out: this app is on Next.js 14.2.15, which
+doesn't have it.
+
+Fix: `createStoryAction` and `regeneratePageAction` (in
+`src/lib/actions/stories.ts`) no longer call `runWorkerOnce` at all —
+they only insert the job row(s) and return/revalidate immediately, so
+neither one can ever block on real provider latency again. Instead,
+the story detail page itself
+(`src/app/[locale]/(dashboard)/dashboard/stories/[storyId]/page.tsx`)
+kicks the worker on its own Server Component render, whenever any of
+its pages are still `QUEUED`/`GENERATING`, capped at 10 jobs per load
+(smaller than the cron's batch of 25, so any one page load's own
+share of the work stays modest) — then re-fetches the pages so the
+render reflects whatever just finished. A slow run here just means a
+slower page load, never a vanished response. Combined with
+`AutoRefresh`'s existing 4-second polling (`router.refresh()` while
+anything is still generating), this turns into a fast, incremental
+worker-progress mechanism layered on top of the existing 5-minute
+cron safety net, which still runs unchanged and still catches
+anything nobody is actively watching.
+
+## Rate limit on "regenerate this page"
+
+Founder feedback, same message: "I want to limit the regenerating the
+stories to don't have someone regenerating a lot" — each regeneration
+is a real Gemini image call and therefore a real cost.
+
+Added a server-side check at the top of `regeneratePageAction`, using
+the existing `enforceRateLimit`/`RateLimitExceededError` infrastructure
+in `src/lib/rate-limit.ts` (already used for auth/OTP/consent limits —
+in-memory per-instance by default, or Upstash-Redis-backed across
+instances if `RATE_LIMIT_REDIS_URL`/`RATE_LIMIT_REDIS_TOKEN` are set):
+10 regenerations per signed-in user per rolling 10 minutes, keyed by
+`regenerate:${userId}` — per user rather than per story/page, so
+spreading clicks across different stories doesn't dodge it. Hitting
+the limit surfaces as a normal action error via the existing toast,
+not a crash. Also added a client-side `useFormStatus`-driven disable
+on the regenerate button itself
+(`src/components/stories/RegeneratePageButton.tsx`) so it can't be
+double-clicked while a request is in flight — a UX nicety only; the
+server-side limit above is the actual enforcement.
+
 ## Not yet built (explicitly out of scope for this build session)
 
 - Vendor moderation integration for image safety checks

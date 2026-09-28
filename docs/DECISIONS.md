@@ -3586,6 +3586,93 @@ prev/next buttons still behave correctly after the frame's restyle
 (same direction-agnostic logic from the previous entry, untouched here
 — re-checked because the buttons' classes changed, not their behaviour).
 
+## Google sign-in, forgot/reset password, and a plainer hero CTA
+
+Founder request, in three parts, explicitly for both account types
+(organisation and family): swap the landing hero's "Book a demo"
+button for a direct "Sign up for free now" (it already linked straight
+to `/sign-up`, never an actual demo-booking flow — only the label was
+wrong); add "Sign up with Google"; add forgot/reset password. Confirmed
+mobile already had its own visible sign-up entry point in both the
+header and the hero (`AuthShell`/the header's button aren't hidden on
+small screens) — nothing to fix there, just to verify.
+
+**Google sign-in/sign-up** (`src/components/auth/GoogleAuthButton.tsx`,
+`src/app/api/auth/callback/route.ts`): one button, reused on the
+sign-in page and both sign-up pages, differing only in a `flow` prop
+("signin" / "org" / "family"). Clicking it calls Supabase's
+`signInWithOAuth` client-side, which redirects to Google, then to
+Supabase's own callback, then back to this app's `/api/auth/callback`
+with a `?code=`. That route is the one place in this app that calls
+`exchangeCodeForSession` — deliberately a Route Handler, not a Server
+Component: only a Route Handler can both read the PKCE code_verifier
+cookie `@supabase/ssr`'s browser client set when the flow started AND
+write the resulting session cookies back, and establishing that session
+is the entire point of this step. Placed under `src/app/api/` rather
+than `src/app/[locale]/` specifically to sit outside next-intl's
+locale-prefixing middleware (`matcher: ['/((?!api|_next|...).*)'])`) —
+the locale travels through as a plain `?locale=` query param instead,
+read back out once inside the handler.
+
+Sign-in and family sign-up needed no design decision beyond "does a
+tenant already exist" (mirrors `verifySignInOtpAction`'s and
+`familySignUpAction`'s existing idempotency reasoning for the phone
+flow — same accepted tradeoff: a mistaken sign-in click against a
+brand-new Google identity leaves a harmless orphan auth user rather
+than silently provisioning one). Organisation sign-up needed a real
+design choice: Google's profile has no organisation name to give
+`create_tenant`. Considered collecting it in a text field before the
+Google button is even clickable, but that means sharing state between
+whichever of the Email/Phone tabs is showing and a Google button that
+sits above both, for one field, on one flow only — not worth it.
+Instead, a first-time Google org identity lands on a new one-field page
+(`/sign-up/complete-organisation`, `completeOrganisationSignupAction`)
+pre-filled with Google's own name guess (editable) and asking only for
+the organisation name, then calls the exact same `create_tenant` RPC
+`signUpAction` already uses. Fewer fields shown before the OAuth
+redirect is also just better funnel design, independent of the
+implementation reason.
+
+Hit one real Next.js build error while wiring this up, not just a
+typo: `tenantSlugFrom` (a plain, synchronous helper already living in
+`src/lib/actions/auth.ts`) was exported so the callback route could
+reuse it — but every export from a `'use server'` file is treated as a
+Server Action, and Next.js hard-requires every Server Action to be an
+`async` function; a plain sync export fails the whole file's build,
+not just a lint warning. Resolved by not exporting it at all: once the
+design above moved org-tenant creation into `completeOrganisationSignupAction`
+(itself already inside `auth.ts`), the callback route never needed
+`tenantSlugFrom` directly.
+
+**Forgot/reset password** (`requestPasswordResetAction` /
+`resetPasswordAction` in `auth.ts`, `/forgot-password` and
+`/reset-password` pages): works identically for both account types,
+same as sign-in itself — this app has never differentiated a
+password-based sign-in by organisation vs. family, so there was no
+second code path to build. The reset link's `?code=` lands on the same
+`/api/auth/callback` route as Google, tagged `flow=recovery`: exchange
+the code, establish the session, redirect straight to
+`/reset-password` — no client-side hash-fragment handling needed
+(the older implicit-flow pattern), since `@supabase/ssr` uses PKCE by
+default and the exchange happens the same way Google's does.
+`requestPasswordResetAction` always returns the same generic message
+regardless of whether the email has an account, same email-enumeration
+reasoning `sendSignInOtpAction` already applies to phone numbers.
+
+**Verified**: `tsc`, `eslint`, all 148 unit tests, `en.json`/`ar.json`
+key-set parity, and a live-browser check of sign-in, both sign-up
+pages, forgot-password, and complete-organisation in both `/en` and
+`/ar` (RTL confirmed) on a real `next dev` server — including actually
+submitting the forgot-password form with a nonexistent email and
+confirming the generic success message renders rather than an error or
+crash, and loading complete-organisation directly with a `fullName`
+query param to confirm the pre-fill. Clicking "Continue with Google"
+itself could not be fully round-tripped end-to-end from this
+environment — that needs your own Google OAuth client (see
+`docs/NEEDS_FROM_ME.md`) — but the button, the redirect URL it builds,
+and the callback route's tenant-lookup/creation logic all exercise real
+code, not a mock.
+
 ## Not yet built (explicitly out of scope for this build session)
 
 - Vendor moderation integration for image safety checks

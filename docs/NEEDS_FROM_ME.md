@@ -55,6 +55,43 @@ else has already been built and is documented in `docs/HANDOFF.md`.
    this is configured, the Phone tab's "Send code" button will fail with
    a Supabase error, not send anything.
 
+3b. **A Google OAuth client, for "Continue with Google" to actually
+   work.** Sign-in, organisation sign-up, and family sign-up all now
+   have a "Continue with Google" button (`src/components/auth/GoogleAuthButton.tsx`,
+   landing in `src/app/api/auth/callback/route.ts` afterwards) — fully
+   built and, unlike phone SMS, this one I *could* partially test myself
+   (the button, the redirect construction, the callback's tenant-creation
+   logic all ran real code paths in a live browser), but the actual
+   "click it and land back signed in" round-trip needs your own Google
+   Cloud OAuth client, which I cannot create. Two things to set up:
+   - **Google Cloud Console**: create a project (or use an existing
+     one), go to **APIs & Services → Credentials → Create Credentials →
+     OAuth client ID**, type "Web application." Add
+     `https://<your-supabase-project-ref>.supabase.co/auth/v1/callback`
+     as an Authorized redirect URI (Supabase's own callback, not this
+     app's). You'll get a Client ID and Client Secret.
+   - **Supabase dashboard**: **Authentication → Providers → Google**,
+     paste in that Client ID/Secret, enable the provider. Then in
+     **Authentication → URL Configuration → Redirect URLs**, add
+     `${NEXT_PUBLIC_APP_URL}/api/auth/callback` (both your local
+     `http://localhost:3000/api/auth/callback` for testing and your real
+     production domain's once you have one) — Supabase refuses to
+     redirect anywhere not on this list, so a missing entry here is the
+     most likely first failure you'll hit.
+   Until both of those are done, clicking the button will fail with a
+   Supabase error (not a crash) rather than send you anywhere.
+
+3c. **Forgot/reset password now exists and needs no extra setup from
+   you** — it reuses Supabase's own built-in email sending
+   (`resetPasswordForEmail`), the same thing every Supabase project has
+   working out of the box for auth emails, no SMTP account needed. One
+   thing worth knowing: Supabase's default sender has a low rate limit
+   (fine for real usage volumes at pilot scale, not fine for load
+   testing) and the email itself carries Supabase's own branding, not
+   Ownly's — if that matters before a real pilot, Supabase supports
+   plugging in your own SMTP provider under **Authentication → Settings
+   → SMTP Settings**, but that's a nice-to-have, not a blocker.
+
 ## Before enabling real (paid) AI image generation
 
 4. **Provide a Gemini API key.** Google Gemini is now the wired-up image

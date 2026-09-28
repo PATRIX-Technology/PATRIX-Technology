@@ -88,6 +88,45 @@ export async function signUpAction(locale: string, formData: FormData): Promise<
   return { redirectTo: `/${locale}/dashboard` };
 }
 
+/**
+ * Finishes an organisation sign-up that arrived via Google: the OAuth
+ * callback (src/app/api/auth/callback/route.ts) already created the
+ * auth session but couldn't provision a tenant itself, since Google's
+ * profile has no organisation name to give it — this action collects
+ * that one missing field from an already-signed-in user and calls the
+ * same create_tenant RPC signUpAction uses. Requires an active session
+ * with no tenant yet; a signed-out visitor or one who already has a
+ * tenant has nothing to complete here.
+ */
+export async function completeOrganisationSignupAction(locale: string, formData: FormData): Promise<ActionResult> {
+  const supabase = await createSupabaseServerClient();
+  const { data: userData } = await supabase.auth.getUser();
+  if (!userData.user) return { error: 'Your session expired — sign in again.' };
+
+  const existing = await getCurrentTenantContext(supabase);
+  if (existing) return { redirectTo: `/${locale}/dashboard` };
+
+  const orgName = String(formData.get('orgName') ?? '').trim();
+  const fullName = String(formData.get('fullName') ?? '').trim();
+  const referralCode = String(formData.get('referralCode') ?? '').trim();
+  if (!orgName || !fullName) {
+    return { error: 'All fields are required.' };
+  }
+
+  const { data: newTenantId, error: rpcError } = await supabase.rpc('create_tenant', {
+    tenant_name: capitalizeWords(orgName),
+    tenant_slug: tenantSlugFrom(orgName),
+    owner_full_name: capitalizeWords(fullName),
+  });
+  if (rpcError) {
+    return { error: rpcError.message };
+  }
+
+  await recordReferralIfPresent(supabase, referralCode, newTenantId);
+
+  return { redirectTo: `/${locale}/dashboard` };
+}
+
 export async function signInAction(locale: string, formData: FormData): Promise<ActionResult> {
   const email = String(formData.get('email') ?? '').trim();
 
@@ -331,4 +370,81 @@ export async function signOutAction(locale: string): Promise<void> {
   const supabase = await createSupabaseServerClient();
   await supabase.auth.signOut();
   redirect(`/${locale}/sign-in`);
+}
+
+/** Same reasoning as OTP_SEND_RATE_LIMIT — Supabase's own email sending
+ * has a low default rate limit, and this endpoint is otherwise a classic
+ * email-bombing target (anyone can submit anyone else's address), so
+ * blunt it per IP+email before Supabase's own limit ever gets hit. */
+const PASSWORD_RESET_RATE_LIMIT = { limit: 5, windowMs: 10 * 60 * 1000 };
+
+/**
+ * Forgot-password, step 1: emails a reset link for a signed-out user.
+ * Works for both organisation and family accounts identically — both
+ * are plain Supabase email/password identities, and this app never
+ * differentiates sign-in by account type (getCurrentTenantContext
+ * figures out which one a session belongs to after the fact).
+ *
+ * Always returns the same generic success message regardless of
+ * whether the address has an account — the same email-enumeration
+ * reasoning as sendSignInOtpAction's shouldCreateUser:true above,
+ * just for a channel (email) where Supabase's own API would otherwise
+ * happily tell a caller "no user found" straight up.
+ */
+export async function requestPasswordResetAction(locale: string, formData: FormData): Promise<ActionResult> {
+  const email = String(formData.get('email') ?? '').trim();
+  if (!email) return { error: 'Enter your email address.' };
+
+  try {
+    const ip = await getClientIp();
+    await enforceRateLimit(
+      `auth:password-reset:${ip}:${email}`,
+      PASSWORD_RESET_RATE_LIMIT.limit,
+      PASSWORD_RESET_RATE_LIMIT.windowMs,
+    );
+  } catch (error) {
+    if (error instanceof RateLimitExceededError) return { error: error.message };
+    throw error;
+  }
+
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000';
+  const supabase = await createSupabaseServerClient();
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${appUrl}/${locale}/reset-password`,
+  });
+  // Deliberately ignored on success/failure alike -- see the enumeration
+  // note above. A real infra error (e.g. Supabase's email provider is
+  // down) fails silently from the user's point of view, same tradeoff
+  // sendSignInOtpAction already accepts for SMS.
+  void error;
+
+  return { message: 'If an account exists for that email, a reset link is on its way.' };
+}
+
+/**
+ * Forgot-password, step 2: sets a new password once the user has
+ * followed the emailed link. That link signs the browser into a
+ * short-lived "recovery" session (Supabase's own mechanism, handled
+ * client-side by the browser Supabase client reading the URL) — this
+ * action runs after that, using the already-established recovery
+ * session's cookies, exactly like changePasswordAction reuses an
+ * existing session rather than taking one as input. No current-password
+ * re-check here (unlike changePasswordAction): proving control of the
+ * recovery link already IS the re-authentication step.
+ */
+export async function resetPasswordAction(formData: FormData): Promise<ActionResult> {
+  const supabase = await createSupabaseServerClient();
+  const { data: userData } = await supabase.auth.getUser();
+  if (!userData.user) {
+    return { error: 'This reset link has expired or was already used — request a new one.' };
+  }
+
+  const newPassword = String(formData.get('newPassword') ?? '');
+  const passwordError = validatePassword(newPassword);
+  if (passwordError) return { error: passwordError };
+
+  const { error } = await supabase.auth.updateUser({ password: newPassword });
+  if (error) return { error: error.message };
+
+  return { message: 'Password updated — you can sign in with it now.' };
 }

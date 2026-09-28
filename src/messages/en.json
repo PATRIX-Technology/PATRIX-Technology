@@ -17,7 +17,7 @@
       "eyebrow": "Personalised storybooks for nurseries, schools & brands",
       "title": "Turn every child into the hero of a story that teaches them something real.",
       "body": "Ownly creates beautifully illustrated, personalised storybooks that help nurseries, schools, clinics and brands teach values like healthy eating, honesty and hand-washing — with the child's own name, avatar and language.",
-      "ctaPrimary": "Book a demo",
+      "ctaPrimary": "Sign up for free now",
       "ctaSecondary": "See how it works"
     },
     "trustBar": "Built for nurseries, schools, clinics and children's brands worldwide",
@@ -46,7 +46,8 @@
       "email": "Email address",
       "password": "Password",
       "submit": "Sign in",
-      "noAccount": "Don't have an account?"
+      "noAccount": "Don't have an account?",
+      "forgotPassword": "Forgot your password?"
     },
     "signUp": {
       "title": "Create your organisation",
@@ -82,7 +83,31 @@
       "verify": "Verify & continue",
       "changeNumber": "Use a different number"
     },
-    "passwordHint": "At least {min} characters, with a mix of letters and numbers."
+    "passwordHint": "At least {min} characters, with a mix of letters and numbers.",
+    "google": {
+      "continueWith": "Continue with Google",
+      "orDivider": "or",
+      "error": "Something went wrong signing in with Google — please try again.",
+      "noAccount": "We couldn't find an account for that Google sign-in — sign up below instead."
+    },
+    "completeOrganisation": {
+      "title": "You're almost there",
+      "body": "Just one more thing — what's your organisation called?",
+      "submit": "Finish setting up"
+    },
+    "forgotPassword": {
+      "title": "Reset your password",
+      "body": "Enter the email address on your account and we'll send you a link to reset your password.",
+      "email": "Email address",
+      "submit": "Send reset link",
+      "backToSignIn": "Back to sign in"
+    },
+    "resetPassword": {
+      "title": "Choose a new password",
+      "body": "You're signed in via your reset link — set a new password below.",
+      "newPassword": "New password",
+      "submit": "Update password"
+    }
   },
   "dashboard": {
     "nav": {

@@ -347,6 +347,9 @@
   "common": {
     "loading": "Loading…",
     "error": "Something went wrong. Please try again.",
+    "previous": "Previous page",
+    "next": "Next page",
+    "pageOf": "Page {current} of {total}",
     "back": "Back",
     "save": "Save",
     "cancel": "Cancel",

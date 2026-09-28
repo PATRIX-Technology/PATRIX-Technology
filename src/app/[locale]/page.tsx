@@ -4,6 +4,8 @@ import Image from 'next/image';
 import { Button } from '@/components/ui/Button';
 import { Logo } from '@/components/brand/Logo';
 import { LocaleSwitcher } from '@/components/ui/LocaleSwitcher';
+import { StoryCarousel } from '@/components/marketing/StoryCarousel';
+import { loadSampleStoryManifest } from '@/lib/domain/sample-stories';
 import type { Locale } from '@/i18n/config';
 
 const USE_CASE_ICONS: Record<string, JSX.Element> = {
@@ -50,10 +52,12 @@ const USE_CASE_ICONS: Record<string, JSX.Element> = {
 
 export default function MarketingHome({ params }: { params: { locale: string } }) {
   const t = useTranslations('marketing');
+  const common = useTranslations('common');
   const nav = useTranslations('nav');
   const brand = useTranslations('brand');
   const locale = params.locale;
   const heroImage = locale === 'ar' ? '/images/marketing/hero-ar.jpg' : '/images/marketing/hero-en.jpg';
+  const sampleManifest = loadSampleStoryManifest();
 
   return (
     <main>
@@ -145,20 +149,42 @@ export default function MarketingHome({ params }: { params: { locale: string } }
           <h2 className="font-display text-2xl text-ink-900 md:text-3xl">{t('sampleStories.title')}</h2>
           <p className="mx-auto mt-3 max-w-2xl text-ink-600">{t('sampleStories.body')}</p>
         </div>
-        <div className="mt-10 grid gap-8 sm:grid-cols-2">
-          {(
-            [
-              { src: '/images/marketing/hero-en.jpg', label: t('sampleStories.enLabel'), dir: 'ltr' as const },
-              { src: '/images/marketing/hero-ar.jpg', label: t('sampleStories.arLabel'), dir: 'rtl' as const },
-            ]
-          ).map((sample) => (
-            <div key={sample.src} className="mx-auto w-full max-w-xs" dir={sample.dir}>
-              <div className="relative aspect-[9/16] overflow-hidden rounded-[2rem] border border-ink-100 shadow-card">
-                <Image src={sample.src} alt="" fill sizes="(max-width: 768px) 80vw, 320px" className="object-cover" />
+        <div className="mt-10 grid gap-10 sm:grid-cols-2">
+          {(['en', 'ar'] as const).map((sampleLocale) => {
+            const pages = sampleManifest?.[sampleLocale];
+            const label = sampleLocale === 'ar' ? t('sampleStories.arLabel') : t('sampleStories.enLabel');
+            const dir = sampleLocale === 'ar' ? ('rtl' as const) : ('ltr' as const);
+
+            if (pages && pages.length > 0) {
+              return (
+                <StoryCarousel
+                  key={sampleLocale}
+                  dir={dir}
+                  title={label}
+                  prevLabel={common('previous')}
+                  nextLabel={common('next')}
+                  pageLabel={(current, total) => common('pageOf', { current, total })}
+                  pages={pages.map((page) => ({
+                    pageNumber: page.pageNumber,
+                    imageSrc: page.publicPath,
+                    caption: sampleLocale === 'en' ? page.text : undefined,
+                  }))}
+                />
+              );
+            }
+
+            // Fallback until `npm run generate-sample-stories` has been run
+            // at least once — see src/lib/domain/sample-stories.ts.
+            const fallbackSrc = sampleLocale === 'ar' ? '/images/marketing/hero-ar.jpg' : '/images/marketing/hero-en.jpg';
+            return (
+              <div key={sampleLocale} className="mx-auto w-full max-w-xs" dir={dir}>
+                <div className="relative aspect-[9/16] overflow-hidden rounded-[2rem] border border-ink-100 shadow-card">
+                  <Image src={fallbackSrc} alt="" fill sizes="(max-width: 768px) 80vw, 320px" className="object-cover" />
+                </div>
+                <p className="mt-3 text-center text-sm font-medium text-ink-600">{label}</p>
               </div>
-              <p className="mt-3 text-center text-sm font-medium text-ink-600">{sample.label}</p>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </section>
 

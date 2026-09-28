@@ -17,6 +17,7 @@
     "format": "prettier --write .",
     "db:seed": "node scripts/seed-platform-data.mjs",
     "resync-arabic-story-text": "tsx scripts/resync-arabic-story-text.ts",
+    "generate-sample-stories": "tsx scripts/generate-sample-stories.ts",
     "db:reset": "node scripts/reset-demo-data.mjs",
     "cap:sync": "cap sync",
     "cap:android": "cap open android",

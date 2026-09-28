@@ -1,15 +1,14 @@
 import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
-import { createSupabaseServiceRoleClient } from '@/lib/supabase/service-role';
 import { getCurrentTenantContext } from '@/lib/domain/session';
-import { getSignedAssetUrl } from '@/lib/domain/storage';
+import { loadSampleStoryManifest } from '@/lib/domain/sample-stories';
 import { Card, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { SampleStoriesPreview } from '@/components/dashboard/SampleStoriesPreview';
+import { StoryCarousel } from '@/components/marketing/StoryCarousel';
 import { BillingSection } from '@/components/dashboard/BillingSection';
 import { flags } from '@/lib/flags';
-import type { PlatformSampleStory, TenantType } from '@/types/database';
+import type { TenantType } from '@/types/database';
 
 export default async function DashboardOverviewPage({ params }: { params: { locale: string } }) {
   const supabase = await createSupabaseServerClient();
@@ -87,23 +86,9 @@ export default async function DashboardOverviewPage({ params }: { params: { loca
  */
 async function SamplesAndPlans({ tenantId, audience }: { tenantId: string; audience: TenantType }) {
   const supabase = await createSupabaseServerClient();
-  const serviceClient = createSupabaseServiceRoleClient();
-
-  const { data: samplesData } = await supabase.rpc('get_platform_sample_stories');
-  const samples = (samplesData ?? []) as PlatformSampleStory[];
-
-  const imageUrls: Record<string, string> = {};
-  await Promise.all(
-    samples.map(async (sample) => {
-      if (!sample.first_page_image_asset_path) return;
-      // Service-role client: these sample images belong to whichever
-      // tenant the founder generated them under, not the viewer's own
-      // tenant, so the viewer's own RLS-scoped Storage access would
-      // otherwise (correctly) refuse to sign them.
-      const url = await getSignedAssetUrl(serviceClient, sample.first_page_image_asset_path);
-      if (url) imageUrls[sample.story_id] = url;
-    }),
-  );
+  const t = await getTranslations('stories');
+  const common = await getTranslations('common');
+  const manifest = loadSampleStoryManifest();
 
   const [{ data: plans }, { data: subscription }] = await Promise.all([
     supabase.from('plans').select('*').eq('is_active', true).eq('audience', audience).order('price_monthly_cents'),
@@ -112,7 +97,35 @@ async function SamplesAndPlans({ tenantId, audience }: { tenantId: string; audie
 
   return (
     <>
-      <SampleStoriesPreview samples={samples} imageUrls={imageUrls} />
+      <Card>
+        <CardTitle>{t('samplePreviewTitle')}</CardTitle>
+        {manifest?.en?.length && manifest?.ar?.length ? (
+          <div className="mt-4 grid gap-8 sm:grid-cols-2">
+            <StoryCarousel
+              dir="ltr"
+              title={t('sampleEnLabel')}
+              prevLabel={common('previous')}
+              nextLabel={common('next')}
+              pageLabel={(current, total) => common('pageOf', { current, total })}
+              pages={manifest.en.map((page) => ({
+                pageNumber: page.pageNumber,
+                imageSrc: page.publicPath,
+                caption: page.text,
+              }))}
+            />
+            <StoryCarousel
+              dir="rtl"
+              title={t('sampleArLabel')}
+              prevLabel={common('previous')}
+              nextLabel={common('next')}
+              pageLabel={(current, total) => common('pageOf', { current, total })}
+              pages={manifest.ar.map((page) => ({ pageNumber: page.pageNumber, imageSrc: page.publicPath }))}
+            />
+          </div>
+        ) : (
+          <p className="mt-2 text-sm text-ink-500">{t('samplePreviewComingSoon')}</p>
+        )}
+      </Card>
       <Card>
         <CardTitle>Choose a plan</CardTitle>
         {flags.billing ? (

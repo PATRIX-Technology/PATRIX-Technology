@@ -1,0 +1,46 @@
+{
+  "en": [
+    {
+      "pageNumber": 1,
+      "text": "At nursery, Amira looked at her lunch tray and only saw white rice. \"Where did all the colours go?\" asked Marya the Fox, hopping onto the table.",
+      "publicPath": "/images/marketing/sample-stories/en/page-1.png"
+    },
+    {
+      "pageNumber": 2,
+      "text": "Marya the Fox pulled out a big basket. Inside were red tomatoes, orange carrots, yellow corn, green cucumbers, and purple grapes. \"Every colour gives you a different superpower,\" Marya the Fox said.",
+      "publicPath": "/images/marketing/sample-stories/en/page-2.png"
+    },
+    {
+      "pageNumber": 3,
+      "text": "Amira tried a little bit of everything. The carrot was crunchy, the grapes were sweet, and the cucumber was cool and juicy. She giggled and asked for more.",
+      "publicPath": "/images/marketing/sample-stories/en/page-3.png"
+    },
+    {
+      "pageNumber": 4,
+      "text": "That night, Amira told the whole family about the rainbow plate. From then on, she always tried to fill her plate with as many colours as possible.",
+      "publicPath": "/images/marketing/sample-stories/en/page-4.png"
+    }
+  ],
+  "ar": [
+    {
+      "pageNumber": 1,
+      "text": "في الحضانة، نظر سلطان إلى صحن الغداء، فلم يجد إلا الأرز الأبيض. قفزت ماريا الثعلبة على الطاولة وقالت: «أين ذهبت كل الألوان؟»",
+      "publicPath": "/images/marketing/sample-stories/ar/page-1.png"
+    },
+    {
+      "pageNumber": 2,
+      "text": "أحضرت ماريا الثعلبة سلة كبيرة، فيها طماطم حمراء، وجزر برتقالي، وذرة صفراء، وخيار أخضر، وعنب بنفسجي. قالت: «كل لون يعطيك قوة خاصة!»",
+      "publicPath": "/images/marketing/sample-stories/ar/page-2.png"
+    },
+    {
+      "pageNumber": 3,
+      "text": "حاول سلطان قليلًا من كل شيء. كان الجزر مقرمشًا، والعنب حلوًا، والخيار طازجًا ومنعشًا. ابتسم وطلب المزيد.",
+      "publicPath": "/images/marketing/sample-stories/ar/page-3.png"
+    },
+    {
+      "pageNumber": 4,
+      "text": "وفي ذلك المساء، أخبر سلطان عائلته كلها عن صحن قوس المطر. ومنذ ذلك اليوم، حاول دائمًا أن يملأ صحنه بأكبر عدد من الألوان.",
+      "publicPath": "/images/marketing/sample-stories/ar/page-4.png"
+    }
+  ]
+}

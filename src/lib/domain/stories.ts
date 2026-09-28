@@ -36,6 +36,11 @@ export interface CreateStoryInput {
   template: StoryThemeTemplate;
   locale: AppLocale;
   createdBy: string;
+  /** Defaults to the real tenant-membership-checked RPC. Internal/admin
+   * scripts running with the service role key (no tenant-member session)
+   * pass 'service_consume_story_quota' instead -- see its migration for
+   * why the auth check can't apply there. */
+  quotaRpc?: 'consume_story_quota' | 'service_consume_story_quota';
 }
 
 /**
@@ -50,9 +55,10 @@ export async function createStory(supabase: SupabaseClient, input: CreateStoryIn
     throw new ConsentRequiredError();
   }
 
-  const { data: quotaOk, error: quotaError } = await supabase.rpc('consume_story_quota', {
-    target_tenant_id: input.tenantId,
-  });
+  const { data: quotaOk, error: quotaError } = await supabase.rpc(
+    input.quotaRpc ?? 'consume_story_quota',
+    { target_tenant_id: input.tenantId },
+  );
   if (quotaError) throw quotaError;
   if (!quotaOk) throw new QuotaExceededError();
 

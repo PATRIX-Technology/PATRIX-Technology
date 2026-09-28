@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
+import { useTranslations } from 'next-intl';
 import { Logo } from '@/components/brand/Logo';
 
 export interface StoryCarouselPage {
@@ -20,37 +21,37 @@ export interface StoryCarouselPage {
  * library) since it only ever needs four pages and prev/next/dot
  * navigation — see docs/DECISIONS.md "Real sample stories generated
  * for the landing/home page carousel".
+ *
+ * Reads its own translations via useTranslations rather than taking
+ * prevLabel/nextLabel/pageLabel as props: this is a Client Component
+ * rendered from Server Component pages (the landing page, the dashboard
+ * home tab), and a function prop like `pageLabel` can't cross that
+ * boundary -- Next.js can't serialize it and the page 500s.
  */
 export function StoryCarousel({
   pages,
   dir,
   title,
-  prevLabel,
-  nextLabel,
-  pageLabel,
 }: {
   pages: StoryCarouselPage[];
   dir: 'ltr' | 'rtl';
   title?: string;
-  prevLabel: string;
-  nextLabel: string;
-  /** e.g. "Page {current} of {total}" already interpolated by the caller. */
-  pageLabel: (current: number, total: number) => string;
 }) {
+  const common = useTranslations('common');
   const [index, setIndex] = useState(0);
   const page = pages[index];
   if (!page) return null;
 
-  // The carousel's own prev/next always mean "visually left/right,"
-  // regardless of reading direction, so RTL swaps both which arrow
-  // moves the index forward AND which arrow is disabled at each end —
-  // a plain `index === 0` check on the visually-left button would be
-  // backwards in RTL, where that button is the one moving forward.
-  const isRtl = dir === 'rtl';
-  const canGoPrev = isRtl ? index < pages.length - 1 : index > 0;
-  const canGoNext = isRtl ? index > 0 : index < pages.length - 1;
-  const goPrev = () => setIndex((i) => (isRtl ? Math.min(i + 1, pages.length - 1) : Math.max(i - 1, 0)));
-  const goNext = () => setIndex((i) => (isRtl ? Math.max(i - 1, 0) : Math.min(i + 1, pages.length - 1)));
+  // Deliberately NOT direction-aware: prev always decrements, next always
+  // increments. The buttons' physical left/right position already flips
+  // under dir="rtl" for free, because flexbox's row start/end are
+  // inline-start/inline-end (the same mechanism that mirrors the dots
+  // below without any index math). Swapping the increment direction too
+  // would double-flip it back to the LTR physical layout.
+  const canGoPrev = index > 0;
+  const canGoNext = index < pages.length - 1;
+  const goPrev = () => setIndex((i) => Math.max(i - 1, 0));
+  const goNext = () => setIndex((i) => Math.min(i + 1, pages.length - 1));
 
   return (
     <div className="mx-auto w-full max-w-sm" dir={dir}>
@@ -84,7 +85,7 @@ export function StoryCarousel({
             type="button"
             onClick={goPrev}
             disabled={!canGoPrev}
-            aria-label={prevLabel}
+            aria-label={common('previous')}
             className="focus-ring flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-white transition-opacity disabled:opacity-30"
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
@@ -104,7 +105,7 @@ export function StoryCarousel({
                 key={p.pageNumber}
                 type="button"
                 onClick={() => setIndex(i)}
-                aria-label={pageLabel(i + 1, pages.length)}
+                aria-label={common('pageOf', { current: i + 1, total: pages.length })}
                 className={`h-1.5 rounded-full transition-all ${
                   i === index ? 'w-5 bg-lagoon-400' : 'w-1.5 bg-white/25'
                 }`}
@@ -116,7 +117,7 @@ export function StoryCarousel({
             type="button"
             onClick={goNext}
             disabled={!canGoNext}
-            aria-label={nextLabel}
+            aria-label={common('next')}
             className="focus-ring flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-white transition-opacity disabled:opacity-30"
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none">

@@ -52,7 +52,6 @@ const USE_CASE_ICONS: Record<string, JSX.Element> = {
 
 export default function MarketingHome({ params }: { params: { locale: string } }) {
   const t = useTranslations('marketing');
-  const common = useTranslations('common');
   const nav = useTranslations('nav');
   const brand = useTranslations('brand');
   const locale = params.locale;
@@ -161,9 +160,6 @@ export default function MarketingHome({ params }: { params: { locale: string } }
                   key={sampleLocale}
                   dir={dir}
                   title={label}
-                  prevLabel={common('previous')}
-                  nextLabel={common('next')}
-                  pageLabel={(current, total) => common('pageOf', { current, total })}
                   pages={pages.map((page) => ({
                     pageNumber: page.pageNumber,
                     imageSrc: page.publicPath,

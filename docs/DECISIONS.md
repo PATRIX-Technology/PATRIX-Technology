@@ -3381,6 +3381,123 @@ item 2), and regenerating the mobile app icons/splash screens from the
 new mark (still Capacitor's generic defaults, unrelated to anything
 renamed here).
 
+## Real sample stories generated for the landing/home page carousel
+
+Founder decision, replacing the static two-photo banner from the previous
+rebrand entry: "run simulation on 1 arabic story and 1 english story...
+have the english story in the english view of landing page / home page
+and arabic story in arab views... the view not pdf will be like carousel
+view of the 4 pages with having nice frame around the carousel." The
+previous static-photo treatment was explicitly rejected.
+
+**Real generation, not a mock**: `scripts/generate-sample-stories.ts`
+creates a "marketing-samples" tenant and two children (Amira/she for
+English, سلطان/Sultan/he for Arabic), then calls the actual production
+`createStory()` → job-queue → `runWorkerOnce()` pipeline — the same code
+path a real signup goes through — so the two sample stories are real
+Gemini illustrations, not placeholder art. Both stories are marked
+`stories.is_platform_sample = true` (the column + `get_platform_sample_stories()`
+RPC from migration 0019 — see below); the eight generated images are
+downloaded from Storage and saved as static files under
+`public/images/marketing/sample-stories/{en,ar}/page-N.*` plus a
+`manifest.json`, so the landing and dashboard-home pages read them as
+plain static assets rather than short-lived signed Storage URLs (a
+10-minute signed URL baked into a cached/static marketing page would
+expire and break — static files sidestep that entirely). Resized and
+re-encoded the eight images with `sharp` before committing (1200px wide,
+mozjpeg quality 82): the raw Gemini output was ~2.4MB per page, ~19MB
+total, unreasonable for a landing page; re-encoding brought the same set
+to ~1.8MB total with no visible quality loss.
+
+**Migration 0019 had never actually been applied to production** —
+discovered while checking what this feature needed, not something this
+session caused. `supabase/migrations/0019_remove_trial_and_platform_samples.sql`
+existed in the repo (removes the free trial story quota, adds
+`is_platform_sample` + its RPC) but a live query against the production
+database showed it had never run: new signups were still silently
+getting a free trial story months after that removal was supposedly
+shipped, and the sample-story column/RPC this feature needs didn't
+exist yet. Applied it live via Supabase's migration tool before building
+anything else on top of it.
+
+**Three real bugs hit and fixed while wiring this up, in the order they
+were found**:
+
+1. **`consume_story_quota` requires a real tenant-member session.**
+   The RPC's `is_tenant_member(auth.uid())` check returns false for a
+   script running with the service-role key (no JWT `sub` claim), so the
+   very first run failed with "Not authorized for this tenant." Rather
+   than weaken the real RPC every paying tenant relies on, added
+   `service_consume_story_quota` — the identical quota logic minus the
+   auth check, `revoke`d from `public`/`authenticated`/`anon` and
+   `grant`ed only to `service_role` (migration `0027`, same pattern this
+   codebase already uses for `sync_quota_to_plan` and `reward_referral`).
+   `createStory()` grew an optional `quotaRpc` parameter defaulting to
+   the real RPC, so every existing production call site is untouched;
+   only this script opts into the service-role variant.
+
+2. **Module-hoisting silently defeated `FEATURE_REAL_IMAGE_PROVIDER`.**
+   The first full run "succeeded" but produced eight identical Mock
+   placeholder SVGs instead of real illustrations — the flag was on in
+   `.env.local`, but `createImageProvider()`'s cached `flags.realImageProvider`
+   evaluates at module-load time, and ES module imports are hoisted
+   above any of a file's own top-level code — so the script's own
+   `loadEnv()` call ran *after* `flags.ts` had already evaluated
+   `process.env.FEATURE_REAL_IMAGE_PROVIDER` as `undefined`. Caught by
+   actually opening the generated files rather than trusting the "25
+   succeeded" worker log. Fixed by splitting the script in two:
+   `generate-sample-stories.ts` is now a thin bootstrap that calls
+   `loadEnv()` and only then dynamically `import()`s
+   `generate-sample-stories-impl.ts`, so every transitive import (the
+   job worker, the image-provider factory) evaluates after the env is
+   loaded. The impl file also now refuses to run at all if
+   `flags.realImageProvider` is still off, rather than silently
+   producing mock output again.
+
+3. **A function prop crossed the Server/Client Component boundary.**
+   `StoryCarousel` originally took `prevLabel`/`nextLabel`/`pageLabel`
+   (the last one a function) as props from its two Server Component
+   callers (the landing page, the dashboard home tab), which Next.js
+   can't serialize — both pages 500'd with "Functions cannot be passed
+   directly to Client Components." Caught by actually loading the pages
+   in a browser, not by reading the code back. Fixed by having
+   `StoryCarousel` call `useTranslations('common')` itself instead of
+   receiving translated strings/functions from its server parent.
+
+**A fourth issue, caught by testing the interaction rather than reading
+the component**: the RTL carousel's prev/next buttons were backwards.
+An earlier pass in this same session had added explicit `isRtl`
+branching to `StoryCarousel`'s index math, reasoning that "prev/next
+should always mean visually-left/visually-right" — but flexbox already
+reverses a `dir="rtl"` container's child order for free (the same
+mechanism that already correctly mirrors the page-dot indicators with
+no extra code), so that branching double-flipped it: at page 1 of 4,
+the visually-left button was disabled and the visually-right one
+advanced the story, backwards from how a right-to-left book actually
+opens (page 1 on the right, advancing moves left). Found this with a
+Playwright script that read each button's actual bounding-box position
+and clicked the physically-left one to see which page it landed on,
+rather than trusting a static screenshot's chevron icons. Fixed by
+deleting the `isRtl` branching entirely — `goPrev`/`goNext` are now
+direction-agnostic (prev always decrements, next always increments),
+and the buttons' left/right position is left entirely to flexbox, the
+same as the dots.
+
+**Verified**: `tsc`, `eslint`, all 148 unit tests, `en.json`/`ar.json`
+key-set parity, and a live-browser check on a real `next dev` server of
+both `/en` and `/ar` — screenshotted, and the RTL button fix specifically
+confirmed by simulating a real click and checking which page it
+navigated to, not just by reading the chevron icons in a screenshot.
+
+**Explicitly still open**: no equivalent live check of the dashboard-home
+carousel was done against a real authenticated session (it reuses the
+identical, already-fixed `StoryCarousel` component and the same
+`loadSampleStoryManifest()` data source as the landing page, just behind
+auth); no database/storage backup exists yet for the live Supabase
+project (Free tier — zero automatic backups) — founder decided to defer
+upgrading to Supabase Pro until pilots officially start rather than pay
+for it now.
+
 ## Not yet built (explicitly out of scope for this build session)
 
 - Vendor moderation integration for image safety checks

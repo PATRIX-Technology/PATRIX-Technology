@@ -87,7 +87,6 @@ export default async function DashboardOverviewPage({ params }: { params: { loca
 async function SamplesAndPlans({ tenantId, audience }: { tenantId: string; audience: TenantType }) {
   const supabase = await createSupabaseServerClient();
   const t = await getTranslations('stories');
-  const common = await getTranslations('common');
   const manifest = loadSampleStoryManifest();
 
   const [{ data: plans }, { data: subscription }] = await Promise.all([
@@ -104,9 +103,6 @@ async function SamplesAndPlans({ tenantId, audience }: { tenantId: string; audie
             <StoryCarousel
               dir="ltr"
               title={t('sampleEnLabel')}
-              prevLabel={common('previous')}
-              nextLabel={common('next')}
-              pageLabel={(current, total) => common('pageOf', { current, total })}
               pages={manifest.en.map((page) => ({
                 pageNumber: page.pageNumber,
                 imageSrc: page.publicPath,
@@ -116,9 +112,6 @@ async function SamplesAndPlans({ tenantId, audience }: { tenantId: string; audie
             <StoryCarousel
               dir="rtl"
               title={t('sampleArLabel')}
-              prevLabel={common('previous')}
-              nextLabel={common('next')}
-              pageLabel={(current, total) => common('pageOf', { current, total })}
               pages={manifest.ar.map((page) => ({ pageNumber: page.pageNumber, imageSrc: page.publicPath }))}
             />
           </div>

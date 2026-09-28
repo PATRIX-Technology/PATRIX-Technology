@@ -3810,6 +3810,73 @@ correct Arabic shaping/RTL, and — checked specifically, given the
 earlier privacy near-miss — no credentials or test email address
 visible anywhere in either final video.
 
+## Owner subscriptions admin panel
+
+Founder request: a way for the platform owner to see and control every
+tenant's plan/subscription directly, not just by querying the database.
+The owner dashboard (`/owner`) already existed but only listed tenant
+name/status; `subscriptions`, `plans`, and `quotas` were all built (see
+"Phase 3 additions") but had no UI.
+
+**No new database access model needed**: `subscriptions_owner_write` and
+`quotas_owner_write` (migration 0004) already grant the platform owner
+full write access via RLS, the same way `sync_quota_to_plan` (migration
+0016) gives a tenant its plan's full story allowance right after a real
+Stripe checkout. A new "Subscriptions" tab
+(`src/app/[locale]/owner/subscriptions/page.tsx`) lists every tenant with
+its plan, status, usage this period, and renewal date, each with inline
+plan/status/cancel-at-period-end controls
+(`adminSetTenantSubscriptionAction`,
+`src/lib/actions/owner-subscriptions.ts`). Saving sets a fresh 30-day
+period starting now and resets the tenant's quota to the new plan's full
+allowance — a manual grant behaves exactly like a paid one from the
+tenant's own point of view, which matters for pilot customers who don't
+have a real Stripe subscription yet.
+
+**Why this needed no service-role client or new RPC**: the platform
+owner already has direct RLS write access to both tables. The action
+itself still checks `is_platform_owner()` explicitly (mirroring
+`updateSuggestionStatusAction`'s existing pattern) purely for a clear
+error message — the real enforcement is the RLS policy either way.
+
+**The founder's own account had no `is_platform_owner` row and no tenant
+ever set it** — nobody had been made a platform owner yet, so `/owner`
+redirected everyone away, including the founder. Set directly via SQL
+against the founder's own existing profile row (`yousefhawwari@gmail.com`)
+since this flag has no self-service path by design (it's a genuinely
+privileged capability, not something to make one click away). Owner MFA
+enrollment (mandatory, see "Owner MFA is mandatory") still applies on
+first visit — this only grants the flag, not a bypass of that gate.
+
+**A real bug caught and fixed during verification, not shipped**: the
+first version updated the subscription/quota rows and called
+`revalidatePath()` + the client called `router.refresh()`, expecting the
+server-rendered Plan/Usage/Renews cells to pick up the new values. They
+didn't — Next's fetch caching around the Supabase REST calls a Server
+Component makes doesn't reliably invalidate through that path in this
+setup. Root-caused by testing an actual save end-to-end (not just
+"looks right at a glance"): the Manage dropdowns showed the right
+pre-selected value (driven by the initial server props) while the
+read-only Plan cell right next to them still showed the old value after
+saving. Fixed the same way `SuggestionStatusControl` already handles
+this in this codebase: the action returns the authoritative saved values
+directly, and `TenantSubscriptionControl` now owns and renders the
+entire row (Plan/Usage/Renews/Manage cells) from its own local state,
+updated straight from the action's result — no dependence on Next's
+cache/revalidation behaving a particular way.
+
+**Verified**: `tsc`, `eslint`, all 148 unit tests, a full `next build`,
+and a genuine end-to-end Playwright run — created a throwaway owner
+test account, completed real TOTP MFA enrollment (computed a valid code
+from the enrollment response's own secret, no human needed), opened the
+Subscriptions tab, changed a fixture tenant's plan and status, and
+confirmed the row updated immediately (no reload) AND after a full page
+reload (proving it's genuinely persisted, not just local state). The
+fixture tenant (`marketing-samples`, used elsewhere for sample stories
+and the demo videos) was restored to its exact original
+subscription/quota values afterward, and the throwaway test account was
+deleted.
+
 ## Not yet built (explicitly out of scope for this build session)
 
 - Vendor moderation integration for image safety checks

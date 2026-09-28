@@ -19,6 +19,7 @@ export function OwnerTabs({ locale, newSuggestionCount }: { locale: string; newS
 
   const tabs = [
     { href: base, label: 'Overview' },
+    { href: `${base}/subscriptions`, label: 'Subscriptions' },
     { href: `${base}/suggestions`, label: 'Story Ideas', badge: newSuggestionCount },
   ];
 

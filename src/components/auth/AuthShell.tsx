@@ -2,6 +2,8 @@ import type { ReactNode } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Logo } from '@/components/brand/Logo';
+import { LocaleSwitcher } from '@/components/ui/LocaleSwitcher';
+import type { Locale } from '@/i18n/config';
 
 /**
  * Shared split-panel shell for the auth pages (sign in, sign up, family
@@ -51,13 +53,16 @@ export function AuthShell({
 
       <div className="flex items-center justify-center bg-[rgb(var(--color-bg))] px-4 py-12">
         <div className="w-full max-w-md">
-          <Link
-            href={`/${locale}`}
-            className="focus-ring mb-8 flex items-center gap-2.5 font-display text-lg text-ink-900 lg:hidden"
-          >
-            <Logo size={26} variant="flat" />
-            Khayali
-          </Link>
+          <div className="mb-8 flex items-center">
+            <Link
+              href={`/${locale}`}
+              className="focus-ring flex items-center gap-2.5 font-display text-lg text-ink-900 lg:hidden"
+            >
+              <Logo size={26} variant="flat" />
+              Khayali
+            </Link>
+            <LocaleSwitcher locale={locale as Locale} className="ms-auto" />
+          </div>
           {children}
         </div>
       </div>

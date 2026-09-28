@@ -3,6 +3,8 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/Button';
 import { Logo } from '@/components/brand/Logo';
+import { LocaleSwitcher } from '@/components/ui/LocaleSwitcher';
+import type { Locale } from '@/i18n/config';
 
 const USE_CASE_ICONS: Record<string, JSX.Element> = {
   graduation: (
@@ -69,6 +71,7 @@ export default function MarketingHome({ params }: { params: { locale: string } }
           </Link>
         </nav>
         <div className="flex flex-shrink-0 items-center gap-2 sm:gap-3">
+          <LocaleSwitcher locale={locale as Locale} />
           <Link href={`/${locale}/sign-in`}>
             <Button size="sm" variant="ghost">
               {nav('signIn')}

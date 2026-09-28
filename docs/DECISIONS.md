@@ -2819,6 +2819,68 @@ bookkeeping flag either way, not the actual enforcement (that's
 Supabase's AAL, checked live via `getMfaStatus` on every request, same
 as the owner gate always worked).
 
+## Billing moved out of Settings into its own tab
+
+Founder feedback: "subscriptions to have it as new tab not inside
+settings I believe better."
+
+The "Plan & billing" card lived inside the Settings page, one card
+among several. Moved it to its own route,
+`(dashboard)/dashboard/billing/page.tsx`, and added a nav entry in
+`DashboardNav.tsx` between Staff and Settings. Reused the `usage`
+translation key ("Usage & plan" / "الاستخدام والباقة") already sitting
+in both message catalogs — it existed on `DashboardLayout`'s `labels`
+object and was passed through, but the nav's `links` array never
+actually used it, so a tab for exactly this content was seemingly
+planned before but never wired up. Same `nursery_owner`-only gate
+Settings used (covers a family account's holder too — "owner" there
+is a historical role name, not a claim about tenant type, see "Phase
+4: families are tenants"), now enforced with an explicit redirect
+rather than just hiding the card, since the nav link being hidden from
+non-owners doesn't stop someone from typing the URL directly.
+
+## Language toggle for the whole app, not just story language
+
+Founder question: "also easy to have arabic version of the app as
+well? to have like a toggle to switch between the main languages of
+the app?"
+
+Turned out to already be almost entirely built: every route lives
+under a `[locale]` segment (`en`/`ar`) with `localePrefix: 'always'`
+(`src/middleware.ts`), and `src/messages/ar.json` already had a
+complete, 1:1 translation for every one of the 228 keys in `en.json`
+— confirmed by actually diffing the flattened key sets, not assuming.
+The only missing piece was a visible way to switch locale at all: the
+URL was the only way in (typing `/ar/...` by hand), with nothing in
+the UI pointing a viewer at it.
+
+Added `src/components/ui/LocaleSwitcher.tsx` — a small "EN / AR" pill
+(matching the existing tab-pill visual language used elsewhere, e.g.
+`AuthMethodTabs`) that reads the current path via `next/navigation`'s
+`usePathname()` and swaps only the leading locale segment, so it lands
+on the same page in the other language rather than resetting to the
+home page. Wired into the three places someone actually needs it:
+`DashboardNav.tsx` (signed-in app), `AuthShell.tsx` (sign in/sign up/
+family sign up), and the marketing home page header. Verified for
+real, not just by reading the code: ran the dev server, clicked
+through with Playwright, and confirmed both the redirect (`/en` →
+`/ar` on the same page) and the resulting RTL layout, translated copy,
+and mirrored header actually render correctly for the marketing home
+page and the sign-in page.
+
+**Real gap found while checking this, not yet fixed**: a fair amount
+of UI added earlier in *this same session* — the Security card,
+change-password form, MFA enroll/challenge copy, the new Billing
+page's heading — was written as plain hardcoded English strings, not
+routed through next-intl's `useTranslations`. None of that will
+actually appear in Arabic yet even with the toggle now in place; it
+falls back to English regardless of locale. The older parts of the
+app (nav, children forms, story templates, marketing copy) are fully
+translated. Bringing the newer security/billing screens into the
+translation system (adding `en.json`/`ar.json` keys and swapping the
+hardcoded strings for `t(...)` calls) is a contained follow-up, not
+done here since it wasn't what was asked this round.
+
 ## Not yet built (explicitly out of scope for this build session)
 
 - Vendor moderation integration for image safety checks

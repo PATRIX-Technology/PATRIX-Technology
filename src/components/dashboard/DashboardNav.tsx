@@ -5,8 +5,10 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { signOutAction } from '@/lib/actions/auth';
 import type { TenantRole, TenantType } from '@/types/database';
+import type { Locale } from '@/i18n/config';
 import { Badge } from '@/components/ui/Badge';
 import { Logo } from '@/components/brand/Logo';
+import { LocaleSwitcher } from '@/components/ui/LocaleSwitcher';
 
 interface Labels {
   overview: string;
@@ -50,6 +52,12 @@ export function DashboardNav({
     // don't apply the way they do for a nursery. See docs/DECISIONS.md
     // "Phase 4: families are tenants".
     { href: `${base}/staff`, label: labels.staff, ownerOnly: true, nurseryOnly: true },
+    // Its own tab rather than a card inside Settings, per founder
+    // feedback — see docs/DECISIONS.md "Billing moved out of Settings
+    // into its own tab". ownerOnly, not nurseryOnly: a family
+    // account's holder also carries the (historically-named)
+    // "nursery_owner" role and has their own plan to manage.
+    { href: `${base}/billing`, label: labels.usage, ownerOnly: true },
     { href: `${base}/settings`, label: labels.settings },
     { href: `/${locale}/contact`, label: labels.support },
   ].filter(
@@ -127,6 +135,9 @@ export function DashboardNav({
             </li>
           ))}
         </ul>
+        <div className="mt-6">
+          <LocaleSwitcher locale={locale as Locale} />
+        </div>
       </div>
       <div className="mt-8 flex items-center justify-between text-sm text-ink-500">
         <span>{fullName}</span>

@@ -6,8 +6,6 @@ import { Card, CardTitle } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { SettingsForm } from '@/components/dashboard/SettingsForm';
 import { ChangePasswordForm } from '@/components/dashboard/ChangePasswordForm';
-import { BillingSection } from '@/components/dashboard/BillingSection';
-import { flags } from '@/lib/flags';
 
 export default async function SettingsPage({ params }: { params: { locale: string } }) {
   const supabase = await createSupabaseServerClient();
@@ -16,17 +14,7 @@ export default async function SettingsPage({ params }: { params: { locale: strin
 
   const { data: tenant } = await supabase.from('tenants').select('*').eq('id', context.tenantId).single();
 
-  const [{ data: plans }, { data: subscription }, { data: userData }, mfaStatus] = await Promise.all([
-    supabase
-      .from('plans')
-      .select('*')
-      .eq('is_active', true)
-      .eq('audience', context.tenantType)
-      .order('price_monthly_cents'),
-    supabase.from('subscriptions').select('*').eq('tenant_id', context.tenantId).maybeSingle(),
-    supabase.auth.getUser(),
-    getMfaStatus(supabase),
-  ]);
+  const [{ data: userData }, mfaStatus] = await Promise.all([supabase.auth.getUser(), getMfaStatus(supabase)]);
   // A phone-only account (see docs/DECISIONS.md "Phone sign-in") has no
   // password at all, so there's nothing for ChangePasswordForm to change.
   const hasPasswordIdentity = Boolean(userData.user?.identities?.some((identity) => identity.provider === 'email'));
@@ -46,18 +34,6 @@ export default async function SettingsPage({ params }: { params: { locale: strin
           <SettingsForm locale={params.locale} tenant={tenant} tenantType={context.tenantType} />
         </div>
       </Card>
-      {context.role === 'nursery_owner' && (
-        <Card>
-          <CardTitle>Plan &amp; billing</CardTitle>
-          {flags.billing ? (
-            <div className="mt-4">
-              <BillingSection plans={plans ?? []} subscription={subscription ?? null} />
-            </div>
-          ) : (
-            <p className="mt-2 text-sm text-ink-500">Billing isn&apos;t available yet — check back soon.</p>
-          )}
-        </Card>
-      )}
       <Card>
         <CardTitle>Security</CardTitle>
         <div className="mt-4 flex flex-col gap-6">

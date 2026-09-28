@@ -3739,6 +3739,77 @@ since no `RESEND_API_KEY` is configured yet — that needs the founder's
 own free Resend signup (see `docs/NEEDS_FROM_ME.md`); the no-op path
 (what happens today, with the key unset) was what was actually tested.
 
+## Landing-page demo videos (English + Arabic)
+
+Founder request: a short demo video showing "how to create the story
+and what will be our results", for both languages, embedded on the
+landing page. Scoped up front via three explicit choices: a real
+screen-recording of the live app (not an animated/narrated explainer),
+short and simple (~25-27s, text captions only, no voiceover), embedded
+directly on the landing page rather than only sent as a file.
+
+**Recording approach**: four separate Playwright recordings per
+locale — the hero, the dashboard home (with the real approved sample
+story), the theme picker on a real child's page (selecting themes,
+never submitting so no generation cost is triggered), and the finished
+approved sample story flipped through via the existing `StoryCarousel`
+on the landing page. A dedicated `demo-recording@ownly.internal`
+account (a `nursery_owner` member of the existing `marketing-samples`
+tenant) was created for this, reusing the same sample-story data the
+landing page and dashboard home already show real visitors.
+
+**Why four separate clips, not one continuous recording**: the first
+attempt recorded one continuous session including the real sign-in
+form, and a spot-check caught the test account's email address
+visible in a frame — harmless (an internal-only test account), but
+never acceptable in a public marketing asset. Rebuilt around a
+pre-authenticated Playwright `storageState` (captured once, outside
+any recording) so the sign-in form is never on camera, and split into
+four independently-trimmed scenes for precise editing control instead.
+
+**Why browser-rendered caption images instead of ffmpeg `drawtext`**:
+`drawtext` cannot shape Arabic script (the same limitation already
+documented in this codebase's own PDF pipeline, see "Arabic PDF text
+shaping" below/above). Captions for both languages are rendered once
+as transparent PNGs via a headless Playwright screenshot of a small
+styled HTML snippet (Fraunces for English, Noto Kufi Arabic for
+Arabic, matching the app's existing dark/saffron/cream palette), then
+composited onto the video with ffmpeg's `overlay` filter — this keeps
+the two languages' caption pipelines identical instead of special-casing
+Arabic.
+
+**ffmpeg pipeline bug found and fixed**: the first compositing attempt
+built one large `filter_complex` — trim, concat, and four chained
+`overlay` calls — in a single ffmpeg invocation, feeding each caption
+PNG in via `-loop 1` with no explicit duration. It never terminated on
+its own (killed after 10+ minutes and 16,000+ frames of a ~25-second
+target, still running). Root-caused to the looped image inputs, not to
+anything in the source clips. Rebuilt as three explicit stages instead:
+trim each scene to its own file first (`-ss`/`-t`, one clip at a time,
+so each stage's duration is independently verifiable with `ffprobe`),
+concatenate the four via the concat demuxer, then overlay captions
+in one simpler filter graph with a hard `-t <total_duration>` safety
+cap on the final output. Each stage is easy to reason about in
+isolation, and the explicit `-t` guarantees termination regardless of
+any future filter-graph surprise. Final output: 25.48s (English),
+26.72s (Arabic), both verified against the plan with `ffprobe`.
+
+**Embed**: `src/app/[locale]/page.tsx`, a new section right after the
+hero (before the sample-story carousel), a plain HTML5 `<video>` with
+native controls pointing at `/videos/demo-en.mp4` or
+`/videos/demo-ar.mp4` by locale — no player library, since native
+controls already cover play/pause/scrub/fullscreen/mute and the whole
+point was to keep this simple.
+
+**Verified**: `tsc`, `eslint`, all 148 unit tests, a full `next build`,
+and a live Playwright check on `next dev` confirming the correct
+video `src` renders per locale. Every extracted frame across both
+videos' four caption windows was read back and visually confirmed:
+correct caption text, correct timing against the on-screen action,
+correct Arabic shaping/RTL, and — checked specifically, given the
+earlier privacy near-miss — no credentials or test email address
+visible anywhere in either final video.
+
 ## Not yet built (explicitly out of scope for this build session)
 
 - Vendor moderation integration for image safety checks

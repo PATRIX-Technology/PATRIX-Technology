@@ -144,6 +144,22 @@ export default function MarketingHome({ params }: { params: { locale: string } }
         <p className="mt-8 text-center text-sm text-ink-500">{t('trustBar')}</p>
       </section>
 
+      <section className="mx-auto max-w-3xl px-6 pb-16">
+        <div className="text-center">
+          <h2 className="font-display text-2xl text-ink-900 md:text-3xl">{t('demoVideo.title')}</h2>
+          <p className="mx-auto mt-3 max-w-2xl text-ink-600">{t('demoVideo.body')}</p>
+        </div>
+        <div className="mt-8 overflow-hidden rounded-xl2 border border-[rgb(var(--color-border))] shadow-card">
+          <video
+            className="w-full"
+            src={locale === 'ar' ? '/videos/demo-ar.mp4' : '/videos/demo-en.mp4'}
+            controls
+            playsInline
+            preload="metadata"
+          />
+        </div>
+      </section>
+
       <section className="mx-auto max-w-5xl px-6 pb-16">
         <div className="text-center">
           <h2 className="font-display text-2xl text-ink-900 md:text-3xl">{t('sampleStories.title')}</h2>

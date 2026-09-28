@@ -26,6 +26,18 @@ const INK_COLOR = rgb(0.141, 0.11, 0.086);
 // docs/DECISIONS.md "PDF banner-style layout".
 const CAPTION_BANNER_COLOR = rgb(0.855, 0.914, 0.851);
 
+// The same two-sparkle mark as src/components/brand/Logo.tsx and
+// public/icons/icon.svg, drawn here in pdf-lib's vector path drawing
+// instead of embedding a raster PNG, so it stays crisp at print
+// resolution. Kept as one literal path (not a shared constant) since
+// this file can't import a .tsx component — see docs/DECISIONS.md
+// "Copyright watermark on every generated PDF page".
+const SPARKLE_SVG_PATH = 'M0,-19 C2,-7 5,-2 18,0 C5,2 2,7 0,19 C-2,7 -5,2 -18,0 C-5,-2 -2,-7 0,-19 Z';
+const WATERMARK_TEAL = rgb(0.184, 0.749, 0.651); // #2FBFA6
+const WATERMARK_CORAL = rgb(0.886, 0.439, 0.541); // #E2708A
+const WATERMARK_GOLD = rgb(0.89, 0.675, 0.239); // #E3AC3D
+const WATERMARK_TEXT_COLOR = rgb(0.996, 0.996, 0.996);
+
 /**
  * Renders a full print-ready PDF: one page per story page, illustration
  * full-bleed — no cover, dedication, or repeating title banner (removed
@@ -49,7 +61,7 @@ export async function renderStoryPdf(input: RenderStoryPdfInput): Promise<Uint8A
   pdfDoc.registerFontkit(fontkit);
   pdfDoc.setTitle(input.title);
   pdfDoc.setSubject(`A personalised story for ${input.childName}`);
-  pdfDoc.setProducer('Khayali Story Platform');
+  pdfDoc.setProducer('TooniX Story Platform');
 
   const fonts = await embedFonts(pdfDoc);
   const isRtl = input.locale === 'ar';
@@ -88,6 +100,8 @@ export async function renderStoryPdf(input: RenderStoryPdfInput): Promise<Uint8A
       width: drawWidth,
       height: drawHeight,
     });
+
+    drawCopyrightWatermark(page, fonts.latinRegular);
 
     const pageNumberY = BLEED_PT + 10;
 
@@ -131,6 +145,76 @@ export async function renderStoryPdf(input: RenderStoryPdfInput): Promise<Uint8A
   }
 
   return pdfDoc.save();
+}
+
+/**
+ * A small "TooniX" corner tag drawn on every generated page, over the
+ * illustration itself (not just the surrounding chrome) — every image a
+ * family or nursery might screenshot, print, or forward carries the
+ * mark. Kept inside the TrimBox with a safety margin so a print vendor
+ * trimming to TrimBox never cuts it off (see docs/DECISIONS.md
+ * "Copyright watermark on every generated PDF page").
+ *
+ * pdf-lib's `drawSvgPath` does not vertically flip a path's own
+ * coordinates the way an SVG renderer does (verified by test-rendering
+ * a single-direction path and comparing against the browser render),
+ * so each sparkle's placement point is pre-flipped here (`100 - ty`)
+ * against the 100x100 viewBox used in Logo.tsx/icon.svg. The sparkle
+ * shape itself doesn't need flipping — it has 4-fold symmetry, so it
+ * looks identical either way. The coral sparkle's 18° tilt (present in
+ * the on-screen mark) is dropped here as not worth the extra rotation-
+ * direction math for a mark this small.
+ */
+function drawCopyrightWatermark(page: import('pdf-lib').PDFPage, textFont: import('pdf-lib').PDFFont): void {
+  const margin = 10;
+  const badgeWidth = 56;
+  const badgeHeight = 20;
+  const badgeRight = PAGE_WIDTH_PT - BLEED_PT - margin;
+  const badgeTop = PAGE_HEIGHT_PT - BLEED_PT - margin;
+  const badgeLeft = badgeRight - badgeWidth;
+  const badgeBottom = badgeTop - badgeHeight;
+
+  page.drawRectangle({
+    x: badgeLeft,
+    y: badgeBottom,
+    width: badgeWidth,
+    height: badgeHeight,
+    color: rgb(0.078, 0.082, 0.169), // #14152B
+    opacity: 0.82,
+  });
+
+  const iconSize = 14;
+  const iconOriginX = badgeLeft + 3;
+  const iconOriginY = badgeBottom + (badgeHeight - iconSize) / 2;
+  const F = iconSize / 100;
+  const flip = (ty: number) => 100 - ty;
+
+  page.drawSvgPath(SPARKLE_SVG_PATH, {
+    x: iconOriginX + 68 * F,
+    y: iconOriginY + flip(32) * F,
+    scale: 1.05 * F,
+    color: WATERMARK_CORAL,
+  });
+  page.drawSvgPath(SPARKLE_SVG_PATH, {
+    x: iconOriginX + 48 * F,
+    y: iconOriginY + flip(52) * F,
+    scale: 1.85 * F,
+    color: WATERMARK_TEAL,
+  });
+  page.drawCircle({
+    x: iconOriginX + 82 * F,
+    y: iconOriginY + flip(66) * F,
+    size: 3.2 * F,
+    color: WATERMARK_GOLD,
+  });
+
+  page.drawText('TooniX', {
+    x: iconOriginX + iconSize + 3,
+    y: badgeBottom + (badgeHeight - 7) / 2 + 1,
+    size: 7,
+    font: textFont,
+    color: WATERMARK_TEXT_COLOR,
+  });
 }
 
 function setPrintBoxes(page: import('pdf-lib').PDFPage): void {

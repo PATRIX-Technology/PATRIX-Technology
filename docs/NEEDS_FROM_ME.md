@@ -16,12 +16,14 @@ else has already been built and is documented in `docs/HANDOFF.md`.
    - Once created, tell me and I will run the migrations in
      `supabase/migrations/` against it and seed the story templates.
 
-2. **Choose and confirm the brand name.** "Khayali" is a working name only
-   (see `docs/DECISIONS.md`). Before it appears on anything public, it
-   needs: a basic UAE/GCC trademark screening, and confirmation the
-   matching domain (e.g. `khayali.com` / `.ae`) is available. I cannot
-   register a domain or file a trademark — that needs your payment method
-   and identity.
+2. **Confirm the brand name.** Renamed from "Khayali" to "TooniX" per
+   your request (see `docs/DECISIONS.md`). It's still a working name in
+   the trademark/legal sense — the name-conflict check done for
+   "Khayali" doesn't carry over to a completely different name, so this
+   needs its own basic UAE/GCC trademark screening and confirmation the
+   matching domain (e.g. `toonix.com` / `.ae`) is available, before it
+   appears on anything public. I cannot register a domain or file a
+   trademark — that needs your payment method and identity.
 
 3. **A domain name and hosting decision.** I'd recommend Vercel (built
    for Next.js) or a similar host — but creating that account and

@@ -15,7 +15,7 @@ estimates, not quotes.
 | Vercel Pro (1 seat) | 881 | $20/mo confirmed current rate; usage beyond the included credit bills separately |
 | Supabase Pro (1 project) | 1,102 | $25/mo confirmed current rate; usage beyond the included quota bills separately |
 | Domain renewal (.ae) | 150 | AED 120-180/yr across registrars; a generic `.com` runs closer to AED 55/yr |
-| Business email (Google Workspace, 1 user) | 264 | Not yet set up — every proposal/contact document in this repo assumes a real @khayali address |
+| Business email (Google Workspace, 1 user) | 264 | Not yet set up — every proposal/contact document in this repo assumes a real @toonix address |
 | Apple Developer Program | 364 | Only if the iOS app is actually submitted; renews yearly |
 | Bookkeeping, VAT & corporate tax filing | 9,000 | Estimate, not a quote — UAE Corporate Tax (9% above AED 375k) and quarterly VAT filing need an accountant regardless of revenue |
 | **Subtotal, fixed recurring** | **18,761** | |
@@ -56,7 +56,7 @@ a constant.
 
 | Item | One-time (AED) | Note |
 |---|---|---|
-| UAE trademark registration, one class | 10,000 | AED 6,500 government fee alone; AED 8,500-12,000 all-in with an agent — the formal version of the name-conflict check already done for "Khayali" |
+| UAE trademark registration, one class | 10,000 | AED 6,500 government fee alone; AED 8,500-12,000 all-in with an agent — the formal version of the name-conflict check that still needs doing for "TooniX" (the earlier check was done for "Khayali", a different name — see `docs/NEEDS_FROM_ME.md` item 2) |
 | Legal review | 10,000 | Contract templates (the proposal/order form in `docs/en/sales/`), PDPL/privacy-policy review — both flagged in `docs/NEEDS_FROM_ME.md` |
 | Google Play Console registration | 92 | One-time, not annual |
 | **Subtotal, one-time** | **20,092** | |

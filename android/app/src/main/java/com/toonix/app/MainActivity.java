@@ -1,4 +1,4 @@
-package com.khayali.app;
+package com.toonix.app;
 
 import com.getcapacitor.BridgeActivity;
 

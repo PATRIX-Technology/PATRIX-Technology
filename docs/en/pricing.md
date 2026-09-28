@@ -65,7 +65,7 @@ theoretical $0.404 minimum.
 ### Self-serve vs. managed
 
 Every tier above is **self-serve** (nursery staff use the dashboard
-themselves) by default. A **managed-service** add-on — Khayali's team
+themselves) by default. A **managed-service** add-on — TooniX's team
 creates and submits stories against a class roster and theme calendar
 for the nursery to approve — is priced as a flat **+40% uplift** on the
 base plan (e.g. Growth becomes AED 1,819/mo). Margin stays above 60%

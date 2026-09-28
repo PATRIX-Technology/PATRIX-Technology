@@ -31,9 +31,9 @@ export function generateStaticParams() {
 }
 
 export const metadata: Metadata = {
-  title: 'Khayali — Personalised storybooks for nurseries & schools',
+  title: 'TooniX — Personalised storybooks for nurseries & schools',
   description:
-    'Khayali creates personalised, illustrated storybooks that teach children values and habits — built for nurseries, schools, clinics and children\'s brands.',
+    'TooniX creates personalised, illustrated storybooks that teach children values and habits — built for nurseries, schools, clinics and children\'s brands.',
   manifest: '/manifest.webmanifest',
 };
 

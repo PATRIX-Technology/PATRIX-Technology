@@ -1,4 +1,4 @@
-# Khayali — Personalised Storybook Platform
+# TooniX — Personalised Storybook Platform
 
 A B2B-first SaaS platform for nurseries, schools, clinics, and children's
 brands to create personalised, illustrated storybooks that teach children

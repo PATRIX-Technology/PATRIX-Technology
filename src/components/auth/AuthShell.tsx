@@ -38,7 +38,7 @@ export function AuthShell({
       >
         <Link href={`/${locale}`} className="focus-ring flex items-center gap-2.5 font-display text-lg text-ink-900">
           <Logo size={28} variant="flat" />
-          Khayali
+          TooniX
         </Link>
         <div className="relative mx-auto w-full max-w-xs">
           <div className="relative aspect-[9/16] overflow-hidden rounded-[2rem] border border-ink-100 shadow-card">
@@ -59,7 +59,7 @@ export function AuthShell({
               className="focus-ring flex items-center gap-2.5 font-display text-lg text-ink-900 lg:hidden"
             >
               <Logo size={26} variant="flat" />
-              Khayali
+              TooniX
             </Link>
             <LocaleSwitcher locale={locale as Locale} className="ms-auto" />
           </div>

@@ -1189,7 +1189,7 @@ personalisation is switched on (both flags), a family tenant now sees
 the upload widget directly, with one required checkbox
 (`PhotoUpload.tsx`'s `requireFamilyConsentCheckbox`) shown inline the
 first time only: "I am this child's parent or legal guardian, and I
-consent to Khayali and its AI illustration provider (Google Gemini)
+consent to TooniX and its AI illustration provider (Google Gemini)
 using this photo solely to personalise this child's storybook
 illustrations." Checking it and uploading in the same action makes
 `uploadChildPhotoAction` insert a `consent_requests` row
@@ -2548,7 +2548,7 @@ included, and always opens its own inline PDF viewer instead. See
 https://bugs.webkit.org/show_bug.cgi?id=167341 and
 https://developer.apple.com/forums/thread/803421 — this is a long-open,
 still-unresolved WebKit limitation, and every website that serves a PDF
-behaves identically on an iPhone; Khayali was never actually broken
+behaves identically on an iPhone; TooniX was never actually broken
 here, it just looked broken next to Android's very different (and
 correct-per-spec) behaviour.
 
@@ -3159,6 +3159,120 @@ with `python-pptx`; LibreOffice headless couldn't render *any* pptx in
 this sandbox, including the untouched original, so a rendered visual
 check wasn't possible here — worth a quick look in real PowerPoint
 before the next pitch.
+
+## Rebrand: Khayali to TooniX, new logo, hero-image fixes, PDF watermark
+
+Founder decision: rename from "Khayali" to "TooniX" (تونكس) everywhere,
+redesign the logo, fix a diacritics issue on the Arabic landing-page
+hero image, and add a copyright mark to generated PDFs. Four pieces:
+
+**1. Full rename.** Every "Khayali"/"khayali"/"خيالي" reference across
+code, `src/messages/en.json`/`ar.json`, all `docs/en/`+`docs/ar/`
+files, the Android/iOS Capacitor configs, `scripts/reset-demo-data.mjs`,
+tests, and both PPTX decks (`docs/en/sales/nursery-pitch-deck.pptx`,
+`docs/en/training/staff-guide.pptx`, edited via the same unzip-XML-
+rezip-validate approach as the earlier pitch-deck slide edit) is now
+"TooniX"/"toonix"/"تونكس". Two things deliberately kept as-is:
+- `docs/DECISIONS.md`'s own record of the earlier "Hikayti → Khayali"
+  rename (the "Brand" section near the top) — rewriting a past
+  decision entry to use the *new* name would misrepresent what was
+  actually decided at the time; a fresh entry (this one) is how a
+  changelog is supposed to record the next rename instead.
+- Two `image_prompt` strings in `supabase/seed/templates.json`
+  containing "خيالي" — a false-positive catch during the sweep: that's
+  the ordinary Arabic adjective "imaginative/fantastical" inside the
+  fixed phrase "أسلوب رسوم كتاب قصص خيالي" ("imaginative storybook
+  illustration style"), not the brand name. Confirmed by reading the
+  surrounding sentence before touching it.
+Also renamed the Android package: `com.khayali.app` → `com.toonix.app`
+in `capacitor.config.ts`, `android/app/build.gradle`,
+`android/app/src/main/res/values/strings.xml`,
+`ios/App/App.xcodeproj/project.pbxproj`, and moved
+`android/app/src/main/java/com/khayali/app/MainActivity.java` to
+`.../com/toonix/app/MainActivity.java` with `git mv` (the package
+declaration inside the file has to match its own directory path, or
+the Android build fails) — safe to do now since the mobile wrapper has
+never been submitted to either app store. `docs/NEEDS_FROM_ME.md` item
+2 and `docs/en/budget.md`'s trademark-registration line were both
+updated to say the earlier UAE/GCC name-conflict check was done for
+"Khayali", a *different* name, so it needs redoing for "TooniX" — it
+does not carry over.
+
+**2. New logo** (`src/components/brand/Logo.tsx`, mirrored as
+`public/icons/icon.svg`): two overlapping four-point sparkles — a
+larger lagoon-teal one with a smaller coral one tucked behind its
+top-right tip, plus a small saffron accent dot. Deliberately *not* a
+literal "X" cross/slash shape: tested that idea first and rejected it
+because a crossing-lines glyph reads as a cancel/delete icon at small
+sizes, exactly wrong for a kids' product. The two sparkles' crossed
+diagonal arms evoke the "X" in "TooniX" without drawing it literally,
+and doubling the mark (rather than one sparkle) reads as "every child
+gets their own story." Checked it renders legibly down to a 16px
+favicon by rendering the actual component's SVG at 128/64/32/16px via
+Playwright before committing to it (screenshotted, not just eyeballed
+in an editor). Kept the exact same component API
+(`variant: 'default' | 'flat'`, `size`, `className`) so every existing
+call site (dashboard nav, auth shell, marketing header/footer, contact
+page) picked it up with no other code changes.
+
+**3. Arabic landing-page hero image had heavy tashkeel; fixed without
+re-generating the artwork.** The founder's actual complaint:
+`public/images/marketing/hero-ar.jpg`'s caption pill read "كُلُّ
+طفلٍ بطلُ قصَّتِه الخَاصَّةُ" — full diacritics stacked on every
+word, which is correct classical Arabic but reads as cluttered/unusual
+for ordinary UI copy (compare the plain, undiacritized "كل طفل بطل
+قصته الخاصة" used everywhere else in the app, e.g. `brand.tagline`).
+Regenerating the whole illustration from a text prompt was ruled out:
+Gemini image generation isn't reproducible from a prompt, so a fresh
+call would likely change the girl/room/animals too, not just the
+caption — a bigger, uncontrolled change for what's actually a small
+text fix. Instead, precisely measured the caption pill's and the old
+logo badge's pixel bounding boxes (`PIL`, pixel-color scans), rendered
+a replacement pill + undiacritized caption + new logo badge as one
+HTML/CSS layout (Playwright, transparent background, Noto Kufi Arabic
+Bold for correct Arabic shaping via Chromium's own text engine rather
+than trusting a font-rendering library to shape Arabic correctly), and
+composited that single overlay back onto the *original* photo at the
+measured coordinates — the girl, room, lighting, and animals are
+byte-for-byte the original artwork; only the pill region changed.
+Did the same corner-badge swap (old book+sparkle icon → new TooniX
+mark) on `hero-en.jpg`, which had no text problem, so only its badge
+needed touching.
+
+**4. Copyright watermark on every generated story PDF page**
+(`src/lib/providers/pdf/render.ts`, `drawCopyrightWatermark`): a small
+dark tag in the top-right corner of every page — icon plus "TooniX" in
+white — drawn with `pdf-lib`'s `drawSvgPath`/`drawCircle`/
+`drawRectangle` (vector, not a rasterised image, so it stays crisp at
+print resolution) and kept inside the TrimBox with a safety margin so
+a print vendor trimming to TrimBox can't cut it off. This project has
+no separate PDF cover page (see the "no cover, dedication, or
+repeating title banner" note earlier in this file), so every page a
+family might screenshot, print, or forward already carries the mark —
+nothing extra needed for a "cover" specifically. One real gotcha found
+by testing rather than assuming: `drawSvgPath` does **not** flip a
+path's y-coordinates the way an SVG renderer does (confirmed by
+drawing a single-direction stick path and comparing against a red
+reference dot in a rendered test PDF) — so a path copied verbatim from
+`Logo.tsx` renders with any *asymmetric* positioning mirrored
+vertically. The sparkle shape itself is 4-fold symmetric so it looks
+identical either way, but the two sparkles' relative placement had to
+be pre-flipped (`100 - ty` against the 100x100 viewBox) to land coral
+above-right of teal, matching the on-screen mark. The coral sparkle's
+18° tilt (present on screen) was dropped for the PDF version — not
+worth the extra rotation-direction math for a mark this small.
+Verified by actually rendering a sample EN and AR PDF
+(`pdftoppm` to PNG) and looking at it, not just trusting the numbers —
+caught nothing wrong, but this is exactly the kind of geometry code
+that silently produces a subtly-wrong result without a visual check.
+
+**Explicitly deferred, per the founder's own sequencing** ("will do
+after finalize the new design & logo & name"): new marketing banners
+for the landing page, presenting the two sample stories (EN/AR) as the
+site's main marketing content, and a demo video on the landing/home
+pages. Nothing in this pass touched the `SampleStoriesPreview`
+dashboard component or built new landing-page sections beyond the hero
+image fix above.
 
 ## Not yet built (explicitly out of scope for this build session)
 

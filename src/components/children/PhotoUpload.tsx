@@ -64,7 +64,7 @@ export function PhotoUpload({
             className="focus-ring mt-0.5 h-4 w-4 rounded border-[rgb(var(--color-border))]"
           />
           <span>
-            I am this child&apos;s parent or legal guardian, and I consent to Khayali and its AI
+            I am this child&apos;s parent or legal guardian, and I consent to TooniX and its AI
             illustration provider (Google Gemini) using this photo solely to personalise this
             child&apos;s storybook illustrations.
           </span>

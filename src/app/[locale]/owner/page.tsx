@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { getCurrentTenantContext } from '@/lib/domain/session';
-import { checkOwnerMfaGate } from '@/lib/domain/mfa';
+import { getMfaStatus } from '@/lib/domain/mfa';
 import { Card, CardTitle } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { OwnerTabs } from '@/components/dashboard/OwnerTabs';
@@ -21,7 +21,7 @@ export default async function OwnerDashboardPage({ params }: { params: { locale:
 
   // Mandatory MFA gate — see docs/DECISIONS.md "Owner MFA is mandatory".
   // No owner-dashboard data is fetched or rendered below this check.
-  const mfaGate = await checkOwnerMfaGate(supabase);
+  const mfaGate = await getMfaStatus(supabase);
   if (mfaGate.status === 'needs_enrollment') {
     redirect(`/${params.locale}/owner/mfa-enroll`);
   }

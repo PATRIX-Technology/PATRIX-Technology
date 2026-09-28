@@ -6,14 +6,21 @@ export type MfaGateResult =
   | { status: 'needs_challenge' };
 
 /**
- * Platform owner accounts must complete TOTP MFA before reaching any
- * /owner route — see docs/DECISIONS.md "Owner MFA is mandatory, not
- * optional". Uses Supabase Auth's built-in Authenticator Assurance Level
- * (AAL) rather than our own token scheme: `nextLevel` tells us whether a
- * second factor exists at all, `currentLevel` tells us whether THIS
- * session has actually completed it.
+ * Reports this session's TOTP MFA status via Supabase Auth's built-in
+ * Authenticator Assurance Level (AAL) rather than a bespoke token scheme:
+ * `nextLevel` tells us whether a second factor exists on the account at
+ * all, `currentLevel` tells us whether THIS session has actually
+ * completed it.
+ *
+ * Two different callers use this the same way but enforce differently:
+ * platform owner routes treat 'needs_enrollment' as a hard block (owner
+ * MFA is mandatory — see docs/DECISIONS.md "Owner MFA is mandatory, not
+ * optional"), while the regular tenant dashboard treats it as optional
+ * and only forces 'needs_challenge' (see "Optional-but-recommended MFA
+ * for regular users") — someone who never enrolled just isn't asked,
+ * but someone who DID enroll always has to complete the step-up.
  */
-export async function checkOwnerMfaGate(supabase: SupabaseClient): Promise<MfaGateResult> {
+export async function getMfaStatus(supabase: SupabaseClient): Promise<MfaGateResult> {
   const { data, error } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
   if (error) throw error;
 

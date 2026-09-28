@@ -5,6 +5,7 @@ import { useFormState } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import { familySignUpAction } from '@/lib/actions/family';
 import type { ActionResult } from '@/lib/actions/auth';
+import { PASSWORD_MIN_LENGTH, PASSWORD_PATTERN, PASSWORD_REQUIREMENT_HINT } from '@/lib/domain/password';
 import { Button } from '@/components/ui/Button';
 import { TextField } from '@/components/ui/Input';
 
@@ -24,7 +25,16 @@ export function FamilySignUpForm({ locale, referralCode }: { locale: string; ref
       <input type="hidden" name="referralCode" value={referralCode ?? ''} />
       <TextField name="fullName" label="Your full name" required />
       <TextField name="email" type="email" label="Email address" required />
-      <TextField name="password" type="password" label="Password" required minLength={8} />
+      <TextField
+        name="password"
+        type="password"
+        label="Password"
+        hint={PASSWORD_REQUIREMENT_HINT}
+        required
+        minLength={PASSWORD_MIN_LENGTH}
+        pattern={PASSWORD_PATTERN}
+        title={PASSWORD_REQUIREMENT_HINT}
+      />
       {state?.error && (
         <p role="alert" className="text-sm text-coral-600">
           {state.error}

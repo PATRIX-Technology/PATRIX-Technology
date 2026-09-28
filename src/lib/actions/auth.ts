@@ -8,6 +8,7 @@ import { getCurrentTenantContext } from '@/lib/domain/session';
 import { normalizePhoneNumber } from '@/lib/domain/phone';
 import { recordReferralIfPresent } from '@/lib/domain/referrals';
 import { capitalizeWords } from '@/lib/domain/names';
+import { validatePassword } from '@/lib/domain/password';
 
 export interface ActionResult {
   error?: string;
@@ -58,8 +59,9 @@ export async function signUpAction(locale: string, formData: FormData): Promise<
   if (!email || !password || !fullName || !orgName) {
     return { error: 'All fields are required.' };
   }
-  if (password.length < 8) {
-    return { error: 'Password must be at least 8 characters.' };
+  const passwordError = validatePassword(password);
+  if (passwordError) {
+    return { error: passwordError };
   }
 
   const supabase = await createSupabaseServerClient();
@@ -113,6 +115,66 @@ export async function signInAction(locale: string, formData: FormData): Promise<
   }
 
   return { redirectTo: `/${locale}/dashboard` };
+}
+
+/** Same shape as AUTH_RATE_LIMIT, but keyed by the signed-in user's own
+ * id rather than IP+email — this action already requires an active
+ * session, so there's a real account identity to key on directly. */
+const CHANGE_PASSWORD_RATE_LIMIT = { limit: 10, windowMs: 5 * 60 * 1000 };
+
+/**
+ * Lets a signed-in user (with an email/password identity) change their
+ * own password — there was previously no way to do this at all, which
+ * would have made the new password-complexity rule (see
+ * docs/DECISIONS.md "Password complexity requirement") unenforceable
+ * for any existing account. Re-verifies the current password via a
+ * fresh signInWithPassword call before allowing the change, rather than
+ * trusting that an open session is still the account owner sitting at
+ * the keyboard. Does NOT need email delivery (unlike a "forgot
+ * password" reset for a signed-out user, which this app doesn't have —
+ * see docs/NEEDS_FROM_ME.md on transactional email) since the user is
+ * already authenticated.
+ */
+export async function changePasswordAction(formData: FormData): Promise<ActionResult> {
+  const supabase = await createSupabaseServerClient();
+  const { data: userData } = await supabase.auth.getUser();
+  if (!userData.user) return { error: 'Not signed in.' };
+
+  const hasPasswordIdentity = userData.user.identities?.some((identity) => identity.provider === 'email');
+  if (!hasPasswordIdentity || !userData.user.email) {
+    return { error: 'This account signs in with a phone code, not a password — there is nothing to change.' };
+  }
+
+  try {
+    await enforceRateLimit(
+      `auth:change-password:${userData.user.id}`,
+      CHANGE_PASSWORD_RATE_LIMIT.limit,
+      CHANGE_PASSWORD_RATE_LIMIT.windowMs,
+    );
+  } catch (error) {
+    if (error instanceof RateLimitExceededError) return { error: error.message };
+    throw error;
+  }
+
+  const currentPassword = String(formData.get('currentPassword') ?? '');
+  const newPassword = String(formData.get('newPassword') ?? '');
+  if (!currentPassword || !newPassword) {
+    return { error: 'All fields are required.' };
+  }
+
+  const passwordError = validatePassword(newPassword);
+  if (passwordError) return { error: passwordError };
+
+  const { error: reauthError } = await supabase.auth.signInWithPassword({
+    email: userData.user.email,
+    password: currentPassword,
+  });
+  if (reauthError) return { error: 'Current password is incorrect.' };
+
+  const { error: updateError } = await supabase.auth.updateUser({ password: newPassword });
+  if (updateError) return { error: updateError.message };
+
+  return { message: 'Password updated.' };
 }
 
 /**

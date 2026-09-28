@@ -6,7 +6,7 @@ import { createSupabaseBrowserClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 
-export function MfaChallengeForm({ locale }: { locale: string }) {
+export function MfaChallengeForm({ redirectTo }: { redirectTo: string }) {
   const router = useRouter();
   const supabase = createSupabaseBrowserClient();
 
@@ -37,7 +37,7 @@ export function MfaChallengeForm({ locale }: { locale: string }) {
       });
       if (verifyError) throw verifyError;
 
-      router.push(`/${locale}/owner`);
+      router.push(redirectTo);
       router.refresh();
     } catch (err) {
       setError((err as Error).message);

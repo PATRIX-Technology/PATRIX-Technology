@@ -7,6 +7,7 @@ import { getCurrentTenantContext } from '@/lib/domain/session';
 import { normalizePhoneNumber } from '@/lib/domain/phone';
 import { recordReferralIfPresent } from '@/lib/domain/referrals';
 import { capitalizeWords } from '@/lib/domain/names';
+import { validatePassword } from '@/lib/domain/password';
 import type { ActionResult } from './auth';
 
 const AUTH_RATE_LIMIT = { limit: 10, windowMs: 5 * 60 * 1000 };
@@ -41,8 +42,9 @@ export async function familySignUpAction(locale: string, formData: FormData): Pr
   if (!email || !password || !fullName) {
     return { error: 'All fields are required.' };
   }
-  if (password.length < 8) {
-    return { error: 'Password must be at least 8 characters.' };
+  const passwordError = validatePassword(password);
+  if (passwordError) {
+    return { error: passwordError };
   }
 
   const supabase = await createSupabaseServerClient();

@@ -320,11 +320,14 @@ pinned to.) `subscriptionFromStripe()` reads
 only ever create single-item subscriptions (one plan per tenant), so the
 first item's period is the subscription's period.
 
-**Owner MFA is mandatory, not optional.** `checkOwnerMfaGate()`
-(`src/lib/domain/mfa.ts`) uses Supabase Auth's built-in TOTP
-factor + Authenticator Assurance Level (AAL) rather than a bespoke 2FA
-scheme. `/owner` (and every future owner-only route) must call this gate
-before rendering anything: no factor enrolled → redirect to
+**Owner MFA is mandatory, not optional.** `getMfaStatus()`
+(`src/lib/domain/mfa.ts`, renamed from the owner-specific
+`checkOwnerMfaGate` once a second, optional caller for regular users
+was added — see "Optional-but-recommended MFA for regular users") uses
+Supabase Auth's built-in TOTP factor + Authenticator Assurance Level
+(AAL) rather than a bespoke 2FA scheme. `/owner` (and every future
+owner-only route) must call this and treat `needs_enrollment` as a hard
+block before rendering anything: no factor enrolled → redirect to
 `/owner/mfa-enroll`; factor enrolled but not verified this session →
 redirect to `/owner/mfa-challenge`; verified → proceed. This piggybacks
 on Supabase's own well-tested TOTP implementation rather than us storing
@@ -2729,6 +2732,92 @@ missing-glyph box slip into an approved, "validated" PDF. Updated
 existing `font-coverage.test.ts` (which already asserts real coverage
 for em/en dash, curly quotes, and ellipsis) that Fraunces has every
 glyph that test expects — all green with no test changes needed.
+
+## Password complexity requirement
+
+Founder request: "Adding password complexity."
+
+Every place a password gets set — org sign-up (`signUpAction`), family
+sign-up (`familySignUpAction`), and accepting a staff invite
+(`acceptStaffInviteAction`) — previously duplicated the exact same bare
+`password.length < 8` check, no letter/number requirement at all.
+Added `src/lib/domain/password.ts`: `validatePassword()` (min 10
+characters, at least one letter, at least one number — deliberately
+not requiring a specific case or a symbol; a "must contain !@#$" rule
+mostly just pushes people toward "Password1!" and a sticky note, per
+NIST 800-63B's now-standard guidance that length plus a real character
+mix beats an arbitrary symbol mandate), plus `PASSWORD_MIN_LENGTH`,
+`PASSWORD_PATTERN` (an HTML `pattern` string for a same-page hint, not
+itself trusted — `validatePassword` is the real, server-side check on
+every path above) and `PASSWORD_REQUIREMENT_HINT` for the matching UI
+copy. All three actions and their form components
+(`SignUpForm.tsx`/`FamilySignUpForm.tsx`/`AcceptStaffInviteForm.tsx`)
+now share this one module instead of three copies of the same rule.
+
+**Found a real gap while doing this**: there was no way for a signed-in
+user to change their own password at all, which would have made the
+new rule unenforceable for any existing account (nowhere for them to
+go strengthen a password that predates it). Added
+`changePasswordAction` (`src/lib/actions/auth.ts`) and
+`ChangePasswordForm` (`src/components/dashboard/ChangePasswordForm.tsx`),
+surfaced in a new "Security" card on the dashboard Settings page. It
+re-verifies the current password via a fresh `signInWithPassword` call
+before allowing the change (an open session shouldn't be trusted alone
+to prove who's at the keyboard), and only renders for an account that
+actually has an email/password identity — a phone-OTP account never
+had a password to begin with, so there's nothing to change. This
+does NOT cover a "forgot password" reset for a signed-out user — that
+needs transactional email, which isn't configured yet (see
+`docs/NEEDS_FROM_ME.md`); this is only for someone already signed in
+who wants to change or strengthen their own password.
+
+## Optional-but-recommended MFA for regular users
+
+Founder request, same message: "also MFA as optional but
+recommending etc.." — platform owner accounts already had mandatory
+TOTP MFA (see "Owner MFA is mandatory, not optional"); regular
+nursery/family/staff users had no MFA option at all.
+
+Reused the exact same Supabase Auth TOTP machinery rather than
+building a second scheme: `checkOwnerMfaGate` in `src/lib/domain/mfa.ts`
+was already generic internally (nothing owner-specific in its logic,
+just its name and docstring), so it's renamed `getMfaStatus` and now
+serves both callers, each enforcing differently:
+
+- **Owner** (`/owner` pages): `needs_enrollment` is a hard block —
+  MFA is mandatory, unchanged from before.
+- **Regular dashboard** (`(dashboard)/layout.tsx`, the single shared
+  layout for every `/dashboard/*` page): `needs_enrollment` is ignored
+  entirely — nobody is forced to enroll. `needs_challenge` still
+  redirects to a challenge page, though: once someone has voluntarily
+  enrolled a TOTP factor, skipping the step-up on every visit would
+  make that factor purely decorative. "Optional" means optional to
+  enroll, not optional to actually use once enrolled.
+
+`MfaEnrollForm`/`MfaChallengeForm` (`src/components/auth/`) took a
+`redirectTo` prop (previously hardcoded to `/${locale}/owner`) so both
+flows share one QR-code-and-TOTP-verify implementation instead of two
+near-identical copies; `MfaEnrollForm` also took optional `title`/
+`description` overrides so the owner flow keeps its "this is
+mandatory" copy while the new regular-user flow gets its own
+"optional but recommended" copy.
+
+New standalone routes `src/app/[locale]/mfa/enroll/page.tsx` and
+`.../mfa/challenge/page.tsx` — deliberately NOT nested under the
+`(dashboard)` route group, for the same reason the owner MFA pages
+aren't nested under `/owner`'s own gate: the dashboard layout is
+exactly what redirects to `/mfa/challenge` on `needs_challenge`, so
+nesting that page inside the same layout would loop.
+
+Surfaced as a new "Security" card on the dashboard Settings page
+(`(dashboard)/dashboard/settings/page.tsx`): shows current status
+("On" / "Recommended", via `Badge`) and, when not enrolled, a link to
+`/mfa/enroll` with copy explicitly framing it as recommended, not
+required. `profiles.mfa_enrolled` (already existed, migration
+`0001_core_schema.sql`) needed no schema change — it's a display/
+bookkeeping flag either way, not the actual enforcement (that's
+Supabase's AAL, checked live via `getMfaStatus` on every request, same
+as the owner gate always worked).
 
 ## Not yet built (explicitly out of scope for this build session)
 

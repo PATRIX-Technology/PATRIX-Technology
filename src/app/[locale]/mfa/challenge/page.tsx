@@ -1,8 +1,10 @@
 import { redirect } from 'next/navigation';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
-import { MfaEnrollForm } from '@/components/auth/MfaEnrollForm';
+import { MfaChallengeForm } from '@/components/auth/MfaChallengeForm';
 
-export default async function MfaEnrollPage({ params }: { params: { locale: string } }) {
+/** See src/app/[locale]/mfa/enroll/page.tsx for why this is a standalone
+ * top-level route rather than nested under (dashboard). */
+export default async function DashboardMfaChallengePage({ params }: { params: { locale: string } }) {
   const supabase = await createSupabaseServerClient();
   const { data } = await supabase.auth.getUser();
   if (!data.user) {
@@ -11,10 +13,7 @@ export default async function MfaEnrollPage({ params }: { params: { locale: stri
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-[rgb(var(--color-surface))] px-4 py-12">
-      <MfaEnrollForm
-        redirectTo={`/${params.locale}/owner`}
-        description="Platform owner accounts require an authenticator app (Google Authenticator, 1Password, Authy, etc.) before accessing the owner dashboard."
-      />
+      <MfaChallengeForm redirectTo={`/${params.locale}/dashboard`} />
     </main>
   );
 }

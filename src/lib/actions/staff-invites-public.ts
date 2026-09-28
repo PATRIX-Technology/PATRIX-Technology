@@ -3,6 +3,7 @@
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { enforceRateLimit, RateLimitExceededError } from '@/lib/rate-limit';
 import { getClientIp } from '@/lib/request-ip';
+import { validatePassword } from '@/lib/domain/password';
 import type { ActionResult } from './auth';
 
 export interface StaffInviteLookup {
@@ -74,7 +75,8 @@ export async function acceptStaffInviteAction(
   const fullName = String(formData.get('fullName') ?? '').trim();
   const password = String(formData.get('password') ?? '');
   if (!fullName || !password) return { error: 'All fields are required.' };
-  if (password.length < 8) return { error: 'Password must be at least 8 characters.' };
+  const passwordError = validatePassword(password);
+  if (passwordError) return { error: passwordError };
 
   const supabase = await createSupabaseServerClient();
   const { data: signUpData, error: signUpError } = await supabase.auth.signUp({ email, password });

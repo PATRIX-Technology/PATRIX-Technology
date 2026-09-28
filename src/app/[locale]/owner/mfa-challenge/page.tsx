@@ -11,7 +11,7 @@ export default async function MfaChallengePage({ params }: { params: { locale: s
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-[rgb(var(--color-surface))] px-4 py-12">
-      <MfaChallengeForm locale={params.locale} />
+      <MfaChallengeForm redirectTo={`/${params.locale}/owner`} />
     </main>
   );
 }

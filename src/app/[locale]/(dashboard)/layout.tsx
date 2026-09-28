@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { getCurrentTenantContext } from '@/lib/domain/session';
+import { getMfaStatus } from '@/lib/domain/mfa';
 import { DashboardNav } from '@/components/dashboard/DashboardNav';
 
 export default async function DashboardLayout({
@@ -17,6 +18,17 @@ export default async function DashboardLayout({
 
   if (!context) {
     redirect(`/${params.locale}/sign-in`);
+  }
+
+  // MFA is optional for regular tenant users, unlike the mandatory owner
+  // gate — see docs/DECISIONS.md "Optional-but-recommended MFA for
+  // regular users". Someone who never enrolled isn't forced to; someone
+  // who DID enroll a TOTP factor always has to complete the step-up
+  // before reaching any dashboard page, or a voluntarily-added second
+  // factor would just be decorative.
+  const mfaStatus = await getMfaStatus(supabase);
+  if (mfaStatus.status === 'needs_challenge') {
+    redirect(`/${params.locale}/mfa/challenge`);
   }
 
   const t = await getTranslations('dashboard.nav');

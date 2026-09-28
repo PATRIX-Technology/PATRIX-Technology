@@ -9,7 +9,19 @@ import { Card } from '@/components/ui/Card';
 
 type Step = 'start' | 'scan' | 'error';
 
-export function MfaEnrollForm({ locale }: { locale: string }) {
+export function MfaEnrollForm({
+  redirectTo,
+  title,
+  description,
+}: {
+  /** Where to send the user once enrollment is verified — the owner
+   * dashboard for the mandatory owner flow, the regular dashboard for
+   * the optional one. See docs/DECISIONS.md "Optional-but-recommended
+   * MFA for regular users". */
+  redirectTo: string;
+  title?: string;
+  description?: string;
+}) {
   const router = useRouter();
   const supabase = createSupabaseBrowserClient();
 
@@ -51,7 +63,7 @@ export function MfaEnrollForm({ locale }: { locale: string }) {
       if (verifyError) throw verifyError;
 
       await markMfaEnrolledAction();
-      router.push(`/${locale}/owner`);
+      router.push(redirectTo);
       router.refresh();
     } catch (err) {
       setError((err as Error).message);
@@ -62,10 +74,10 @@ export function MfaEnrollForm({ locale }: { locale: string }) {
 
   return (
     <Card className="mx-auto max-w-md">
-      <h1 className="mb-2 font-display text-xl text-ink-900">Set up two-factor authentication</h1>
+      <h1 className="mb-2 font-display text-xl text-ink-900">{title ?? 'Set up two-factor authentication'}</h1>
       <p className="mb-6 text-sm text-ink-600">
-        Platform owner accounts require an authenticator app (Google Authenticator, 1Password, Authy,
-        etc.) before accessing the owner dashboard.
+        {description ??
+          'Use an authenticator app (Google Authenticator, 1Password, Authy, etc.) to add a second step to signing in.'}
       </p>
 
       {step === 'start' && <Button onClick={startEnrollment}>Start setup</Button>}

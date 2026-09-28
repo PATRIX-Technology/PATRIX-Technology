@@ -21,7 +21,7 @@
 // cost basis) — only run this deliberately, not as part of any automated
 // process.
 import { createClient } from '@supabase/supabase-js';
-import { writeFileSync, mkdirSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { createStory } from '../src/lib/domain/stories';
 import { runWorkerOnce } from '../src/lib/jobs/worker';
@@ -178,33 +178,67 @@ async function waitForCompletion(storyIds: string[]): Promise<void> {
   throw new Error('Timed out waiting for story generation to complete.');
 }
 
+/** Optional `--locale=en` / `--locale=ar` CLI filter, for regenerating
+ * just one language's sample (e.g. retrying Arabic alone after Gemini
+ * ignored the no-tashkeel instruction) without touching -- or having
+ * to re-spend real money regenerating -- the other, already-good one. */
+function targetLocales(): Array<'en' | 'ar'> {
+  const arg = process.argv.find((a) => a.startsWith('--locale='));
+  if (arg === '--locale=en') return ['en'];
+  if (arg === '--locale=ar') return ['ar'];
+  return ['en', 'ar'];
+}
+
+function readExistingManifest(): Record<string, { pageNumber: number; text: string; publicPath: string }[]> {
+  const path = join(PUBLIC_DIR, 'manifest.json');
+  if (!existsSync(path)) return {};
+  try {
+    return JSON.parse(readFileSync(path, 'utf-8'));
+  } catch {
+    return {};
+  }
+}
+
 async function main() {
+  const locales = targetLocales();
+  console.log(`Generating sample stor${locales.length > 1 ? 'ies' : 'y'} for: ${locales.join(', ')}`);
+
   const systemUserId = await getOrCreateSystemUserId();
   const tenantId = await getOrCreateSampleTenant(systemUserId);
 
-  const enChild = await getOrCreateChild(tenantId, { firstName: 'Amira', pronoun: 'she' });
-  const arChild = await getOrCreateChild(tenantId, { firstName: 'Sultan', arabicFirstName: 'سلطان', pronoun: 'he' });
+  const enChild = locales.includes('en')
+    ? await getOrCreateChild(tenantId, { firstName: 'Amira', pronoun: 'she' })
+    : null;
+  const arChild = locales.includes('ar')
+    ? await getOrCreateChild(tenantId, { firstName: 'Sultan', arabicFirstName: 'سلطان', pronoun: 'he' })
+    : null;
 
-  const enStoryId = await generateOne('en', enChild, tenantId, systemUserId);
-  const arStoryId = await generateOne('ar', arChild, tenantId, systemUserId);
+  const storyIds: Record<'en' | 'ar', string | null> = { en: null, ar: null };
+  if (enChild) storyIds.en = await generateOne('en', enChild, tenantId, systemUserId);
+  if (arChild) storyIds.ar = await generateOne('ar', arChild, tenantId, systemUserId);
 
-  console.log('Waiting for generation to complete (this calls real Gemini for 8 images)...');
-  await waitForCompletion([enStoryId, arStoryId]);
+  const newStoryIds = [storyIds.en, storyIds.ar].filter((id): id is string => Boolean(id));
 
-  console.log('Approving both stories...');
+  console.log(`Waiting for generation to complete (this calls real Gemini for ${newStoryIds.length * 4} images)...`);
+  await waitForCompletion(newStoryIds);
+
+  console.log('Approving...');
   await supabase
     .from('stories')
     .update({ status: 'APPROVED', approved_at: new Date().toISOString() })
-    .in('id', [enStoryId, arStoryId])
+    .in('id', newStoryIds)
     .eq('status', 'NEEDS_REVIEW');
 
-  console.log('Clearing any previous platform samples and marking these two...');
-  await supabase.from('stories').update({ is_platform_sample: false }).eq('is_platform_sample', true);
-  await supabase.from('stories').update({ is_platform_sample: true }).in('id', [enStoryId, arStoryId]);
+  console.log('Clearing previous platform sample(s) for the regenerated locale(s) and marking the new one(s)...');
+  for (const locale of locales) {
+    await supabase.from('stories').update({ is_platform_sample: false }).eq('is_platform_sample', true).eq('locale', locale);
+  }
+  await supabase.from('stories').update({ is_platform_sample: true }).in('id', newStoryIds);
 
   console.log('Downloading generated images as static public files...');
-  const manifest: Record<string, { pageNumber: number; text: string; publicPath: string }[]> = {};
-  for (const [locale, storyId] of [['en', enStoryId] as const, ['ar', arStoryId] as const]) {
+  const manifest = readExistingManifest();
+  for (const [locale, storyId] of [['en', storyIds.en] as const, ['ar', storyIds.ar] as const]) {
+    if (!storyId) continue;
     const { data: storyPages, error } = await supabase
       .from('story_pages')
       .select('page_number, text, image_asset_path')
@@ -241,8 +275,9 @@ async function main() {
   writeFileSync(join(PUBLIC_DIR, 'manifest.json'), JSON.stringify(manifest, null, 2));
 
   console.log('\nDone.');
-  console.log('EN sample story id:', enStoryId);
-  console.log('AR sample story id:', arStoryId);
+  for (const [locale, storyId] of Object.entries(storyIds)) {
+    if (storyId) console.log(`${locale.toUpperCase()} sample story id:`, storyId);
+  }
   console.log('Manifest written to', join(PUBLIC_DIR, 'manifest.json'));
 }
 

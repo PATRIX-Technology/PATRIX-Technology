@@ -3498,6 +3498,94 @@ project (Free tier — zero automatic backups) — founder decided to defer
 upgrading to Supabase Pro until pilots officially start rather than pay
 for it now.
 
+## Addendum: one-story-per-locale display, caption contrast fix, frame redesign, Arabic diacritics
+
+Founder feedback on the carousel above, in three parts: (1) show only
+the visitor's own current-locale story on the landing/home pages, not
+both English and Arabic side by side; (2) the English caption's font
+and colour were wrong; (3) the shared card frame looked unprofessional,
+and Gemini's baked-in Arabic caption still had diacritics despite the
+existing "latest updates" to remove them.
+
+**One story per locale**: both `src/app/[locale]/page.tsx` and the
+dashboard's `SamplesAndPlans` now pick a single `sampleLocale` from the
+page's own `locale` param and render exactly one `StoryCarousel`,
+instead of mapping over `['en', 'ar']` and showing two side by side
+regardless of which locale the visitor is actually browsing.
+
+**Caption contrast bug, found and root-caused, not just recoloured**:
+the English caption text was drawn in `text-ink-900` — but this app is
+dark-first (see "Dark-first design system"), so `ink-900` means
+"near-white, for text on this app's own dark surfaces" (`#f4f1e8` —
+see `tailwind.config.ts`), not "darkest ink" like a conventional
+Tailwind ramp. That token is correct everywhere else in this component
+(the card frame, now reusing the same dark surface as the rest of the
+app), but the caption band itself is a fixed light sage colour matching
+the printed PDF (`CAPTION_BANNER_COLOR` in `render.ts`) — near-white
+text on a light band is exactly the low-contrast bug reported. Fixed by
+drawing the caption in a literal hex (`#241c16`), matching the PDF's own
+`INK_COLOR` exactly, rather than any theme-relative token — the band is
+styled to match a printed page sitting inside this app, not the app's
+own dark chrome around it. Also switched off the wrong assumption that
+`font-display` (Fraunces) wasn't loading: it was — `text-ink-900` was
+the whole bug — and added `font-semibold` to match the PDF's use of the
+semi-bold `latinDisplay` static instance more closely.
+
+**Frame redesign**: replaced the bespoke dark-navy gradient card
+(invented for the first pass, never matched anything else in the app)
+with a plain instance of this app's own `Card` tokens — same
+`border-[rgb(var(--color-border))]`, `bg-[rgb(var(--color-surface-raised))]`,
+and `shadow-card` used by every other card on both pages, so the
+carousel now reads as part of this app rather than a one-off widget.
+Also removed the small `Logo` badge that was floating on top of the
+illustration's corner: both the landing page and the dashboard home tab
+already show the Ownly logo in their own header immediately above this
+section, so repeating it as an overlay on the artwork read as a sticker
+slapped on the art, not a frame. Restyled the nav buttons from a
+frosted dark-glass look (which only worked by coincidence against the
+old gradient) to plain `ghost`-style buttons using the same
+`text-ink-700`/`hover:bg-ink-100` tokens the rest of the app's ghost
+buttons use.
+
+**Arabic diacritics — two real regeneration attempts, then a different
+fix, not a third blind retry**: the prompt in `prompts.ts` already
+explicitly forbids tashkeel/harakat in the baked-in Arabic caption (see
+"No diacritics and no stray text in the Gemini-baked Arabic caption"),
+and yet both the original sample generation and a full paid retry
+(`generate-sample-stories.ts --locale=ar`, added specifically to allow
+retrying one language without re-spending on the other) produced fully
+diacritized captions baked into the image regardless. Two-for-two
+against an explicit, repeated instruction reads as a systematic model
+behaviour for this scene, not bad luck — so rather than pay for a third
+speculative attempt, switched approach for this carousel specifically:
+`story_pages.text` (the actual stored caption) has never had
+diacritics — only Gemini's baked-in rendering did — so the fix is to
+stop relying on Gemini's baked caption for the Arabic sample images at
+all. Cropped the bottom ~22% off both Arabic images with `sharp`
+(measured the actual band boundary by sampling pixel colour down a
+vertical strip rather than guessing a percentage — the flat pastel
+band consistently starts around 78% of image height, matching the
+prompt's own "bottom 15-20%" instruction) and now draw the same clean,
+correctly-shaped, diacritic-free caption text ourselves — the same
+reliable path English already used, just with `font-arabic` (Noto Kufi
+Arabic, already loaded via `next/font` for exactly this purpose) instead
+of `font-display`. `StoryCarousel` picks the caption font from `dir`
+now, so both languages draw their own caption band the same way. This
+only changes the sample-story carousel, not the real Arabic PDF
+pipeline (`render.ts` still needs Gemini's baked approach there — no
+`pdf-lib` text-drawing approach shapes Arabic correctly, per "Arabic
+captions baked into the illustration" — that constraint doesn't apply
+to a web carousel, which can render real HTML/CSS text).
+
+**Verified**: `tsc`, `eslint`, all 148 unit tests, and a live-browser
+check of both `/en` and `/ar` on a real `next dev` server — confirmed
+only one story shows per locale, the English caption is now legible,
+the frame matches the rest of the app, the Arabic caption has no
+diacritics, and a Playwright click-through re-confirmed the RTL
+prev/next buttons still behave correctly after the frame's restyle
+(same direction-agnostic logic from the previous entry, untouched here
+— re-checked because the buttons' classes changed, not their behaviour).
+
 ## Not yet built (explicitly out of scope for this build session)
 
 - Vendor moderation integration for image safety checks

@@ -27,7 +27,7 @@ export default async function DashboardOverviewPage({ params }: { params: { loca
         <Link href={`/${params.locale}/dashboard/children`}>
           <Button size="lg">{t('addChildCta')}</Button>
         </Link>
-        <SamplesAndPlans tenantId={context.tenantId} audience="family" />
+        <SamplesAndPlans tenantId={context.tenantId} audience="family" locale={params.locale} />
       </div>
     );
   }
@@ -61,7 +61,7 @@ export default async function DashboardOverviewPage({ params }: { params: { loca
       <Link href={`/${params.locale}/dashboard/children`}>
         <Button size="lg">{t('addChildCta')}</Button>
       </Link>
-      <SamplesAndPlans tenantId={context.tenantId} audience="nursery" />
+      <SamplesAndPlans tenantId={context.tenantId} audience="nursery" locale={params.locale} />
       <div className="grid gap-4 sm:grid-cols-3">
         {stats.map((stat) => (
           <Card key={stat.label}>
@@ -84,7 +84,15 @@ export default async function DashboardOverviewPage({ params }: { params: { loca
  * same reason: pilot/trial nurseries see the product and its pricing
  * every time they land on their dashboard, not just once at signup.
  */
-async function SamplesAndPlans({ tenantId, audience }: { tenantId: string; audience: TenantType }) {
+async function SamplesAndPlans({
+  tenantId,
+  audience,
+  locale,
+}: {
+  tenantId: string;
+  audience: TenantType;
+  locale: string;
+}) {
   const supabase = await createSupabaseServerClient();
   const t = await getTranslations('stories');
   const manifest = loadSampleStoryManifest();
@@ -94,25 +102,25 @@ async function SamplesAndPlans({ tenantId, audience }: { tenantId: string; audie
     supabase.from('subscriptions').select('*').eq('tenant_id', tenantId).maybeSingle(),
   ]);
 
+  // Shows only the viewer's own current-locale story, not both side by
+  // side — see docs/DECISIONS.md "Real sample stories generated for the
+  // landing/home page carousel".
+  const sampleLocale = locale === 'ar' ? ('ar' as const) : ('en' as const);
+  const samplePages = manifest?.[sampleLocale];
+
   return (
     <>
       <Card>
         <CardTitle>{t('samplePreviewTitle')}</CardTitle>
-        {manifest?.en?.length && manifest?.ar?.length ? (
-          <div className="mt-4 grid gap-8 sm:grid-cols-2">
+        {samplePages && samplePages.length > 0 ? (
+          <div className="mt-4 flex justify-center">
             <StoryCarousel
-              dir="ltr"
-              title={t('sampleEnLabel')}
-              pages={manifest.en.map((page) => ({
+              dir={sampleLocale === 'ar' ? 'rtl' : 'ltr'}
+              pages={samplePages.map((page) => ({
                 pageNumber: page.pageNumber,
                 imageSrc: page.publicPath,
                 caption: page.text,
               }))}
-            />
-            <StoryCarousel
-              dir="rtl"
-              title={t('sampleArLabel')}
-              pages={manifest.ar.map((page) => ({ pageNumber: page.pageNumber, imageSrc: page.publicPath }))}
             />
           </div>
         ) : (

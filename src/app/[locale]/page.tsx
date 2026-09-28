@@ -148,22 +148,23 @@ export default function MarketingHome({ params }: { params: { locale: string } }
           <h2 className="font-display text-2xl text-ink-900 md:text-3xl">{t('sampleStories.title')}</h2>
           <p className="mx-auto mt-3 max-w-2xl text-ink-600">{t('sampleStories.body')}</p>
         </div>
-        <div className="mt-10 grid gap-10 sm:grid-cols-2">
-          {(['en', 'ar'] as const).map((sampleLocale) => {
+        <div className="mt-10 flex justify-center">
+          {(() => {
+            // Shows only the visitor's own current-locale story, not both
+            // side by side — see docs/DECISIONS.md "Real sample stories
+            // generated for the landing/home page carousel".
+            const sampleLocale = locale === 'ar' ? ('ar' as const) : ('en' as const);
             const pages = sampleManifest?.[sampleLocale];
-            const label = sampleLocale === 'ar' ? t('sampleStories.arLabel') : t('sampleStories.enLabel');
             const dir = sampleLocale === 'ar' ? ('rtl' as const) : ('ltr' as const);
 
             if (pages && pages.length > 0) {
               return (
                 <StoryCarousel
-                  key={sampleLocale}
                   dir={dir}
-                  title={label}
                   pages={pages.map((page) => ({
                     pageNumber: page.pageNumber,
                     imageSrc: page.publicPath,
-                    caption: sampleLocale === 'en' ? page.text : undefined,
+                    caption: page.text,
                   }))}
                 />
               );
@@ -171,16 +172,14 @@ export default function MarketingHome({ params }: { params: { locale: string } }
 
             // Fallback until `npm run generate-sample-stories` has been run
             // at least once — see src/lib/domain/sample-stories.ts.
-            const fallbackSrc = sampleLocale === 'ar' ? '/images/marketing/hero-ar.jpg' : '/images/marketing/hero-en.jpg';
             return (
-              <div key={sampleLocale} className="mx-auto w-full max-w-xs" dir={dir}>
+              <div className="mx-auto w-full max-w-xs" dir={dir}>
                 <div className="relative aspect-[9/16] overflow-hidden rounded-[2rem] border border-ink-100 shadow-card">
-                  <Image src={fallbackSrc} alt="" fill sizes="(max-width: 768px) 80vw, 320px" className="object-cover" />
+                  <Image src={heroImage} alt="" fill sizes="(max-width: 768px) 80vw, 320px" className="object-cover" />
                 </div>
-                <p className="mt-3 text-center text-sm font-medium text-ink-600">{label}</p>
               </div>
             );
-          })}
+          })()}
         </div>
       </section>
 

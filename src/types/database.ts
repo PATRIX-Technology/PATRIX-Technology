@@ -12,7 +12,13 @@ export type TenantStatus = 'active' | 'suspended' | 'closed';
 export type TenantType = 'nursery' | 'family';
 export type ReferralStatus = 'pending' | 'rewarded';
 export type StorySuggestionStatus = 'new' | 'reviewed' | 'added' | 'declined';
-export type Pronoun = 'she' | 'he' | 'they';
+/** Founder decision: every child gets a definite gender, so this is
+ * binary only — see docs/DECISIONS.md "Pronoun is binary only (no
+ * 'they')". The Postgres enum backing this column (pronoun_type) still
+ * technically has a 'they' member for historical reasons (Postgres can't
+ * drop an enum value without recreating the type), but nothing in the
+ * app will ever read or write it again. */
+export type Pronoun = 'she' | 'he';
 export type AppLocale = 'en' | 'ar';
 export type ConsentStatus = 'not_requested' | 'pending' | 'granted' | 'declined' | 'withdrawn';
 export type NativeReviewStatus = 'draft' | 'reviewed';

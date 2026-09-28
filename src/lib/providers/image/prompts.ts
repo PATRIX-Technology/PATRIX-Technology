@@ -45,17 +45,16 @@ export interface IllustrationPromptInput {
    * has to be spelled out explicitly rather than left for Gemini to
    * infer, and why a reference photo doesn't need it (the photo already
    * carries this visually). */
-  pronoun: 'she' | 'he' | 'they';
+  pronoun: 'she' | 'he';
   hasReferencePhoto: boolean;
   hasReferenceImage: boolean;
   captionText: string;
   locale: 'en' | 'ar';
 }
 
-const GENDER_DESCRIPTOR: Record<'she' | 'he' | 'they', string> = {
+const GENDER_DESCRIPTOR: Record<'she' | 'he', string> = {
   she: 'a girl',
   he: 'a boy',
-  they: 'a child',
 };
 
 export function buildIllustrationPrompt(input: IllustrationPromptInput): string {

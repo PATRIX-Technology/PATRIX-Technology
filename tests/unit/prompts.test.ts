@@ -4,7 +4,7 @@ import { buildIllustrationPrompt, type IllustrationPromptInput } from '@/lib/pro
 const baseInput: IllustrationPromptInput = {
   sceneDescription: 'a fox in a garden',
   avatarConfig: { hair: 'curly black', skinTone: 'medium', outfitColor: '#2FBFA6' },
-  pronoun: 'they',
+  pronoun: 'she',
   hasReferencePhoto: false,
   hasReferenceImage: false,
   captionText: 'The fox hid behind the garden gate.',
@@ -20,11 +20,6 @@ describe('buildIllustrationPrompt', () => {
   it('describes the character as a boy when pronoun is he', () => {
     const prompt = buildIllustrationPrompt({ ...baseInput, pronoun: 'he' });
     expect(prompt).toContain('The child character is a boy');
-  });
-
-  it('describes the character as gender-neutral when pronoun is they', () => {
-    const prompt = buildIllustrationPrompt({ ...baseInput, pronoun: 'they' });
-    expect(prompt).toContain('The child character is a child');
   });
 
   it('does not inject a gender descriptor when a reference photo is present', () => {

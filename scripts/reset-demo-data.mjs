@@ -112,7 +112,7 @@ async function main() {
     {
       tenant_id: tenant.id,
       first_name: 'Rami',
-      pronoun: 'they',
+      pronoun: 'he',
       class_name: 'Starfish Class',
       preferred_language: 'en',
       avatar_config: { hair: 'curly_brown', skinTone: 'dark', outfitColor: '#ef4c2a', accessory: 'cap' },

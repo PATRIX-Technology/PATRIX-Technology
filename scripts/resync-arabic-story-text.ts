@@ -37,7 +37,7 @@ const supabase = createClient(supabaseUrl, serviceRoleKey, { auth: { persistSess
 interface StoryRow {
   id: string;
   theme_key: string;
-  pronoun_snapshot: Pronoun | null;
+  pronoun_snapshot: Pronoun;
   tenant_id: string;
   child_id: string;
 }
@@ -103,7 +103,7 @@ async function main() {
     const tenant = tenantById.get(story.tenant_id);
     const childName = child?.arabic_first_name || child?.first_name || 'الطفل';
     const organisation = tenant?.name ?? 'Organisation';
-    const pronoun: Pronoun = story.pronoun_snapshot ?? 'they';
+    const pronoun: Pronoun = story.pronoun_snapshot;
 
     const rendered = renderTemplate(template, { childName, pronoun, organisation });
 

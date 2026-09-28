@@ -50,11 +50,21 @@ describe('parseChildrenCsv', () => {
     expect(results[0]!.data).toMatchObject({ pronoun: 'he', preferredLanguage: 'ar' });
   });
 
-  it('defaults an unrecognized pronoun to "they" rather than erroring', () => {
+  it('flags a row with an unrecognized pronoun as an error rather than guessing', () => {
     const { results } = parseChildrenCsv(
       'first_name,pronoun,class_name,preferred_language\nRami,unspecified,,en',
     );
-    expect(results[0]!.data?.pronoun).toBe('they');
+    expect(results[0]!.data).toBeUndefined();
+    expect(results[0]!.errors).toBeDefined();
+    expect(results[0]!.errors![0]).toMatch(/pronoun/i);
+  });
+
+  it('flags a row with a blank pronoun cell as an error', () => {
+    const { results } = parseChildrenCsv(
+      'first_name,pronoun,class_name,preferred_language\nRami,,,en',
+    );
+    expect(results[0]!.data).toBeUndefined();
+    expect(results[0]!.errors).toBeDefined();
   });
 
   it('flags a row with an empty first name', () => {

@@ -128,9 +128,9 @@
       "arabicLastName": "Family name (AR, optional)",
       "pronoun": "Pronoun",
       "pronounOptions": {
+        "placeholder": "Select...",
         "she": "She / her",
-        "he": "He / him",
-        "they": "They / them"
+        "he": "He / him"
       },
       "class": "Class or group",
       "language": "Preferred language",

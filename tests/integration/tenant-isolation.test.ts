@@ -62,7 +62,7 @@ describe('tenant isolation (RLS)', () => {
     // violating WITH CHECK raises a policy violation — assert on that.
     await expect(
       clientB.query(
-        `insert into children (tenant_id, first_name, pronoun) values ($1, 'Intruder', 'they')`,
+        `insert into children (tenant_id, first_name, pronoun) values ($1, 'Intruder', 'she')`,
         [tenantAId],
       ),
     ).rejects.toThrow(/row-level security/i);

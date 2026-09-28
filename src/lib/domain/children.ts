@@ -29,7 +29,7 @@ export const ChildFormSchema = z.object({
   arabicFirstName: optionalNameField('Arabic first name'),
   /** Optional Arabic spelling of the family name — record-keeping only. */
   arabicLastName: optionalNameField('Arabic family name'),
-  pronoun: z.enum(['she', 'he', 'they']),
+  pronoun: z.enum(['she', 'he']),
   className: z.string().trim().max(80).optional().or(z.literal('')),
   preferredLanguage: z.enum(['en', 'ar']),
   avatarConfig: AvatarConfigSchema.default(DEFAULT_AVATAR_CONFIG),
@@ -42,8 +42,12 @@ export type ChildFormInput = z.infer<typeof ChildFormSchema>;
  * last_name/arabic_first_name/arabic_last_name columns are also read
  * when present (see docs/DECISIONS.md "Bilingual name fields for
  * children"), but their absence isn't an error.
- * pronoun/preferred_language are case-insensitive and default sensibly so
- * a nursery admin's spreadsheet doesn't need to be pixel-perfect.
+ * preferred_language is case-insensitive and defaults to "en" so a
+ * nursery admin's spreadsheet doesn't need to be pixel-perfect there.
+ * pronoun is also case-insensitive and accepts a few loose spellings
+ * (her/female/f, him/male/m), but has no default -- see
+ * docs/DECISIONS.md "Pronoun is binary only (no 'they')": a missing or
+ * unrecognized value is now a row error rather than a silent guess.
  */
 const CSV_HEADER = ['first_name', 'pronoun', 'class_name', 'preferred_language'];
 
@@ -53,11 +57,16 @@ export interface CsvRowResult {
   errors?: string[];
 }
 
-function normalizePronoun(value: string): 'she' | 'he' | 'they' {
+/** Returns null when the cell is empty or doesn't match a recognized
+ * spelling -- see docs/DECISIONS.md "Pronoun is binary only (no
+ * 'they')": there's no longer a default to silently fall back to, so an
+ * unrecognized value is a row error the importer has to see and fix,
+ * not a guess this code makes for them. */
+function normalizePronoun(value: string): 'she' | 'he' | null {
   const v = value.trim().toLowerCase();
   if (v === 'she' || v === 'her' || v === 'f' || v === 'female') return 'she';
   if (v === 'he' || v === 'him' || v === 'm' || v === 'male') return 'he';
-  return 'they';
+  return null;
 }
 
 function normalizeLanguage(value: string): 'en' | 'ar' {
@@ -138,16 +147,25 @@ export function parseChildrenCsv(content: string): { results: CsvRowResult[]; he
     const lastName = (cells[colIndex('last_name')] ?? '').trim();
     const arabicFirstName = (cells[colIndex('arabic_first_name')] ?? '').trim();
     const arabicLastName = (cells[colIndex('arabic_last_name')] ?? '').trim();
-    const pronounRaw = cells[colIndex('pronoun')] ?? 'they';
+    const pronounRaw = cells[colIndex('pronoun')] ?? '';
     const className = (cells[colIndex('class_name')] ?? '').trim();
     const languageRaw = cells[colIndex('preferred_language')] ?? 'en';
+    const pronoun = normalizePronoun(pronounRaw);
+
+    if (pronoun === null) {
+      results.push({
+        row: i + 1,
+        errors: [`Pronoun must be "she" or "he" (also accepts her/female/f or him/male/m) -- got "${pronounRaw || '(empty)'}"`],
+      });
+      continue;
+    }
 
     const parsed = ChildFormSchema.safeParse({
       firstName,
       lastName: lastName || undefined,
       arabicFirstName: arabicFirstName || undefined,
       arabicLastName: arabicLastName || undefined,
-      pronoun: normalizePronoun(pronounRaw),
+      pronoun,
       className: className || undefined,
       preferredLanguage: normalizeLanguage(languageRaw),
       avatarConfig: DEFAULT_AVATAR_CONFIG,

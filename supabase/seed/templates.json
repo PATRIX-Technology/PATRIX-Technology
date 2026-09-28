@@ -9,7 +9,7 @@
     "pages": [
       {
         "order": 1,
-        "text": "At {organisation}, {child_name} looked at {pronoun:possessive} lunch tray and only saw white rice. \"Where did all the colours go?\" asked {mascot}, hopping onto the table.",
+        "text": "At nursery, {child_name} looked at {pronoun:possessive} lunch tray and only saw white rice. \"Where did all the colours go?\" asked {mascot}, hopping onto the table.",
         "image_prompt": "A cheerful cartoon fox mascot hopping onto a lunch table next to {child_name}'s avatar, looking at a plain plate of rice, bright nursery classroom background, warm colours, storybook illustration style."
       },
       {
@@ -39,7 +39,7 @@
     "pages": [
       {
         "order": 1,
-        "text": "في {organisation}، {v:looked} {child_name} إلى صحن الغداء، ف{v:did_not_find} إلا الأرز الأبيض. قفزت {mascot} على الطاولة وقالت: «أين ذهبت كل الألوان؟»",
+        "text": "في الحضانة، {v:looked} {child_name} إلى صحن الغداء، ف{v:did_not_find} إلا الأرز الأبيض. قفزت {mascot} على الطاولة وقالت: «أين ذهبت كل الألوان؟»",
         "image_prompt": "شخصية ثعلب كرتونية مبتهجة تقفز إلى طاولة الغداء بجانب شخصية {child_name}، تنظر إلى صحن أرز بسيط، خلفية فصل حضانة مشرقة، ألوان دافئة، أسلوب رسوم كتاب قصص."
       },
       {
@@ -129,7 +129,7 @@
     "pages": [
       {
         "order": 1,
-        "text": "{child_name} stood by the door of {organisation}, holding tightly onto {pronoun:possessive} bag. {pronoun:subject_cap} felt a little wobbly inside.",
+        "text": "{child_name} stood by the nursery door, holding tightly onto {pronoun:possessive} bag. {pronoun:subject_cap} felt a little wobbly inside.",
         "image_prompt": "{child_name}'s avatar standing nervously at a bright nursery entrance holding a small backpack, morning light, storybook illustration style."
       },
       {
@@ -159,7 +159,7 @@
     "pages": [
       {
         "order": 1,
-        "text": "{v:stood} {child_name} عند باب {organisation}، {v:while_holding_bag} بقوة. {v:felt_worried} قليلاً.",
+        "text": "{v:stood} {child_name} عند باب الحضانة، {v:while_holding_bag} بقوة. {v:felt_worried} قليلاً.",
         "image_prompt": "شخصية {child_name} تقف متوترة عند مدخل حضانة مشرق وتحمل حقيبة صغيرة، ضوء الصباح، أسلوب رسوم كتاب قصص."
       },
       {
@@ -249,7 +249,7 @@
     "pages": [
       {
         "order": 1,
-        "text": "{child_name} accidentally knocked over a cup of paint at {organisation}. {pronoun:subject_cap} thought about hiding it and saying nothing.",
+        "text": "{child_name} accidentally knocked over a cup of paint at nursery. {pronoun:subject_cap} thought about hiding it and saying nothing.",
         "image_prompt": "{child_name}'s avatar standing next to a spilled cup of paint on a classroom table, worried expression, cartoon fox mascot peeking from behind a shelf, storybook illustration style."
       },
       {
@@ -279,7 +279,7 @@
     "pages": [
       {
         "order": 1,
-        "text": "{v:accidentally_dropped} {child_name} كوب الألوان بالخطأ في {organisation}. {v:felt_worried} {v:thought_to_hide}.",
+        "text": "{v:accidentally_dropped} {child_name} كوب الألوان بالخطأ في الحضانة. {v:felt_worried} {v:thought_to_hide}.",
         "image_prompt": "شخصية {child_name} تقف بجانب كوب ألوان منسكب على طاولة الفصل، تعبير قلق، الثعلب الكرتوني يراقب من خلف رف، أسلوب رسوم كتاب قصص."
       },
       {
@@ -309,7 +309,7 @@
     "pages": [
       {
         "order": 1,
-        "text": "Right before snack time at {organisation}, {mascot} appeared with a cape made of tiny bubbles. \"Bubble Heroes wash their hands before they eat!\" {pronoun:subject} announced.",
+        "text": "Right before snack time at nursery, {mascot} appeared with a cape made of tiny bubbles. \"Bubble Heroes wash their hands before they eat!\" {pronoun:subject} announced.",
         "image_prompt": "Cartoon fox mascot wearing a shimmering bubble cape near a nursery sink, playful superhero pose, storybook illustration style."
       },
       {
@@ -339,7 +339,7 @@
     "pages": [
       {
         "order": 1,
-        "text": "قبل وقت الوجبة الخفيفة في {organisation}، طلّت {mascot} بعباءة من الفقاعات الصغيرة. قالت: «أبطال الفقاعات يغسلون أيديهم قبل الأكل!»",
+        "text": "قبل وقت الوجبة الخفيفة في الحضانة، طلّت {mascot} بعباءة من الفقاعات الصغيرة. قالت: «أبطال الفقاعات يغسلون أيديهم قبل الأكل!»",
         "image_prompt": "الثعلب الكرتوني يرتدي عباءة فقاعات متلألئة بجانب مغسلة في الحضانة، وضعية بطل خارق مرحة، أسلوب رسوم كتاب قصص."
       },
       {
@@ -439,7 +439,7 @@
       },
       {
         "order": 3,
-        "text": "{child_name} thought about all the things {pronoun:subject} felt grateful for — {pronoun:possessive} family, {pronoun:possessive} friends at {organisation}, and the place {pronoun:subject} called home.",
+        "text": "{child_name} thought about all the things {pronoun:subject} felt grateful for — {pronoun:possessive} family, {pronoun:possessive} friends at nursery, and the place {pronoun:subject} called home.",
         "image_prompt": "{child_name}'s avatar drawing a picture of family and friends and home, thoughtful happy expression, storybook illustration style."
       },
       {
@@ -469,7 +469,7 @@
       },
       {
         "order": 3,
-        "text": "{v:thought} {child_name} في كل ما {v:felt_grateful} لأجله: عائلت{ps}، وأصدقائ{ps} في {organisation}، والمكان الذي {v:called_it_home} وطناً.",
+        "text": "{v:thought} {child_name} في كل ما {v:felt_grateful} لأجله: عائلت{ps}، وأصدقائ{ps} في الحضانة، والمكان الذي {v:called_it_home} وطناً.",
         "image_prompt": "شخصية {child_name} ترسم لوحة لعائلتها وأصدقائها ووطنها، تعبير سعيد ومتأمل، أسلوب رسوم كتاب قصص."
       },
       {

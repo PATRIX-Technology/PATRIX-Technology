@@ -84,12 +84,19 @@ export function ChildForm({
         <select
           id="pronoun"
           name="pronoun"
-          defaultValue={defaultValues?.pronoun ?? 'they'}
+          required
+          defaultValue={defaultValues?.pronoun ?? ''}
           className="focus-ring w-full rounded-lg border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] px-3 py-2"
         >
+          {/* No pre-selected gender for a new child -- see docs/DECISIONS.md
+              "Pronoun is binary only (no 'they')": there's no longer a
+              neutral third option to default to, so this placeholder forces
+              an explicit choice instead of silently picking one. */}
+          <option value="" disabled>
+            {tForm('pronounOptions.placeholder')}
+          </option>
           <option value="she">{tForm('pronounOptions.she')}</option>
           <option value="he">{tForm('pronounOptions.he')}</option>
-          <option value="they">{tForm('pronounOptions.they')}</option>
         </select>
       </div>
       <TextField name="className" label={tForm('class')} defaultValue={defaultValues?.className ?? ''} />

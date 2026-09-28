@@ -32,7 +32,7 @@ const baseRequest = {
   pageId: 'page-1',
   prompt: 'a fox in a garden',
   avatarConfig: {},
-  pronoun: 'they' as const,
+  pronoun: 'she' as const,
   captionText: 'The fox hid behind the garden gate.',
   locale: 'en' as const,
 };

@@ -213,7 +213,7 @@ async function generatePageImage(supabase: SupabaseClient, job: StoryJob): Promi
     pageId: job.page_id,
     prompt: page.image_prompt,
     avatarConfig: page.stories.avatar_config_snapshot ?? {},
-    pronoun: page.stories.pronoun_snapshot ?? 'they',
+    pronoun: page.stories.pronoun_snapshot,
     captionText: page.text,
     locale: page.stories.locale,
     ...(referencePhoto

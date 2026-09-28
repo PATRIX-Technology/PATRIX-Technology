@@ -111,7 +111,7 @@ describe('family tenants (Phase 4 scaffolding)', () => {
       'Owner A',
     ]);
     const tenantAId = tenantARow.rows[0].tenant_id;
-    await clientA.query(`insert into children (tenant_id, first_name, pronoun) values ($1, 'Kid A', 'they')`, [
+    await clientA.query(`insert into children (tenant_id, first_name, pronoun) values ($1, 'Kid A', 'she')`, [
       tenantAId,
     ]);
     await clientA.end();

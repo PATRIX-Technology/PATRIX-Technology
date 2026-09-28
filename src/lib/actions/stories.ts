@@ -198,7 +198,7 @@ export async function regeneratePageAction(locale: string, storyId: string, page
         story.locale === 'ar' && child.arabic_first_name ? child.arabic_first_name : child.first_name;
       const rendered = renderTemplate(template, {
         childName,
-        pronoun: story.pronoun_snapshot ?? 'they',
+        pronoun: story.pronoun_snapshot,
         organisation: tenant?.name ?? context.tenantName,
       });
       refreshedText = rendered.find((p) => p.order === page.page_number)?.text;

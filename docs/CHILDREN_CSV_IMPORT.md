@@ -23,7 +23,7 @@ gate in `src/app/[locale]/(dashboard)/dashboard/children/page.tsx`).
 | `last_name` | No | Yes | Any text, no digits, ≤60 chars | Record-keeping only — never used in story generation. |
 | `arabic_first_name` | No | Yes | Arabic script, ≤60 chars | Used instead of `first_name` when generating an Arabic-locale story, so the name reads naturally in Arabic sentences. |
 | `arabic_last_name` | No | Yes | Arabic script, ≤60 chars | Record-keeping only. |
-| `pronoun` | Yes | Yes (defaults to `they`) | `she`, `he`, `they` (also accepts `her`/`female` → she, `him`/`male` → he; case-insensitive) | Drives both the story text's pronouns/grammar and — since a recent fix — the gender of the illustrated character when no reference photo is used. |
+| `pronoun` | Yes | **No — every row needs one** | `she`, `he` (also accepts `her`/`female`/`f` → she, `him`/`male`/`m` → he; case-insensitive) | Drives both the story text's pronouns/grammar and the gender of the illustrated character when no reference photo is used. Binary only — no neutral/unspecified option — so a blank or unrecognized cell is a row error you'll need to fix, not something the importer guesses at. |
 | `class_name` | Yes | Yes | Any text, ≤80 chars, e.g. `KG1-A` | Used to group the roster and to name folders in a bulk PDF export. |
 | `preferred_language` | Yes | Yes (defaults to `en`) | `en`, `ar` (also accepts `english`, `arabic`, `العربية`; case-insensitive) | Which language this child's stories are generated in by default. |
 
@@ -31,9 +31,9 @@ gate in `src/app/[locale]/(dashboard)/dashboard/children/page.tsx`).
 column name — `first_name, pronoun, class_name, preferred_language` are
 the four required column headers (see `CSV_HEADER` in
 `src/lib/domain/children.ts`). Within a required column, individual
-*cells* can still be left blank for `pronoun`, `class_name`, and
-`preferred_language` (each falls back sensibly); only `first_name` must
-actually have a value in every row.
+*cells* can still be left blank for `class_name` and `preferred_language`
+(each falls back sensibly); `first_name` and `pronoun` must actually have
+a value in every row.
 
 ## What CSV import does NOT set
 

@@ -26,7 +26,7 @@ const templates = raw.map((row, index) => ({
   ...row,
 }));
 
-const PRONOUNS: Pronoun[] = ['she', 'he', 'they'];
+const PRONOUNS: Pronoun[] = ['she', 'he'];
 const LEFTOVER_TOKEN = /\{[a-z_:]+\}/i;
 
 describe('seed template fixtures (supabase/seed/templates.json)', () => {

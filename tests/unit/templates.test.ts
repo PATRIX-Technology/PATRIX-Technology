@@ -37,7 +37,6 @@ describe('renderTokens', () => {
   it.each([
     ['she', 'she', 'her', 'her'],
     ['he', 'he', 'his', 'him'],
-    ['they', 'they', 'their', 'them'],
   ] as const)('resolves English pronoun forms for %s', (pronoun, subject, possessive, object) => {
     const ctx = { childName: 'X', pronoun, organisation: 'Y', mascot: 'Z', locale: 'en' as const };
     expect(renderTokens('{pronoun:subject}', ctx)).toBe(subject);
@@ -59,7 +58,7 @@ describe('renderTokens', () => {
   });
 
   it('leaves unknown {v:...} tokens untouched rather than crashing', () => {
-    const ctx = { childName: 'X', pronoun: 'they' as const, organisation: 'Y', mascot: 'Z', locale: 'ar' as const };
+    const ctx = { childName: 'X', pronoun: 'he' as const, organisation: 'Y', mascot: 'Z', locale: 'ar' as const };
     expect(renderTokens('{v:not_a_real_key}', ctx)).toBe('{v:not_a_real_key}');
   });
 });

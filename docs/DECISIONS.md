@@ -2622,7 +2622,72 @@ only a few words changed (a preposition phrase swapped for "في
 should still glance over the 5 edited Arabic sentences listed above at
 some point as a sanity check, same as any other content edit.
 
-## Not yet built (explicitly out of scope for this build session)
+## Addendum: the org/family name fix above also needed the seed file
+
+Follow-up to "Organisation/family name must never reach a generated
+image" above. That fix rewrote the 10 affected rows live in
+`story_theme_templates`, but a second, independent source of truth
+turned up afterward: `supabase/seed/templates.json`, the version-
+controlled fixture `tests/unit/seed-templates.test.ts` validates
+against and that a future reseed would insert from. It had the exact
+same 10 `{organisation}` occurrences (this is genuinely where that
+content originated). Applied the identical replacements there too, so
+a future reseed can't quietly reintroduce the bug the live-DB fix just
+closed. Verified no `organisation` token remains in either place.
+
+## Pronoun is binary only (no "they")
+
+Founder decision: "for pronouns i believe we can remove them/their ...
+as we have male or female should be only right?" — every child gets a
+definite gender for story-writing purposes, so the third,
+unspecified/neutral option was removed everywhere in the app:
+
+- `Pronoun` narrowed from `'she' | 'he' | 'they'` to `'she' | 'he'` in
+  both places it was independently defined (`src/types/database.ts`,
+  `src/lib/domain/pronouns.ts`), plus the same narrowing in
+  `IllustrationPromptInput.pronoun` (`src/lib/providers/image/
+  prompts.ts`, which had its own separate inline union rather than
+  importing the shared type).
+- Removed the `they` entry from every lookup table keyed by pronoun:
+  `EN_FORMS`, `GENDER_DESCRIPTOR`, `ARABIC_POSSESSIVE_SUFFIX`, and all
+  ~65 verb-phrase entries in `ARABIC_CONJUGATIONS` (previously each had
+  a masculine-plural "they" form, the conventional MSA default for a
+  mixed/unspecified-gender group — no longer needed since there's no
+  unspecified case left to default for).
+- `ChildFormSchema.pronoun` is now `z.enum(['she', 'he'])`. The child
+  add/edit form (`ChildForm.tsx`) dropped the "They / them" option and
+  now opens on a disabled "Select..." placeholder for a new child
+  instead of silently pre-selecting a value — an explicit choice, not a
+  guess.
+- CSV bulk import (`src/lib/domain/children.ts`): `normalizePronoun`
+  used to default a missing/unrecognized cell to `'they'`; now returns
+  `null` for that case, which the row loop turns into an explicit row
+  error ("Pronoun must be 'she' or 'he'...") rather than silently
+  guessing a child's gender. Updated `docs/CHILDREN_CSV_IMPORT.md` and
+  the row-loop test in `tests/unit/children-csv.test.ts` to match — the
+  old test literally asserted the silent-default behaviour that's now
+  the thing being prevented.
+- Removed the `?? 'they'` fallback on `pronoun_snapshot` reads in
+  `createStoryAction`'s regenerate path, the job worker, and the
+  `resync-arabic-story-text.ts` maintenance script — `pronoun_snapshot`
+  is `NOT NULL` at the DB level (migration `0018_pronoun_snapshot.sql`),
+  so this was always dead code; keeping a fallback would have meant
+  inventing a fake default for a case that can't happen.
+- Fixed the one live child with `pronoun = 'they'` directly in the
+  database (a "Noah" in the `test` demo tenant — set to `'he'`) and the
+  demo-data seeding script's third sample child (`scripts/
+  reset-demo-data.mjs`, "Rami" — also set to `'he'`).
+
+**Deliberately not touched**: the Postgres enum type backing this
+column (`pronoun_type`, `create type pronoun_type as enum ('she', 'he',
+'they')` in migration `0001_core_schema.sql`) still technically has a
+`'they'` member. Postgres has no `ALTER TYPE ... DROP VALUE` — removing
+an enum value requires recreating the type and repointing every column
+that uses it, which is real, non-trivial risk on a live production
+database for a purely cosmetic benefit: nothing in the app can ever
+write `'they'` again after the changes above, so the unused enum member
+is inert dead capacity, not a live bug. Not worth the risk of an enum
+migration on a live database for that.
 
 - Vendor moderation integration for image safety checks
   (`VendorModerationSafetyChecker` — needs a chosen moderation vendor;

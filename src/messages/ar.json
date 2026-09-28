@@ -128,9 +128,9 @@
       "arabicLastName": "اسم العائلة (AR، اختياري)",
       "pronoun": "الضمير",
       "pronounOptions": {
+        "placeholder": "اختر...",
         "she": "هي",
-        "he": "هو",
-        "they": "غير محدد"
+        "he": "هو"
       },
       "class": "الفصل أو المجموعة",
       "language": "اللغة المفضلة",

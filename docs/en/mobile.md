@@ -9,7 +9,7 @@ open and build.
 
 ## Why `server.url`, not a static export
 
-TooniX is a server-rendered Next.js app: Server Actions, per-tenant
+Ownly is a server-rendered Next.js app: Server Actions, per-tenant
 dynamic dashboard routes, API routes (PDF/ZIP export, Stripe webhooks).
 A static export (`next export`) can't power any of that — Server
 Actions and dynamic server rendering don't exist in a static bundle, so
@@ -89,7 +89,7 @@ regenerate with `npx capacitor-assets generate` after changing them).
 ## What to change before either store submission
 
 - `capacitor.config.ts`: `server.url` → your real domain, `appId` if
-  you want something other than `com.toonix.app` (this has to be
+  you want something other than `com.ownly.app` (this has to be
   decided before first submission — changing it later means a new app
   listing, not an update to the existing one).
 - App name, screenshots, and store descriptions — none of this is

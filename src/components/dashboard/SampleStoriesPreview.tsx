@@ -1,3 +1,4 @@
+import { useTranslations } from 'next-intl';
 import type { PlatformSampleStory } from '@/types/database';
 import { Card, CardTitle } from '@/components/ui/Card';
 
@@ -17,11 +18,13 @@ export function SampleStoriesPreview({
   /** story_id -> signed URL, or undefined if that sample has no image yet. */
   imageUrls: Record<string, string>;
 }) {
+  const t = useTranslations('stories');
+
   if (samples.length === 0) {
     return (
       <Card>
-        <CardTitle>Sample stories</CardTitle>
-        <p className="mt-2 text-sm text-ink-500">Sample stories are coming soon.</p>
+        <CardTitle>{t('samplePreviewTitle')}</CardTitle>
+        <p className="mt-2 text-sm text-ink-500">{t('samplePreviewComingSoon')}</p>
       </Card>
     );
   }
@@ -40,13 +43,13 @@ export function SampleStoriesPreview({
               />
             ) : (
               <div className="flex h-full w-full items-center justify-center text-sm text-ink-400">
-                Preview coming soon
+                {t('samplePreviewImagePending')}
               </div>
             )}
           </div>
           <div className="p-4">
             <p className="text-xs font-medium uppercase tracking-wide text-lagoon-600">
-              {sample.locale === 'ar' ? 'نموذج قصة بالعربية' : 'Sample story in English'}
+              {sample.locale === 'ar' ? t('sampleArLabel') : t('sampleEnLabel')}
             </p>
             <p className="mt-1 font-display text-lg text-ink-900">{sample.title}</p>
             <p className="mt-1 text-sm text-ink-600">{sample.synopsis}</p>

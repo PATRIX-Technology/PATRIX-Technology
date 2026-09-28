@@ -1,6 +1,6 @@
 {
   "brand": {
-    "name": "TooniX",
+    "name": "Ownly",
     "tagline": "Every child, the hero of their own story."
   },
   "nav": {
@@ -16,11 +16,17 @@
     "hero": {
       "eyebrow": "Personalised storybooks for nurseries, schools & brands",
       "title": "Turn every child into the hero of a story that teaches them something real.",
-      "body": "TooniX creates beautifully illustrated, personalised storybooks that help nurseries, schools, clinics and brands teach values like healthy eating, honesty and hand-washing — with the child's own name, avatar and language.",
+      "body": "Ownly creates beautifully illustrated, personalised storybooks that help nurseries, schools, clinics and brands teach values like healthy eating, honesty and hand-washing — with the child's own name, avatar and language.",
       "ctaPrimary": "Book a demo",
       "ctaSecondary": "See how it works"
     },
     "trustBar": "Built for nurseries, schools, clinics and children's brands worldwide",
+    "sampleStories": {
+      "title": "See a story come to life",
+      "body": "The same warm, illustrated storytelling — in English and Arabic, both written for their own reader, never a mirrored translation.",
+      "enLabel": "English",
+      "arLabel": "Arabic"
+    },
     "familyCallout": {
       "title": "A parent yourself?",
       "body": "Create a free family account and make a personalised story for your own child — then invite friends and earn free stories when they subscribe.",
@@ -219,7 +225,7 @@
     "inviteLinkReady": "Share this link with them — it lets them set up their own login and join your team.",
     "inviteLinkCopy": "Copy link",
     "inviteLinkCopied": "Copied!",
-    "inviteWhatsappText": "You've been invited to join our team on TooniX — set up your login here:",
+    "inviteWhatsappText": "You've been invited to join our team on Ownly — set up your login here:",
     "invitePendingLabel": "Invite pending",
     "table": {
       "name": "Name",
@@ -267,6 +273,11 @@
   },
   "stories": {
     "title": "Stories",
+    "samplePreviewTitle": "Sample stories",
+    "samplePreviewComingSoon": "Sample stories are coming soon.",
+    "samplePreviewImagePending": "Preview coming soon",
+    "sampleEnLabel": "Sample story in English",
+    "sampleArLabel": "نموذج قصة بالعربية",
     "create": "Create a story",
     "chooseTheme": "Choose a theme",
     "chooseChild": "Choose a child",
@@ -329,8 +340,8 @@
     "rewardedLabel": "Completed",
     "storiesEarnedLabel": "Stories earned",
     "shareButton": "Share invite",
-    "shareTitle": "Join me on TooniX",
-    "shareText": "Join me on TooniX and create a free personalised storybook for your child!",
+    "shareTitle": "Join me on Ownly",
+    "shareText": "Join me on Ownly and create a free personalised storybook for your child!",
     "emailButton": "Email"
   },
   "common": {

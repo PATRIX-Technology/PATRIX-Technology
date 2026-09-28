@@ -1,7 +1,7 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 /**
- * TooniX is a server-rendered Next.js app (Server Actions, dynamic
+ * Ownly is a server-rendered Next.js app (Server Actions, dynamic
  * per-tenant dashboard routes, API routes) - not a static site, so a
  * static `next export` bundle can't power these native shells (Server
  * Actions and dynamic rendering simply don't exist in a static export).
@@ -10,14 +10,14 @@ import type { CapacitorConfig } from '@capacitor/cli';
  * docs/en/mobile.md "Why server.url, not a static export".
  */
 const config: CapacitorConfig = {
-  appId: 'com.toonix.app',
-  appName: 'TooniX',
+  appId: 'com.ownly.app',
+  appName: 'Ownly',
   webDir: 'mobile-www',
   server: {
     // TODO before building: point this at the real production domain
     // once one exists (see docs/NEEDS_FROM_ME.md) - a vercel.app preview
     // URL works for local testing in the meantime.
-    url: 'https://toonix.example.com',
+    url: 'https://ownly.example.com',
     cleartext: false,
   },
   backgroundColor: '#14152B',

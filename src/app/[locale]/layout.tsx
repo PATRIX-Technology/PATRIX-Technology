@@ -31,9 +31,9 @@ export function generateStaticParams() {
 }
 
 export const metadata: Metadata = {
-  title: 'TooniX — Personalised storybooks for nurseries & schools',
+  title: 'Ownly — Personalised storybooks for nurseries & schools',
   description:
-    'TooniX creates personalised, illustrated storybooks that teach children values and habits — built for nurseries, schools, clinics and children\'s brands.',
+    'Ownly creates personalised, illustrated storybooks that teach children values and habits — built for nurseries, schools, clinics and children\'s brands.',
   manifest: '/manifest.webmanifest',
 };
 

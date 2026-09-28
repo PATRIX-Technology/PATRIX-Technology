@@ -6,7 +6,7 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // TooniX is dark-first by design (see docs/DECISIONS.md "Dark-
+        // Ownly is dark-first by design (see docs/DECISIONS.md "Dark-
         // first design system"), so unlike a conventional Tailwind ramp
         // (50 = lightest, 900 = darkest), `ink` runs the other way: 900
         // is the brightest text tone (near-white, for headings) and 50

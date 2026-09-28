@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">TooniX</string>
-    <string name="title_activity_main">TooniX</string>
-    <string name="package_name">com.toonix.app</string>
-    <string name="custom_url_scheme">com.toonix.app</string>
+    <string name="app_name">Ownly</string>
+    <string name="title_activity_main">Ownly</string>
+    <string name="package_name">com.ownly.app</string>
+    <string name="custom_url_scheme">com.ownly.app</string>
 </resources>

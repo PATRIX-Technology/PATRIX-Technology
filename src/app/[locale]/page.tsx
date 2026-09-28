@@ -140,6 +140,28 @@ export default function MarketingHome({ params }: { params: { locale: string } }
         <p className="mt-8 text-center text-sm text-ink-500">{t('trustBar')}</p>
       </section>
 
+      <section className="mx-auto max-w-5xl px-6 pb-16">
+        <div className="text-center">
+          <h2 className="font-display text-2xl text-ink-900 md:text-3xl">{t('sampleStories.title')}</h2>
+          <p className="mx-auto mt-3 max-w-2xl text-ink-600">{t('sampleStories.body')}</p>
+        </div>
+        <div className="mt-10 grid gap-8 sm:grid-cols-2">
+          {(
+            [
+              { src: '/images/marketing/hero-en.jpg', label: t('sampleStories.enLabel'), dir: 'ltr' as const },
+              { src: '/images/marketing/hero-ar.jpg', label: t('sampleStories.arLabel'), dir: 'rtl' as const },
+            ]
+          ).map((sample) => (
+            <div key={sample.src} className="mx-auto w-full max-w-xs" dir={sample.dir}>
+              <div className="relative aspect-[9/16] overflow-hidden rounded-[2rem] border border-ink-100 shadow-card">
+                <Image src={sample.src} alt="" fill sizes="(max-width: 768px) 80vw, 320px" className="object-cover" />
+              </div>
+              <p className="mt-3 text-center text-sm font-medium text-ink-600">{sample.label}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
       <section id="use-cases" className="mx-auto max-w-6xl px-6 py-16">
         <h2 className="mb-10 text-center font-display text-2xl text-ink-900 md:text-3xl">
           {t('useCases.title')}

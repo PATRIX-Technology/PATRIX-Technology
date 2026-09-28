@@ -1189,7 +1189,7 @@ personalisation is switched on (both flags), a family tenant now sees
 the upload widget directly, with one required checkbox
 (`PhotoUpload.tsx`'s `requireFamilyConsentCheckbox`) shown inline the
 first time only: "I am this child's parent or legal guardian, and I
-consent to TooniX and its AI illustration provider (Google Gemini)
+consent to Ownly and its AI illustration provider (Google Gemini)
 using this photo solely to personalise this child's storybook
 illustrations." Checking it and uploading in the same action makes
 `uploadChildPhotoAction` insert a `consent_requests` row
@@ -2548,7 +2548,7 @@ included, and always opens its own inline PDF viewer instead. See
 https://bugs.webkit.org/show_bug.cgi?id=167341 and
 https://developer.apple.com/forums/thread/803421 — this is a long-open,
 still-unresolved WebKit limitation, and every website that serves a PDF
-behaves identically on an iPhone; TooniX was never actually broken
+behaves identically on an iPhone; Ownly was never actually broken
 here, it just looked broken next to Android's very different (and
 correct-per-spec) behaviour.
 
@@ -3273,6 +3273,113 @@ site's main marketing content, and a demo video on the landing/home
 pages. Nothing in this pass touched the `SampleStoriesPreview`
 dashboard component or built new landing-page sections beyond the hero
 image fix above.
+
+## Rebrand: TooniX to Ownly, new logo, landing/home banners, presentation logo
+
+Founder decision, immediately following the previous rebrand: rename
+"TooniX" to "Ownly" (أونلي), design a completely different logo (the
+founder didn't like the sparkle mark), and build the marketing banners
+that were explicitly deferred in the previous pass.
+
+**Why the name changed again**: before applying "TooniX" everywhere,
+an informal web search turned up a real prior-use conflict — "Toonix"
+is an actual trademark filed by The Cartoon Network, Inc., covering
+children's books and toys, and briefly used as a real Nordic kids'
+streaming brand. That is exactly the kind of conflict an informal
+search is supposed to catch, and this doc's own "Not yet built" note
+after the previous rebrand already flagged that "TooniX" still needed
+real clearance — this is that flag being acted on immediately rather
+than left to chance. Ran the same kind of check against roughly a
+dozen candidate names before landing on "Ownly" — several looked
+promising at first glance and then turned up real conflicts on a
+second, deeper search pass (a live "Storia" kids-storybook app, a
+$240M UAE aluminium company called "Talex," a live "Lumo" interactive
+storybook app, an existing "Kidori" kids-education app with 250k+
+downloads, "Mythox" — a live AI app). "Ownly" plays on "own" (a story
+that's truly this child's) while sounding like "only" (the one story
+like it); no conflict found across several search passes, though — per
+every caveat given alongside each of these name checks — that's still
+an informal signal, not a legal clearance, and this time it's flagged
+explicitly to the founder as worth actually paying a trademark lawyer
+for rather than repeating a third informal-search-only cycle.
+
+**Mechanics of the rename**: identical process to the previous
+Khayali→TooniX pass — every "TooniX"/"toonix"/"تونكس" across code,
+both translation catalogs, every doc, the Android/iOS app IDs
+(`com.toonix.app` → `com.ownly.app`, including moving the Android Java
+package directory again), the demo-data script, tests, and both PPTX
+decks. Left the previous rebrand's own DECISIONS.md entry and the two
+`@TooniX_Bot` Telegram-bot references untouched — the bot's actual
+Telegram username hasn't changed (that needs the founder's own
+Telegram/BotFather access, not something I can do), so the docs
+describing it are still factually correct as written.
+
+**New logo** (`src/components/brand/Logo.tsx`, `public/icons/icon.svg`):
+three open, nested arcs — teal outer, coral middle, saffron inner —
+sharing one gap, reading as a fingerprint whorl or an open "O." Chose
+this deliberately over a closed-circle "activity rings" look (rendered
+both side by side before deciding) since three full concentric circles
+would echo an existing, recognisable "rings" mark (a fitness tracker's
+activity rings) in a way three open arcs don't. Ties directly to the
+new name's meaning: a story as unique as a fingerprint. Same component
+API as before (`variant`, `size`, `className`), so it propagated to
+every existing call site automatically. Also re-composited the new
+mark into both `public/images/marketing/hero-*.jpg` corner badges
+(same measure-and-composite technique as the previous pass, since the
+mark itself is baked into those photos) and swapped the pitch
+deck/staff-guide PPTX decks' embedded logo image (`ppt/media/image-*.png`,
+replaced the raster PNG directly since it's a plain image relationship,
+no XML text to edit) — both decks' title and closing slides were still
+showing the *very first* Khayali-era book+sparkle icon, never updated
+in either previous rebrand.
+
+**PDF watermark mark update** (`src/lib/providers/pdf/render.ts`):
+swapped the sparkle-path drawing for the same three-arc paths, using
+`pdf-lib`'s elliptical-arc (`A`) support in `drawSvgPath` — confirmed
+that command is supported by rendering a test PDF, not assumed. Hit a
+real placement bug on the first attempt: unlike the old sparkle path
+(defined relative to its own local origin), the ring paths were first
+written with absolute 0–100 viewBox coordinates copied straight from
+`Logo.tsx`, and `drawSvgPath`'s `x`/`y` place a path's own local origin
+on the page — so the mark rendered offset outside its badge entirely.
+Caught this by rendering an actual sample PDF and looking at it, not
+by inspecting the numbers; fixed by re-deriving the arc paths relative
+to their own centre (matching the pattern that worked for the sparkle)
+before placing them. Confirmed the fix the same way, on both an English
+and an Arabic sample PDF.
+
+**Landing-page and dashboard-home banners** (the piece explicitly
+deferred in the previous pass, now built): added a new section to
+`src/app/[locale]/page.tsx` between the hero and the use-cases grid —
+"See a story come to life" — showing both `hero-en.jpg` and
+`hero-ar.jpg` side by side (stacked on mobile) as framed sample-story
+cards, regardless of which locale the visitor is browsing in, so the
+bilingual claim is visible proof rather than just a sentence. New
+`marketing.sampleStories.*` keys in both `en.json`/`ar.json`. Also
+found and fixed a real, unrelated gap while touching the dashboard-home
+sample-stories component: `SampleStoriesPreview.tsx` had *never* used
+`useTranslations` at all since it was first built — "Sample stories,"
+"Sample stories are coming soon.," and "Preview coming soon" were
+hardcoded English regardless of app locale. Added `stories.samplePreview*`
+keys and wired the component to them; left the two per-sample labels
+("Sample story in English" / "نموذج قصة بالعربية") as fixed strings on
+purpose, since those describe which language *that specific sample*
+is in, not the viewer's own locale.
+
+**Verified**: `tsc`, `eslint`, all 148 unit tests + the 8 PDF
+render/preflight integration tests, `en.json`/`ar.json` key-set parity,
+both new PPTX decks re-validated against their originals with the pptx
+skill's `validate.py`, and a full live-browser check of both `/en` and
+`/ar` on a real `next dev` server (Playwright, screenshotted) — new
+banner section, new logo, new hero-image badges, and the sample PDF
+render all confirmed visually, not just by reading the code back.
+
+**Explicitly still open**: a demo video for the landing/home pages
+(needs actual footage/production, not something buildable here),
+real trademark/domain clearance for "Ownly" (see `docs/NEEDS_FROM_ME.md`
+item 2), and regenerating the mobile app icons/splash screens from the
+new mark (still Capacitor's generic defaults, unrelated to anything
+renamed here).
 
 ## Not yet built (explicitly out of scope for this build session)
 

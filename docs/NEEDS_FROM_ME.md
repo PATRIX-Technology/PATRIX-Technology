@@ -16,14 +16,19 @@ else has already been built and is documented in `docs/HANDOFF.md`.
    - Once created, tell me and I will run the migrations in
      `supabase/migrations/` against it and seed the story templates.
 
-2. **Confirm the brand name.** Renamed from "Khayali" to "TooniX" per
-   your request (see `docs/DECISIONS.md`). It's still a working name in
-   the trademark/legal sense — the name-conflict check done for
-   "Khayali" doesn't carry over to a completely different name, so this
-   needs its own basic UAE/GCC trademark screening and confirmation the
-   matching domain (e.g. `toonix.com` / `.ae`) is available, before it
-   appears on anything public. I cannot register a domain or file a
-   trademark — that needs your payment method and identity.
+2. **Confirm the brand name.** Renamed twice per your requests: "Khayali"
+   → "TooniX" → now "Ownly" (see `docs/DECISIONS.md`). The informal
+   search I ran before this second rename found a real prior-use
+   conflict for "TooniX" (Cartoon Network's own "Toonix" brand, used for
+   children's content) — worth remembering that an *informal* search
+   like the ones I can run is not a substitute for the formal UAE/GCC
+   trademark screening this still needs before "Ownly" appears on
+   anything public. My own check on "Ownly" came back clean, but I
+   cannot register a domain or file a trademark myself — that needs your
+   payment method, identity, and (given what happened with the last two
+   names) genuinely worth paying for a real trademark lawyer's opinion
+   this time rather than relying on my searches alone. Also check
+   `ownly.com` / `.ae` domain availability.
 
 3. **A domain name and hosting decision.** I'd recommend Vercel (built
    for Next.js) or a similar host — but creating that account and

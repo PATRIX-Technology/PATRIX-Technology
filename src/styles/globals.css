@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 /*
- * TooniX is dark-first by product decision (see docs/DECISIONS.md
+ * Ownly is dark-first by product decision (see docs/DECISIONS.md
  * "Dark-first design system") — there is no light/dark toggle, so the
  * bare :root carries the dark palette directly rather than the usual
  * light-default-plus-dark-override pattern. `[data-theme='light']` is

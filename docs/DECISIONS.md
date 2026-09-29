@@ -4250,6 +4250,25 @@ never reads `file.type` at all. Unit tested
 (`tests/unit/photo-sniff.test.ts`) including the exact attack this
 closes: a `<script>` payload rejected regardless of what type it claims.
 
+## CSV import: cap rows and file size
+
+Follow-up to the "CSV import row cap (currently uncapped)" audit
+finding. `importChildrenCsvAction`/`parseChildrenCsv` had no limit at
+all — a file with an unreasonable number of rows would still be fully
+parsed into memory and handed to Postgres as one giant `.insert()`. No
+real nursery imports anywhere close to a large number of children at
+once; this exists purely as a resource-exhaustion backstop, not a
+product limit anyone should ever actually hit.
+
+Added `MAX_CSV_IMPORT_ROWS = 1000` in `parseChildrenCsv`
+(`src/lib/domain/children.ts`), checked right after the header
+validation and before any per-row parsing, and a 2MB file-size cap in
+`importChildrenCsvAction` itself (checked before even reading the
+file's content, so an abnormally large file — few rows but huge lines,
+or plain garbage — never gets read into memory at all). Unit tested
+both at the boundary (exactly `MAX_CSV_IMPORT_ROWS` still succeeds) and
+one over it.
+
 ## Not yet built (explicitly out of scope for this build session)
 
 - Vendor moderation integration for image safety checks

@@ -123,6 +123,8 @@ export interface ImportCsvResult extends ActionResult {
   rowErrors?: { row: number; errors: string[] }[];
 }
 
+const MAX_CSV_BYTES = 2 * 1024 * 1024; // 2MB -- comfortably more than MAX_CSV_IMPORT_ROWS' worth of plain-text rows
+
 export async function importChildrenCsvAction(locale: string, formData: FormData): Promise<ImportCsvResult> {
   const supabase = await createSupabaseServerClient();
   const context = await getCurrentTenantContext(supabase);
@@ -130,6 +132,9 @@ export async function importChildrenCsvAction(locale: string, formData: FormData
 
   const file = formData.get('file');
   if (!(file instanceof File)) return { error: 'No file uploaded.' };
+  if (file.size > MAX_CSV_BYTES) {
+    return { error: `File is too large (max ${MAX_CSV_BYTES / (1024 * 1024)}MB).` };
+  }
 
   const content = await file.text();
   const { results, headerError } = parseChildrenCsv(content);

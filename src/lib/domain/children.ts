@@ -165,6 +165,14 @@ export function parseCsv(content: string): string[][] {
   return rows.filter((r) => r.some((cell) => cell.trim().length > 0));
 }
 
+/** Nothing downstream (a single bulk `.insert()` in importChildrenCsvAction)
+ * ever capped how many rows one CSV could carry — a file with, say, a
+ * million rows would still be fully parsed into memory and handed to
+ * Postgres as one giant insert. No real nursery imports anywhere close
+ * to this many children at once; it exists purely as a resource-exhaustion
+ * backstop. */
+export const MAX_CSV_IMPORT_ROWS = 1000;
+
 export function parseChildrenCsv(content: string): { results: CsvRowResult[]; headerError?: string } {
   const rows = parseCsv(content);
   if (rows.length === 0) {
@@ -178,6 +186,13 @@ export function parseChildrenCsv(content: string): { results: CsvRowResult[]; he
     return {
       results: [],
       headerError: `The first row must contain these columns: ${CSV_HEADER.join(', ')}. Found: ${header.join(', ')}`,
+    };
+  }
+
+  if (rows.length - 1 > MAX_CSV_IMPORT_ROWS) {
+    return {
+      results: [],
+      headerError: `This file has ${rows.length - 1} rows, which is more than the ${MAX_CSV_IMPORT_ROWS}-row limit per import. Split it into smaller files and import them one at a time.`,
     };
   }
 

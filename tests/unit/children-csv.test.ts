@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parseChildrenCsv, parseCsv } from '@/lib/domain/children';
+import { MAX_CSV_IMPORT_ROWS, parseChildrenCsv, parseCsv } from '@/lib/domain/children';
 
 describe('parseCsv', () => {
   it('parses simple rows', () => {
@@ -108,5 +108,21 @@ describe('parseChildrenCsv', () => {
     expect(results[0]!.data?.lastName).toBeUndefined();
     expect(results[0]!.data?.arabicFirstName).toBeUndefined();
     expect(results[0]!.data?.arabicLastName).toBeUndefined();
+  });
+
+  it('rejects a file with more rows than MAX_CSV_IMPORT_ROWS, before inserting anything', () => {
+    const header = 'first_name,pronoun,class_name,preferred_language';
+    const rows = Array.from({ length: MAX_CSV_IMPORT_ROWS + 1 }, (_, i) => `Child${i},she,Room,en`);
+    const { results, headerError } = parseChildrenCsv([header, ...rows].join('\n'));
+    expect(headerError).toMatch(new RegExp(`${MAX_CSV_IMPORT_ROWS}-row limit`));
+    expect(results).toHaveLength(0);
+  });
+
+  it('accepts a file with exactly MAX_CSV_IMPORT_ROWS rows', () => {
+    const header = 'first_name,pronoun,class_name,preferred_language';
+    const rows = Array.from({ length: MAX_CSV_IMPORT_ROWS }, (_, i) => `Child${i},she,Room,en`);
+    const { results, headerError } = parseChildrenCsv([header, ...rows].join('\n'));
+    expect(headerError).toBeUndefined();
+    expect(results).toHaveLength(MAX_CSV_IMPORT_ROWS);
   });
 });

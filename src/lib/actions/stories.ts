@@ -271,7 +271,7 @@ export async function kickStoryWorkerAction(): Promise<{ processed: number } | {
 
   try {
     const serviceClient = createSupabaseServiceRoleClient();
-    const result = await runWorkerOnce(serviceClient, 8);
+    const result = await runWorkerOnce(serviceClient, 6);
     return { processed: result.processed };
   } catch (error) {
     return { error: errorMessage(error) };

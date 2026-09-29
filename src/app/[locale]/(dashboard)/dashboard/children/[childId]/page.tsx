@@ -15,14 +15,13 @@ import { getSignedAssetUrl } from '@/lib/domain/storage';
 import { flags } from '@/lib/flags';
 import { Badge } from '@/components/ui/Badge';
 
-// Generating a story's images runs synchronously inside createStoryAction
-// (called from this page) so the demo/pilot flow feels immediate rather
-// than waiting on a cron tick — see docs/DECISIONS.md "Job queue
-// implementation". 60 is the Hobby plan's ceiling for this config value —
-// see docs/DECISIONS.md "maxDuration must not exceed the Hobby ceiling"
-// for why this was briefly set to 300 (a Pro-only value) and had to be
+// 60 is the Hobby plan's ceiling for this config value — see
+// docs/DECISIONS.md "maxDuration must not exceed the Hobby ceiling" for
+// why this was briefly set to 300 (a Pro-only value) and had to be
 // reverted: it risks the deployment itself failing on Hobby, not just a
-// runtime timeout.
+// runtime timeout. This page itself does no generation work (createStoryAction
+// only inserts rows; AutoRefresh on the story page drives generation once
+// there), so this ceiling is mostly headroom rather than a real constraint here.
 export const maxDuration = 60;
 
 export default async function ChildDetailPage({

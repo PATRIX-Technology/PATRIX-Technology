@@ -23,8 +23,33 @@ export interface WorkerRunResult {
  * invoked by a scheduled trigger (cron-hit API route, Supabase Edge
  * Function cron, or a long-running process in dev) rather than kept alive
  * as its own server — see docs/DECISIONS.md "Job queue implementation".
+ *
+ * deadlineMs bounds this call's own wall-clock time, independent of how
+ * many jobs it claims or how many distinct stories they belong to. This
+ * function is also invoked synchronously from a client-triggered Server
+ * Action (kickStoryWorkerAction, called by AutoRefresh on every story
+ * page load/poll) sharing Vercel's Hobby maxDuration=60 ceiling. Real
+ * Gemini calls have no per-request timeout of their own, and a wave's
+ * wall-clock time is only as fast as its slowest concurrent call, so a
+ * big-enough backlog (or the API just running slow) can push the whole
+ * invocation past 60s -- at which point Vercel kills the function
+ * mid-response, and the browser that happened to trigger the kick sees
+ * an uncaught AggregateError from the truncated stream and crashes,
+ * even though the work it was killed doing may belong to a completely
+ * different story than the one that user has open. Confirmed live via a
+ * real end-to-end QA pass. Checking the deadline between waves instead
+ * caps this call's own duration well under the ceiling: jobs claimed for
+ * a wave that gets skipped stay RUNNING and self-heal via
+ * reclaim_stale_story_jobs on the next invocation, same as an
+ * already-killed request does today -- this just makes that the normal
+ * path instead of a crash.
  */
-export async function runWorkerOnce(supabase: SupabaseClient, maxJobs = 25): Promise<WorkerRunResult> {
+export async function runWorkerOnce(
+  supabase: SupabaseClient,
+  maxJobs = 25,
+  deadlineMs = 45_000,
+): Promise<WorkerRunResult> {
+  const deadline = Date.now() + deadlineMs;
   const result: WorkerRunResult = { processed: 0, succeeded: 0, failed: 0, retried: 0 };
 
   // A job that was claimed (RUNNING) but whose worker process got killed
@@ -71,7 +96,9 @@ export async function runWorkerOnce(supabase: SupabaseClient, maxJobs = 25): Pro
   };
 
   (await Promise.all(firstWave.map((job) => processJob(supabase, job)))).forEach(record);
-  (await Promise.all(secondWave.map((job) => processJob(supabase, job)))).forEach(record);
+  if (secondWave.length > 0 && Date.now() < deadline) {
+    (await Promise.all(secondWave.map((job) => processJob(supabase, job)))).forEach(record);
+  }
 
   return result;
 }

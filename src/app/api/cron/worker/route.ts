@@ -13,14 +13,14 @@ export const maxDuration = 60;
  * Actions workflow (.github/workflows/story-worker-cron.yml) hits this
  * every 5 minutes with the CRON_SECRET below — set up because Vercel's
  * own native Cron restricts free/Hobby plans to once a day, which is
- * useless for this. Server actions also call runWorkerOnce
- * synchronously right after creating a story so it normally finishes
- * within that same request; this route is the safety net that keeps
- * the queue moving for anything that gets orphaned in QUEUED/GENERATING
- * status instead — most likely a real (non-mock) multi-page generation
- * that ran long enough to hit Vercel's function timeout mid-request.
- * See docs/DECISIONS.md "Defending against a mid-generation function
- * timeout".
+ * useless for this. kickStoryWorkerAction (a Server Action, called from
+ * the browser by AutoRefresh while a story page is open) is the fast
+ * path that normally drives the queue; this route is the safety net for
+ * anything that gets orphaned in QUEUED/GENERATING status when nobody
+ * has a story page open — including a job a previous invocation of
+ * either path claimed but couldn't finish before its own deadline, see
+ * runWorkerOnce's deadlineMs. See docs/DECISIONS.md "Defending against a
+ * mid-generation function timeout".
  */
 export async function GET(request: Request) {
   const secret = process.env.CRON_SECRET;

@@ -38,13 +38,12 @@ export default async function StoryDetailPage({
   // "maxDuration must not exceed the Hobby ceiling"): a real, multi-page
   // story generating in Arabic hit it and crashed the whole page with no
   // usable error. Fixed by no longer doing any generation work here at
-  // all -- this page is now a plain read of current DB state, and
-  // /api/cron/worker (running every 5 minutes, see
-  // .github/workflows/story-worker-cron.yml) is the only thing that
-  // actually drives generation forward. AutoRefresh below still polls
-  // every few seconds so a parent watching this page sees new images
-  // land as the cron tick processes them, just without this page ever
-  // doing the work itself.
+  // all -- this page is now a plain read of current DB state. AutoRefresh
+  // below drives generation forward itself, from client-side JS, via
+  // kickStoryWorkerAction -- a separate request whose own worst case is a
+  // bounded wall-clock deadline inside runWorkerOnce, not this page's
+  // render. /api/cron/worker (every 5 minutes) remains the fallback for
+  // when nobody has this page open.
   const { data: pages } = await supabase
     .from('story_pages')
     .select('*')

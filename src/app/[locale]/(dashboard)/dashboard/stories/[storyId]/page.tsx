@@ -1,10 +1,8 @@
 import { notFound } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
-import { createSupabaseServiceRoleClient } from '@/lib/supabase/service-role';
 import { getCurrentTenantContext } from '@/lib/domain/session';
 import { getSignedAssetUrls } from '@/lib/domain/storage';
-import { runWorkerOnce } from '@/lib/jobs/worker';
 import { MAX_MANUAL_REGENERATIONS_PER_PAGE } from '@/lib/domain/stories';
 import { Card, CardTitle } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
@@ -13,17 +11,6 @@ import { RegeneratePageButton } from '@/components/stories/RegeneratePageButton'
 import { DownloadButton } from '@/components/stories/DownloadButton';
 import { AutoRefresh } from '@/components/stories/AutoRefresh';
 import type { StoryStatus } from '@/types/database';
-
-// This page now calls runWorkerOnce (real Gemini image generation) during
-// its own render -- see docs/DECISIONS.md "Story creation no longer waits
-// on the worker before redirecting". Vercel's default function duration is
-// well under 60s unless a route says otherwise, and 60 is the actual
-// ceiling on the current (Hobby) plan regardless of what's requested here
-// -- see docs/DECISIONS.md "maxDuration must not exceed the Hobby
-// ceiling". Every other route in this app doing real generation work
-// already sets this explicitly; this page needs the same now that it does
-// generation work too.
-export const maxDuration = 60;
 
 export default async function StoryDetailPage({
   params,
@@ -43,38 +30,26 @@ export default async function StoryDetailPage({
     .maybeSingle();
   if (!story) notFound();
 
-  const { data: initialPages } = await supabase
+  // This page used to call runWorkerOnce (real Gemini image generation)
+  // synchronously during its own render, on every load AND on every
+  // 4-second AutoRefresh poll while anything was still generating -- up
+  // to 10 real Gemini calls per tick. That repeatedly re-exposed this
+  // page to Vercel's 60-second function ceiling (see docs/DECISIONS.md
+  // "maxDuration must not exceed the Hobby ceiling"): a real, multi-page
+  // story generating in Arabic hit it and crashed the whole page with no
+  // usable error. Fixed by no longer doing any generation work here at
+  // all -- this page is now a plain read of current DB state, and
+  // /api/cron/worker (running every 5 minutes, see
+  // .github/workflows/story-worker-cron.yml) is the only thing that
+  // actually drives generation forward. AutoRefresh below still polls
+  // every few seconds so a parent watching this page sees new images
+  // land as the cron tick processes them, just without this page ever
+  // doing the work itself.
+  const { data: pages } = await supabase
     .from('story_pages')
     .select('*')
     .eq('story_id', story.id)
     .order('page_number');
-
-  // Story creation and "regenerate this page" no longer wait on the
-  // worker themselves before returning — see docs/DECISIONS.md "Story
-  // creation no longer waits on the worker before redirecting". This
-  // page picks the resulting queued job(s) up instead: on the very
-  // first load right after creating a story, and again on every
-  // AutoRefresh poll below while anything is still generating, so
-  // watching this page keeps making progress even between the
-  // scheduled worker's own 5-minute cron ticks. A bounded batch size
-  // (not the cron's 25) keeps any one page load's share of the work
-  // modest, since a slow real-provider run here just means a slower
-  // page load, never a vanished redirect.
-  const hasQueuedWork = (initialPages ?? []).some(
-    (p) => p.image_status === 'QUEUED' || p.image_status === 'GENERATING',
-  );
-  if (hasQueuedWork) {
-    try {
-      const serviceClient = createSupabaseServiceRoleClient();
-      await runWorkerOnce(serviceClient, 10);
-    } catch {
-      // Non-fatal: the next auto-refresh or the scheduled worker retries.
-    }
-  }
-
-  const { data: pages } = hasQueuedWork
-    ? await supabase.from('story_pages').select('*').eq('story_id', story.id).order('page_number')
-    : { data: initialPages };
 
   // The story's own title/synopsis are never stored on the row itself —
   // only the per-page text is baked in at creation time (see

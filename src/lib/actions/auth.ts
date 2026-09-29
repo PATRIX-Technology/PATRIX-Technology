@@ -9,6 +9,7 @@ import { normalizePhoneNumber } from '@/lib/domain/phone';
 import { recordReferralIfPresent } from '@/lib/domain/referrals';
 import { capitalizeWords } from '@/lib/domain/names';
 import { validatePassword } from '@/lib/domain/password';
+import { sanitizeSignUpErrorMessage } from '@/lib/domain/auth-errors';
 
 export interface ActionResult {
   error?: string;
@@ -67,7 +68,7 @@ export async function signUpAction(locale: string, formData: FormData): Promise<
   const supabase = await createSupabaseServerClient();
   const { error: signUpError } = await supabase.auth.signUp({ email, password });
   if (signUpError) {
-    return { error: signUpError.message };
+    return { error: sanitizeSignUpErrorMessage(signUpError.message) };
   }
 
   // signUp() with email confirmation disabled (dev/demo config) signs the

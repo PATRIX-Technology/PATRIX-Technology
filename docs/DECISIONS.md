@@ -4288,6 +4288,27 @@ at all, rather than silently allowing every request through — verified
 this doesn't break the real deployment: `CRON_SECRET` is already set
 in Vercel's production environment (`docs/NEEDS_FROM_ME.md`).
 
+## Sign-up: don't relay "already registered" verbatim (email enumeration)
+
+Follow-up to the "generic error message on sign-up email conflict"
+audit finding. Both `signUpAction` (`src/lib/actions/auth.ts`) and
+`familySignUpAction` (`src/lib/actions/family.ts`) relayed Supabase
+Auth's own `signUp()` error message straight to the client. When the
+email is already registered, that message says so outright — a
+classic enumeration side channel: submit a list of addresses, see
+which ones say "already registered" vs. succeed.
+
+Added `sanitizeSignUpErrorMessage()` (`src/lib/domain/auth-errors.ts`),
+which replaces any "already registered"/"already exists"/"already in
+use" wording with a generic message, and passes every other error
+(weak password, etc.) through unchanged. Matches the tradeoff this
+codebase already accepts for `forgotPasswordAction` and
+`sendSignInOtpAction` (see their own comments) — a full fix would
+also silently no-op and email the real account holder, which isn't
+achievable yet with no transactional email provider configured
+(`docs/NEEDS_FROM_ME.md`); this closes the literal wording leak, which
+is the part that costs nothing to scan for at scale.
+
 ## Not yet built (explicitly out of scope for this build session)
 
 - Vendor moderation integration for image safety checks

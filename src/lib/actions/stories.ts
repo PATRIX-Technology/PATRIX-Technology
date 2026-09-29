@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
+import { createSupabaseServiceRoleClient } from '@/lib/supabase/service-role';
 import { getCurrentTenantContext } from '@/lib/domain/session';
 import {
   createStoryForTenant,
@@ -13,6 +14,8 @@ import {
 import { renderTemplate, StoryThemeTemplateSchema } from '@/lib/domain/templates';
 import { parseAvatarConfig } from '@/lib/domain/avatar';
 import { enforceRateLimit, RateLimitExceededError } from '@/lib/rate-limit';
+import { runWorkerOnce } from '@/lib/jobs/worker';
+import { errorMessage } from '@/lib/errors';
 import type { ActionResult } from './auth';
 
 /** Each regeneration costs a real Gemini image call — generous enough for
@@ -232,4 +235,45 @@ export async function regeneratePageAction(locale: string, storyId: string, page
 
 export async function redirectToReader(locale: string, storyId: string): Promise<void> {
   redirect(`/${locale}/dashboard/stories/${storyId}/reader`);
+}
+
+/**
+ * Drives the story-generation queue forward from the browser, called by
+ * WorkerKicker (a 'use client' component mounted on the story detail
+ * page) instead of by that page's own server-render. The story page used
+ * to call runWorkerOnce synchronously during its own SSR — every load AND
+ * every 4-second AutoRefresh tick — which repeatedly re-exposed the page
+ * itself to Vercel's 60-second function ceiling; a real multi-page story
+ * hit it and crashed the whole page with a generic, unrecoverable client
+ * exception. See docs/DECISIONS.md.
+ *
+ * The scheduled GitHub Actions cron (.github/workflows/story-worker-cron.yml,
+ * every 5 minutes) remains the actual safety net for a closed tab, but
+ * GitHub's own schedule trigger is explicitly best-effort and can be
+ * delayed by hours under load — confirmed in production, not theoretical.
+ * This action is the fast path: same runWorkerOnce, same service-role
+ * client, same job queue, just invoked as its own separate request from
+ * client-side JS. If IT is ever slow enough to hit a platform timeout,
+ * that only fails this one fetch — caught by WorkerKicker and silently
+ * retried next tick — never the page's own render.
+ *
+ * Not tenant-scoped: like the cron route, it claims whatever is next in
+ * the GLOBAL queue (FOR UPDATE SKIP LOCKED-safe under concurrent
+ * callers), same as every other trigger of this worker. Requires only an
+ * authenticated session, not ownership of any particular story -- there
+ * is nothing tenant-specific to leak, since the only output is a bare
+ * processed/succeeded/failed count.
+ */
+export async function kickStoryWorkerAction(): Promise<{ processed: number } | { error: string }> {
+  const supabase = await createSupabaseServerClient();
+  const context = await getCurrentTenantContext(supabase);
+  if (!context) return { error: 'Not signed in.' };
+
+  try {
+    const serviceClient = createSupabaseServiceRoleClient();
+    const result = await runWorkerOnce(serviceClient, 8);
+    return { processed: result.processed };
+  } catch (error) {
+    return { error: errorMessage(error) };
+  }
 }

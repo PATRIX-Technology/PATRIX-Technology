@@ -42,3 +42,6 @@ next-env.d.ts
 # generated assets
 /public/generated
 /tmp
+
+# throwaway scratch scripts (ad hoc QA/debug runs against a live deployment)
+/qa-*.tmp.js

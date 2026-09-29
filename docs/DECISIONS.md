@@ -4049,6 +4049,73 @@ timing logic, the RPC refactor for consent/quota, the mobile IAP
 model) that needs the founder's input on approach and priority, not a
 unilateral fix — reported in full rather than fixed silently.
 
+## Pre-pilot hardening: consent, quota, and story creation enforced at the database level
+
+Follow-up to the "Full QA + security pass" HIGH finding above: parental
+consent, story quota, and cross-tenant child ownership were enforced only
+by application code (`src/lib/domain/stories.ts`, `src/lib/actions/*.ts`),
+never by the database itself. A tenant member calling Supabase directly —
+bypassing this app's UI entirely — could have inserted a `stories`/
+`story_pages` row already marked APPROVED/GENERATED (skipping consent,
+quota, and `approve_story()`), inserted a `story_jobs` row with an
+arbitrary `image_prompt` (a real, paid Gemini call, not theoretical),
+inserted a `consent_requests` row pointing a token at a CHILD FROM ANOTHER
+TENANT, or updated `children.consent_status` straight to `'granted'` with
+no parent ever involved.
+
+Fixed in `supabase/migrations/0030_secure_story_creation_and_consent.sql`,
+following the same SECURITY DEFINER RPC pattern already used by
+`approve_story`/`reject_story`/`respond_to_consent` elsewhere in this
+schema:
+
+- **Composite FKs** — `children_id_tenant_id_key` (unique on `(id,
+  tenant_id)`) plus matching composite foreign keys on `consent_requests`
+  and `stories` mean a `child_id`/`tenant_id` pair that doesn't actually
+  belong together can never be inserted, full stop, regardless of any RLS
+  policy bug.
+- **`children_consent_status_guard` trigger** — blocks any UPDATE setting
+  `consent_status` to `'granted'`/`'declined'` unless a transaction-local
+  flag (`app.allow_consent_decision`) is set, which only
+  `respond_to_consent()`'s own transaction sets. This applies to every
+  role, including `service_role` — a trigger, unlike RLS, can't be
+  bypassed by role.
+- **`create_story()` / `regenerate_story_page()`** (new SECURITY DEFINER
+  RPCs) — the only way a tenant member may now create a story or queue a
+  page regeneration. Both check tenant membership and re-enforce every
+  rule the client-side checks already gave a friendlier error for
+  (consent granted, quota available, not-yet-approved, per-page
+  regeneration cap) atomically, server-side. `createStoryForTenant()` in
+  `src/lib/domain/stories.ts` calls `create_story` instead of the old
+  direct-insert `createStory()` (kept, unchanged, for the service-role
+  sample-story script, which bypasses RLS anyway).
+- **Closed the direct-write policies these RPCs replace** —
+  `stories_tenant_write`, `stories_tenant_update`,
+  `story_pages_insert_via_story`, `story_pages_update_via_story`,
+  `story_jobs_insert_via_story` are all dropped. Nothing in the app needed
+  them any more; the worker and the sample-story script use the service
+  role, which bypasses RLS regardless.
+- **Family self-consent preserved as a deliberate exception** —
+  `uploadChildPhotoAction` legitimately inserts an already-`'granted'`
+  `consent_requests` row in one step for a family tenant, since the
+  member inserting the row IS the child's parent (see "Family photo
+  consent: a single checkbox at upload time"); there's no third party to
+  send a token link to. The new `consent_requests_tenant_insert` policy
+  allows `status = 'granted'` only when `tenants.tenant_type = 'family'`,
+  keeping the nursery bypass shut while not breaking this already-shipped
+  feature. (Caught by re-running the existing test suite against the new
+  policy — `family-tenants.test.ts` already covered this path.)
+
+Verified against real production data before applying (zero rows would
+have violated any of the new composite FKs or constraints), applied to
+production via migration, and confirmed via the Supabase security
+advisors that the intended policies/functions/constraints are the only
+ones now in place. All 250 existing tests pass, including three that
+needed rewriting because they exercised the now-closed direct-write
+bypass paths on purpose (`consent.test.ts`'s withdraw fixture now grants
+via `respond_to_consent` instead of a direct trigger-blocked update;
+`story-jobs-rls.test.ts`'s "lets a tenant member enqueue a job" test now
+asserts the opposite, that direct inserts are blocked for everyone).
+
 ## Not yet built (explicitly out of scope for this build session)
 
 - Vendor moderation integration for image safety checks

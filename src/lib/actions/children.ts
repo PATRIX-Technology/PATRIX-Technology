@@ -175,6 +175,18 @@ export async function requestConsentAction(
   const context = await getCurrentTenantContext(supabase);
   if (!context) return { error: 'Not signed in.' };
 
+  // childId belonging to context.tenantId is also enforced at the
+  // database level now (consent_requests_child_tenant_fkey, migration
+  // 0030), which would otherwise surface as a raw foreign-key error —
+  // this check exists to give a clear message instead.
+  const { data: child } = await supabase
+    .from('children')
+    .select('id')
+    .eq('id', childId)
+    .eq('tenant_id', context.tenantId)
+    .maybeSingle();
+  if (!child) return { error: 'Child not found.' };
+
   const { data: tenant } = await supabase
     .from('tenants')
     .select('photo_personalization_opt_in')

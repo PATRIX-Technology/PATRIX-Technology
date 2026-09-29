@@ -82,10 +82,17 @@ describe('consent workflow', () => {
   it('lets an owner withdraw consent, flipping child + request status', async () => {
     const rawToken = 'test-token-withdraw';
     await db.adminClient.query(
-      `insert into consent_requests (tenant_id, child_id, token_hash, status, responded_at) values ($1, $2, $3, 'granted', now())`,
+      `insert into consent_requests (tenant_id, child_id, token_hash) values ($1, $2, $3)`,
       [tenantId, childId, sha256(rawToken)],
     );
-    await db.adminClient.query(`update children set consent_status = 'granted' where id = $1`, [childId]);
+    // Grant via the real respond_to_consent RPC rather than a direct
+    // `update children set consent_status = ...` -- migration 0030's
+    // children_consent_status_guard trigger now blocks that update path
+    // for every role, including this admin client, which is exactly the
+    // point: 'granted'/'declined' can only ever be reached through here.
+    const grantingAnonClient = await db.connectAs({ role: 'anon' });
+    await grantingAnonClient.query(`select respond_to_consent($1, 'granted')`, [rawToken]);
+    await grantingAnonClient.end();
 
     const ownerClient = await db.connectAs({ role: 'authenticated', userId: ownerId });
     await ownerClient.query('select withdraw_consent($1)', [childId]);

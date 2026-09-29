@@ -5,7 +5,7 @@ import { redirect } from 'next/navigation';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { getCurrentTenantContext } from '@/lib/domain/session';
 import {
-  createStory,
+  createStoryForTenant,
   ConsentRequiredError,
   QuotaExceededError,
   MAX_MANUAL_REGENERATIONS_PER_PAGE,
@@ -78,7 +78,7 @@ export async function createStoryAction(
 
   let story: { id: string };
   try {
-    story = await createStory(supabase, {
+    story = await createStoryForTenant(supabase, {
       tenantId: context.tenantId,
       childId: child.id,
       childName,
@@ -208,25 +208,20 @@ export async function regeneratePageAction(locale: string, storyId: string, page
     }
   }
 
-  const { error: pageError } = await supabase
-    .from('story_pages')
-    .update({
-      image_status: 'QUEUED',
-      attempts: 0,
-      regenerate_count: page.regenerate_count + 1,
-      last_error: null,
-      ...(refreshedText ? { text: refreshedText } : {}),
-    })
-    .eq('id', pageId)
-    .eq('story_id', storyId);
-  if (pageError) return { error: pageError.message };
-
-  const { error: jobError } = await supabase
-    .from('story_jobs')
-    .insert({ story_id: storyId, page_id: pageId, job_type: 'GENERATE_PAGE_IMAGE' });
-  if (jobError) return { error: jobError.message };
-
-  await supabase.from('stories').update({ status: 'GENERATING' }).eq('id', storyId);
+  // The actual writes (queueing the image job, bumping regenerate_count,
+  // re-flipping the story to GENERATING) all happen inside the
+  // regenerate_story_page SECURITY DEFINER RPC (migration 0030), not as
+  // direct table writes from here — a security audit found the previous
+  // direct-write version let any tenant member bypass the checks above
+  // (already-approved, per-page cap) via a raw client call. The checks
+  // above stay as early, friendlier error messages; the RPC re-enforces
+  // both regardless, since it's the only thing actually allowed to write.
+  const { error: rpcError } = await supabase.rpc('regenerate_story_page', {
+    target_story_id: storyId,
+    target_page_id: pageId,
+    new_text: refreshedText ?? null,
+  });
+  if (rpcError) return { error: rpcError.message };
 
   // Not kicking the worker synchronously here either — see the note on
   // createStoryAction above. The story page itself picks this job up on

@@ -2,17 +2,17 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { createTestDatabase, createTenantWithOwner, createUser, type TestDb } from './db/setup';
 
 /**
- * Regression test for a real bug caught during a security review of this
- * branch: story_jobs originally had only a SELECT RLS policy, but
- * src/lib/domain/stories.ts (createStory) and
- * src/lib/actions/stories.ts (regeneratePageAction) both insert into
- * story_jobs using the regular authenticated client, not the service
- * role. Against a real Supabase project this would have made every story
- * creation and every page regeneration fail outright with a row-level
- * security violation the moment a real nursery tried to use the product
- * — caught here, before that ever happened, by testing the actual insert
- * path against real RLS rather than a mocked Supabase client. See
- * supabase/migrations/0003_templates_stories.sql "story_jobs_insert_via_story".
+ * story_jobs RLS. Originally this table had a client-facing INSERT policy
+ * (story_jobs_insert_via_story) because createStory()/regeneratePageAction
+ * inserted directly using the regular authenticated client. Migration
+ * 0030 dropped that policy: a later security audit found a tenant member
+ * could exploit the same direct-insert path to queue a job with an
+ * arbitrary image_prompt, a real cost/abuse vector, so story creation and
+ * page regeneration now go through the create_story/regenerate_story_page
+ * SECURITY DEFINER RPCs instead (src/lib/domain/stories.ts,
+ * src/lib/actions/stories.ts) — no client role has any direct write path
+ * into this table any more. See docs/DECISIONS.md "Full QA + security
+ * pass, and two critical privilege-escalation holes".
  */
 describe('story_jobs RLS (queueing a generation job)', () => {
   let db: TestDb;
@@ -43,13 +43,11 @@ describe('story_jobs RLS (queueing a generation job)', () => {
 
   afterAll(async () => db.teardown());
 
-  it('lets a tenant member enqueue a GENERATE_PAGE_IMAGE job for their own story', async () => {
+  it('blocks a tenant member from enqueueing a job directly, even for their own story (must go through create_story/regenerate_story_page)', async () => {
     const client = await db.connectAs({ role: 'authenticated', userId: ownerAId });
-    const result = await client.query(
-      `insert into story_jobs (story_id, job_type) values ($1, 'GENERATE_PAGE_IMAGE') returning id`,
-      [storyAId],
-    );
-    expect(result.rows).toHaveLength(1);
+    await expect(
+      client.query(`insert into story_jobs (story_id, job_type) values ($1, 'GENERATE_PAGE_IMAGE')`, [storyAId]),
+    ).rejects.toThrow(/row-level security/i);
     await client.end();
   });
 

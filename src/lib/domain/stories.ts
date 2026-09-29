@@ -110,3 +110,49 @@ export async function createStory(supabase: SupabaseClient, input: CreateStoryIn
 
   return story;
 }
+
+/**
+ * The real customer-facing path — used by createStoryAction, called with
+ * the regular authenticated (RLS-governed) client. Unlike createStory()
+ * above, the actual writes (consent check, quota consumption, story/
+ * story_pages/story_jobs inserts) all happen inside the create_story
+ * SECURITY DEFINER RPC (migration 0030), not as direct table inserts from
+ * here — a security audit found that a tenant member calling Supabase
+ * directly (bypassing this app's own code) could insert a story already
+ * marked APPROVED, or a story_pages row with an arbitrary image_prompt,
+ * skipping consent and quota entirely. Template rendering itself (pure
+ * text substitution) stays here in TypeScript; only the guarded writes
+ * moved into the RPC. See docs/DECISIONS.md "Full QA + security pass"
+ * for the fuller writeup.
+ */
+export async function createStoryForTenant(supabase: SupabaseClient, input: CreateStoryInput) {
+  // renderTemplate() itself throws TemplateNotReviewedError for an
+  // unreviewed Arabic template — preserved unchanged from createStory().
+  const pages = renderTemplate(input.template, {
+    childName: input.childName,
+    pronoun: input.pronoun,
+    organisation: input.organisationName,
+  });
+
+  const { data: storyId, error } = await supabase.rpc('create_story', {
+    target_tenant_id: input.tenantId,
+    target_child_id: input.childId,
+    target_theme_key: input.template.theme_key,
+    target_locale: input.locale,
+    target_avatar_config: input.avatarConfig,
+    target_pronoun: input.pronoun,
+    pages: pages.map((page) => ({
+      page_number: page.order,
+      text: page.text,
+      image_prompt: page.image_prompt,
+    })),
+  });
+
+  if (error) {
+    if (error.message.includes('granted consent')) throw new ConsentRequiredError();
+    if (error.message.includes('used all the stories')) throw new QuotaExceededError();
+    throw error;
+  }
+
+  return { id: storyId as string };
+}

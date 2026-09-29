@@ -35,12 +35,19 @@ test.describe('Sign-in form', () => {
   test('renders correctly right-to-left in Arabic', async ({ page }) => {
     await page.goto('/ar/sign-in');
     await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
-    await expect(page.getByRole('button')).toBeVisible();
+    // "Sign in" submit button specifically — the page also has a
+    // "Continue with Google" button, so an unscoped getByRole('button')
+    // matches both (strict-mode violation).
+    await expect(page.getByRole('button', { name: 'تسجيل الدخول' })).toBeVisible();
   });
 
   test('links to sign-up', async ({ page }) => {
     await page.goto('/en/sign-in');
-    await page.getByRole('link', { name: /create one/i }).click();
+    // The old plain "create one" link was replaced by the Organisation /
+    // Family account tabs (AccountTypeTabs, role="tab" not "link") — see
+    // docs/DECISIONS.md "Structure app around Individual/Family vs B2B
+    // modes". "Organisation" is the equivalent of the old sign-up link.
+    await page.getByRole('tab', { name: 'Organisation' }).click();
     await expect(page).toHaveURL(/\/en\/sign-up$/);
   });
 });

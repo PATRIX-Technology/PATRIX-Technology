@@ -38,14 +38,17 @@ export async function createTestDatabase(): Promise<TestDb> {
 
   await adminClient.query(readFileSync(join(REPO_ROOT, 'supabase/testing/00_auth_stub.sql'), 'utf8'));
   await adminClient.query(readFileSync(join(REPO_ROOT, 'supabase/testing/01_storage_stub.sql'), 'utf8'));
+  // Must run BEFORE any migration creates a table — see 99_grants.sql's
+  // own comment for why (ALTER DEFAULT PRIVILEGES, not GRANT ON ALL
+  // TABLES, so it applies to tables migrations create afterward, same
+  // chronological order as a real Supabase project).
+  await adminClient.query(readFileSync(join(REPO_ROOT, 'supabase/testing/99_grants.sql'), 'utf8'));
 
   const migrationsDir = join(REPO_ROOT, 'supabase/migrations');
   const migrationFiles = readdirSync(migrationsDir).filter((f) => f.endsWith('.sql')).sort();
   for (const file of migrationFiles) {
     await adminClient.query(readFileSync(join(migrationsDir, file), 'utf8'));
   }
-
-  await adminClient.query(readFileSync(join(REPO_ROOT, 'supabase/testing/99_grants.sql'), 'utf8'));
 
   async function connectAs(opts: {
     role: 'anon' | 'authenticated' | 'service_role';

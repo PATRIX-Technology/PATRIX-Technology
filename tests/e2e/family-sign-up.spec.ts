@@ -10,7 +10,10 @@ test.describe('Family sign-up (Phase 4)', () => {
 
   test('links to the nursery/organisation sign-up for the other audience', async ({ page }) => {
     await page.goto('/en/family/sign-up');
-    await page.getByRole('link', { name: /sign up here instead/i }).click();
+    // Replaced by the Organisation / Family account tabs
+    // (AccountTypeTabs, role="tab" not "link") — see docs/DECISIONS.md
+    // "Structure app around Individual/Family vs B2B modes".
+    await page.getByRole('tab', { name: 'Organisation' }).click();
     await expect(page).toHaveURL(/\/en\/sign-up$/);
   });
 

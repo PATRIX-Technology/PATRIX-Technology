@@ -6,7 +6,10 @@ test.describe('Marketing home page', () => {
     await expect(page.locator('html')).toHaveAttribute('lang', 'en');
     await expect(page.locator('html')).toHaveAttribute('dir', 'ltr');
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
-    await expect(page.getByText('Ownly', { exact: true })).toBeVisible();
+    // The brand name now also appears in the footer (see docs/DECISIONS.md
+    // "Show the brand name next to the logo"), so this must be scoped —
+    // the header is what actually establishes the page's identity.
+    await expect(page.locator('header').getByText('Ownly', { exact: true })).toBeVisible();
   });
 
   test('renders in Arabic with the correct language/direction', async ({ page }) => {
@@ -14,7 +17,7 @@ test.describe('Marketing home page', () => {
     await expect(page.locator('html')).toHaveAttribute('lang', 'ar');
     await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
-    await expect(page.getByText('أونلي', { exact: true })).toBeVisible();
+    await expect(page.locator('header').getByText('أونلي', { exact: true })).toBeVisible();
   });
 
   test('has a working skip-to-content link for keyboard/screen-reader users', async ({ page }) => {

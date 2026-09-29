@@ -1,4 +1,4 @@
-import { createHash, randomBytes } from 'node:crypto';
+import { createHash, randomBytes, randomUUID } from 'node:crypto';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { createTestDatabase, createTenantWithOwner, createUser, type TestDb } from './db/setup';
 
@@ -25,6 +25,13 @@ describe('staff invites (real account, joins the existing tenant)', () => {
     db = await createTestDatabase();
     ownerId = await createUser(db.adminClient, 'Owner');
     tenantId = await createTenantWithOwner(db.adminClient, ownerId, 'Little Explorers');
+    // A real tenant always has exactly one subscriptions row by the time
+    // anyone could invite staff to it (created at signup — migration
+    // 0015). createTenantWithOwner is a raw fixture insert that skips
+    // that application-level step, so add it here to match real state —
+    // otherwise the "no extra subscription" assertion below would pass
+    // trivially against a tenant that never had one to begin with.
+    await db.adminClient.query('insert into subscriptions (tenant_id) values ($1)', [tenantId]);
   }, 60_000);
 
   afterAll(async () => db.teardown());
@@ -114,7 +121,14 @@ describe('staff invites (real account, joins the existing tenant)', () => {
   it('accept_staff_invite joins the invited person to the EXISTING tenant, not a new one', async () => {
     const email = 'joins-existing@example.test';
     const { token } = await insertInvite(email, 'nursery_admin');
-    const newUserId = await createUser(db.adminClient, 'placeholder', email);
+    // Deliberately NOT using createUser() here, which also inserts a
+    // profiles row -- this RPC only ever runs right after a brand new
+    // auth.signUp(), before any profile exists (see accept_staff_invite's
+    // own doc comment), and its `on conflict do nothing` means a
+    // pre-existing profile's full_name would never get overwritten,
+    // which would make this test pass for the wrong reason.
+    const newUserId = randomUUID();
+    await db.adminClient.query('insert into auth.users (id, email) values ($1, $2)', [newUserId, email]);
 
     const client = await db.connectAs({ role: 'authenticated', userId: newUserId });
     const { rows } = await client.query('select accept_staff_invite($1, $2) as tenant_id', [
@@ -150,20 +164,23 @@ describe('staff invites (real account, joins the existing tenant)', () => {
   });
 
   it('rejects a second acceptance of the same invite', async () => {
+    // Two different real accounts can never share an email — Supabase
+    // Auth itself enforces that uniqueness at signup, before this RPC is
+    // ever reached. The realistic double-acceptance scenario this RPC
+    // actually has to guard against is the SAME account calling it twice
+    // (e.g. the invite link opened in two tabs, or reused after already
+    // being accepted) — so accept with the same user both times.
     const email = 'double-accept@example.test';
     const { token } = await insertInvite(email);
-    const firstUserId = await createUser(db.adminClient, 'First', email);
-    const secondUserId = await createUser(db.adminClient, 'Second', email);
+    const userId = await createUser(db.adminClient, 'First', email);
 
-    const firstClient = await db.connectAs({ role: 'authenticated', userId: firstUserId });
-    await firstClient.query('select accept_staff_invite($1, $2)', [token, 'First']);
-    await firstClient.end();
+    const client = await db.connectAs({ role: 'authenticated', userId });
+    await client.query('select accept_staff_invite($1, $2)', [token, 'First']);
 
-    const secondClient = await db.connectAs({ role: 'authenticated', userId: secondUserId });
-    await expect(secondClient.query('select accept_staff_invite($1, $2)', [token, 'Second'])).rejects.toThrow(
+    await expect(client.query('select accept_staff_invite($1, $2)', [token, 'Second'])).rejects.toThrow(
       /already been used/i,
     );
-    await secondClient.end();
+    await client.end();
   });
 
   it('rejects acceptance when the authenticated email does not match the invite', async () => {
@@ -195,11 +212,19 @@ describe('staff invites (real account, joins the existing tenant)', () => {
   });
 
   it('no client role can write to staff_invites directly except via insert -- no update policy exists', async () => {
+    // With RLS enabled and no UPDATE policy at all, Postgres doesn't throw
+    // a permission error for an UPDATE — it silently matches zero rows
+    // (the missing policy acts as a USING clause of `false`), same as a
+    // WHERE clause that matches nothing. So the correct assertion is that
+    // the write had no effect, not that it threw.
     const { inviteId } = await insertInvite('no-direct-update@example.test');
     const client = await db.connectAs({ role: 'authenticated', userId: ownerId });
-    await expect(
-      client.query("update staff_invites set status = 'accepted' where id = $1", [inviteId]),
-    ).rejects.toThrow(/row-level security|permission denied/i);
+
+    const result = await client.query("update staff_invites set status = 'accepted' where id = $1", [inviteId]);
+    expect(result.rowCount).toBe(0);
+
+    const { rows } = await db.adminClient.query('select status from staff_invites where id = $1', [inviteId]);
+    expect(rows[0].status).toBe('pending');
     await client.end();
   });
 });

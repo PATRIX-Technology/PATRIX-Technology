@@ -3912,6 +3912,143 @@ Supabase's own documented fallback pattern exactly — worth a quick
 visual confirmation next session once network access is available
 again, but low risk either way.
 
+## Full QA + security pass, and two critical privilege-escalation holes
+
+Founder request: act as QA and security expert across the whole app —
+web now, Android/iOS "in the near future" — and confirm everything
+works and is secure, "especially with Stripe & logins for future."
+
+**QA pass — real, structured, not just a click-through:**
+
+- **Discovered CI has never actually run, on any commit, ever.**
+  `.github/workflows/ci.yml` triggered on `push: branches: [main]` and
+  `pull_request` — but this repo has no `main` branch and no PR has
+  ever been opened; every one of 123+ commits went straight to this
+  feature branch. `gh`/the GitHub API confirms only the unrelated
+  "Story worker safety net" cron workflow has ever run. Every lint/
+  typecheck/test/build check this project has ever gotten has been
+  manual, in-session, ad-hoc verification — never automated. Fixed by
+  dropping the branch filter (`on: push:` / `pull_request:`, no
+  restriction) so it runs on every push regardless of branch.
+- **Found and fixed 3 real bugs in `tests/integration/staff-invites.test.ts`**
+  that `npm test` would have failed on every single run, had anything
+  ever run it: a fixture tenant created via raw SQL (bypassing the app's
+  real signup flow) never got the subscription row a real tenant always
+  has, so the "no extra subscription" assertion failed trivially; a
+  "double acceptance" test created two different `auth.users` rows
+  sharing one email, which real Supabase Auth's own uniqueness
+  constraint makes impossible in production, so the test never modelled
+  a real scenario; and a "no direct UPDATE" RLS test asserted the wrong
+  thing entirely — Postgres RLS with zero UPDATE policies filters the
+  row to zero matches, it does not throw a permission error, so the
+  correct assertion is "this had no effect", not "this threw." All three
+  were test-authoring bugs, not production bugs — the underlying RLS/
+  RPC behaviour was already correct in every case.
+- **Ran the full integration suite for real** — it spins up a genuine
+  throwaway local Postgres and replays every migration, so it verifies
+  actual RLS enforcement rather than a mock (`tests/integration/db/
+  setup.ts`). Needed installing/starting Postgres 16 in this sandbox and
+  setting the `postgres`/`postgres` password the harness expects — not
+  previously running here either. 250/250 pass now (started at 243, +7
+  once the privilege-escalation regression tests below were added).
+- **Fixed 3 stale E2E tests** (`tests/e2e/{marketing,auth-forms,
+  family-sign-up}.spec.ts`) broken by real, legitimate later UI changes
+  the tests never caught up with: the brand name now also appears in
+  the footer (strict-mode `getByText` ambiguity), the old plain "create
+  one"/"sign up here instead" links were replaced by the Organisation/
+  Family account tabs (`AccountTypeTabs`, `role="tab"` not `"link"`),
+  and the sign-in page's RTL button check matched both the new "Continue
+  with Google" button and the real submit button. 15/15 E2E tests pass
+  now. This is the exact class of regression the CI-never-ran discovery
+  explains: these all broke silently, with nothing to notice.
+- `npm audit`, dependency CVE status, and Capacitor mobile-wrapper
+  review were folded into the security audit below rather than
+  duplicated here.
+
+**Security audit — delegated to a dedicated subagent** (read-only,
+no live network) covering auth/sessions, RLS across every migration,
+Stripe billing, secrets, input validation, rate limiting, dependency
+CVEs, and mobile (Capacitor/Android/iOS) readiness. Two CRITICAL,
+live, immediately-exploitable findings — fixed the same session, not
+left for later:
+
+1. **Any signed-up user could make themselves platform owner.**
+   `profiles_self_update`/`profiles_self_insert` (migration 0001) let a
+   user write EVERY column of their own profile row, including
+   `is_platform_owner` — RLS's `with check (id = auth.uid())` only
+   restricts which ROW you can touch, not which COLUMNS, and the base
+   Postgres GRANT was never scoped down from Supabase's default
+   "authenticated can touch its own tables" grant. A single
+   `supabase.from('profiles').update({is_platform_owner:true})` from
+   any free signup was enough to grant full owner access: every
+   tenant's data, plans/quotas, the AI kill switch, story templates.
+   Checked the live database directly: found this had already
+   self-granted `is_platform_owner=true` on two of this session's own
+   throwaway MFA-testing accounts (an accidental, harmless
+   demonstration of the exact hole, from inside this same session,
+   not an outside attacker) — deleted both. No other unexpected owner
+   accounts existed.
+2. **`record_ai_spend` was never revoked from `anon`/`authenticated`**,
+   unlike every sibling privileged function in this codebase
+   (`claim_next_story_job`, `sync_quota_to_plan`, `reward_referral`,
+   `service_consume_story_quota`). Any signed-in user could call it
+   directly to record a huge spend (tripping the global kill switch,
+   stopping generation for every customer) or a negative amount
+   (permanently defeating the $-cap, since the running total only
+   needs to stay under the cap). Real Gemini generation is already
+   live in production, so this was a live path to unlimited
+   uncapped AI spend, not a theoretical one. Checked `ai_spend_ledger`
+   directly: zero rows with `amount_usd <= 0` — not exploited.
+
+Fixed in `supabase/migrations/0029_lock_down_profiles_and_ai_spend.sql`
+(revoke the broad grant, column-scope `profiles` UPDATE to
+`full_name`/`mfa_enrolled` — the only two legitimate client writes,
+confirmed by checking every `insert into profiles` call site: all go
+through a `SECURITY DEFINER` RPC, none is a direct client insert —
+and revoke `record_ai_spend` down to `service_role` only, plus a
+defensive `amount <= 0` check inside the function itself). Applied
+directly to the live database, then re-verified against it: `authenticated`
+now shows UPDATE only on `full_name`/`mfa_enrolled` in
+`information_schema.column_privileges`.
+
+**A second, genuine bug found while writing the regression tests for
+this fix, in the test infrastructure itself**:
+`supabase/testing/99_grants.sql` (the local integration-test harness's
+stand-in for Supabase's own default `anon`/`authenticated` grants) was
+applied AFTER replaying every migration, using
+`grant ... on all tables in schema public`. That ordering silently
+re-widened the very grant migration 0029 narrows, on every single test
+run — meaning no local test could ever have correctly verified this
+class of fix. In real Supabase, that default grant exists from the
+project's creation, chronologically BEFORE any of our own migrations
+ever create a table — so the harness had it backwards. Fixed by
+switching to `alter default privileges ... grant ... on tables` (which
+applies to tables created *afterward*, not just tables that already
+exist) and moving its application to before the migrations loop
+instead of after. Added `tests/integration/profiles-privilege-
+escalation.test.ts` (7 tests) proving both fixes hold: can't
+self-escalate, can't insert a profile directly, can't call
+`record_ai_spend` as `anon`/`authenticated`, a non-positive amount is
+rejected even as `service_role`, and the two legitimate client writes
+(`full_name`, `mfa_enrolled`) still work.
+
+**Everything else the audit found** (HIGH: MFA only checked at page
+load, not at every data access; several business rules — parental
+consent, story quota, approval — enforceable only by the app's own
+code, not the database, so a direct write can skip them; Stripe
+granting stories before payment confirms; webhook failures marked
+processed anyway; **MEDIUM**: session cookie flags/lifetime, Next.js
+14.2.15's un-patched CVEs beyond the already-tracked major-version
+upgrade, in-memory rate limiting, SMS pump risk, photo upload trusting
+client-claimed MIME type; mobile: Apple/Google in-app-purchase rules
+for subscriptions sold inside a native app, required account
+deletion, Sign in with Apple, Google OAuth breaking inside an embedded
+WebView, `allowBackup` on Android) is real and worth acting on, but
+each is either a bigger design change or a business decision (Stripe
+timing logic, the RPC refactor for consent/quota, the mobile IAP
+model) that needs the founder's input on approach and priority, not a
+unilateral fix — reported in full rather than fixed silently.
+
 ## Not yet built (explicitly out of scope for this build session)
 
 - Vendor moderation integration for image safety checks

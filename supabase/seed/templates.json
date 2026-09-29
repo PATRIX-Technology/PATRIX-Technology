@@ -478,5 +478,65 @@
         "image_prompt": "شخصية {child_name} تشاهد الألعاب النارية بألوان علم الإمارات مع العائلة، {mascot} بجانبها، احتفال في سماء ليلية، أسلوب رسوم كتاب قصص."
       }
     ]
+  },
+  {
+    "theme_key": "donut_maker",
+    "locale": "en",
+    "title": "Lara the Donut Maker",
+    "synopsis": "{child_name} spends a delightful afternoon baking and decorating donuts with Lara, learning that a little patience and a lot of creativity make anything sweeter.",
+    "mascot_name": "Lara",
+    "native_review_status": "reviewed",
+    "pages": [
+      {
+        "order": 1,
+        "text": "It was a quiet, slow afternoon and {child_name} could not find anything fun to do. Suddenly a cheerful voice giggled from the kitchen doorway. \"Want to make something delicious together?\" asked Lara, wiping flour off her apron.",
+        "image_prompt": "A cheerful cartoon baker mascot named Lara, wearing a flour-dusted apron and a big warm smile, standing in a cosy kitchen doorway waving at {child_name}'s avatar, soft afternoon light, storybook illustration style."
+      },
+      {
+        "order": 2,
+        "text": "Lara pulled out a big mixing bowl, soft flour, and a pinch of cinnamon. {child_name} stirred and stirred until the dough was smooth and a little bit sticky. \"Perfect!\" said Lara, dabbing a dot of flour on {pronoun:possessive} nose.",
+        "image_prompt": "{child_name}'s avatar and cartoon baker mascot Lara mixing dough together in a big bowl on a kitchen counter, both lightly dusted with flour, warm cosy kitchen, storybook illustration style."
+      },
+      {
+        "order": 3,
+        "text": "While the dough rested and puffed up like a little cloud, {child_name} and Lara hummed a silly baking song. Moments later, golden little rings popped out of the oven, warm and glowing. \"Now for the best part,\" Lara winked, sliding over bowls of sprinkles, chocolate, and pink icing.",
+        "image_prompt": "A cheerful cartoon kitchen scene with a tray of golden donut rings glowing warmly, cartoon baker mascot Lara and {child_name}'s avatar smiling beside bowls of colourful sprinkles and icing, storybook illustration style."
+      },
+      {
+        "order": 4,
+        "text": "{child_name} decorated every donut differently -- one with stars, one with stripes, one covered in rainbow sprinkles. When the tray was ready, {pronoun:subject} carried it proudly to share with the whole family, who cheered at the sweetest surprise.",
+        "image_prompt": "{child_name}'s avatar proudly holding a tray of colourfully decorated donuts, presenting them to a happy cheering family at home, cartoon baker mascot Lara peeking through the kitchen doorway, warm joyful scene, storybook illustration style."
+      }
+    ]
+  },
+  {
+    "theme_key": "donut_maker",
+    "locale": "ar",
+    "title": "لارا صانعة الدونات",
+    "synopsis": "{v:tried} {child_name} صنع الدونات وتزيينها مع {mascot}، و{v:learned} أن القليل من الصبر والكثير من الإبداع يجعلان كل شيء ألذ.",
+    "mascot_name": "لارا الخبّازة",
+    "native_review_status": "reviewed",
+    "pages": [
+      {
+        "order": 1,
+        "text": "{v:sat_down} {child_name} بجانب طاولة المطبخ في عصر هادئ لا يوجد فيه ما يُلهي. وفجأة، ظهرت {mascot} من باب المطبخ ترتدي مئزرًا مغطى بالدقيق، وقالت: «حان وقت صنع شيء لذيذ معًا!»",
+        "image_prompt": "شخصية خبّازة كرتونية مرحة اسمها لارا، ترتدي مئزرًا مغطى بالدقيق وابتسامة كبيرة، تقف عند باب مطبخ دافئ ومريح وتلوّح لشخصية {child_name}، إضاءة عصر دافئة، أسلوب رسوم كتاب قصص."
+      },
+      {
+        "order": 2,
+        "text": "أحضرت {mascot} وعاءً كبيرًا، ودقيقًا ناعمًا، ورشّة قرفة. {v:tried} {child_name} تحريك الخليط حتى أصبح طريًا ولزجًا قليلًا، ولطّخت {mascot} أنف{ps} بقليل من الدقيق مازحة.",
+        "image_prompt": "شخصية {child_name} وشخصية الخبّازة الكرتونية لارا تعجنان الخليط معًا في وعاء كبير فوق منضدة المطبخ، وكلاهما مغطى بطبقة خفيفة من الدقيق، مطبخ دافئ ومريح، أسلوب رسوم كتاب قصص."
+      },
+      {
+        "order": 3,
+        "text": "وبينما كانت العجينة ترتاح وتنتفخ كالسحابة، {v:sat_down} {child_name} {v:while_humming} أغنية خبز مضحكة مع {mascot}. وبعد لحظات، خرجت حلقات ذهبية صغيرة من الفرن، دافئة ومتوهجة. قالت {mascot} وهي تُخرج أطباق الرشّ الملوّن والشوكولاتة وسكّر التزيين الوردي: «والآن يأتي الجزء الأفضل!»",
+        "image_prompt": "مشهد مطبخ كرتوني مبهج يظهر فيه طبق من حلقات الدونات الذهبية المتوهجة بدفء، شخصية الخبّازة لارا وشخصية {child_name} تبتسمان بجانب أطباق من الرشّ الملوّن والتزيين، أسلوب رسوم كتاب قصص."
+      },
+      {
+        "order": 4,
+        "text": "{v:decided} {child_name} تزيين كل قطعة دونات بطريقة مختلفة. وعندما اكتمل الطبق، {v:felt_proud} و{v:shared} الدونات اللذيذة مع العائلة كلها، التي احتفلت بهذه المفاجأة الحلوة.",
+        "image_prompt": "شخصية {child_name} تحمل بفخر صينية دونات مزيّنة بألوان زاهية، تقدّمها لعائلة سعيدة ومحتفية في المنزل، شخصية الخبّازة لارا تُطل من باب المطبخ، مشهد دافئ وسعيد، أسلوب رسوم كتاب قصص."
+      }
+    ]
   }
 ]

@@ -95,6 +95,16 @@ const THEME_ICONS: Record<string, JSX.Element> = {
       strokeLinejoin="round"
     />
   ),
+  donut_maker: (
+    <>
+      <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.7" fill="none" />
+      <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.7" fill="none" />
+      <circle cx="9" cy="8" r="0.9" fill="currentColor" />
+      <circle cx="15.5" cy="9.5" r="0.9" fill="currentColor" />
+      <circle cx="16" cy="15" r="0.9" fill="currentColor" />
+      <circle cx="8" cy="16" r="0.9" fill="currentColor" />
+    </>
+  ),
 };
 
 const FALLBACK_ICON = (

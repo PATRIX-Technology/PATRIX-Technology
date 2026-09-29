@@ -4116,6 +4116,35 @@ via `respond_to_consent` instead of a direct trigger-blocked update;
 `story-jobs-rls.test.ts`'s "lets a tenant member enqueue a job" test now
 asserts the opposite, that direct inserts are blocked for everyone).
 
+## Platform owner privileges now require a completed MFA session (aal2), not just the profile flag
+
+Follow-up to the "Full QA + security pass" HIGH finding: `getMfaStatus()`
+(`src/lib/domain/mfa.ts`) already gates the owner dashboard's UI on
+Supabase Auth's real Authenticator Assurance Level — someone who hasn't
+completed the TOTP challenge this session gets redirected to
+`/owner/mfa-challenge`. But `is_platform_owner()`, used throughout this
+schema's RLS policies to grant full cross-tenant access, only ever
+checked the static `profiles.is_platform_owner` flag. A valid-but-not-
+yet-elevated (`aal1`) access token for the owner's account — issued
+right after password sign-in, before the challenge page ran — would
+still pass every `is_platform_owner()` check in the database directly,
+sidestepping the UI gate entirely for anyone calling Supabase directly
+with that token.
+
+Fixed in `supabase/migrations/0031_require_aal2_for_platform_owner.sql`:
+`is_platform_owner()` now also requires `auth.jwt() ->> 'aal' = 'aal2'`,
+mirroring at the database layer exactly what the app's own MFA gate
+already enforces client-side. The local test stub (`00_auth_stub.sql`)
+gained a matching `auth.jwt()` (real Supabase already has one; the stub
+didn't) built from the same per-key GUCs the harness already sets, and
+`connectAs()` now takes an optional `aal` (defaulting to `'aal2'`, so
+every existing test that doesn't care about MFA assurance level keeps
+working unchanged). Added a regression test
+(`tenant-isolation.test.ts`) proving an owner session that hasn't
+completed MFA (`aal1`) is denied cross-tenant visibility even with the
+flag set. Verified the founder's own account is `mfa_enrolled = true`
+before applying to production, so this doesn't lock them out.
+
 ## Not yet built (explicitly out of scope for this build session)
 
 - Vendor moderation integration for image safety checks

@@ -111,6 +111,27 @@ describe('tenant isolation (RLS)', () => {
     await client.end();
   });
 
+  it('does NOT let the platform owner see across tenants from a session that has not completed MFA (aal1)', async () => {
+    // Regression test for migration 0031: is_platform_owner() used to
+    // check only the profiles.is_platform_owner flag, with no regard for
+    // whether THIS session had actually completed the owner's mandatory
+    // MFA step-up. A valid-but-not-yet-elevated (aal1) access token for
+    // the owner's account -- e.g. issued right after password sign-in,
+    // before /owner/mfa-challenge ran -- used to still pass every
+    // is_platform_owner() check in the database.
+    const platformOwnerId = await createUser(db.adminClient, 'Platform Support Unverified');
+    await db.adminClient.query('update profiles set is_platform_owner = true where id = $1', [
+      platformOwnerId,
+    ]);
+
+    const client = await db.connectAs({ role: 'authenticated', userId: platformOwnerId, aal: 'aal1' });
+    const { rows } = await client.query('select id from tenants');
+    const ids = rows.map((r: { id: string }) => r.id);
+    expect(ids).not.toContain(tenantAId);
+    expect(ids).not.toContain(tenantBId);
+    await client.end();
+  });
+
   it('staff members cannot be added to a tenant by a non-owner in another tenant', async () => {
     const clientB = await db.connectAs({ role: 'authenticated', userId: ownerBId });
     await expect(

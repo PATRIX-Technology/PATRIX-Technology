@@ -29,6 +29,20 @@ as $$
   select coalesce(nullif(current_setting('request.jwt.claim.role', true), ''), 'anon');
 $$;
 
+-- Mirrors Supabase's auth.jwt(): the real implementation parses the whole
+-- request.jwt.claims JSON GUC. Our harness sets individual
+-- request.jwt.claim.* GUCs instead (see connectAs in
+-- tests/integration/db/setup.ts), so this stub rebuilds just the claims
+-- our own migrations actually read (currently only 'aal', for the
+-- platform-owner MFA-assurance-level check in is_platform_owner()).
+create or replace function auth.jwt() returns jsonb
+language sql stable
+as $$
+  select jsonb_build_object(
+    'aal', coalesce(nullif(current_setting('request.jwt.claim.aal', true), ''), 'aal2')
+  );
+$$;
+
 -- Roles mirroring Supabase's built-in Postgres roles.
 do $$
 begin

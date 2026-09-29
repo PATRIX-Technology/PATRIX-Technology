@@ -53,6 +53,12 @@ export async function createTestDatabase(): Promise<TestDb> {
   async function connectAs(opts: {
     role: 'anon' | 'authenticated' | 'service_role';
     userId?: string;
+    /** Defaults to 'aal2' (a completed-MFA session) so existing tests
+     * that don't care about MFA assurance level keep working unchanged
+     * — see is_platform_owner()'s aal2 check, migration
+     * 0031_require_aal2_for_platform_owner.sql. Pass 'aal1' explicitly
+     * to simulate a session that hasn't completed MFA yet. */
+    aal?: 'aal1' | 'aal2';
   }): Promise<Client> {
     const client = new Client({ connectionString: dbUrl });
     await client.connect();
@@ -61,6 +67,7 @@ export async function createTestDatabase(): Promise<TestDb> {
       await client.query(`SET request.jwt.claim.sub = '${opts.userId}'`);
     }
     await client.query(`SET request.jwt.claim.role = '${opts.role}'`);
+    await client.query(`SET request.jwt.claim.aal = '${opts.aal ?? 'aal2'}'`);
     return client;
   }
 

@@ -78,8 +78,19 @@ export default async function StoryDetailPage({
   const signedUrls = await getSignedAssetUrls(supabase, assetPaths);
 
   const allGenerated = (pages ?? []).every((p) => p.image_status === 'GENERATED');
+  // A freshly created page starts life as PENDING and is only ever moved
+  // straight to GENERATING once a worker actually claims its job -- there
+  // is no step that sets image_status to QUEUED (only the underlying
+  // story_jobs row is QUEUED). Checking only for QUEUED/GENERATING here
+  // meant a brand new story, opened only by the person who just created
+  // it, never activated AutoRefresh at all: nothing ever called
+  // kickStoryWorkerAction for it, so it sat untouched until the
+  // best-effort cron (every 5 minutes, sometimes hours late) happened to
+  // reach it -- this is what actually left the two Lara stories stuck at
+  // PENDING/0 attempts for hours. Any status short of a terminal one
+  // needs the poll running.
   const stillGenerating = (pages ?? []).some(
-    (p) => p.image_status === 'QUEUED' || p.image_status === 'GENERATING',
+    (p) => p.image_status !== 'GENERATED' && p.image_status !== 'FAILED',
   );
   const child = story.children as unknown as { first_name: string; arabic_first_name: string | null } | null;
   // Same rule as story creation: an Arabic story shows the Arabic name,

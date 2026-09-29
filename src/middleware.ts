@@ -33,6 +33,12 @@ export default async function middleware(request: NextRequest) {
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
+      // Keep in sync with src/lib/supabase/server.ts's COOKIE_OPTIONS.
+      cookieOptions: {
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 60 * 60 * 24 * 30,
+      },
       cookies: {
         getAll() {
           return request.cookies.getAll();

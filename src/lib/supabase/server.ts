@@ -8,10 +8,29 @@ import { cookies } from 'next/headers';
  * createSupabaseServiceRoleClient for that, and only in trusted server code
  * (webhooks, background workers, admin RPCs already gated on is_platform_owner()).
  */
+/**
+ * @supabase/ssr's own defaults are secure: false (no Secure attribute at
+ * all, so the cookie would ride over plain HTTP too) and maxAge: 400 days
+ * (its absolute ceiling — https://developer.chrome.com/blog/cookie-max-age-expires
+ * — chosen so the library never silently exceeds what browsers allow, not
+ * because 400 days is an appropriate session lifetime for this app).
+ * httpOnly stays false deliberately, not by oversight: the browser
+ * client (createSupabaseBrowserClient) reads this same cookie via
+ * document.cookie to attach the session to its own requests — the SSR
+ * cookie-based auth flow this app uses cannot work at all without that
+ * read access. See docs/DECISIONS.md "Session cookie hardening".
+ */
+const COOKIE_OPTIONS = {
+  secure: process.env.NODE_ENV === 'production',
+  sameSite: 'lax' as const,
+  maxAge: 60 * 60 * 24 * 30, // 30 days, not @supabase/ssr's 400-day ceiling
+};
+
 export async function createSupabaseServerClient() {
   const cookieStore = await cookies();
 
   return createServerClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, {
+    cookieOptions: COOKIE_OPTIONS,
     cookies: {
       getAll() {
         return cookieStore.getAll();

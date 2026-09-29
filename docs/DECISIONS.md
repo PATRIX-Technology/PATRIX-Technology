@@ -4145,6 +4145,62 @@ completed MFA (`aal1`) is denied cross-tenant visibility even with the
 flag set. Verified the founder's own account is `mfa_enrolled = true`
 before applying to production, so this doesn't lock them out.
 
+## Content-Security-Policy header, and session cookie hardening
+
+Follow-up to the "Full QA + security pass" MEDIUM findings on session
+cookies and missing security headers. Two changes, both in
+`next.config.mjs` and `src/lib/supabase/{server,client}.ts` +
+`src/middleware.ts`:
+
+**Session cookies.** `@supabase/ssr`'s own defaults are `secure: undefined`
+(no `Secure` attribute at all — the cookie would ride over plain HTTP
+too) and `maxAge: 400 days` (its documented absolute ceiling, not a
+considered session lifetime). All three places this app creates a
+Supabase client with cookie access now pass matching `cookieOptions`:
+`secure` in production, `sameSite: 'lax'`, and `maxAge` cut to 30 days.
+`httpOnly` deliberately stays `false` — not an oversight: the browser
+client reads this same cookie via `document.cookie` to attach the
+session to its own requests, and the SSR cookie-based auth flow this
+app uses cannot work at all without that read access. This is an
+accepted, understood tradeoff, mitigated by the CSP below narrowing
+what an XSS payload could actually do with a stolen cookie.
+
+**Content-Security-Policy.** Added via `next.config.mjs`'s `headers()`,
+alongside the security headers already there. No per-request nonce:
+that requires forcing every route to dynamic rendering (Next.js's own
+documented CSP recipe), which this app doesn't currently pay for —
+several dashboard/auth pages are SSG. Without a nonce, `script-src`
+needs `'unsafe-inline'` because Next.js itself injects real inline
+`<script>` tags for RSC hydration payloads on every single page
+(`self.__next_f.push(...)`), confirmed by inspecting a production
+build's actual HTML output — not inert JSON, and not something this
+app's own code controls. `style-src` needs it too, for this app's own
+inline `style={{...}}` attributes (a handful of components use them).
+
+Even with those two exceptions, every other directive still
+meaningfully narrows the attack surface: `object-src 'none'`,
+`base-uri 'self'`, `frame-ancestors 'none'`/`frame-src 'none'` (this
+app never embeds or is embedded), `form-action 'self'` (every form in
+this app posts to a Server Action, same-origin), and `connect-src
+'self' https://*.supabase.co` — no fetch/XHR/WebSocket to anywhere
+else, blocking the exfiltration half of most XSS payloads even though
+inline-script execution itself isn't fully closed. `img-src`/`font-src`
+allow `data:` for the QR-code images (`qrcode` npm package renders a
+data URI client-side, for both the parent consent flow and MFA
+enrollment) and Supabase Storage's `*.supabase.co` host for child
+photos/avatars. Added `Strict-Transport-Security` alongside it
+(`max-age=63072000; includeSubDomains`, no `preload` — that submission
+is effectively irreversible and wasn't asked for).
+
+Verified by building production, starting it locally, confirming the
+header's actual value with `curl -I`, and driving a real headless
+Chromium through the marketing/sign-in/sign-up/family-sign-up pages
+(Playwright) with a console listener watching for CSP violations —
+zero, across every page checked. Full nonce-based CSP (closing the
+`'unsafe-inline'` gaps) is tracked as future hardening once the
+dynamic-rendering cost is something the app is ready to pay for
+everywhere.
+
 ## Not yet built (explicitly out of scope for this build session)
 
 - Vendor moderation integration for image safety checks

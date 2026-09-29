@@ -4269,6 +4269,25 @@ or plain garbage — never gets read into memory at all). Unit tested
 both at the boundary (exactly `MAX_CSV_IMPORT_ROWS` still succeeds) and
 one over it.
 
+## Cron worker route: fail closed on a missing secret, compare it in constant time
+
+Follow-up to the "cron secret timing-safe compare + reject-if-missing"
+audit finding. `/api/cron/worker`'s auth check was
+`if (secret && authHeader !== ...)` — if `CRON_SECRET` were ever unset,
+the `secret &&` short-circuit skipped the whole check, leaving the
+route completely unauthenticated (anyone could trigger it) rather than
+refusing to serve. The comparison itself was also a plain `!==` string
+comparison, which leaks how many leading bytes matched via response
+timing.
+
+Added `isCronRequestAuthorized()` (`src/lib/domain/cron.ts`, unit
+tested), using `crypto.timingSafeEqual` with an explicit length check
+first (that function throws rather than compares on a length
+mismatch). The route now returns 500 if `CRON_SECRET` isn't configured
+at all, rather than silently allowing every request through — verified
+this doesn't break the real deployment: `CRON_SECRET` is already set
+in Vercel's production environment (`docs/NEEDS_FROM_ME.md`).
+
 ## Not yet built (explicitly out of scope for this build session)
 
 - Vendor moderation integration for image safety checks

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createSupabaseServiceRoleClient } from '@/lib/supabase/service-role';
 import { runWorkerOnce } from '@/lib/jobs/worker';
+import { isCronRequestAuthorized } from '@/lib/domain/cron';
 
 export const runtime = 'nodejs';
 // 60 is the Hobby plan's ceiling for this config value — see
@@ -23,8 +24,14 @@ export const maxDuration = 60;
  */
 export async function GET(request: Request) {
   const secret = process.env.CRON_SECRET;
-  const authHeader = request.headers.get('authorization');
-  if (secret && authHeader !== `Bearer ${secret}`) {
+  // A missing secret used to fail OPEN (the `secret &&` short-circuit
+  // skipped the check entirely), leaving this route unauthenticated —
+  // anyone could trigger it. It's a required secret, not an optional
+  // one: fail closed instead.
+  if (!secret) {
+    return NextResponse.json({ error: 'CRON_SECRET is not configured' }, { status: 500 });
+  }
+  if (!isCronRequestAuthorized(request.headers.get('authorization'), secret)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 

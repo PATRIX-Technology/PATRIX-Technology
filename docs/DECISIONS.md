@@ -4230,6 +4230,26 @@ already used in `requestConsentAction`). Added a regression test
 proving a second, unrelated tenant can no longer borrow another
 tenant's granted photo consent.
 
+## Photo upload: sniff real magic bytes instead of trusting the client-claimed type
+
+Follow-up to the "photo upload trusting client-claimed MIME type" audit
+finding. `uploadChildPhotoAction` only ever checked `file.type` against
+an allow-list — that field is just whatever the client put in the
+multipart request and is trivially spoofable; nothing stops a crafted
+request from setting `type: 'image/jpeg'` while sending arbitrary bytes.
+The claimed (not real) type was also what got written as the object's
+Storage `contentType`.
+
+Added `sniffImageMimeType()` (`src/lib/domain/children.ts`), which
+reads the actual leading bytes and matches them against JPEG (`FF D8
+FF`), PNG (`89 50 4E 47 0D 0A 1A 0A`), and WEBP (`RIFF....WEBP`)
+signatures, returning `null` for anything else. `uploadChildPhotoAction`
+now sniffs the real file content once, uses that result for both the
+allow-list check and the `contentType` actually written to Storage, and
+never reads `file.type` at all. Unit tested
+(`tests/unit/photo-sniff.test.ts`) including the exact attack this
+closes: a `<script>` payload rejected regardless of what type it claims.
+
 ## Not yet built (explicitly out of scope for this build session)
 
 - Vendor moderation integration for image safety checks

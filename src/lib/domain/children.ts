@@ -1,6 +1,49 @@
 import { z } from 'zod';
 import { AvatarConfigSchema, DEFAULT_AVATAR_CONFIG } from './avatar';
 
+/**
+ * Identifies an image file by its actual leading bytes rather than the
+ * browser-supplied `file.type` — a File's `type` is just whatever the
+ * client claims in the multipart request and is trivially spoofable
+ * (nothing stops someone from POSTing arbitrary bytes with
+ * `type: 'image/jpeg'` set). Used by uploadChildPhotoAction so both the
+ * allow-list check AND the contentType actually written to Storage are
+ * based on what the file really is, not what it claims to be. Returns
+ * null for anything that isn't one of the three types this app accepts.
+ */
+export function sniffImageMimeType(bytes: Uint8Array): 'image/jpeg' | 'image/png' | 'image/webp' | null {
+  if (bytes.length >= 3 && bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff) {
+    return 'image/jpeg';
+  }
+  if (
+    bytes.length >= 8 &&
+    bytes[0] === 0x89 &&
+    bytes[1] === 0x50 &&
+    bytes[2] === 0x4e &&
+    bytes[3] === 0x47 &&
+    bytes[4] === 0x0d &&
+    bytes[5] === 0x0a &&
+    bytes[6] === 0x1a &&
+    bytes[7] === 0x0a
+  ) {
+    return 'image/png';
+  }
+  if (
+    bytes.length >= 12 &&
+    bytes[0] === 0x52 &&
+    bytes[1] === 0x49 &&
+    bytes[2] === 0x46 &&
+    bytes[3] === 0x46 &&
+    bytes[8] === 0x57 &&
+    bytes[9] === 0x45 &&
+    bytes[10] === 0x42 &&
+    bytes[11] === 0x50
+  ) {
+    return 'image/webp';
+  }
+  return null;
+}
+
 /** Shared shape for the three optional name fields (last name, Arabic
  * first/last name) — same rules as the required first name, just optional. */
 function optionalNameField(label: string) {

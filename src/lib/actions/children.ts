@@ -4,7 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { createSupabaseServiceRoleClient } from '@/lib/supabase/service-role';
 import { getCurrentTenantContext } from '@/lib/domain/session';
-import { ChildFormSchema, parseChildrenCsv } from '@/lib/domain/children';
+import { ChildFormSchema, parseChildrenCsv, sniffImageMimeType } from '@/lib/domain/children';
 import { DEFAULT_AVATAR_CONFIG } from '@/lib/domain/avatar';
 import { buildConsentScope, generateConsentToken } from '@/lib/domain/consent';
 import { deleteChildCascade, deleteStoryAssetsForChild, deleteChildPhoto } from '@/lib/domain/deletion';
@@ -257,7 +257,6 @@ export async function deleteChildAction(locale: string, childId: string): Promis
 }
 
 const MAX_PHOTO_BYTES = 8 * 1024 * 1024; // 8MB
-const ALLOWED_PHOTO_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
 
 /**
  * Uploads a reference photo for photo-based story personalisation.
@@ -281,11 +280,19 @@ export async function uploadChildPhotoAction(locale: string, formData: FormData)
   const childId = String(formData.get('childId') ?? '');
   const file = formData.get('photo');
   if (!childId || !(file instanceof File)) return { error: 'No photo provided.' };
-  if (!ALLOWED_PHOTO_TYPES.has(file.type)) {
-    return { error: 'Please upload a JPEG, PNG, or WEBP image.' };
-  }
   if (file.size > MAX_PHOTO_BYTES) {
     return { error: 'Photo must be smaller than 8MB.' };
+  }
+
+  // file.type is just whatever the client claimed in the multipart
+  // request — trivially spoofable, and previously the only check here.
+  // Sniff the real magic bytes instead, so both the allow-list check and
+  // the contentType actually written to Storage reflect what the file
+  // really is, not what it claims to be.
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  const sniffedType = sniffImageMimeType(bytes);
+  if (!sniffedType) {
+    return { error: 'Please upload a JPEG, PNG, or WEBP image.' };
   }
 
   // childId is raw form input — verify it's actually this tenant's own
@@ -350,14 +357,13 @@ export async function uploadChildPhotoAction(locale: string, formData: FormData)
     }
   }
 
-  const extension = file.type === 'image/png' ? 'png' : file.type === 'image/webp' ? 'webp' : 'jpg';
+  const extension = sniffedType === 'image/png' ? 'png' : sniffedType === 'image/webp' ? 'webp' : 'jpg';
   const assetPath = `${context.tenantId}/children/${childId}/photo.${extension}`;
-  const bytes = new Uint8Array(await file.arrayBuffer());
 
   const serviceClient = createSupabaseServiceRoleClient();
   const { error: uploadError } = await serviceClient.storage
     .from(STORY_ASSETS_BUCKET)
-    .upload(assetPath, bytes, { contentType: file.type, upsert: true });
+    .upload(assetPath, bytes, { contentType: sniffedType, upsert: true });
   if (uploadError) return { error: uploadError.message };
 
   const { error: updateError } = await supabase

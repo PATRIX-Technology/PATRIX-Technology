@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { acceptStaffInviteAction, type AcceptStaffInviteResult } from '@/lib/actions/staff-invites-public';
 import { PASSWORD_MIN_LENGTH, PASSWORD_PATTERN } from '@/lib/domain/password';
-import { Button } from '@/components/ui/Button';
+import { SubmitButton } from '@/components/ui/SubmitButton';
 import { TextField } from '@/components/ui/Input';
 
 export function AcceptStaffInviteForm({
@@ -53,9 +53,7 @@ export function AcceptStaffInviteForm({
           {state.error}
         </p>
       )}
-      <Button type="submit" size="lg">
-        {t('submit')}
-      </Button>
+      <SubmitButton size="lg">{t('submit')}</SubmitButton>
     </form>
   );
 }

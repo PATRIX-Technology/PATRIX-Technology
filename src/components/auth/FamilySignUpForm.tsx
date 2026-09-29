@@ -7,7 +7,7 @@ import { useTranslations } from 'next-intl';
 import { familySignUpAction } from '@/lib/actions/family';
 import type { ActionResult } from '@/lib/actions/auth';
 import { PASSWORD_MIN_LENGTH, PASSWORD_PATTERN } from '@/lib/domain/password';
-import { Button } from '@/components/ui/Button';
+import { SubmitButton } from '@/components/ui/SubmitButton';
 import { TextField } from '@/components/ui/Input';
 
 export function FamilySignUpForm({ locale, referralCode }: { locale: string; referralCode?: string }) {
@@ -43,9 +43,7 @@ export function FamilySignUpForm({ locale, referralCode }: { locale: string; ref
           {state.error}
         </p>
       )}
-      <Button type="submit" size="lg">
-        {t('submit')}
-      </Button>
+      <SubmitButton size="lg">{t('submit')}</SubmitButton>
     </form>
   );
 }

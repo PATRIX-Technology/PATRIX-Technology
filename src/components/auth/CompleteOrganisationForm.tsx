@@ -5,7 +5,7 @@ import { useFormState } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { completeOrganisationSignupAction, type ActionResult } from '@/lib/actions/auth';
-import { Button } from '@/components/ui/Button';
+import { SubmitButton } from '@/components/ui/SubmitButton';
 import { TextField } from '@/components/ui/Input';
 
 export function CompleteOrganisationForm({
@@ -39,9 +39,7 @@ export function CompleteOrganisationForm({
           {state.error}
         </p>
       )}
-      <Button type="submit" size="lg">
-        {tComplete('submit')}
-      </Button>
+      <SubmitButton size="lg">{tComplete('submit')}</SubmitButton>
     </form>
   );
 }

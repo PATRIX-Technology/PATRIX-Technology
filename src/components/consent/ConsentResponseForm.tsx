@@ -3,7 +3,7 @@
 import { useFormState } from 'react-dom';
 import { useTranslations } from 'next-intl';
 import { respondToConsentAction, type RespondToConsentResult } from '@/lib/actions/consent-public';
-import { Button } from '@/components/ui/Button';
+import { SubmitButton } from '@/components/ui/SubmitButton';
 
 export function ConsentResponseForm({ token }: { token: string }) {
   const t = useTranslations('consent');
@@ -31,14 +31,12 @@ export function ConsentResponseForm({ token }: { token: string }) {
     <div className="flex flex-col gap-4">
       <div className="flex gap-3">
         <form action={grantFormAction}>
-          <Button type="submit" size="lg">
-            {t('grant')}
-          </Button>
+          <SubmitButton size="lg">{t('grant')}</SubmitButton>
         </form>
         <form action={declineFormAction}>
-          <Button type="submit" size="lg" variant="secondary">
+          <SubmitButton size="lg" variant="secondary">
             {t('decline')}
-          </Button>
+          </SubmitButton>
         </form>
       </div>
       {grantState?.error && <p className="text-sm text-coral-600">{grantState.error}</p>}

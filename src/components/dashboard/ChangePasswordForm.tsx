@@ -6,7 +6,7 @@ import { useTranslations } from 'next-intl';
 import { changePasswordAction } from '@/lib/actions/auth';
 import type { ActionResult } from '@/lib/actions/auth';
 import { PASSWORD_MIN_LENGTH, PASSWORD_PATTERN } from '@/lib/domain/password';
-import { Button } from '@/components/ui/Button';
+import { SubmitButton } from '@/components/ui/SubmitButton';
 import { TextField } from '@/components/ui/Input';
 import { useToast } from '@/components/ui/Toast';
 
@@ -62,9 +62,7 @@ export function ChangePasswordForm() {
         title={tAuth('passwordHint', { min: PASSWORD_MIN_LENGTH })}
         autoComplete="new-password"
       />
-      <Button type="submit" className="self-start">
-        {t('submit')}
-      </Button>
+      <SubmitButton className="self-start">{t('submit')}</SubmitButton>
     </form>
   );
 }

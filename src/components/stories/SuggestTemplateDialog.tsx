@@ -7,6 +7,7 @@ import { suggestStoryTemplateAction } from '@/lib/actions/story-suggestions';
 import type { ActionResult } from '@/lib/actions/auth';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
+import { SubmitButton } from '@/components/ui/SubmitButton';
 import { whatsappLink } from '@/lib/config/contact';
 
 /**
@@ -111,7 +112,7 @@ export function SuggestTemplateDialog({
               <Button type="button" variant="secondary" onClick={handleClose}>
                 {t('suggestIdeaClose')}
               </Button>
-              <Button type="submit">{t('suggestIdeaSubmit')}</Button>
+              <SubmitButton>{t('suggestIdeaSubmit')}</SubmitButton>
             </div>
           </form>
         )}

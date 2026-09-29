@@ -6,6 +6,7 @@ import { useTranslations } from 'next-intl';
 import { removeChildPhotoAction, uploadChildPhotoAction } from '@/lib/actions/children';
 import type { ActionResult } from '@/lib/actions/auth';
 import { Button } from '@/components/ui/Button';
+import { SubmitButton } from '@/components/ui/SubmitButton';
 
 export function PhotoUpload({
   locale,
@@ -77,9 +78,9 @@ export function PhotoUpload({
         className="focus-ring rounded-lg border border-[rgb(var(--color-border))] p-2 text-sm"
       />
       {uploadState?.error && <p className="text-sm text-coral-600">{uploadState.error}</p>}
-      <Button type="submit" size="sm" className="self-start">
+      <SubmitButton size="sm" className="self-start">
         {t('uploadPhoto')}
-      </Button>
+      </SubmitButton>
     </form>
   );
 }

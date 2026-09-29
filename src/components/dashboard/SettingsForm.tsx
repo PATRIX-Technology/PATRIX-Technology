@@ -4,7 +4,7 @@ import { useFormState } from 'react-dom';
 import { useTranslations } from 'next-intl';
 import { updateTenantBrandingAction } from '@/lib/actions/tenant';
 import type { ActionResult } from '@/lib/actions/auth';
-import { Button } from '@/components/ui/Button';
+import { SubmitButton } from '@/components/ui/SubmitButton';
 import { TextField } from '@/components/ui/Input';
 import type { Tenant, TenantType } from '@/types/database';
 
@@ -65,9 +65,7 @@ export function SettingsForm({
         </>
       )}
       {state?.error && <p className="text-sm text-coral-600">{state.error}</p>}
-      <Button type="submit" className="self-start">
-        {tCommon('save')}
-      </Button>
+      <SubmitButton className="self-start">{tCommon('save')}</SubmitButton>
     </form>
   );
 }

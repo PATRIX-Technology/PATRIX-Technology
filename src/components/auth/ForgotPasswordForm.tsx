@@ -3,7 +3,7 @@
 import { useFormState } from 'react-dom';
 import { useTranslations } from 'next-intl';
 import { requestPasswordResetAction, type ActionResult } from '@/lib/actions/auth';
-import { Button } from '@/components/ui/Button';
+import { SubmitButton } from '@/components/ui/SubmitButton';
 import { TextField } from '@/components/ui/Input';
 
 export function ForgotPasswordForm({ locale }: { locale: string }) {
@@ -25,9 +25,7 @@ export function ForgotPasswordForm({ locale }: { locale: string }) {
           {state.error}
         </p>
       )}
-      <Button type="submit" size="lg">
-        {t('submit')}
-      </Button>
+      <SubmitButton size="lg">{t('submit')}</SubmitButton>
     </form>
   );
 }

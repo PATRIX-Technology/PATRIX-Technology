@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl';
 import { useFormState } from 'react-dom';
 import type { ActionResult } from '@/lib/actions/auth';
 import { Button } from '@/components/ui/Button';
+import { SubmitButton } from '@/components/ui/SubmitButton';
 import { TextField } from '@/components/ui/Input';
 import { AvatarPicker } from './AvatarPicker';
 import { DEFAULT_AVATAR_CONFIG, type AvatarConfig } from '@/lib/domain/avatar';
@@ -124,7 +125,7 @@ export function ChildForm({
         <Button type="button" variant="secondary" onClick={onCancel}>
           {tForm('cancel')}
         </Button>
-        <Button type="submit">{submitLabel}</Button>
+        <SubmitButton>{submitLabel}</SubmitButton>
       </div>
     </form>
   );

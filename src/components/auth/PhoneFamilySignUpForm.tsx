@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { sendFamilySignUpOtpAction, verifyFamilySignUpOtpAction } from '@/lib/actions/family';
 import type { ActionResult } from '@/lib/actions/auth';
-import { Button } from '@/components/ui/Button';
+import { SubmitButton } from '@/components/ui/SubmitButton';
 import { TextField } from '@/components/ui/Input';
 import { CountryPhoneField } from '@/components/auth/CountryPhoneField';
 
@@ -49,9 +49,9 @@ export function PhoneFamilySignUpForm({ locale, referralCode }: { locale: string
             {sendState.error}
           </p>
         )}
-        <Button type="submit" size="lg" disabled={!phone}>
+        <SubmitButton size="lg" disabled={!phone}>
           {t('sendCode')}
-        </Button>
+        </SubmitButton>
       </form>
     );
   }
@@ -77,9 +77,7 @@ export function PhoneFamilySignUpForm({ locale, referralCode }: { locale: string
           {verifyState.error}
         </p>
       )}
-      <Button type="submit" size="lg">
-        {t('verify')}
-      </Button>
+      <SubmitButton size="lg">{t('verify')}</SubmitButton>
       <button
         type="button"
         onClick={() => setStep('details')}

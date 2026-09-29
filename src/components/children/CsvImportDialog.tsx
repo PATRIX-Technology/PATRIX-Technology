@@ -6,6 +6,7 @@ import { useFormState } from 'react-dom';
 import { importChildrenCsvAction, type ImportCsvResult } from '@/lib/actions/children';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
+import { SubmitButton } from '@/components/ui/SubmitButton';
 
 export function CsvImportDialog({ locale }: { locale: string }) {
   const t = useTranslations('children');
@@ -145,7 +146,7 @@ export function CsvImportDialog({ locale }: { locale: string }) {
             <Button type="button" variant="secondary" onClick={() => setOpen(false)}>
               Close
             </Button>
-            <Button type="submit">{t('importCsv')}</Button>
+            <SubmitButton>{t('importCsv')}</SubmitButton>
           </div>
         </form>
       </Modal>

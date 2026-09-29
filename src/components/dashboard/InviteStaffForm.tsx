@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl';
 import { useFormState } from 'react-dom';
 import { inviteStaffAction, type InviteStaffResult } from '@/lib/actions/tenant';
 import { Button } from '@/components/ui/Button';
+import { SubmitButton } from '@/components/ui/SubmitButton';
 import { TextField } from '@/components/ui/Input';
 
 export function InviteStaffForm({ locale }: { locale: string }) {
@@ -45,7 +46,7 @@ export function InviteStaffForm({ locale }: { locale: string }) {
             <option value="nursery_staff">{t('roleStaffLabel')}</option>
           </select>
         </div>
-        <Button type="submit">{t('inviteSubmit')}</Button>
+        <SubmitButton>{t('inviteSubmit')}</SubmitButton>
       </form>
       {state?.error && <p className="text-sm text-coral-600">{state.error}</p>}
       {state?.inviteUrl && (

@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { resetPasswordAction, type ActionResult } from '@/lib/actions/auth';
 import { PASSWORD_MIN_LENGTH, PASSWORD_PATTERN } from '@/lib/domain/password';
-import { Button } from '@/components/ui/Button';
+import { SubmitButton } from '@/components/ui/SubmitButton';
 import { TextField } from '@/components/ui/Input';
 
 export function ResetPasswordForm({ locale }: { locale: string }) {
@@ -46,9 +46,7 @@ export function ResetPasswordForm({ locale }: { locale: string }) {
           {state.error}
         </p>
       )}
-      <Button type="submit" size="lg">
-        {t('submit')}
-      </Button>
+      <SubmitButton size="lg">{t('submit')}</SubmitButton>
     </form>
   );
 }

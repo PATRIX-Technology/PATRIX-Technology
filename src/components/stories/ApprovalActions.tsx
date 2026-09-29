@@ -6,6 +6,7 @@ import { useFormState } from 'react-dom';
 import { approveStoryAction, rejectStoryAction } from '@/lib/actions/stories';
 import type { ActionResult } from '@/lib/actions/auth';
 import { Button } from '@/components/ui/Button';
+import { SubmitButton } from '@/components/ui/SubmitButton';
 
 export function ApprovalActions({
   locale,
@@ -37,9 +38,7 @@ export function ApprovalActions({
     <div className="space-y-3">
       <div className="flex gap-3">
         <form action={approveFormAction}>
-          <Button type="submit" disabled={!canApprove}>
-            {t('approve')}
-          </Button>
+          <SubmitButton disabled={!canApprove}>{t('approve')}</SubmitButton>
         </form>
         <Button variant="danger" onClick={() => setShowReject((v) => !v)}>
           {t('reject')}
@@ -57,9 +56,7 @@ export function ApprovalActions({
             required
             className="focus-ring flex-1 rounded-lg border border-[rgb(var(--color-border))] px-3 py-2 text-sm"
           />
-          <Button type="submit" variant="danger">
-            {t('confirmReject')}
-          </Button>
+          <SubmitButton variant="danger">{t('confirmReject')}</SubmitButton>
         </form>
       )}
       {rejectState?.error && <p className="text-sm text-coral-600">{rejectState.error}</p>}

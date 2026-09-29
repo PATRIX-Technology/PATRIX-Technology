@@ -5,7 +5,7 @@ import { useTranslations } from 'next-intl';
 import { submitDemoRequestAction } from '@/lib/actions/demo-request';
 import type { ActionResult } from '@/lib/actions/auth';
 import { whatsappLink } from '@/lib/config/contact';
-import { Button } from '@/components/ui/Button';
+import { SubmitButton } from '@/components/ui/SubmitButton';
 import { TextField } from '@/components/ui/Input';
 
 export function DemoRequestForm({ locale }: { locale: string }) {
@@ -53,9 +53,7 @@ export function DemoRequestForm({ locale }: { locale: string }) {
           </p>
         )}
         <div className="flex flex-wrap items-center gap-3 pt-1">
-          <Button type="submit" size="lg">
-            {t('submit')}
-          </Button>
+          <SubmitButton size="lg">{t('submit')}</SubmitButton>
           {waLink && (
             <a href={waLink} target="_blank" rel="noreferrer" className="text-sm font-medium text-lagoon-600">
               {t('whatsappCta')}

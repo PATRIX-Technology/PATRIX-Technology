@@ -7,6 +7,7 @@ import QRCode from 'qrcode';
 import { requestConsentAction, withdrawConsentAction, type RequestConsentResult } from '@/lib/actions/children';
 import type { ActionResult } from '@/lib/actions/auth';
 import { Button } from '@/components/ui/Button';
+import { SubmitButton } from '@/components/ui/SubmitButton';
 import { Badge } from '@/components/ui/Badge';
 import type { ConsentStatus } from '@/types/database';
 
@@ -74,9 +75,9 @@ export function ConsentPanel({
               {t('photoConsentCheckboxLabel')}
             </label>
           )}
-          <Button type="submit" variant="secondary" className="self-start">
+          <SubmitButton variant="secondary" className="self-start">
             {t('sendLink')}
-          </Button>
+          </SubmitButton>
         </form>
         {consentStatus === 'granted' && (
           <form
@@ -85,9 +86,7 @@ export function ConsentPanel({
               if (!confirm(t('withdrawConfirm'))) event.preventDefault();
             }}
           >
-            <Button type="submit" variant="danger">
-              {t('withdraw')}
-            </Button>
+            <SubmitButton variant="danger">{t('withdraw')}</SubmitButton>
           </form>
         )}
       </div>

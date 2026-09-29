@@ -20,7 +20,11 @@ const REPO_ROOT = join(__dirname, '..', '..', '..');
 export interface TestDb {
   adminClient: Client;
   databaseName: string;
-  connectAs(opts: { role: 'anon' | 'authenticated' | 'service_role'; userId?: string }): Promise<Client>;
+  connectAs(opts: {
+    role: 'anon' | 'authenticated' | 'service_role';
+    userId?: string;
+    aal?: 'aal1' | 'aal2';
+  }): Promise<Client>;
   teardown(): Promise<void>;
 }
 

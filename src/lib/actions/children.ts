@@ -288,6 +288,21 @@ export async function uploadChildPhotoAction(locale: string, formData: FormData)
     return { error: 'Photo must be smaller than 8MB.' };
   }
 
+  // childId is raw form input — verify it's actually this tenant's own
+  // child before doing anything else with it. Without this, a tenant
+  // member could submit another tenant's child id and, if that child
+  // happened to already have photo consent granted, borrow it to skip
+  // this tenant's own consent gate entirely (migration 0032 closes the
+  // same hole at the database level too, in has_granted_photo_consent
+  // itself; this is the friendlier, earlier error).
+  const { data: child } = await supabase
+    .from('children')
+    .select('id')
+    .eq('id', childId)
+    .eq('tenant_id', context.tenantId)
+    .maybeSingle();
+  if (!child) return { error: 'Child not found.' };
+
   const { data: hasConsent, error: consentError } = await supabase.rpc('has_granted_photo_consent', {
     target_child_id: childId,
   });

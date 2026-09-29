@@ -4201,6 +4201,35 @@ zero, across every page checked. Full nonce-based CSP (closing the
 dynamic-rendering cost is something the app is ready to pay for
 everywhere.
 
+## Photo consent check wasn't scoped to the caller's tenant
+
+Follow-up to the "service-role storage path validation" / "childId
+validation" audit items. `has_granted_photo_consent(target_child_id)`
+(migration 0010) checked only whether ANY child with that id had a
+granted, photo-scoped consent row — never whether the CALLER belonged
+to that child's tenant. `uploadChildPhotoAction`
+(`src/lib/actions/children.ts`) takes `childId` straight from form
+input and passed it into this RPC with no ownership check of its own.
+
+A tenant member could therefore submit another tenant's child id and,
+if that child happened to already have photo consent granted (any
+family-tenant child auto-grants), the check would return true —
+letting them skip their OWN tenant's consent gate by borrowing
+someone else's already-granted record. The actual storage write and
+`children.photo_asset_path` update stay correctly scoped to the
+caller's own tenant regardless (storage RLS and `children`'s
+tenant-scoped update policy both key off the caller's real tenant),
+so this was never a cross-tenant read/write — but it did bypass the
+consent requirement itself, which is the whole point of the check.
+
+Fixed in both layers: `supabase/migrations/0032_scope_photo_consent_check_to_tenant.sql`
+adds `is_tenant_member(cr.tenant_id) or is_platform_owner()` to the
+RPC itself, and `uploadChildPhotoAction` now verifies `childId`
+belongs to `context.tenantId` before calling it at all (same pattern
+already used in `requestConsentAction`). Added a regression test
+proving a second, unrelated tenant can no longer borrow another
+tenant's granted photo consent.
+
 ## Not yet built (explicitly out of scope for this build session)
 
 - Vendor moderation integration for image safety checks

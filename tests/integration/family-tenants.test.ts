@@ -157,4 +157,42 @@ describe('family tenants (Phase 4 scaffolding)', () => {
     expect(after.rows[0].granted).toBe(true);
     await client.end();
   });
+
+  it('does NOT let a different tenant borrow another tenant\'s granted photo consent (migration 0032)', async () => {
+    // Regression test: has_granted_photo_consent(childId) used to check
+    // only whether ANY child with that id had granted photo consent,
+    // with no check that the CALLER belonged to that child's tenant.
+    // uploadChildPhotoAction takes childId as raw form input, so a
+    // tenant member could submit another tenant's (granted) child id
+    // and skip their own tenant's consent gate entirely.
+    const ownerId = await createUser(db.adminClient, 'Photo Family Owner 2');
+    const client = await db.connectAs({ role: 'authenticated', userId: ownerId });
+    const tenantRow = await client.query(`select create_family_tenant($1, $2) as tenant_id`, [
+      'Photo Family 2',
+      'Photo Owner 2',
+    ]);
+    const tenantId = tenantRow.rows[0].tenant_id;
+    const childRow = await client.query(
+      `insert into children (tenant_id, first_name, pronoun) values ($1, 'Nour', 'she') returning id`,
+      [tenantId],
+    );
+    const childId = childRow.rows[0].id;
+    await client.query(
+      `insert into consent_requests (tenant_id, child_id, token_hash, scope, status, requested_by, responded_at)
+       values ($1, $2, $3, $4, 'granted', $5, now())`,
+      [tenantId, childId, `test-hash-2-${childId}`, { story: true, photo: true }, ownerId],
+    );
+    await client.end();
+
+    const otherOwnerId = await createUser(db.adminClient, 'Unrelated Family Owner');
+    const otherClient = await db.connectAs({ role: 'authenticated', userId: otherOwnerId });
+    await otherClient.query(`select create_family_tenant($1, $2) as tenant_id`, [
+      'Unrelated Family',
+      'Unrelated Owner',
+    ]);
+
+    const result = await otherClient.query('select has_granted_photo_consent($1) as granted', [childId]);
+    expect(result.rows[0].granted).toBe(false);
+    await otherClient.end();
+  });
 });

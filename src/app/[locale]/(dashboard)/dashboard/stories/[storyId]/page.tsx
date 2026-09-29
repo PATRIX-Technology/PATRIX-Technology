@@ -22,9 +22,19 @@ export default async function StoryDetailPage({
   const t = await getTranslations('stories');
   if (!context) return null;
 
+  // children!stories_child_id_fkey disambiguates the embed: migration 0030
+  // added a second FK from stories to children (the composite
+  // stories_child_tenant_fkey, for cross-tenant integrity), so PostgREST
+  // can no longer infer a single relationship on its own. Left as a bare
+  // `children(...)` embed, this query silently errors ("more than one
+  // relationship was found") -- and since the error here is discarded,
+  // `story` comes back undefined and this page 404s. That broke viewing
+  // ANY story (detail page, list page, PDF render -- see the same fix in
+  // story-pdf.ts and stories/page.tsx) for every tenant, not just this
+  // story, ever since 0030 shipped. Found via a live end-to-end QA pass.
   const { data: story } = await supabase
     .from('stories')
-    .select('*, children(first_name, arabic_first_name)')
+    .select('*, children!stories_child_id_fkey(first_name, arabic_first_name)')
     .eq('id', params.storyId)
     .eq('tenant_id', context.tenantId)
     .maybeSingle();

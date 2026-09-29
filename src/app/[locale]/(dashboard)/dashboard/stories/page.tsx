@@ -33,9 +33,13 @@ export default async function StoriesPage({ params }: { params: { locale: string
     .eq('tenant_id', context.tenantId)
     .eq('status', 'APPROVED');
 
+  // children!stories_child_id_fkey disambiguates the embed -- see the
+  // fuller note in stories/[storyId]/page.tsx. Without it, this whole
+  // list query silently errors and every tenant with existing stories
+  // sees an empty "No stories yet" list instead of their real stories.
   const { data: stories } = await supabase
     .from('stories')
-    .select('id, child_id, theme_key, status, locale, created_at, children(first_name)')
+    .select('id, child_id, theme_key, status, locale, created_at, children!stories_child_id_fkey(first_name)')
     .eq('tenant_id', context.tenantId)
     .order('created_at', { ascending: false });
 

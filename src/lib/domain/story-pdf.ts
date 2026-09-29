@@ -31,9 +31,13 @@ export async function renderApprovedStoryPdf(
   storyId: string,
   context: TenantContext,
 ): Promise<RenderedStoryPdf> {
+  // children!stories_child_id_fkey disambiguates the embed -- see the
+  // fuller note in stories/[storyId]/page.tsx. Without it this query
+  // silently errored for every PDF/ZIP download, surfacing only as the
+  // generic "Could not load story" thrown below.
   const { data: story, error: storyError } = await supabase
     .from('stories')
-    .select('*, children(first_name, arabic_first_name)')
+    .select('*, children!stories_child_id_fkey(first_name, arabic_first_name)')
     .eq('id', storyId)
     .eq('tenant_id', context.tenantId)
     .eq('status', 'APPROVED')

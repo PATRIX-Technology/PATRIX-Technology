@@ -95,7 +95,7 @@ export default async function StoriesPage({ params }: { params: { locale: string
         </div>
       </div>
       {!stories || stories.length === 0 ? (
-        <EmptyState title="No stories yet" body="Create one from a child's profile page." />
+        <EmptyState title={t('emptyTitle')} body={t('emptyBody')} />
       ) : (
         <div className="space-y-4">
           {sortedFolders.map((folder) => (
@@ -113,9 +113,9 @@ export default async function StoriesPage({ params }: { params: { locale: string
                 <table className="w-full border-t border-[rgb(var(--color-border))] text-sm">
                   <thead>
                     <tr className="border-b border-[rgb(var(--color-border))] text-left text-ink-500">
-                      <th className="p-4">Theme</th>
-                      <th className="p-4">Language</th>
-                      <th className="p-4">Status</th>
+                      <th className="p-4">{t('columnTheme')}</th>
+                      <th className="p-4">{t('columnLanguage')}</th>
+                      <th className="p-4">{t('columnStatus')}</th>
                     </tr>
                   </thead>
                   <tbody>

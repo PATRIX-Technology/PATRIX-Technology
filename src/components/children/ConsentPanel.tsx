@@ -71,7 +71,7 @@ export function ConsentPanel({
                 onChange={(e) => setIncludePhoto(e.target.checked)}
                 className="h-4 w-4"
               />
-              Also ask permission to use a photo for this story
+              {t('photoConsentCheckboxLabel')}
             </label>
           )}
           <Button type="submit" variant="secondary" className="self-start">
@@ -98,10 +98,10 @@ export function ConsentPanel({
       {requestState?.consentUrl && (
         <div className="rounded-xl2 border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-4">
           <p className="mb-2 text-sm font-medium text-ink-700">
-            Share this link or QR code with the parent:
+            {t('shareLinkPrompt')}
           </p>
           <code className="block break-all rounded bg-ink-50 p-2 text-xs">{requestState.consentUrl}</code>
-          {qrDataUrl && <img src={qrDataUrl} alt="Consent QR code" className="mt-3 h-40 w-40" />}
+          {qrDataUrl && <img src={qrDataUrl} alt={t('qrCodeAlt')} className="mt-3 h-40 w-40" />}
         </div>
       )}
     </div>

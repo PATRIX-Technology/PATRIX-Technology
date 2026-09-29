@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Capacitor } from '@capacitor/core';
 import { Filesystem, Directory } from '@capacitor/filesystem';
 import { Share } from '@capacitor/share';
+import { useTranslations } from 'next-intl';
 import { Button, type ButtonProps } from '@/components/ui/Button';
 import { useToast } from '@/components/ui/Toast';
 
@@ -117,6 +118,7 @@ export function DownloadButton({
   failedTitle: string;
   failedBody: string;
 } & Omit<ButtonProps, 'onClick' | 'isLoading'>) {
+  const t = useTranslations('stories');
   const showToast = useToast();
   const [loading, setLoading] = useState(false);
 
@@ -132,8 +134,8 @@ export function DownloadButton({
       // JS) up front.
       if (isIOS()) {
         showToast({
-          title: 'Opening your PDF',
-          description: 'To save it, tap the Share icon in Safari, then "Save to Files".',
+          title: t('iosSaveTitle'),
+          description: t('iosSaveBody'),
           tone: 'info',
         });
       }

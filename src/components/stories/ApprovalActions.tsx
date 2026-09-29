@@ -46,19 +46,19 @@ export function ApprovalActions({
         </Button>
       </div>
       {!canApprove && (
-        <p className="text-xs text-ink-500">Every page must finish generating before this story can be approved.</p>
+        <p className="text-xs text-ink-500">{t('approvalBlockedNotice')}</p>
       )}
       {approveState?.error && <p className="text-sm text-coral-600">{approveState.error}</p>}
       {showReject && (
         <form action={rejectFormAction} className="flex gap-2">
           <input
             name="reason"
-            placeholder="Reason for rejection"
+            placeholder={t('rejectReasonPlaceholder')}
             required
             className="focus-ring flex-1 rounded-lg border border-[rgb(var(--color-border))] px-3 py-2 text-sm"
           />
           <Button type="submit" variant="danger">
-            Confirm reject
+            {t('confirmReject')}
           </Button>
         </form>
       )}

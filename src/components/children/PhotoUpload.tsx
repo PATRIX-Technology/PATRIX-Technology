@@ -2,6 +2,7 @@
 
 import { useRef, useState } from 'react';
 import { useFormState } from 'react-dom';
+import { useTranslations } from 'next-intl';
 import { removeChildPhotoAction, uploadChildPhotoAction } from '@/lib/actions/children';
 import type { ActionResult } from '@/lib/actions/auth';
 import { Button } from '@/components/ui/Button';
@@ -25,6 +26,7 @@ export function PhotoUpload({
    * instead of the nursery flow's separate request/wait/respond steps. */
   requireFamilyConsentCheckbox?: boolean;
 }) {
+  const t = useTranslations('children.photoUpload');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploadState, uploadFormAction] = useFormState<ActionResult, FormData>(
     async (_prev, formData) => uploadChildPhotoAction(locale, formData),
@@ -43,10 +45,10 @@ export function PhotoUpload({
       <div className="flex items-center gap-4">
         {photoUrl && (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={photoUrl} alt="Reference photo" className="h-20 w-20 rounded-xl2 object-cover" />
+          <img src={photoUrl} alt={t('referencePhotoAlt')} className="h-20 w-20 rounded-xl2 object-cover" />
         )}
         <Button variant="danger" size="sm" onClick={handleRemove} isLoading={isRemoving}>
-          Remove photo
+          {t('removePhoto')}
         </Button>
       </div>
     );
@@ -63,11 +65,7 @@ export function PhotoUpload({
             required
             className="focus-ring mt-0.5 h-4 w-4 rounded border-[rgb(var(--color-border))]"
           />
-          <span>
-            I am this child&apos;s parent or legal guardian, and I consent to Ownly and its AI
-            illustration provider (Google Gemini) using this photo solely to personalise this
-            child&apos;s storybook illustrations.
-          </span>
+          <span>{t('familyConsentText')}</span>
         </label>
       )}
       <input
@@ -80,7 +78,7 @@ export function PhotoUpload({
       />
       {uploadState?.error && <p className="text-sm text-coral-600">{uploadState.error}</p>}
       <Button type="submit" size="sm" className="self-start">
-        Upload photo
+        {t('uploadPhoto')}
       </Button>
     </form>
   );

@@ -49,7 +49,7 @@ export function RegeneratePageButton({
   }, [state]);
 
   if (remaining <= 0) {
-    return <p className="text-xs text-ink-400">Regeneration limit reached for this page.</p>;
+    return <p className="text-xs text-ink-400">{t('regenerationLimitReached')}</p>;
   }
 
   return (

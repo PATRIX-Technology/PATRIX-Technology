@@ -112,7 +112,7 @@ export default async function ChildDetailPage({
               </span>
             )}
           </h1>
-          <p className="text-sm text-ink-500">{child.class_name ?? 'No class assigned'}</p>
+          <p className="text-sm text-ink-500">{child.class_name ?? t('children.noClassAssigned')}</p>
         </div>
         <EditChildDialog
           locale={params.locale}
@@ -132,13 +132,8 @@ export default async function ChildDetailPage({
 
       {context.tenantType === 'family' ? (
         <Card>
-          <CardTitle>Consent</CardTitle>
-          <p className="mt-2 text-sm text-ink-600">
-            As this child&apos;s parent or guardian, your consent to create and read their storybooks
-            was recorded automatically when you added them to your family account. Uploading a
-            reference photo is separate and needs a one-time confirmation, shown below, since the
-            photo is shared with our AI illustration provider.
-          </p>
+          <CardTitle>{t('children.familyConsentTitle')}</CardTitle>
+          <p className="mt-2 text-sm text-ink-600">{t('children.familyConsentBody')}</p>
         </Card>
       ) : (
         <Card>
@@ -156,10 +151,9 @@ export default async function ChildDetailPage({
 
       {photoUploadAvailable && (
         <Card>
-          <CardTitle>Reference photo</CardTitle>
+          <CardTitle>{t('children.referencePhotoTitle')}</CardTitle>
           <p className="mt-2 text-sm text-ink-600">
-            Upload a clear photo of {child.first_name} so their illustrated character looks like them
-            across every page. Only used for image generation — never shown to other families.
+            {t('children.referencePhotoBody', { childName: child.first_name })}
           </p>
           <div className="mt-4">
             <PhotoUpload
@@ -202,7 +196,7 @@ export default async function ChildDetailPage({
               <Badge tone="info">{t(`stories.status.${story.status}`)}</Badge>
             </li>
           ))}
-          {(!stories || stories.length === 0) && <p className="py-4 text-sm text-ink-500">No stories yet.</p>}
+          {(!stories || stories.length === 0) && <p className="py-4 text-sm text-ink-500">{t('stories.noStoriesYet')}</p>}
         </ul>
       </Card>
     </div>

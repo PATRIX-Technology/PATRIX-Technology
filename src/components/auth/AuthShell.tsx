@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import Image from 'next/image';
-import Link from 'next/link';
+import { HomeLink } from '@/components/brand/HomeLink';
 import { Logo } from '@/components/brand/Logo';
 import { LocaleSwitcher } from '@/components/ui/LocaleSwitcher';
 import type { Locale } from '@/i18n/config';
@@ -36,10 +36,10 @@ export function AuthShell({
             'linear-gradient(160deg, #1c1e42 0%, #14152b 55%, #100f22 100%)',
         }}
       >
-        <Link href={`/${locale}`} className="focus-ring flex items-center gap-2.5 font-display text-lg text-ink-900">
+        <HomeLink locale={locale} className="focus-ring flex items-center gap-2.5 font-display text-lg text-ink-900">
           <Logo size={28} variant="flat" />
           Ownly
-        </Link>
+        </HomeLink>
         <div className="relative mx-auto w-full max-w-xs">
           <div className="relative aspect-[9/16] overflow-hidden rounded-[2rem] border border-ink-100 shadow-card">
             <Image src={heroImage} alt="" fill sizes="320px" className="object-cover" />
@@ -54,13 +54,13 @@ export function AuthShell({
       <div className="flex items-center justify-center bg-[rgb(var(--color-bg))] px-4 py-12">
         <div className="w-full max-w-md">
           <div className="mb-8 flex items-center">
-            <Link
-              href={`/${locale}`}
+            <HomeLink
+              locale={locale}
               className="focus-ring flex items-center gap-2.5 font-display text-lg text-ink-900 lg:hidden"
             >
               <Logo size={26} variant="flat" />
               Ownly
-            </Link>
+            </HomeLink>
             <LocaleSwitcher locale={locale as Locale} className="ms-auto" />
           </div>
           {children}

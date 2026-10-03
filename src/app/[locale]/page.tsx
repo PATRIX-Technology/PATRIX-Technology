@@ -2,6 +2,7 @@ import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/Button';
+import { HomeLink } from '@/components/brand/HomeLink';
 import { Logo } from '@/components/brand/Logo';
 import { LocaleSwitcher } from '@/components/ui/LocaleSwitcher';
 import { StoryCarousel } from '@/components/marketing/StoryCarousel';
@@ -62,10 +63,13 @@ export default function MarketingHome({ params }: { params: { locale: string } }
   return (
     <main>
       <header className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-6 py-6">
-        <span className="flex min-w-0 items-center gap-2.5 truncate font-display text-xl text-ink-900">
+        <HomeLink
+          locale={locale}
+          className="focus-ring flex min-w-0 items-center gap-2.5 truncate rounded font-display text-xl text-ink-900"
+        >
           <Logo size={30} variant="flat" />
           {brand('name')}
-        </span>
+        </HomeLink>
         <nav className="hidden items-center gap-6 text-sm text-ink-600 sm:flex">
           <Link href={`/${locale}/family/sign-up`} className="focus-ring rounded hover:text-ink-800">
             {nav('forFamilies')}
@@ -240,10 +244,10 @@ export default function MarketingHome({ params }: { params: { locale: string } }
 
       <footer className="border-t border-[rgb(var(--color-border))] px-6 py-10">
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 text-sm text-ink-500 sm:flex-row">
-          <span className="flex items-center gap-2 font-display text-ink-700">
+          <HomeLink locale={locale} className="focus-ring flex items-center gap-2 rounded font-display text-ink-700">
             <Logo size={20} variant="flat" />
             {brand('name')}
-          </span>
+          </HomeLink>
           <div className="flex items-center gap-4">
             <Link href={`/${locale}/legal`} className="focus-ring rounded hover:text-ink-700">
               {nav('legal')}

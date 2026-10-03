@@ -1,7 +1,7 @@
 import { useTranslations } from 'next-intl';
-import Link from 'next/link';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
+import { HomeLink } from '@/components/brand/HomeLink';
 import { Logo } from '@/components/brand/Logo';
 import { whatsappLink } from '@/lib/config/contact';
 
@@ -33,12 +33,12 @@ export default function ContactPage({ params }: { params: { locale: string } }) 
 
         <p className="mt-6 text-xs text-ink-500">{t('responseTime')}</p>
 
-        <Link
-          href={`/${params.locale}`}
+        <HomeLink
+          locale={params.locale}
           className="focus-ring mt-8 inline-block text-sm text-lagoon-600 hover:text-lagoon-500"
         >
           ← {brand('name')}
-        </Link>
+        </HomeLink>
       </Card>
     </main>
   );

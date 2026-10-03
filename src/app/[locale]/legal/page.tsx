@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { Card } from '@/components/ui/Card';
+import { HomeLink } from '@/components/brand/HomeLink';
 import { Logo } from '@/components/brand/Logo';
 
 type LegalTab = 'tos' | 'privacy' | 'pdpl';
@@ -25,10 +26,10 @@ export default function LegalPage({
   return (
     <main className="min-h-screen px-4 py-12">
       <div className="mx-auto max-w-3xl">
-        <Link href={`/${params.locale}`} className="focus-ring mb-8 inline-flex items-center gap-2.5 font-display text-lg text-ink-900">
+        <HomeLink locale={params.locale} className="focus-ring mb-8 inline-flex items-center gap-2.5 font-display text-lg text-ink-900">
           <Logo size={24} />
           <span>{t('title')}</span>
-        </Link>
+        </HomeLink>
 
         <p className="mb-2 text-ink-600">
           <InterpolatedBody body={t.raw('intro')} contactHref={contactHref} contactLabel={t('contactLinkLabel')} />

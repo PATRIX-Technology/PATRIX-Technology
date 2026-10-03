@@ -138,10 +138,10 @@ export function DashboardNav({
   );
 
   const brandRow = (
-    <div className="flex items-center gap-2.5 font-display text-lg text-ink-900">
+    <Link href={base} className="focus-ring flex items-center gap-2.5 font-display text-lg text-ink-900">
       <Logo size={24} />
       {brand('name')}
-    </div>
+    </Link>
   );
 
   const linksList = (

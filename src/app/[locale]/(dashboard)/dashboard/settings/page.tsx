@@ -73,6 +73,12 @@ export default async function SettingsPage({ params }: { params: { locale: strin
       <Card>
         <CardTitle>{t('privacyTitle')}</CardTitle>
         <p className="mt-2 max-w-xl text-sm text-ink-600">{t('privacyBody')}</p>
+        <Link
+          href={`/${params.locale}/legal?tab=privacy`}
+          className="focus-ring mt-3 inline-block text-sm font-medium text-lagoon-600 hover:text-lagoon-500"
+        >
+          {t('privacyFullPolicyLink')}
+        </Link>
       </Card>
     </div>
   );

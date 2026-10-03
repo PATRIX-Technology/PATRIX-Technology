@@ -244,9 +244,14 @@ export default function MarketingHome({ params }: { params: { locale: string } }
             <Logo size={20} variant="flat" />
             {brand('name')}
           </span>
-          <Link href={`/${locale}/contact`} className="focus-ring rounded hover:text-ink-700">
-            {nav('contact')}
-          </Link>
+          <div className="flex items-center gap-4">
+            <Link href={`/${locale}/legal`} className="focus-ring rounded hover:text-ink-700">
+              {nav('legal')}
+            </Link>
+            <Link href={`/${locale}/contact`} className="focus-ring rounded hover:text-ink-700">
+              {nav('contact')}
+            </Link>
+          </div>
         </div>
       </footer>
     </main>

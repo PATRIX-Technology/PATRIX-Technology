@@ -51,6 +51,7 @@ export default async function DashboardLayout({
           usage: t('usage'),
           support: t('support'),
           invite: t('invite'),
+          legal: t('legal'),
         }}
       />
       <main className="flex-1 bg-[rgb(var(--color-surface))] p-6 md:p-10">{children}</main>

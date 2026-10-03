@@ -6,6 +6,7 @@ import { AuthMethodTabs } from '@/components/auth/AuthMethodTabs';
 import { AccountTypeTabs } from '@/components/auth/AccountTypeTabs';
 import { GoogleAuthButton } from '@/components/auth/GoogleAuthButton';
 import { AuthDivider } from '@/components/auth/AuthDivider';
+import { LegalAgreementNote } from '@/components/auth/LegalAgreementNote';
 import { Card } from '@/components/ui/Card';
 
 export default function FamilySignUpPage({
@@ -55,6 +56,7 @@ export default function FamilySignUpPage({
             {tSignUp('signInInstead')}
           </Link>
         </p>
+        <LegalAgreementNote locale={params.locale} />
       </Card>
     </main>
   );

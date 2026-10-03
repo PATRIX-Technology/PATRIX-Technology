@@ -7,6 +7,7 @@ import { AccountTypeTabs } from '@/components/auth/AccountTypeTabs';
 import { AuthShell } from '@/components/auth/AuthShell';
 import { GoogleAuthButton } from '@/components/auth/GoogleAuthButton';
 import { AuthDivider } from '@/components/auth/AuthDivider';
+import { LegalAgreementNote } from '@/components/auth/LegalAgreementNote';
 
 export default function SignUpPage({
   params,
@@ -54,6 +55,7 @@ export default function SignUpPage({
           {t('signInInstead')}
         </Link>
       </p>
+      <LegalAgreementNote locale={params.locale} />
     </AuthShell>
   );
 }

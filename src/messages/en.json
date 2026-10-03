@@ -10,7 +10,8 @@
     "pricing": "Pricing",
     "contact": "Contact",
     "signIn": "Sign in",
-    "signUp": "Sign up"
+    "signUp": "Sign up",
+    "legal": "Legal"
   },
   "marketing": {
     "hero": {
@@ -74,7 +75,10 @@
       "password": "Password",
       "submit": "Create organisation",
       "haveAccount": "Already have an account?",
-      "signInInstead": "Sign in instead"
+      "signInInstead": "Sign in instead",
+      "legalAgreement": "By creating an account, you agree to Ownly's {terms} and {privacy}.",
+      "termsLink": "Terms of Service",
+      "privacyLink": "Privacy Policy"
     },
     "familySignUp": {
       "title": "Create your family account",
@@ -136,7 +140,8 @@
       "settings": "Settings",
       "usage": "Usage & plan",
       "support": "Support",
-      "invite": "Invite & Earn Free Stories"
+      "invite": "Invite & Earn Free Stories",
+      "legal": "Legal"
     },
     "overview": {
       "welcome": "Welcome back",
@@ -156,7 +161,8 @@
       "retentionLabel": "Data retention (days)",
       "retentionHint": "How long child and story data is kept before scheduled deletion.",
       "privacyTitle": "Privacy",
-      "privacyBody": "Every child's data is kept private to your own account, stored securely, and never shared with other families or organisations. Photos and images are only ever accessible through short-lived, private links."
+      "privacyBody": "Every child's data is kept private to your own account, stored securely, and never shared with other families or organisations. Photos and images are only ever accessible through short-lived, private links.",
+      "privacyFullPolicyLink": "Read our full Privacy Policy"
     },
     "security": {
       "title": "Security",
@@ -441,6 +447,141 @@
       "title": "Verify your identity",
       "description": "Enter the 6-digit code from your authenticator app.",
       "verify": "Verify"
+    }
+  },
+  "legalPage": {
+    "title": "Legal",
+    "intro": "Ownly's Terms of Service, Privacy Policy, and UAE PDPL compliance statement. If you have questions about any of this, reach out on our {contact} page.",
+    "contactLinkLabel": "Contact",
+    "lastUpdated": "Last updated: October 2026",
+    "entityNote": "Ownly is a brand operated by its founding team, currently completing incorporation as a licensed entity in Meydan Free Zone, Dubai, UAE. This page will be updated with the full registered legal name and trade license number once incorporation is complete.",
+    "tabs": {
+      "tos": "Terms of Service",
+      "privacy": "Privacy Policy",
+      "pdpl": "Data Protection (PDPL)"
+    },
+    "tos": {
+      "heading": "Terms of Service",
+      "sections": [
+        {
+          "heading": "1. Who we are",
+          "body": "Ownly provides an online platform that generates personalized, AI-illustrated storybooks for children, for use by families and by nurseries/schools (\"Organisations\"). These Terms govern your use of the Ownly platform, whichever way you access it."
+        },
+        {
+          "heading": "2. Accounts",
+          "body": "You must provide accurate information when creating an account. A family account is held by a parent or legal guardian. An Organisation account is held by an authorised representative of that nursery or school, who may invite staff members under their own account."
+        },
+        {
+          "heading": "3. AI-generated content",
+          "body": "Story text and illustrations are generated using third-party AI models (including Google's Gemini API). AI-generated content can occasionally contain inaccuracies in likeness or narrative detail. If a generated page doesn't look right, you can request a free regeneration from within the app. Our liability for such inaccuracies is limited to providing that regeneration."
+        },
+        {
+          "heading": "4. Your content, our platform",
+          "body": "You retain ownership of what you submit (a child's photo, name, and preferences, provided with appropriate parental/guardian consent) and of the final personalized storybook generated for that child. Ownly retains ownership of the platform itself, its story templates, prompts, and underlying technology."
+        },
+        {
+          "heading": "5. Subscriptions and billing",
+          "body": "Paid plans are billed in AED through our payment processor (Stripe). You can view your current plan and usage at any time from the Usage & Plan tab. You may cancel a subscription at any time; cancellation takes effect at the end of the current billing period."
+        },
+        {
+          "heading": "6. Acceptable use",
+          "body": "You agree to only submit photos and information you have the right and appropriate consent to use, and not to request story content that is unsafe, hateful, or inappropriate for children. We may suspend accounts that violate this."
+        },
+        {
+          "heading": "7. Termination",
+          "body": "You may close your account at any time from Settings. We may suspend or terminate accounts for breach of these Terms. On termination, you have a reasonable window to export any approved stories before account data is deleted per our retention settings."
+        },
+        {
+          "heading": "8. Liability",
+          "body": "To the extent permitted by UAE law, Ownly's total liability arising from your use of the platform is limited to the fees you paid in the three months preceding a claim. Nothing in these Terms excludes liability that cannot lawfully be excluded."
+        },
+        {
+          "heading": "9. Governing law",
+          "body": "These Terms are governed by the laws of the United Arab Emirates as applied in the Emirate of Dubai, without prejudice to any mandatory federal law."
+        },
+        {
+          "heading": "10. Changes to these Terms",
+          "body": "We may update these Terms from time to time. We'll update the \"Last updated\" date above, and will flag material changes more prominently in the app."
+        }
+      ]
+    },
+    "privacy": {
+      "heading": "Privacy Policy",
+      "sections": [
+        {
+          "heading": "1. What we collect",
+          "body": "Account information (name, email or phone number); for children enrolled by a parent/guardian or nursery, the child's first name, a reference photo, and story preferences (e.g. language, pronoun); and basic usage data (pages viewed, stories generated) to operate the service."
+        },
+        {
+          "heading": "2. Why we collect it",
+          "body": "To create your account, generate the personalized storybooks you request, process payments, send service-related notifications, and provide support when you contact us."
+        },
+        {
+          "heading": "3. Who can see it",
+          "body": "Your data is isolated to your own account or Organisation by database-level access controls — it is never visible to other families or other Organisations on Ownly. Within an Organisation account, only invited staff with an active role can see that Organisation's children and stories."
+        },
+        {
+          "heading": "4. Third parties we use",
+          "body": "Google (Gemini API) to generate story text and illustrations; Supabase to host our database, authentication, and file storage; Stripe to process payments; Twilio to deliver SMS login codes; and Resend to deliver account emails. Each of these providers only receives the data necessary to perform its specific function."
+        },
+        {
+          "heading": "5. Where your data is processed",
+          "body": "Our primary infrastructure is hosted with Supabase and Vercel. Generating story illustrations and text involves sending the relevant content to Google's Gemini API, which may process data on servers outside the UAE. We only work with providers that maintain appropriate data protection safeguards."
+        },
+        {
+          "heading": "6. How long we keep it",
+          "body": "Organisations can configure a data retention period in Settings; child and story data is scheduled for deletion once that period elapses. You can also request deletion of your account and associated data at any time — see \"Your rights\" below."
+        },
+        {
+          "heading": "7. Your rights",
+          "body": "You can request access to, correction of, export of, or deletion of your personal data at any time. See the Data Protection (PDPL) tab for the full list of your rights under UAE law and how to exercise them."
+        },
+        {
+          "heading": "8. Children's data",
+          "body": "A child's photo and name are only ever processed with the explicit, informed consent of a parent or legal guardian, collected through our in-app consent flow before any image is generated. We never use a child's photo, name, or story data for advertising or behavioural profiling."
+        },
+        {
+          "heading": "9. Security",
+          "body": "Data is encrypted in transit. Story images are served only through short-lived, private signed links, never public URLs. Optional two-factor authentication (MFA) is available on every account, and mandatory for account owners handling billing."
+        },
+        {
+          "heading": "10. Contact us",
+          "body": "For any privacy question or request, reach out on our {contact} page and we'll get back to you."
+        }
+      ]
+    },
+    "pdpl": {
+      "heading": "UAE Data Protection (PDPL) Compliance",
+      "sections": [
+        {
+          "heading": "1. Our commitment",
+          "body": "Ownly is committed to complying with UAE Federal Decree-Law No. 45 of 2021 on the Protection of Personal Data (\"PDPL\") in how we collect, process, and store personal data, including children's data."
+        },
+        {
+          "heading": "2. Legal basis for processing",
+          "body": "We process account data on the basis of our contract with you (delivering the service you signed up for). We process a child's photo and personal details only on the basis of explicit consent, collected from a parent or legal guardian before that data is used."
+        },
+        {
+          "heading": "3. Your rights under the PDPL",
+          "body": "You have the right to: access the personal data we hold about you or your child; request correction of inaccurate data; request erasure of your data; object to or restrict certain processing; request a copy of your data in a portable format; and withdraw consent at any time (which may limit your ability to use features that depend on that data)."
+        },
+        {
+          "heading": "4. How to exercise your rights",
+          "body": "Contact us via our {contact} page with your request. We will verify your identity and respond within a reasonable timeframe consistent with PDPL requirements."
+        },
+        {
+          "heading": "5. Cross-border data transfer",
+          "body": "Generating story content involves sending relevant data to Google's Gemini API, which may process it outside the UAE. We only use service providers who maintain data protection standards consistent with PDPL requirements for cross-border transfers."
+        },
+        {
+          "heading": "6. Data breach notification",
+          "body": "In the event of a data breach affecting your personal data, we will notify affected users and, where required by law, the relevant UAE data protection authority, without undue delay."
+        },
+        {
+          "heading": "7. Data protection contact",
+          "body": "Our designated data protection contact point will be published here once our Meydan Free Zone incorporation is complete. Until then, direct any request through our {contact} page."
+        }
+      ]
     }
   }
 }

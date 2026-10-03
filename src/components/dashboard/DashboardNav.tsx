@@ -20,6 +20,7 @@ interface Labels {
   usage: string;
   support: string;
   invite: string;
+  legal: string;
 }
 
 export function DashboardNav({
@@ -60,6 +61,7 @@ export function DashboardNav({
     { href: `${base}/billing`, label: labels.usage, ownerOnly: true },
     { href: `${base}/settings`, label: labels.settings },
     { href: `/${locale}/contact`, label: labels.support },
+    { href: `/${locale}/legal`, label: labels.legal },
   ].filter(
     (link) =>
       (!link.ownerOnly || role === 'nursery_owner') && (!link.nurseryOnly || tenantType === 'nursery'),

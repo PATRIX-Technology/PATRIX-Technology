@@ -9,6 +9,7 @@ import type { ActionResult } from '@/lib/actions/auth';
 import { Button } from '@/components/ui/Button';
 import { SubmitButton } from '@/components/ui/SubmitButton';
 import { Badge } from '@/components/ui/Badge';
+import { useToast } from '@/components/ui/Toast';
 import type { ConsentStatus } from '@/types/database';
 
 const TONE: Record<ConsentStatus, 'neutral' | 'warning' | 'success' | 'danger'> = {
@@ -35,8 +36,10 @@ export function ConsentPanel({
 }) {
   const t = useTranslations('consent');
   const tChildren = useTranslations('children');
+  const showToast = useToast();
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const [includePhoto, setIncludePhoto] = useState(false);
+  const [canNativeShare, setCanNativeShare] = useState(false);
 
   const requestAction = requestConsentAction.bind(null, locale, childId);
   const [requestState, requestFormAction] = useFormState<RequestConsentResult, FormData>(
@@ -55,6 +58,31 @@ export function ConsentPanel({
       QRCode.toDataURL(requestState.consentUrl, { margin: 1, width: 200 }).then(setQrDataUrl);
     }
   }, [requestState?.consentUrl]);
+
+  useEffect(() => {
+    setCanNativeShare(typeof navigator !== 'undefined' && typeof navigator.share === 'function');
+  }, []);
+
+  const shareText = requestState?.consentUrl ? `${t('shareMessageText')} ${requestState.consentUrl}` : '';
+
+  async function handleCopyLink() {
+    if (!requestState?.consentUrl) return;
+    try {
+      await navigator.clipboard.writeText(requestState.consentUrl);
+      showToast({ title: t('shareCopied'), tone: 'success' });
+    } catch {
+      showToast({ title: t('shareCopied'), description: requestState.consentUrl, tone: 'info' });
+    }
+  }
+
+  async function handleNativeShare() {
+    if (!requestState?.consentUrl) return;
+    try {
+      await navigator.share({ text: shareText, url: requestState.consentUrl });
+    } catch {
+      // User cancelled the share sheet — nothing to do.
+    }
+  }
 
   return (
     <div className="space-y-4">
@@ -101,6 +129,32 @@ export function ConsentPanel({
           </p>
           <code className="block break-all rounded bg-ink-50 p-2 text-xs">{requestState.consentUrl}</code>
           {qrDataUrl && <img src={qrDataUrl} alt={t('qrCodeAlt')} className="mt-3 h-40 w-40" />}
+          <div className="mt-3 flex flex-wrap gap-2">
+            <a
+              href={`https://wa.me/?text=${encodeURIComponent(shareText)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="focus-ring inline-flex items-center gap-1.5 rounded-lg bg-ink-100 px-3 py-1.5 text-sm font-medium text-ink-800 hover:bg-ink-200"
+            >
+              <span aria-hidden>💬</span>
+              {t('shareWhatsapp')}
+            </a>
+            <a
+              href={`mailto:?subject=${encodeURIComponent(t('shareEmailSubject'))}&body=${encodeURIComponent(shareText)}`}
+              className="focus-ring inline-flex items-center gap-1.5 rounded-lg bg-ink-100 px-3 py-1.5 text-sm font-medium text-ink-800 hover:bg-ink-200"
+            >
+              <span aria-hidden>✉️</span>
+              {t('shareEmail')}
+            </a>
+            {canNativeShare && (
+              <Button type="button" variant="secondary" size="sm" onClick={handleNativeShare}>
+                {t('shareNative')}
+              </Button>
+            )}
+            <Button type="button" variant="secondary" size="sm" onClick={handleCopyLink}>
+              {t('shareCopy')}
+            </Button>
+          </div>
         </div>
       )}
     </div>

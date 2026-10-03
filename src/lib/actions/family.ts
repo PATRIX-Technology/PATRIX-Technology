@@ -9,6 +9,7 @@ import { recordReferralIfPresent } from '@/lib/domain/referrals';
 import { capitalizeWords } from '@/lib/domain/names';
 import { validatePassword } from '@/lib/domain/password';
 import { sanitizeSignUpErrorMessage } from '@/lib/domain/auth-errors';
+import { hasAcceptedLegalTerms, recordLegalAcceptance } from '@/lib/domain/legal';
 import type { ActionResult } from './auth';
 
 const AUTH_RATE_LIMIT = { limit: 10, windowMs: 5 * 60 * 1000 };
@@ -43,6 +44,9 @@ export async function familySignUpAction(locale: string, formData: FormData): Pr
   if (!email || !password || !fullName) {
     return { error: 'All fields are required.' };
   }
+  if (!hasAcceptedLegalTerms(formData)) {
+    return { error: 'Please agree to the Terms of Service and Privacy Policy to continue.' };
+  }
   const passwordError = validatePassword(password);
   if (passwordError) {
     return { error: passwordError };
@@ -65,6 +69,14 @@ export async function familySignUpAction(locale: string, formData: FormData): Pr
   }
 
   await recordReferralIfPresent(supabase, referralCode, newTenantId);
+  const { data: userData } = await supabase.auth.getUser();
+  if (userData.user) {
+    await recordLegalAcceptance(supabase, {
+      userId: userData.user.id,
+      tenantId: newTenantId,
+      ip: await getClientIp(),
+    });
+  }
 
   return { redirectTo: `/${locale}/dashboard` };
 }
@@ -130,6 +142,9 @@ export async function verifyFamilySignUpOtpAction(locale: string, formData: Form
     if (!fullName) {
       return { error: 'Missing your name — go back and try again.' };
     }
+    if (!hasAcceptedLegalTerms(formData)) {
+      return { error: 'Please agree to the Terms of Service and Privacy Policy to continue.' };
+    }
     const capitalizedFullName = capitalizeWords(fullName);
     const { data: newTenantId, error: rpcError } = await supabase.rpc('create_family_tenant', {
       family_display_name: `${capitalizedFullName}'s Family`,
@@ -139,7 +154,60 @@ export async function verifyFamilySignUpOtpAction(locale: string, formData: Form
       return { error: rpcError.message };
     }
     await recordReferralIfPresent(supabase, referralCode, newTenantId);
+    const { data: userData } = await supabase.auth.getUser();
+    if (userData.user) {
+      await recordLegalAcceptance(supabase, {
+        userId: userData.user.id,
+        tenantId: newTenantId,
+        ip: await getClientIp(),
+      });
+    }
   }
+
+  return { redirectTo: `/${locale}/dashboard` };
+}
+
+/**
+ * Finishes a family sign-up that arrived via Google, mirroring
+ * completeOrganisationSignupAction in src/lib/actions/auth.ts. Google's
+ * profile already gives us a full name, so (unlike the org flow) there is
+ * no missing field to collect here — the one thing this page exists for is
+ * the mandatory legal-agreement checkbox, which the OAuth callback itself
+ * (a redirect-only route handler, not a form) cannot show. Requires an
+ * active session with no tenant yet.
+ */
+export async function completeFamilySignupAction(locale: string, formData: FormData): Promise<ActionResult> {
+  const supabase = await createSupabaseServerClient();
+  const { data: userData } = await supabase.auth.getUser();
+  if (!userData.user) return { error: 'Your session expired — sign in again.' };
+
+  const existing = await getCurrentTenantContext(supabase);
+  if (existing) return { redirectTo: `/${locale}/dashboard` };
+
+  const fullName = String(formData.get('fullName') ?? '').trim();
+  const referralCode = String(formData.get('referralCode') ?? '').trim();
+  if (!fullName) {
+    return { error: 'Missing your name — go back and try again.' };
+  }
+  if (!hasAcceptedLegalTerms(formData)) {
+    return { error: 'Please agree to the Terms of Service and Privacy Policy to continue.' };
+  }
+
+  const capitalizedFullName = capitalizeWords(fullName);
+  const { data: newTenantId, error: rpcError } = await supabase.rpc('create_family_tenant', {
+    family_display_name: `${capitalizedFullName}'s Family`,
+    owner_full_name: capitalizedFullName,
+  });
+  if (rpcError) {
+    return { error: rpcError.message };
+  }
+
+  await recordReferralIfPresent(supabase, referralCode, newTenantId);
+  await recordLegalAcceptance(supabase, {
+    userId: userData.user.id,
+    tenantId: newTenantId,
+    ip: await getClientIp(),
+  });
 
   return { redirectTo: `/${locale}/dashboard` };
 }

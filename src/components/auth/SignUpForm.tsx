@@ -8,6 +8,7 @@ import { signUpAction, type ActionResult } from '@/lib/actions/auth';
 import { PASSWORD_MIN_LENGTH, PASSWORD_PATTERN } from '@/lib/domain/password';
 import { SubmitButton } from '@/components/ui/SubmitButton';
 import { TextField } from '@/components/ui/Input';
+import { LegalAgreementCheckbox } from '@/components/auth/LegalAgreementCheckbox';
 
 export function SignUpForm({ locale, referralCode }: { locale: string; referralCode?: string }) {
   const t = useTranslations('auth.signUp');
@@ -38,6 +39,7 @@ export function SignUpForm({ locale, referralCode }: { locale: string; referralC
         pattern={PASSWORD_PATTERN}
         title={tAuth('passwordHint', { min: PASSWORD_MIN_LENGTH })}
       />
+      <LegalAgreementCheckbox locale={locale} />
       {state?.error && (
         <p role="alert" className="text-sm text-coral-600">
           {state.error}

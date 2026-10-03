@@ -1,7 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { getCurrentTenantContext } from '@/lib/domain/session';
-import { recordReferralIfPresent } from '@/lib/domain/referrals';
 import { capitalizeWords } from '@/lib/domain/names';
 import { isLocale, defaultLocale } from '@/i18n/config';
 
@@ -24,14 +23,14 @@ import { isLocale, defaultLocale } from '@/i18n/config';
  * - "signin": require an existing tenant; a Google identity with none
  *   yet (first click ever, on the sign-in page specifically) is told to
  *   sign up instead, same as verifySignInOtpAction's phone equivalent.
- * - "family": provisions a tenant on first arrival exactly like
- *   familySignUpAction does, but using Google's own profile name instead
- *   of a form field -- reuses create_family_tenant, so tenant creation
- *   itself never needs a second code path. Re-arriving with a tenant
- *   already provisioned (a returning user who clicked the sign-up
- *   button instead of sign-in) just signs them in -- create_family_tenant
- *   has no "already exists" guard, so calling it twice would create a
- *   second, duplicate tenant.
+ * - "family": Google's profile already gives us a name, but nowhere to
+ *   show the mandatory legal-agreement checkbox (PDPL requires an explicit,
+ *   recorded consent, not one implied by this redirect) -- so first arrival
+ *   lands on /family/sign-up/complete instead of provisioning anything
+ *   here, exactly like the "org" branch below. That page's own action
+ *   calls create_family_tenant once the checkbox is accepted. Re-arriving
+ *   with a tenant already provisioned (a returning user who clicked the
+ *   sign-up button instead of sign-in) just signs them in.
  * - "org": Google's profile has no organisation name to give us, so
  *   first arrival lands on /sign-up/complete-organisation instead of
  *   provisioning anything here -- that page's own action calls
@@ -83,15 +82,9 @@ export async function GET(request: NextRequest) {
   const fullName = capitalizeWords(googleFullName);
 
   if (flow === 'family') {
-    const { data: newTenantId, error: rpcError } = await supabase.rpc('create_family_tenant', {
-      family_display_name: `${fullName}'s Family`,
-      owner_full_name: fullName,
-    });
-    if (rpcError) {
-      return NextResponse.redirect(new URL(`/${locale}/family/sign-up?authError=1`, request.url));
-    }
-    await recordReferralIfPresent(supabase, referralCode, newTenantId);
-    return NextResponse.redirect(new URL(`/${locale}/dashboard`, request.url));
+    return NextResponse.redirect(
+      new URL(`/${locale}/family/sign-up/complete?fullName=${encodeURIComponent(fullName)}${refQuery}`, request.url),
+    );
   }
 
   if (flow === 'org') {

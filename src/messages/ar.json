@@ -76,9 +76,10 @@
       "submit": "إنشاء المؤسسة",
       "haveAccount": "لديك حساب بالفعل؟",
       "signInInstead": "سجّل الدخول",
-      "legalAgreement": "بإنشائك حساباً، فإنك توافق على {terms} و{privacy} الخاصة بأونلي.",
+      "legalAgreement": "لقد قرأت وأوافق على {terms} و{privacy} الخاصة بأونلي.",
       "termsLink": "شروط الخدمة",
-      "privacyLink": "سياسة الخصوصية"
+      "privacyLink": "سياسة الخصوصية",
+      "legalRequired": "يرجى الموافقة على شروط الخدمة وسياسة الخصوصية للمتابعة."
     },
     "familySignUp": {
       "title": "أنشئ حساب عائلتك",
@@ -113,6 +114,11 @@
     "completeOrganisation": {
       "title": "خطوة أخيرة",
       "body": "شيء واحد أخير — ما اسم مؤسستك؟",
+      "submit": "إنهاء الإعداد"
+    },
+    "completeFamily": {
+      "title": "خطوة أخيرة",
+      "body": "مرحبًا بك، {fullName} — خطوة أخيرة قبل تجهيز حساب عائلتك.",
       "submit": "إنهاء الإعداد"
     },
     "forgotPassword": {

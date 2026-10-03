@@ -10,6 +10,7 @@ import { recordReferralIfPresent } from '@/lib/domain/referrals';
 import { capitalizeWords } from '@/lib/domain/names';
 import { validatePassword } from '@/lib/domain/password';
 import { sanitizeSignUpErrorMessage } from '@/lib/domain/auth-errors';
+import { hasAcceptedLegalTerms, recordLegalAcceptance } from '@/lib/domain/legal';
 
 export interface ActionResult {
   error?: string;
@@ -60,6 +61,9 @@ export async function signUpAction(locale: string, formData: FormData): Promise<
   if (!email || !password || !fullName || !orgName) {
     return { error: 'All fields are required.' };
   }
+  if (!hasAcceptedLegalTerms(formData)) {
+    return { error: 'Please agree to the Terms of Service and Privacy Policy to continue.' };
+  }
   const passwordError = validatePassword(password);
   if (passwordError) {
     return { error: passwordError };
@@ -85,6 +89,14 @@ export async function signUpAction(locale: string, formData: FormData): Promise<
   }
 
   await recordReferralIfPresent(supabase, referralCode, newTenantId);
+  const { data: userData } = await supabase.auth.getUser();
+  if (userData.user) {
+    await recordLegalAcceptance(supabase, {
+      userId: userData.user.id,
+      tenantId: newTenantId,
+      ip: await getClientIp(),
+    });
+  }
 
   return { redirectTo: `/${locale}/dashboard` };
 }
@@ -113,6 +125,9 @@ export async function completeOrganisationSignupAction(locale: string, formData:
   if (!orgName || !fullName) {
     return { error: 'All fields are required.' };
   }
+  if (!hasAcceptedLegalTerms(formData)) {
+    return { error: 'Please agree to the Terms of Service and Privacy Policy to continue.' };
+  }
 
   const { data: newTenantId, error: rpcError } = await supabase.rpc('create_tenant', {
     tenant_name: capitalizeWords(orgName),
@@ -124,6 +139,11 @@ export async function completeOrganisationSignupAction(locale: string, formData:
   }
 
   await recordReferralIfPresent(supabase, referralCode, newTenantId);
+  await recordLegalAcceptance(supabase, {
+    userId: userData.user.id,
+    tenantId: newTenantId,
+    ip: await getClientIp(),
+  });
 
   return { redirectTo: `/${locale}/dashboard` };
 }
@@ -286,6 +306,9 @@ export async function verifyNurserySignUpOtpAction(locale: string, formData: For
     if (!orgName || !fullName) {
       return { error: 'Missing your organisation name — go back and try again.' };
     }
+    if (!hasAcceptedLegalTerms(formData)) {
+      return { error: 'Please agree to the Terms of Service and Privacy Policy to continue.' };
+    }
     const { data: newTenantId, error: rpcError } = await supabase.rpc('create_tenant', {
       tenant_name: capitalizeWords(orgName),
       tenant_slug: tenantSlugFrom(orgName),
@@ -295,6 +318,14 @@ export async function verifyNurserySignUpOtpAction(locale: string, formData: For
       return { error: rpcError.message };
     }
     await recordReferralIfPresent(supabase, referralCode, newTenantId);
+    const { data: userData } = await supabase.auth.getUser();
+    if (userData.user) {
+      await recordLegalAcceptance(supabase, {
+        userId: userData.user.id,
+        tenantId: newTenantId,
+        ip: await getClientIp(),
+      });
+    }
   }
 
   return { redirectTo: `/${locale}/dashboard` };

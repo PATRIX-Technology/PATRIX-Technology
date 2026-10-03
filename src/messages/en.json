@@ -76,9 +76,10 @@
       "submit": "Create organisation",
       "haveAccount": "Already have an account?",
       "signInInstead": "Sign in instead",
-      "legalAgreement": "By creating an account, you agree to Ownly's {terms} and {privacy}.",
+      "legalAgreement": "I have read and agree to Ownly's {terms} and {privacy}.",
       "termsLink": "Terms of Service",
-      "privacyLink": "Privacy Policy"
+      "privacyLink": "Privacy Policy",
+      "legalRequired": "Please agree to the Terms of Service and Privacy Policy to continue."
     },
     "familySignUp": {
       "title": "Create your family account",
@@ -113,6 +114,11 @@
     "completeOrganisation": {
       "title": "You're almost there",
       "body": "Just one more thing — what's your organisation called?",
+      "submit": "Finish setting up"
+    },
+    "completeFamily": {
+      "title": "You're almost there",
+      "body": "Welcome, {fullName} — one last step before your family account is ready.",
       "submit": "Finish setting up"
     },
     "forgotPassword": {

@@ -9,6 +9,7 @@ import type { ActionResult } from '@/lib/actions/auth';
 import { SubmitButton } from '@/components/ui/SubmitButton';
 import { TextField } from '@/components/ui/Input';
 import { CountryPhoneField } from '@/components/auth/CountryPhoneField';
+import { LegalAgreementCheckbox } from '@/components/auth/LegalAgreementCheckbox';
 
 export function PhoneFamilySignUpForm({ locale, referralCode }: { locale: string; referralCode?: string }) {
   const t = useTranslations('auth.phone');
@@ -16,6 +17,7 @@ export function PhoneFamilySignUpForm({ locale, referralCode }: { locale: string
   const [step, setStep] = useState<'details' | 'code'>('details');
   const [fullName, setFullName] = useState('');
   const [phone, setPhone] = useState<string | null>(null);
+  const [legalAccepted, setLegalAccepted] = useState(false);
 
   const [sendState, sendFormAction] = useFormState<ActionResult, FormData>(async (_prev, formData) => {
     const result = await sendFamilySignUpOtpAction(formData);
@@ -44,12 +46,13 @@ export function PhoneFamilySignUpForm({ locale, referralCode }: { locale: string
         />
         <CountryPhoneField label={t('phoneLabel')} onChange={setPhone} />
         <input type="hidden" name="phone" value={phone ?? ''} />
+        <LegalAgreementCheckbox locale={locale} checked={legalAccepted} onChange={setLegalAccepted} />
         {sendState?.error && (
           <p role="alert" className="text-sm text-coral-600">
             {sendState.error}
           </p>
         )}
-        <SubmitButton size="lg" disabled={!phone}>
+        <SubmitButton size="lg" disabled={!phone || !legalAccepted}>
           {t('sendCode')}
         </SubmitButton>
       </form>
@@ -60,6 +63,7 @@ export function PhoneFamilySignUpForm({ locale, referralCode }: { locale: string
     <form action={verifyFormAction} className="flex flex-col gap-4">
       <input type="hidden" name="phone" value={phone ?? ''} />
       <input type="hidden" name="fullName" value={fullName} />
+      <input type="hidden" name="legalAccepted" value={legalAccepted ? 'true' : ''} />
       <input type="hidden" name="referralCode" value={referralCode ?? ''} />
       <p className="text-sm text-ink-600">{t('codeSentTo', { phone: phone ?? '' })}</p>
       <TextField

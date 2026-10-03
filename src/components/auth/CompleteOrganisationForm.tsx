@@ -7,6 +7,7 @@ import { useTranslations } from 'next-intl';
 import { completeOrganisationSignupAction, type ActionResult } from '@/lib/actions/auth';
 import { SubmitButton } from '@/components/ui/SubmitButton';
 import { TextField } from '@/components/ui/Input';
+import { LegalAgreementCheckbox } from '@/components/auth/LegalAgreementCheckbox';
 
 export function CompleteOrganisationForm({
   locale,
@@ -34,6 +35,7 @@ export function CompleteOrganisationForm({
       <input type="hidden" name="referralCode" value={referralCode ?? ''} />
       <TextField name="orgName" label={t('orgName')} hint={t('orgNameHint')} required autoFocus />
       <TextField name="fullName" label={t('fullName')} defaultValue={defaultFullName} required />
+      <LegalAgreementCheckbox locale={locale} />
       {state?.error && (
         <p role="alert" className="text-sm text-coral-600">
           {state.error}

@@ -7,6 +7,7 @@ import type { Pronoun } from '@/lib/domain/pronouns';
 interface SeedTemplateRow {
   theme_key: string;
   locale: 'en' | 'ar';
+  category: string;
   title: string;
   synopsis: string;
   mascot_name: string;

@@ -14,8 +14,14 @@ interface TemplateOption {
   theme_key: string;
   title: string;
   locale: string;
+  category: string;
   native_review_status: NativeReviewStatus;
 }
+
+// Display order for known categories; anything else (a future category
+// seeded without updating this list) is appended after, alphabetically,
+// rather than dropped — see docs/DECISIONS.md "Story template categories".
+const CATEGORY_ORDER = ['family', 'nurseries', 'gifts', 'educational', 'entertainment'];
 
 const THEME_ICONS: Record<string, JSX.Element> = {
   healthy_eating: (
@@ -166,6 +172,15 @@ export function CreateStoryForm({
   const usableTemplates = templates.filter((tpl) => tpl.native_review_status === 'reviewed');
   const consentGranted = consentStatus === 'granted';
 
+  const categories = Array.from(new Set(usableTemplates.map((tpl) => tpl.category))).sort((a, b) => {
+    const ai = CATEGORY_ORDER.indexOf(a);
+    const bi = CATEGORY_ORDER.indexOf(b);
+    if (ai === -1 && bi === -1) return a.localeCompare(b);
+    if (ai === -1) return 1;
+    if (bi === -1) return -1;
+    return ai - bi;
+  });
+
   if (!consentGranted) {
     return (
       <p className="text-sm text-ink-500">
@@ -188,31 +203,44 @@ export function CreateStoryForm({
       onSubmit={() => {
         submitCount.current += 1;
       }}
-      className="flex flex-col gap-5"
+      className="flex flex-col gap-6"
     >
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        {usableTemplates.map((template, index) => (
-          <label
-            key={template.id}
-            className="group relative flex cursor-pointer flex-col gap-3 rounded-xl2 border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface-raised))] p-4 transition-all hover:-translate-y-0.5 hover:border-lagoon-700 hover:shadow-card has-[:checked]:border-saffron-500 has-[:checked]:shadow-card has-[:checked]:ring-2 has-[:checked]:ring-saffron-500/35"
-          >
-            <input type="radio" name="templateId" value={template.id} required className="peer sr-only" />
-            <span
-              className={`flex h-11 w-11 items-center justify-center rounded-xl ${ICON_TINTS[index % ICON_TINTS.length]}`}
-            >
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-                {THEME_ICONS[template.theme_key] ?? FALLBACK_ICON}
-              </svg>
-            </span>
-            <div>
-              <p className="font-medium text-ink-800">{template.title}</p>
+      {categories.map((category) => {
+        const categoryTemplates = usableTemplates.filter((tpl) => tpl.category === category);
+        return (
+          <div key={category} className="flex flex-col gap-3">
+            <h3 className="text-sm font-semibold uppercase tracking-wide text-ink-500">
+              {t.has(`categories.${category}`) ? t(`categories.${category}`) : category}
+            </h3>
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {categoryTemplates.map((template) => {
+                const globalIndex = usableTemplates.indexOf(template);
+                return (
+                  <label
+                    key={template.id}
+                    className="group relative flex cursor-pointer flex-col gap-3 rounded-xl2 border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface-raised))] p-4 transition-all hover:-translate-y-0.5 hover:border-lagoon-700 hover:shadow-card has-[:checked]:border-saffron-500 has-[:checked]:shadow-card has-[:checked]:ring-2 has-[:checked]:ring-saffron-500/35"
+                  >
+                    <input type="radio" name="templateId" value={template.id} required className="peer sr-only" />
+                    <span
+                      className={`flex h-11 w-11 items-center justify-center rounded-xl ${ICON_TINTS[globalIndex % ICON_TINTS.length]}`}
+                    >
+                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                        {THEME_ICONS[template.theme_key] ?? FALLBACK_ICON}
+                      </svg>
+                    </span>
+                    <div>
+                      <p className="font-medium text-ink-800">{template.title}</p>
+                    </div>
+                    <span className="absolute end-3 top-3 text-xs font-semibold text-saffron-400 opacity-0 peer-checked:opacity-100">
+                      ✓
+                    </span>
+                  </label>
+                );
+              })}
             </div>
-            <span className="absolute end-3 top-3 text-xs font-semibold text-saffron-400 opacity-0 peer-checked:opacity-100">
-              ✓
-            </span>
-          </label>
-        ))}
-      </div>
+          </div>
+        );
+      })}
       <GenerateButton label={t('generate')} />
     </form>
   );

@@ -13,6 +13,11 @@ export const StoryThemeTemplateSchema = z.object({
   id: z.string().uuid(),
   theme_key: z.string(),
   locale: z.enum(['en', 'ar']),
+  // Groups templates in the picker UI (family, nurseries, gifts,
+  // educational, entertainment, ...) — free-form, not an enum, so a new
+  // category needs no migration, just a seeded row using it. See
+  // supabase/seed/templates.json.
+  category: z.string(),
   title: z.string(),
   synopsis: z.string(),
   mascot_name: z.string(),

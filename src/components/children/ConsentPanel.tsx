@@ -39,7 +39,7 @@ export function ConsentPanel({
   const showToast = useToast();
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const [includePhoto, setIncludePhoto] = useState(false);
-  const [canNativeShare, setCanNativeShare] = useState(false);
+  const [canShareFiles, setCanShareFiles] = useState(false);
 
   const requestAction = requestConsentAction.bind(null, locale, childId);
   const [requestState, requestFormAction] = useFormState<RequestConsentResult, FormData>(
@@ -60,7 +60,16 @@ export function ConsentPanel({
   }, [requestState?.consentUrl]);
 
   useEffect(() => {
-    setCanNativeShare(typeof navigator !== 'undefined' && typeof navigator.share === 'function');
+    // Feature-detect actual file-sharing support (not just text/url
+    // sharing) with a throwaway probe file — Safari/Chrome on desktop
+    // commonly have navigator.share but refuse files.
+    if (typeof navigator === 'undefined' || typeof navigator.canShare !== 'function') return;
+    try {
+      const probe = new File([new Uint8Array([0])], 'probe.png', { type: 'image/png' });
+      setCanShareFiles(navigator.canShare({ files: [probe] }));
+    } catch {
+      setCanShareFiles(false);
+    }
   }, []);
 
   const shareText = requestState?.consentUrl ? `${t('shareMessageText')} ${requestState.consentUrl}` : '';
@@ -75,13 +84,33 @@ export function ConsentPanel({
     }
   }
 
-  async function handleNativeShare() {
-    if (!requestState?.consentUrl) return;
+  async function getQrFile(): Promise<File | null> {
+    if (!qrDataUrl) return null;
+    const blob = await (await fetch(qrDataUrl)).blob();
+    return new File([blob], 'ownly-consent-qr.png', { type: 'image/png' });
+  }
+
+  // Shares the QR code image itself (e.g. into WhatsApp as an attachment)
+  // rather than the link as text — wa.me and mailto: links can only ever
+  // carry text, so sending the actual PNG requires the OS share sheet.
+  async function handleShareQr() {
+    const file = await getQrFile();
+    if (!file) return;
     try {
-      await navigator.share({ text: shareText, url: requestState.consentUrl });
+      await navigator.share({ files: [file], text: shareText });
     } catch {
       // User cancelled the share sheet — nothing to do.
     }
+  }
+
+  function handleDownloadQr() {
+    if (!qrDataUrl) return;
+    const a = document.createElement('a');
+    a.href = qrDataUrl;
+    a.download = 'ownly-consent-qr.png';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
   }
 
   return (
@@ -130,15 +159,14 @@ export function ConsentPanel({
           <code className="block break-all rounded bg-ink-50 p-2 text-xs">{requestState.consentUrl}</code>
           {qrDataUrl && <img src={qrDataUrl} alt={t('qrCodeAlt')} className="mt-3 h-40 w-40" />}
           <div className="mt-3 flex flex-wrap gap-2">
-            <a
-              href={`https://wa.me/?text=${encodeURIComponent(shareText)}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="focus-ring inline-flex items-center gap-1.5 rounded-lg bg-ink-100 px-3 py-1.5 text-sm font-medium text-ink-800 hover:bg-ink-200"
-            >
-              <span aria-hidden>💬</span>
-              {t('shareWhatsapp')}
-            </a>
+            {canShareFiles && (
+              <Button type="button" variant="primary" size="sm" onClick={handleShareQr}>
+                <span aria-hidden>💬</span> {t('shareQr')}
+              </Button>
+            )}
+            <Button type="button" variant="secondary" size="sm" onClick={handleDownloadQr}>
+              {t('shareDownloadQr')}
+            </Button>
             <a
               href={`mailto:?subject=${encodeURIComponent(t('shareEmailSubject'))}&body=${encodeURIComponent(shareText)}`}
               className="focus-ring inline-flex items-center gap-1.5 rounded-lg bg-ink-100 px-3 py-1.5 text-sm font-medium text-ink-800 hover:bg-ink-200"
@@ -146,11 +174,6 @@ export function ConsentPanel({
               <span aria-hidden>✉️</span>
               {t('shareEmail')}
             </a>
-            {canNativeShare && (
-              <Button type="button" variant="secondary" size="sm" onClick={handleNativeShare}>
-                {t('shareNative')}
-              </Button>
-            )}
             <Button type="button" variant="secondary" size="sm" onClick={handleCopyLink}>
               {t('shareCopy')}
             </Button>

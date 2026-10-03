@@ -11,6 +11,7 @@ const baseTemplate: StoryThemeTemplate = {
   id: '11111111-1111-1111-1111-111111111111',
   theme_key: 'healthy_eating',
   locale: 'en',
+  category: 'educational',
   title: 'The Rainbow Plate',
   synopsis: 'test',
   mascot_name: 'Marya the Fox',

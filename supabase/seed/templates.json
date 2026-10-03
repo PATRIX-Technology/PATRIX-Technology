@@ -2,6 +2,7 @@
   {
     "theme_key": "healthy_eating",
     "locale": "en",
+    "category": "educational",
     "title": "The Rainbow Plate",
     "synopsis": "{child_name} learns that eating a rainbow of fruits and vegetables makes {pronoun:object} strong and full of energy.",
     "mascot_name": "Marya the Fox",
@@ -32,6 +33,7 @@
   {
     "theme_key": "healthy_eating",
     "locale": "ar",
+    "category": "educational",
     "title": "صحن قوس المطر",
     "synopsis": "{v:learns_present} {child_name} أن أكل الأطعمة بألوان قوس المطر يعطي{ps} القوة والطاقة.",
     "mascot_name": "ماريا الثعلبة",
@@ -45,23 +47,24 @@
       {
         "order": 2,
         "text": "أحضرت {mascot} سلة كبيرة، فيها طماطم حمراء، وجزر برتقالي، وذرة صفراء، وخيار أخضر، وعنب بنفسجي. قالت: «كل لون يعطيك قوة خاصة!»",
-        "image_prompt": "ثعلب كرتوني يقدّم سلة خوص مليئة بالفواكه والخضروات الملونة لشخصية {child_name}، مؤثرات بريق سحري حول الطعام، أسلوب رسوم كتاب قصص."
+        "image_prompt": "ثعلب كرتوني يقدم سلة خوص مليئة بالفواكه والخضروات الملونة لشخصية {child_name}، مؤثرات بريق سحري حول الطعام، أسلوب رسوم كتاب قصص."
       },
       {
         "order": 3,
-        "text": "{v:tried} {child_name} قليلًا من كل شيء. كان الجزر مقرمشًا، والعنب حلوًا، والخيار طازجًا ومنعشًا. {v:smiled} {v:asked_for_more} المزيد.",
-        "image_prompt": "شخصية {child_name} تأكل بسعادة خضروات وفواكه ملونة على طاولة الحضانة، ابتسامة كبيرة، الثعلب الكرتوني يشجّع من بعيد، أسلوب رسوم كتاب قصص."
+        "text": "{v:tried} {child_name} قليلا من كل شيء. كان الجزر مقرمشا، والعنب حلوا، والخيار طازجا ومنعشا. {v:smiled} {v:asked_for_more} المزيد.",
+        "image_prompt": "شخصية {child_name} تأكل بسعادة خضروات وفواكه ملونة على طاولة الحضانة، ابتسامة كبيرة، الثعلب الكرتوني يشجع من بعيد، أسلوب رسوم كتاب قصص."
       },
       {
         "order": 4,
-        "text": "وفي ذلك المساء، {v:told} {child_name} عائلت{ps} كلها عن صحن قوس المطر. ومنذ ذلك اليوم، {v:tried} دائمًا أن {v:fills} صحن{ps} بأكبر عدد من الألوان.",
-        "image_prompt": "شخصية {child_name} تُظهر بفخر صحنًا ملونًا للعائلة في المنزل، الثعلب الكرتوني يلمح من النافذة، إضاءة مسائية دافئة، أسلوب رسوم كتاب قصص."
+        "text": "وفي ذلك المساء، {v:told} {child_name} عائلت{ps} كلها عن صحن قوس المطر. ومنذ ذلك اليوم، {v:tried} دائما أن {v:fills} صحن{ps} بأكبر عدد من الألوان.",
+        "image_prompt": "شخصية {child_name} تظهر بفخر صحنا ملونا للعائلة في المنزل، الثعلب الكرتوني يلمح من النافذة، إضاءة مسائية دافئة، أسلوب رسوم كتاب قصص."
       }
     ]
   },
   {
     "theme_key": "brushing_teeth",
     "locale": "en",
+    "category": "educational",
     "title": "Sparkle Smile Adventure",
     "synopsis": "{child_name} discovers a nightly brushing routine with {mascot} that keeps {pronoun:possessive} smile sparkling.",
     "mascot_name": "Marya the Fox",
@@ -92,6 +95,7 @@
   {
     "theme_key": "brushing_teeth",
     "locale": "ar",
+    "category": "educational",
     "title": "رحلة الابتسامة الحلوة",
     "synopsis": "{v:discovers_present} {child_name} مع {mascot} متعة تنظيف الأسنان كل ليلة لتبقى ابتسامت{ps} لامعة.",
     "mascot_name": "ماريا الثعلبة",
@@ -99,22 +103,22 @@
     "pages": [
       {
         "order": 1,
-        "text": "في كل ليلة، {v:wanted} {child_name} {v:ignored_teeth}. {v:warned_the_child} {mascot} وهي تلوّح بفرشاة صغيرة: «لكنّ حشرات السكر تحب الاختباء هناك!»",
+        "text": "في كل ليلة، {v:wanted} {child_name} {v:ignored_teeth}. {v:warned_the_child} {mascot} وهي تلوح بفرشاة صغيرة: «لكن حشرات السكر تحب الاختباء هناك!»",
         "image_prompt": "ثعلب كرتوني يحمل فرشاة أسنان صغيرة، يتحدث إلى شخصية {child_name} بملابس النوم في حمام مريح، حشرات سكر كرتونية مرحة تختبئ، أسلوب رسوم كتاب قصص."
       },
       {
         "order": 2,
         "text": "كشفت {mascot} لـ{child_name} السر: {v:clean_imperative} بحركات دائرية صغيرة، من الأعلى إلى الأسفل، طوال أغنية الحروف!",
-        "image_prompt": "شخصية {child_name} تنظّف أسنانها بحركات دائرية أمام المرآة، الثعلب الكرتوني يوضّح الحركة بجانبها، نوتات موسيقية تطفو في الهواء، أسلوب رسوم كتاب قصص."
+        "image_prompt": "شخصية {child_name} تنظف أسنانها بحركات دائرية أمام المرآة، الثعلب الكرتوني يوضح الحركة بجانبها، نوتات موسيقية تطفو في الهواء، أسلوب رسوم كتاب قصص."
       },
       {
         "order": 3,
-        "text": "حزمت حشرات السكر حقائبها الصغيرة وهربت بسرعة، فلم يبقَ لها شيءٌ تقرضه!",
+        "text": "حزمت حشرات السكر حقائبها الصغيرة وهربت بسرعة، فلم يبق لها شيء تقرضه!",
         "image_prompt": "حشرات سكر كرتونية صغيرة تهرب من أسنان كرتونية لامعة ونظيفة، شخصية {child_name} تبتسم بفخر، أسلوب رسوم كتاب قصص."
       },
       {
         "order": 4,
-        "text": "{v:looked} {child_name} في المرآة و{v:saw} ابتسامة كبيرة ولامعة. ومنذ تلك الليلة، {v:never_stopped_brushing} أبدًا.",
+        "text": "{v:looked} {child_name} في المرآة و{v:saw} ابتسامة كبيرة ولامعة. ومنذ تلك الليلة، {v:never_stopped_brushing} أبدا.",
         "image_prompt": "شخصية {child_name} تنظر في مرآة الحمام بابتسامة لامعة كبيرة، الثعلب الكرتوني يرفع إبهامه، ضوء ليلي دافئ، أسلوب رسوم كتاب قصص."
       }
     ]
@@ -122,6 +126,7 @@
   {
     "theme_key": "first_day_school",
     "locale": "en",
+    "category": "nurseries",
     "title": "The Big Brave Day",
     "synopsis": "{child_name} feels nervous about the first day at {organisation}, until {mascot} helps {pronoun:object} find courage.",
     "mascot_name": "Marya the Fox",
@@ -152,6 +157,7 @@
   {
     "theme_key": "first_day_school",
     "locale": "ar",
+    "category": "nurseries",
     "title": "يوم الشجاعة الكبير",
     "synopsis": "{v:feels_present} {child_name} بالقلق في أول يوم ل{ps} في {organisation}، إلى أن تساعد{ps} {mascot} على إيجاد شجاعت{ps}.",
     "mascot_name": "ماريا الثعلبة",
@@ -159,29 +165,30 @@
     "pages": [
       {
         "order": 1,
-        "text": "{v:stood} {child_name} عند باب الحضانة، {v:while_holding_bag} بقوة. {v:felt_worried} قليلاً.",
+        "text": "{v:stood} {child_name} عند باب الحضانة، {v:while_holding_bag} بقوة. {v:felt_worried} قليلا.",
         "image_prompt": "شخصية {child_name} تقف متوترة عند مدخل حضانة مشرق وتحمل حقيبة صغيرة، ضوء الصباح، أسلوب رسوم كتاب قصص."
       },
       {
         "order": 2,
-        "text": "قالت {mascot} وهي تجلس بجانب {child_name}: «الجميع يشعر بالتوتر قليلًا في اليوم الأول، حتى الثعالب!»",
+        "text": "قالت {mascot} وهي تجلس بجانب {child_name}: «الجميع يشعر بالتوتر قليلا في اليوم الأول، حتى الثعالب!»",
         "image_prompt": "الثعلب الكرتوني يجلس بجانب شخصية {child_name} عند مدخل الحضانة، تعبير مطمئن ودافئ، أطفال آخرون يلعبون بهدوء في الخلفية، أسلوب رسوم كتاب قصص."
       },
       {
         "order": 3,
-        "text": "معًا، {v:went_together_dual} {child_name} و{mascot} بخطوة شجاعة عبر الباب. وفي الداخل، كان هناك أصدقاء جدد وألعاب ملونة ويوم كامل مليء بالمرح!",
-        "image_prompt": "شخصية {child_name} والثعلب الكرتوني يخطوان يدًا بيد عبر باب فصل مشرق، ألعاب ملونة وأطفال مبتسمون في الداخل، أسلوب رسوم كتاب قصص."
+        "text": "معا، {v:went_together_dual} {child_name} و{mascot} بخطوة شجاعة عبر الباب. وفي الداخل، كان هناك أصدقاء جدد وألعاب ملونة ويوم كامل مليء بالمرح!",
+        "image_prompt": "شخصية {child_name} والثعلب الكرتوني يخطوان يدا بيد عبر باب فصل مشرق، ألعاب ملونة وأطفال مبتسمون في الداخل، أسلوب رسوم كتاب قصص."
       },
       {
         "order": 4,
-        "text": "وفي نهاية اليوم، لم {v:did_not_want} في المغادرة. فقد {v:made_new_friends} أصدقاء جددًا، ولم {v:could_not} الانتظار للعودة غدًا.",
-        "image_prompt": "شخصية {child_name} تلوّح مودّعة بسعادة لأصدقاء جدد في الحضانة، الثعلب الكرتوني يبتسم قريبًا، ضوء المساء الذهبي، أسلوب رسوم كتاب قصص."
+        "text": "وفي نهاية اليوم، لم {v:did_not_want} في المغادرة. فقد {v:made_new_friends} أصدقاء جددا، ولم {v:could_not} الانتظار للعودة غدا.",
+        "image_prompt": "شخصية {child_name} تلوح مودعة بسعادة لأصدقاء جدد في الحضانة، الثعلب الكرتوني يبتسم قريبا، ضوء المساء الذهبي، أسلوب رسوم كتاب قصص."
       }
     ]
   },
   {
     "theme_key": "new_sibling",
     "locale": "en",
+    "category": "family",
     "title": "Our New Little Star",
     "synopsis": "{child_name} learns how to be a caring big sibling when a new baby joins the family.",
     "mascot_name": "Marya the Fox",
@@ -212,6 +219,7 @@
   {
     "theme_key": "new_sibling",
     "locale": "ar",
+    "category": "family",
     "title": "نجمتنا الصغيرة الجديدة",
     "synopsis": "{v:learns_present} {child_name} كيف {v:older_sibling_copula} {v:older_sibling_noun} عندما ينضم طفل جديد إلى العائلة.",
     "mascot_name": "ماريا الثعلبة",
@@ -219,29 +227,30 @@
     "pages": [
       {
         "order": 1,
-        "text": "{v:heard} {child_name} خبراً كبيراً: طفل جديد سينضم إلى العائلة! و{v:was_not_sure} من شعور{ps}.",
+        "text": "{v:heard} {child_name} خبرا كبيرا: طفل جديد سينضم إلى العائلة! و{v:was_not_sure} من شعور{ps}.",
         "image_prompt": "شخصية {child_name} تنظر بتفكير إلى سرير أطفال صغير في المنزل، الوالدان يبتسمان بالقرب، ألوان حضانة دافئة وناعمة، أسلوب رسوم كتاب قصص."
       },
       {
         "order": 2,
-        "text": "قالت {mascot}: «أن {v:older_sibling_copula} {v:older_sibling_noun} فهذه قوة خاصة، ستُعلّم الطفل الجديد كل ما تعرفه.»",
+        "text": "قالت {mascot}: «أن {v:older_sibling_copula} {v:older_sibling_noun} فهذه قوة خاصة، ستعلم الطفل الجديد كل ما تعرفه.»",
         "image_prompt": "الثعلب الكرتوني يتحدث إلى شخصية {child_name} بجانب سرير الطفل، عباءة صغيرة تظهر بشكل مرح على كتفي {child_name}، أسلوب رسوم كتاب قصص."
       },
       {
         "order": 3,
         "text": "{v:sang} {child_name} أغنية هادئة للطفل، و{v:showed_toy} لعبت{ps} المفضلة، {v:helped_choose} في اختيار قبعة صغيرة له.",
-        "image_prompt": "شخصية {child_name} تُظهر لعبة بلطف لطفل في سريره، الثعلب الكرتوني يشاهد بسعادة، مشهد منزلي مريح، أسلوب رسوم كتاب قصص."
+        "image_prompt": "شخصية {child_name} تظهر لعبة بلطف لطفل في سريره، الثعلب الكرتوني يشاهد بسعادة، مشهد منزلي مريح، أسلوب رسوم كتاب قصص."
       },
       {
         "order": 4,
         "text": "ابتسم الطفل ابتسامة لطيفة لـ{child_name} وحد{ps}، ومنذ تلك اللحظة، {v:knew} إن كون{ps} {v:older_sibling_noun} هو أجمل شيء في العالم.",
-        "image_prompt": "طفل صغير يبتسم لشخصية {child_name}، الثعلب الكرتوني يحتفل بهدوء قريبًا، مشهد عائلي دافئ، أسلوب رسوم كتاب قصص."
+        "image_prompt": "طفل صغير يبتسم لشخصية {child_name}، الثعلب الكرتوني يحتفل بهدوء قريبا، مشهد عائلي دافئ، أسلوب رسوم كتاب قصص."
       }
     ]
   },
   {
     "theme_key": "honesty",
     "locale": "en",
+    "category": "educational",
     "title": "The Truth Tree",
     "synopsis": "{child_name} learns that telling the truth, even when it's hard, makes {pronoun:object} feel light and proud.",
     "mascot_name": "Marya the Fox",
@@ -272,8 +281,9 @@
   {
     "theme_key": "honesty",
     "locale": "ar",
+    "category": "educational",
     "title": "شجرة الصدق",
-    "synopsis": "{v:learns_present} {child_name} أن قول الحقيقة، حتى لو كان صعباً، يجعل{ps} {v:feels_present} بالراحة والفخر.",
+    "synopsis": "{v:learns_present} {child_name} أن قول الحقيقة، حتى لو كان صعبا، يجعل{ps} {v:feels_present} بالراحة والفخر.",
     "mascot_name": "ماريا الثعلبة",
     "native_review_status": "reviewed",
     "pages": [
@@ -284,24 +294,25 @@
       },
       {
         "order": 2,
-        "text": "همست {mascot}: «في كل مرة نقول الحقيقة، تنمو ورقة جديدة على شجرة الصدق. وفي كل مرة نخفيها، تحزن الشجرة قليلاً.»",
-        "image_prompt": "الثعلب الكرتوني يُظهر لشخصية {child_name} شجرة سحرية متوهجة مغطاة بالأوراق، أسلوب رسوم كتاب قصص خيالي."
+        "text": "همست {mascot}: «في كل مرة نقول الحقيقة، تنمو ورقة جديدة على شجرة الصدق. وفي كل مرة نخفيها، تحزن الشجرة قليلا.»",
+        "image_prompt": "الثعلب الكرتوني يظهر لشخصية {child_name} شجرة سحرية متوهجة مغطاة بالأوراق، أسلوب رسوم كتاب قصص خيالي."
       },
       {
         "order": 3,
-        "text": "{v:took_deep_breath} {child_name} نفسًا عميقًا، و{v:said} للمعلمة ما حدث بالضبط. ابتسمت المعلمة وقالت: «شكرًا لصدقك!»",
+        "text": "{v:took_deep_breath} {child_name} نفسا عميقا، و{v:said} للمعلمة ما حدث بالضبط. ابتسمت المعلمة وقالت: «شكرا لصدقك!»",
         "image_prompt": "شخصية {child_name} تتحدث إلى معلمة حضانة مبتسمة، تعبير مرتاح ولطيف، الثعلب الكرتوني قريب، أسلوب رسوم كتاب قصص."
       },
       {
         "order": 4,
         "text": "وفي تلك الليلة، {v:imagined} {child_name} ورقة جديدة تكبر على شجرة الصدق — ورقت{ps} الخاصة.",
-        "image_prompt": "شخصية {child_name} تحلم بشجرة سحرية متوهجة تنمو فيها ورقة جديدة متلألئة، الثعلب الكرتوني يستريح قريبًا، سماء ليلية، أسلوب رسوم كتاب قصص."
+        "image_prompt": "شخصية {child_name} تحلم بشجرة سحرية متوهجة تنمو فيها ورقة جديدة متلألئة، الثعلب الكرتوني يستريح قريبا، سماء ليلية، أسلوب رسوم كتاب قصص."
       }
     ]
   },
   {
     "theme_key": "hand_washing",
     "locale": "en",
+    "category": "educational",
     "title": "Bubble Heroes",
     "synopsis": "{child_name} and {mascot} become Bubble Heroes, washing away germs before snack time.",
     "mascot_name": "Marya the Fox",
@@ -332,14 +343,15 @@
   {
     "theme_key": "hand_washing",
     "locale": "ar",
+    "category": "educational",
     "title": "أبطال الفقاعات",
-    "synopsis": "يصبح {child_name} و{mascot} بطلَي الفقاعات، ويطردان الجراثيم قبل وقت الوجبة الخفيفة.",
+    "synopsis": "يصبح {child_name} و{mascot} بطلي الفقاعات، ويطردان الجراثيم قبل وقت الوجبة الخفيفة.",
     "mascot_name": "ماريا الثعلبة",
     "native_review_status": "reviewed",
     "pages": [
       {
         "order": 1,
-        "text": "قبل وقت الوجبة الخفيفة في الحضانة، طلّت {mascot} بعباءة من الفقاعات الصغيرة. قالت: «أبطال الفقاعات يغسلون أيديهم قبل الأكل!»",
+        "text": "قبل وقت الوجبة الخفيفة في الحضانة، طلت {mascot} بعباءة من الفقاعات الصغيرة. قالت: «أبطال الفقاعات يغسلون أيديهم قبل الأكل!»",
         "image_prompt": "الثعلب الكرتوني يرتدي عباءة فقاعات متلألئة بجانب مغسلة في الحضانة، وضعية بطل خارق مرحة، أسلوب رسوم كتاب قصص."
       },
       {
@@ -349,19 +361,20 @@
       },
       {
         "order": 3,
-        "text": "{v:counted} {child_name} إلى العشرين {v:while_humming} أغنيةً سعيدة، حتى اختفت آخر جرثومة في البالوعة.",
+        "text": "{v:counted} {child_name} إلى العشرين {v:while_humming} أغنية سعيدة، حتى اختفت آخر جرثومة في البالوعة.",
         "image_prompt": "شخصيات جراثيم كرتونية صغيرة تدور نحو بالوعة المغسلة، شخصية {child_name} تبتسم بيدين نظيفتين ولامعتين، أسلوب رسوم كتاب قصص."
       },
       {
         "order": 4,
         "text": "بيدين نظيفتين وابتسامة كبيرة، {v:sat_down} {child_name} {v:to_eat_snack} وجبت{ps} الخفيفة. {v:true_bubble_hero}!",
-        "image_prompt": "شخصية {child_name} تجلس بسعادة على طاولة الوجبة الخفيفة بيدين نظيفتين، الثعلب الكرتوني يرتدي عباءة الفقاعات يجلس قريبًا، أسلوب رسوم كتاب قصص."
+        "image_prompt": "شخصية {child_name} تجلس بسعادة على طاولة الوجبة الخفيفة بيدين نظيفتين، الثعلب الكرتوني يرتدي عباءة الفقاعات يجلس قريبا، أسلوب رسوم كتاب قصص."
       }
     ]
   },
   {
     "theme_key": "saving_money",
     "locale": "en",
+    "category": "educational",
     "title": "The Piggy Bank Promise",
     "synopsis": "{child_name} learns that saving a little bit at a time can grow into something wonderful.",
     "mascot_name": "Marya the Fox",
@@ -392,8 +405,9 @@
   {
     "theme_key": "saving_money",
     "locale": "ar",
-    "title": "وعد الحصّالة",
-    "synopsis": "{v:learns_present} {child_name} أن توفير القليل شيئًا فشيئًا يكبر ليصبح شيئًا رائعًا.",
+    "category": "educational",
+    "title": "وعد الحصالة",
+    "synopsis": "{v:learns_present} {child_name} أن توفير القليل شيئا فشيئا يكبر ليصبح شيئا رائعا.",
     "mascot_name": "ماريا الثعلبة",
     "native_review_status": "reviewed",
     "pages": [
@@ -404,24 +418,25 @@
       },
       {
         "order": 2,
-        "text": "قالت {mascot}: «صندوق التوفير يشبه حديقة صغيرة، كل عملة تزرعها اليوم تكبر لتصبح شيئًا أكبر غدًا.»",
+        "text": "قالت {mascot}: «صندوق التوفير يشبه حديقة صغيرة، كل عملة تزرعها اليوم تكبر لتصبح شيئا أكبر غدا.»",
         "image_prompt": "الثعلب الكرتوني يشير إلى صندوق توفير خزفي على شكل تل صغير، عملات معدنية تنبت كنباتات صغيرة، أسلوب رسوم كتاب قصص خيالي."
       },
       {
         "order": 3,
-        "text": "كل أسبوع، {v:saved} {child_name} جزءًا من مصروف{ps}، و{v:counted} النقود وهي تسقط في حصالة التوفير: واحد، اثنان، ثلاثة!",
-        "image_prompt": "شخصية {child_name} تضع عملة معدنية في صندوق التوفير، تعدّ على أصابعها، غرفة نوم مريحة، أسلوب رسوم كتاب قصص."
+        "text": "كل أسبوع، {v:saved} {child_name} جزءا من مصروف{ps}، و{v:counted} النقود وهي تسقط في حصالة التوفير: واحد، اثنان، ثلاثة!",
+        "image_prompt": "شخصية {child_name} تضع عملة معدنية في صندوق التوفير، تعد على أصابعها، غرفة نوم مريحة، أسلوب رسوم كتاب قصص."
       },
       {
         "order": 4,
-        "text": "بعد أسابيع، {v:emptied} {child_name} صندوق التوفير و{v:counted} ما يكفي لشراء الطائرة الورقية، و{v:felt_proud} لأن{ps} {v:saved_it_up} درهماً بدرهم.",
-        "image_prompt": "شخصية {child_name} تطير طائرة ورقية جديدة في الخارج بابتسامة فخورة كبيرة، الثعلب الكرتوني يشجّع من الأسفل، سماء مشمسة، أسلوب رسوم كتاب قصص."
+        "text": "بعد أسابيع، {v:emptied} {child_name} صندوق التوفير و{v:counted} ما يكفي لشراء الطائرة الورقية، و{v:felt_proud} لأن{ps} {v:saved_it_up} درهما بدرهم.",
+        "image_prompt": "شخصية {child_name} تطير طائرة ورقية جديدة في الخارج بابتسامة فخورة كبيرة، الثعلب الكرتوني يشجع من الأسفل، سماء مشمسة، أسلوب رسوم كتاب قصص."
       }
     ]
   },
   {
     "theme_key": "national_day_gratitude",
     "locale": "en",
+    "category": "nurseries",
     "title": "UAE National Day",
     "synopsis": "{child_name} discovers what makes {pronoun:object} proud and thankful about home on UAE National Day.",
     "mascot_name": "Grandma Amal",
@@ -452,6 +467,7 @@
   {
     "theme_key": "national_day_gratitude",
     "locale": "ar",
+    "category": "nurseries",
     "title": "اليوم الوطني لدولة الإمارات",
     "synopsis": "{v:discovers_present} {child_name} أسباب فخر{ps} وحب{ps} لوطن{ps} في اليوم الوطني لدولة الإمارات.",
     "mascot_name": "الجدة أمل",
@@ -459,17 +475,17 @@
     "pages": [
       {
         "order": 1,
-        "text": "تزيّنت الشوارع بالأعلام الحمراء والخضراء والبيضاء والسوداء. {v:said} {child_name} {v:while_looking} إلى الأعلام: «بماذا نحتفل؟»",
-        "image_prompt": "شخصية {child_name} تنظر إلى أعلام دولة الإمارات تزيّن الشارع، أجواء احتفالية، أسلوب رسوم كتاب قصص."
+        "text": "تزينت الشوارع بالأعلام الحمراء والخضراء والبيضاء والسوداء. {v:said} {child_name} {v:while_looking} إلى الأعلام: «بماذا نحتفل؟»",
+        "image_prompt": "شخصية {child_name} تنظر إلى أعلام دولة الإمارات تزين الشارع، أجواء احتفالية، أسلوب رسوم كتاب قصص."
       },
       {
         "order": 2,
-        "text": "قالت {mascot} وهي تلوّح بعَلَمٍ صغير: «اليوم نقول شكرًا لوطننا، وعائلتنا، ومجتمعنا!»",
-        "image_prompt": "{mascot}، جدة ترتدي اللباس التقليدي الإماراتي، تلوّح بعلم إماراتي صغير بجانب شخصية {child_name}، تجمّع مجتمعي دافئ في الخلفية، أسلوب رسوم كتاب قصص."
+        "text": "قالت {mascot} وهي تلوح بعلم صغير: «اليوم نقول شكرا لوطننا، وعائلتنا، ومجتمعنا!»",
+        "image_prompt": "{mascot}، جدة ترتدي اللباس التقليدي الإماراتي، تلوح بعلم إماراتي صغير بجانب شخصية {child_name}، تجمع مجتمعي دافئ في الخلفية، أسلوب رسوم كتاب قصص."
       },
       {
         "order": 3,
-        "text": "{v:thought} {child_name} في كل ما {v:felt_grateful} لأجله: عائلت{ps}، وأصدقائ{ps} في الحضانة، والمكان الذي {v:called_it_home} وطناً.",
+        "text": "{v:thought} {child_name} في كل ما {v:felt_grateful} لأجله: عائلت{ps}، وأصدقائ{ps} في الحضانة، والمكان الذي {v:called_it_home} وطنا.",
         "image_prompt": "شخصية {child_name} ترسم لوحة لعائلتها وأصدقائها ووطنها، تعبير سعيد ومتأمل، أسلوب رسوم كتاب قصص."
       },
       {
@@ -482,6 +498,7 @@
   {
     "theme_key": "donut_maker",
     "locale": "en",
+    "category": "entertainment",
     "title": "Lara the Donut Maker",
     "synopsis": "{child_name} spends a delightful afternoon baking and decorating donuts with Lara, learning that a little patience and a lot of creativity make anything sweeter.",
     "mascot_name": "Lara",
@@ -512,30 +529,31 @@
   {
     "theme_key": "donut_maker",
     "locale": "ar",
+    "category": "entertainment",
     "title": "لارا صانعة الدونات",
     "synopsis": "{v:tried} {child_name} صنع الدونات وتزيينها مع {mascot}، و{v:learned} أن القليل من الصبر والكثير من الإبداع يجعلان كل شيء ألذ.",
-    "mascot_name": "لارا الخبّازة",
+    "mascot_name": "لارا الخبازة",
     "native_review_status": "reviewed",
     "pages": [
       {
         "order": 1,
-        "text": "{v:sat_down} {child_name} بجانب طاولة المطبخ في عصر هادئ لا يوجد فيه ما يُلهي. وفجأة، ظهرت {mascot} من باب المطبخ ترتدي مئزرًا مغطى بالدقيق، وقالت: «حان وقت صنع شيء لذيذ معًا!»",
-        "image_prompt": "شخصية خبّازة كرتونية مرحة اسمها لارا، ترتدي مئزرًا مغطى بالدقيق وابتسامة كبيرة، تقف عند باب مطبخ دافئ ومريح وتلوّح لشخصية {child_name}، إضاءة عصر دافئة، أسلوب رسوم كتاب قصص."
+        "text": "{v:sat_down} {child_name} بجانب طاولة المطبخ في عصر هادئ لا يوجد فيه ما يلهي. وفجأة، ظهرت {mascot} من باب المطبخ ترتدي مئزرا مغطى بالدقيق، وقالت: «حان وقت صنع شيء لذيذ معا!»",
+        "image_prompt": "شخصية خبازة كرتونية مرحة اسمها لارا، ترتدي مئزرا مغطى بالدقيق وابتسامة كبيرة، تقف عند باب مطبخ دافئ ومريح وتلوح لشخصية {child_name}، إضاءة عصر دافئة، أسلوب رسوم كتاب قصص."
       },
       {
         "order": 2,
-        "text": "أحضرت {mascot} وعاءً كبيرًا، ودقيقًا ناعمًا، ورشّة قرفة. {v:tried} {child_name} تحريك الخليط حتى أصبح طريًا ولزجًا قليلًا، ولطّخت {mascot} أنف{ps} بقليل من الدقيق مازحة.",
-        "image_prompt": "شخصية {child_name} وشخصية الخبّازة الكرتونية لارا تعجنان الخليط معًا في وعاء كبير فوق منضدة المطبخ، وكلاهما مغطى بطبقة خفيفة من الدقيق، مطبخ دافئ ومريح، أسلوب رسوم كتاب قصص."
+        "text": "أحضرت {mascot} وعاء كبيرا، ودقيقا ناعما، ورشة قرفة. {v:tried} {child_name} تحريك الخليط حتى أصبح طريا ولزجا قليلا، ولطخت {mascot} أنف{ps} بقليل من الدقيق مازحة.",
+        "image_prompt": "شخصية {child_name} وشخصية الخبازة الكرتونية لارا تعجنان الخليط معا في وعاء كبير فوق منضدة المطبخ، وكلاهما مغطى بطبقة خفيفة من الدقيق، مطبخ دافئ ومريح، أسلوب رسوم كتاب قصص."
       },
       {
         "order": 3,
-        "text": "وبينما كانت العجينة ترتاح وتنتفخ كالسحابة، {v:sat_down} {child_name} {v:while_humming} أغنية خبز مضحكة مع {mascot}. وبعد لحظات، خرجت حلقات ذهبية صغيرة من الفرن، دافئة ومتوهجة. قالت {mascot} وهي تُخرج أطباق الرشّ الملوّن والشوكولاتة وسكّر التزيين الوردي: «والآن يأتي الجزء الأفضل!»",
-        "image_prompt": "مشهد مطبخ كرتوني مبهج يظهر فيه طبق من حلقات الدونات الذهبية المتوهجة بدفء، شخصية الخبّازة لارا وشخصية {child_name} تبتسمان بجانب أطباق من الرشّ الملوّن والتزيين، أسلوب رسوم كتاب قصص."
+        "text": "وبينما كانت العجينة ترتاح وتنتفخ كالسحابة، {v:sat_down} {child_name} {v:while_humming} أغنية خبز مضحكة مع {mascot}. وبعد لحظات، خرجت حلقات ذهبية صغيرة من الفرن، دافئة ومتوهجة. قالت {mascot} وهي تخرج أطباق الرش الملون والشوكولاتة وسكر التزيين الوردي: «والآن يأتي الجزء الأفضل!»",
+        "image_prompt": "مشهد مطبخ كرتوني مبهج يظهر فيه طبق من حلقات الدونات الذهبية المتوهجة بدفء، شخصية الخبازة لارا وشخصية {child_name} تبتسمان بجانب أطباق من الرش الملون والتزيين، أسلوب رسوم كتاب قصص."
       },
       {
         "order": 4,
         "text": "{v:decided} {child_name} تزيين كل قطعة دونات بطريقة مختلفة. وعندما اكتمل الطبق، {v:felt_proud} و{v:shared} الدونات اللذيذة مع العائلة كلها، التي احتفلت بهذه المفاجأة الحلوة.",
-        "image_prompt": "شخصية {child_name} تحمل بفخر صينية دونات مزيّنة بألوان زاهية، تقدّمها لعائلة سعيدة ومحتفية في المنزل، شخصية الخبّازة لارا تُطل من باب المطبخ، مشهد دافئ وسعيد، أسلوب رسوم كتاب قصص."
+        "image_prompt": "شخصية {child_name} تحمل بفخر صينية دونات مزينة بألوان زاهية، تقدمها لعائلة سعيدة ومحتفية في المنزل، شخصية الخبازة لارا تطل من باب المطبخ، مشهد دافئ وسعيد، أسلوب رسوم كتاب قصص."
       }
     ]
   }

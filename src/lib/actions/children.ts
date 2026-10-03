@@ -216,9 +216,16 @@ export async function requestConsentAction(
 
   await supabase.from('children').update({ consent_status: 'pending' }).eq('id', childId);
 
-  const baseUrl = process.env.CONSENT_LINK_BASE_URL ?? 'http://localhost:3000/consent';
+  // Locale comes from the staff member generating the link, not a
+  // separate preference -- whatever language they were using when they
+  // clicked "Generate" is the language the parent sees. CONSENT_LINK_BASE_URL
+  // is the app's origin only (no /consent suffix baked in); the locale
+  // segment is required by next-intl's routing (src/app/[locale]/consent/
+  // [token]/page.tsx), and without it the middleware silently falls back
+  // to the default locale (English) regardless of what was intended.
+  const origin = (process.env.CONSENT_LINK_BASE_URL ?? 'http://localhost:3000').replace(/\/$/, '');
   revalidatePath(`/${locale}/dashboard/children/${childId}`);
-  return { consentUrl: `${baseUrl.replace(/\/$/, '')}/${token}` };
+  return { consentUrl: `${origin}/${locale}/consent/${token}` };
 }
 
 export async function withdrawConsentAction(locale: string, childId: string): Promise<ActionResult> {

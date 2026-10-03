@@ -21,7 +21,7 @@ export function ConsentResponseForm({ token }: { token: string }) {
   );
 
   if (grantState.success) {
-    return <p className="text-lagoon-700">{t('granted')}</p>;
+    return <p className="text-lagoon-300">{t('granted')}</p>;
   }
   if (declineState.success) {
     return <p className="text-ink-600">{t('declined')}</p>;

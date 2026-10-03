@@ -76,7 +76,7 @@ NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
 SUPABASE_SERVICE_ROLE_KEY=
 NEXT_PUBLIC_APP_URL=https://your-real-domain.com
-CONSENT_LINK_BASE_URL=https://your-real-domain.com/consent
+CONSENT_LINK_BASE_URL=https://your-real-domain.com
 CRON_SECRET=<generate a random 32+ character value>
 ```
 

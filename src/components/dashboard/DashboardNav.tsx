@@ -49,10 +49,17 @@ export function DashboardNav({
   // a tapped link, so picking a tab always lands straight on that page's
   // content instead of leaving the menu open over it.
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   useEffect(() => {
     setIsMenuOpen(false);
   }, [pathname]);
+
+  function handleRefresh() {
+    setIsRefreshing(true);
+    router.refresh();
+    setTimeout(() => setIsRefreshing(false), 600);
+  }
 
   const links = [
     { href: base, label: labels.overview },
@@ -92,6 +99,35 @@ export function DashboardNav({
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className={isRtl ? 'rotate-180' : ''}>
         <path
           d="M15 6l-6 6 6 6"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+    </button>
+  );
+
+  const refreshButton = (
+    // The Capacitor-wrapped app also has no pull-to-refresh/reload
+    // control, so this sits beside the back button for the same reason
+    // — see docs/DECISIONS.md "Mobile: Capacitor wrapper for Android +
+    // iOS".
+    <button
+      type="button"
+      onClick={handleRefresh}
+      aria-label={common('refresh')}
+      className="focus-ring flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[rgb(var(--color-border))] text-ink-600 transition-colors hover:bg-ink-100"
+    >
+      <svg
+        width="16"
+        height="16"
+        viewBox="0 0 24 24"
+        fill="none"
+        className={isRefreshing ? 'animate-spin' : ''}
+      >
+        <path
+          d="M4 4v5h5M20 20v-5h-5M4.5 9a8 8 0 0 1 14.5-3M19.5 15a8 8 0 0 1-14.5 3"
           stroke="currentColor"
           strokeWidth="2"
           strokeLinecap="round"
@@ -176,6 +212,7 @@ export function DashboardNav({
       <div className="flex items-center justify-between border-b border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface-raised))] px-4 py-3 md:hidden">
         <div className="flex items-center gap-2.5">
           {backButton}
+          {refreshButton}
           {brandRow}
         </div>
         <button
@@ -220,6 +257,7 @@ export function DashboardNav({
         <div>
           <div className="mb-5 flex items-center gap-2.5">
             {backButton}
+            {refreshButton}
             {brandRow}
           </div>
           {navBody}

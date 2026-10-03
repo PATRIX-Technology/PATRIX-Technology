@@ -44,7 +44,7 @@ export default async function ChildDetailPage({
 
   const { data: templates } = await supabase
     .from('story_theme_templates')
-    .select('id, theme_key, title, locale, native_review_status')
+    .select('id, theme_key, title, locale, category, native_review_status')
     .eq('is_active', true)
     .eq('locale', child.preferred_language);
 

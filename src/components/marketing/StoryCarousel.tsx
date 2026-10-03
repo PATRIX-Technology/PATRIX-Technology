@@ -7,7 +7,7 @@ import { useTranslations } from 'next-intl';
 export interface StoryCarouselPage {
   pageNumber: number;
   imageSrc: string;
-  /** Drawn as an overlay caption band, in the script-appropriate font
+  /** Drawn as a caption band below the image, in the script-appropriate font
    * (Fraunces for English, Noto Kufi Arabic for Arabic). Unlike the
    * printed PDF -- where the Arabic caption is baked into the
    * illustration itself by Gemini, since no PDF text-drawing approach
@@ -24,7 +24,11 @@ export interface StoryCarouselPage {
 }
 
 /** Same caption-band colour as the printed PDF's CAPTION_BANNER_COLOR
- * (src/lib/providers/pdf/render.ts) -- rgb(0.855, 0.914, 0.851). */
+ * (src/lib/providers/pdf/render.ts) -- rgb(0.855, 0.914, 0.851). Drawn as
+ * a normal block below the image rather than an absolute overlay on top
+ * of it -- a long caption (the real generated page text, not a short
+ * blurb) would otherwise grow tall enough on a narrow screen to cover
+ * most of the illustration underneath it. */
 const CAPTION_BAND_COLOR = '#dae9d9';
 /** Same caption-text colour as the PDF's INK_COLOR -- a literal dark
  * ink, not this app's `ink-900` token: that token means "near-white,
@@ -80,7 +84,9 @@ export function StoryCarousel({
   return (
     <div className="mx-auto w-full max-w-sm" dir={dir}>
       <div className="rounded-xl2 border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface-raised))] p-3 shadow-card">
-        <div className="relative aspect-[5/7] w-full overflow-hidden rounded-2xl bg-[rgb(var(--color-surface))]">
+        <div
+          className={`relative aspect-[5/7] w-full overflow-hidden bg-[rgb(var(--color-surface))] ${page.caption ? 'rounded-t-2xl' : 'rounded-2xl'}`}
+        >
           <Image
             key={page.imageSrc}
             src={page.imageSrc}
@@ -89,20 +95,17 @@ export function StoryCarousel({
             sizes="(max-width: 768px) 90vw, 360px"
             className="object-cover"
           />
-          {page.caption ? (
-            <div
-              className="absolute inset-x-0 bottom-0 px-5 py-4 text-center"
-              style={{ backgroundColor: CAPTION_BAND_COLOR, opacity: 0.96 }}
-            >
-              <p
-                className={`text-sm font-semibold sm:text-base ${dir === 'rtl' ? 'font-arabic' : 'font-display'}`}
-                style={{ color: CAPTION_TEXT_COLOR }}
-              >
-                {page.caption}
-              </p>
-            </div>
-          ) : null}
         </div>
+        {page.caption ? (
+          <div className="rounded-b-2xl px-5 py-4 text-center" style={{ backgroundColor: CAPTION_BAND_COLOR }}>
+            <p
+              className={`text-sm font-semibold sm:text-base ${dir === 'rtl' ? 'font-arabic' : 'font-display'}`}
+              style={{ color: CAPTION_TEXT_COLOR }}
+            >
+              {page.caption}
+            </p>
+          </div>
+        ) : null}
 
         <div className="mt-3 flex items-center justify-between px-1">
           <button

@@ -167,8 +167,9 @@ export async function signInAction(locale: string, formData: FormData): Promise<
   }
 
   const password = String(formData.get('password') ?? '');
+  const rememberMe = formData.get('rememberMe') === 'true';
 
-  const supabase = await createSupabaseServerClient();
+  const supabase = await createSupabaseServerClient(rememberMe);
   const { error } = await supabase.auth.signInWithPassword({ email, password });
   if (error) {
     return { error: 'Incorrect email or password.' };
@@ -383,8 +384,9 @@ export async function verifySignInOtpAction(locale: string, formData: FormData):
   if (!phone || !token) {
     return { error: 'Enter the code we sent you.' };
   }
+  const rememberMe = formData.get('rememberMe') === 'true';
 
-  const supabase = await createSupabaseServerClient();
+  const supabase = await createSupabaseServerClient(rememberMe);
   const { error: verifyError } = await supabase.auth.verifyOtp({ phone, token, type: 'sms' });
   if (verifyError) {
     return { error: 'That code is incorrect or has expired.' };

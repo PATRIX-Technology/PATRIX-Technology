@@ -19,14 +19,30 @@ import { cookies } from 'next/headers';
  * document.cookie to attach the session to its own requests — the SSR
  * cookie-based auth flow this app uses cannot work at all without that
  * read access. See docs/DECISIONS.md "Session cookie hardening".
+ *
+ * @supabase/ssr 0.5.2's applyServerStorage always writes its OWN 400-day
+ * maxAge onto the Set-Cookie it sends to our setAll below, discarding
+ * whatever maxAge we pass in cookieOptions (verified by calling its
+ * exported applyServerStorage directly) -- so the 30-day intent above
+ * never actually reached the browser. setAll re-applies the real value
+ * itself rather than trusting the options it's handed.
  */
+const PERSISTED_MAX_AGE = 60 * 60 * 24 * 30; // 30 days
+
 const COOKIE_OPTIONS = {
   secure: process.env.NODE_ENV === 'production',
   sameSite: 'lax' as const,
-  maxAge: 60 * 60 * 24 * 30, // 30 days, not @supabase/ssr's 400-day ceiling
 };
 
-export async function createSupabaseServerClient() {
+/**
+ * @param rememberMe When false, the session cookie is written with no
+ * maxAge/expires at all, so the browser treats it as a session cookie
+ * and drops it when the browser (not just the tab) closes -- the
+ * "keep me signed in" checkbox's unchecked state. Defaults to true:
+ * every call site without that checkbox (password reset, MFA, etc.)
+ * keeps today's always-persistent behaviour.
+ */
+export async function createSupabaseServerClient(rememberMe = true) {
   const cookieStore = await cookies();
 
   return createServerClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, {
@@ -37,7 +53,11 @@ export async function createSupabaseServerClient() {
       },
       setAll(cookiesToSet: { name: string; value: string; options: CookieOptions }[]) {
         try {
-          cookiesToSet.forEach(({ name, value, options }) => cookieStore.set(name, value, options));
+          cookiesToSet.forEach(({ name, value, options }) => {
+            const { maxAge: _ignoredLibraryMaxAge, expires: _ignoredLibraryExpires, ...rest } = options;
+            const sessionLifetime = options.maxAge === 0 ? { maxAge: 0 } : rememberMe ? { maxAge: PERSISTED_MAX_AGE } : {};
+            cookieStore.set(name, value, { ...rest, ...sessionLifetime });
+          });
         } catch {
           // Called from a Server Component with no request context to
           // mutate — safe to ignore, middleware refreshes the session.

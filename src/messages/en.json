@@ -105,6 +105,7 @@
       "changeNumber": "Use a different number"
     },
     "passwordHint": "At least {min} characters, with a mix of letters and numbers.",
+    "rememberMe": "Keep me signed in",
     "google": {
       "continueWith": "Continue with Google",
       "orDivider": "or",

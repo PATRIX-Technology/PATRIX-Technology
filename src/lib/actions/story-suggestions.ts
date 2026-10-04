@@ -4,16 +4,52 @@ import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { getCurrentTenantContext } from '@/lib/domain/session';
 import { enforceRateLimit, RateLimitExceededError } from '@/lib/rate-limit';
 import { getClientIp } from '@/lib/request-ip';
-import { sendTelegramMessage } from '@/lib/notifications/telegram';
 import type { StorySuggestionStatus } from '@/types/database';
 import type { ActionResult } from './auth';
 
 /**
+ * How many suggestions a tenant may submit per hour, keyed by their
+ * current plan — a higher-tier subscriber gets a higher cap. Deliberately
+ * modest at every tier since this is a feedback form, not core product
+ * usage: even the top nursery plan doesn't need a high ceiling. Tenants
+ * with no active subscription row yet (checkout not completed, or a plan
+ * that's been removed from the `plans` table) get the lowest tier's limit
+ * rather than the old flat 10/hour default.
+ */
+const SUGGESTION_RATE_LIMIT_BY_PLAN_KEY: Record<string, number> = {
+  family: 3,
+  family_plus: 5,
+  starter: 10,
+  starter_usd: 10,
+  growth: 20,
+  growth_usd: 20,
+  network: 30,
+  network_usd: 30,
+};
+const DEFAULT_SUGGESTION_RATE_LIMIT = 3;
+
+async function getSuggestionRateLimit(
+  supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>,
+  tenantId: string,
+): Promise<number> {
+  const { data } = await supabase
+    .from('subscriptions')
+    .select('plans(key)')
+    .eq('tenant_id', tenantId)
+    .maybeSingle();
+  const planKey = (data?.plans as unknown as { key: string } | null)?.key;
+  return (planKey && SUGGESTION_RATE_LIMIT_BY_PLAN_KEY[planKey]) || DEFAULT_SUGGESTION_RATE_LIMIT;
+}
+
+/**
  * Saves a nursery/family's story-idea suggestion — see
- * docs/DECISIONS.md "Story template suggestions". Always saved to the
- * database first; the Telegram notification and the WhatsApp wa.me
- * link the dialog offers afterwards are both best-effort extras on
- * top of that saved row, never a substitute for it.
+ * docs/DECISIONS.md "Story template suggestions" and its "Telegram
+ * notification removed" follow-up. Always saved to the database
+ * first and visible on the Owner dashboard's suggestions list — the
+ * durable, guaranteed record. The WhatsApp wa.me link the dialog
+ * offers afterwards is an optional, submitter-initiated fast path on
+ * top of that (founder's own number, no WhatsApp Business API or
+ * per-message cost involved), never a substitute for the saved row.
  */
 export async function suggestStoryTemplateAction(formData: FormData): Promise<ActionResult> {
   const supabase = await createSupabaseServerClient();
@@ -22,7 +58,8 @@ export async function suggestStoryTemplateAction(formData: FormData): Promise<Ac
 
   try {
     const ip = await getClientIp();
-    await enforceRateLimit(`story-suggestion:${ip}:${context.userId}`, 10, 60 * 60 * 1000);
+    const limit = await getSuggestionRateLimit(supabase, context.tenantId);
+    await enforceRateLimit(`story-suggestion:${ip}:${context.userId}`, limit, 60 * 60 * 1000);
   } catch (error) {
     if (error instanceof RateLimitExceededError) return { error: error.message };
     throw error;
@@ -41,10 +78,6 @@ export async function suggestStoryTemplateAction(formData: FormData): Promise<Ac
     description,
   });
   if (error) return { error: error.message };
-
-  await sendTelegramMessage(
-    `📖 New story idea suggestion\n\nFrom: ${context.tenantName} (${context.fullName})\n\nTopic: ${topic}\n\nWhy it matters: ${description}`,
-  );
 
   return { message: 'saved' };
 }

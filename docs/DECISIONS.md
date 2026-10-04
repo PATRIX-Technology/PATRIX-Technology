@@ -1863,6 +1863,44 @@ mattering enough to keep troubleshooting: "let's stay whatsapp then."
 never set) — a five-minute finish if he ever wants to revisit it, not
 something to bring back up unprompted.
 
+**Follow-up (later session): removed outright.** Founder feedback,
+alongside the tier-based rate-limit request below: "keep the sending
+to go to my whatsapp (+971555990694) not telegram." Asked which
+WhatsApp path he meant, since a real automatic push needs a WhatsApp
+*Business* API account (the same cost/verification tradeoff already
+decided against above) — he picked the submitter-initiated `wa.me`
+tap-to-send that already existed, confirming Telegram should simply
+go away rather than be replaced by anything server-side. Deleted
+`src/lib/notifications/telegram.ts` and its test, the
+`sendTelegramMessage` call and import in `suggestStoryTemplateAction`,
+and the `TELEGRAM_BOT_TOKEN`/`TELEGRAM_CHAT_ID` block in
+`.env.example`. The Owner dashboard's "Story idea suggestions" card
+(described above) is no longer a fallback for a sometimes-missing
+notification — with Telegram gone, it's the one guaranteed channel
+every suggestion reaches, alongside the still-optional WhatsApp tap
+for a submitter who wants to flag theirs directly. `TELEGRAM_BOT_TOKEN`
+is still sitting in Vercel's env vars, now read by nothing; see
+`docs/NEEDS_FROM_ME.md` for the one-line cleanup left for the founder.
+
+## Tier-based rate limit for story suggestions
+
+Founder feedback, same request as the Telegram removal above: "every
+user having limitation on them based on their subscription tier."
+`suggestStoryTemplateAction` previously enforced one flat limit (10
+per hour) regardless of who was asking. Replaced with
+`SUGGESTION_RATE_LIMIT_BY_PLAN_KEY` in
+`src/lib/actions/story-suggestions.ts`, keyed by the tenant's current
+`plans.key` (joined through `subscriptions.plan_id`): family 3/hr,
+family_plus 5/hr, starter 10/hr, growth 20/hr, network 30/hr (same
+cap for a plan's AED and USD variants — they're priced identically,
+just different currencies). A tenant with no subscription row yet
+(checkout never completed, or between plans) falls back to 3/hr, the
+lowest tier's cap, rather than the old 10/hr default. Numbers are a
+reasonable first pass, not something the founder specified precisely
+— this is a feedback form, not core product usage, so even the top
+nursery tier doesn't need a high ceiling; revisit if a real tenant
+hits the cap in practice.
+
 ## Invite link shares to WhatsApp/Telegram/Email in one tap
 
 Founder feedback, after noticing the invite link on the new page was

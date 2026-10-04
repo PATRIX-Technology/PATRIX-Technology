@@ -257,21 +257,21 @@ needed for this: nothing is emailed to a recipient, the referrer just
 shares their own link directly. See `docs/DECISIONS.md` "Referral
 program replaces gifting".
 
-## Telegram notification for story-idea suggestions — parked, not needed
+## Telegram notification for story-idea suggestions — removed, one cleanup step left for you
 
-6c. **Not something you need to do.** A Telegram bot (`@TooniX_Bot`)
-   was created and its token is already set in Vercel
-   (`TELEGRAM_BOT_TOKEN`), but getting the matching `TELEGRAM_CHAT_ID`
-   stalled — Telegram wasn't responding to any bot on your account —
-   and you decided WhatsApp alone is enough, since (per
-   `docs/DECISIONS.md`) the WhatsApp links in this app cost nothing
-   and were never the paid Business API in the first place. The bot
-   token sits in Vercel unused and harmless — `sendTelegramMessage()`
-   is a no-op without `TELEGRAM_CHAT_ID`, which was never set. Story
-   suggestions are still fully covered without it: saved to the
-   database, visible on your Owner dashboard, and shareable by the
-   submitter via WhatsApp. Revisit only if you want to; the steps are
-   in the version history of this file if so.
+6c. **One small thing only you can do.** Per your explicit request,
+   the Telegram integration (`src/lib/notifications/telegram.ts`,
+   `sendTelegramMessage()`, its call from `suggestStoryTemplateAction`)
+   has been removed from the code entirely — see `docs/DECISIONS.md`
+   "Telegram notification removed". Story suggestions are still fully
+   covered without it: saved to the database, visible on your Owner
+   dashboard, and shareable by the submitter straight to your own
+   WhatsApp (+971 55 599 0694) via the wa.me link already in the
+   suggestion dialog. The only follow-up: `TELEGRAM_BOT_TOKEN` is
+   still sitting in your Vercel project's environment variables,
+   unread by any code now — delete it there whenever convenient
+   (Project Settings → Environment Variables); harmless if left, but
+   nothing uses it anymore.
 
 ## Legal / compliance (do not treat any of this as done)
 

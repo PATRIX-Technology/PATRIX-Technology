@@ -205,14 +205,22 @@ export function CreateStoryForm({
       }}
       className="flex flex-col gap-6"
     >
-      {categories.map((category) => {
+      {categories.map((category, categoryIndex) => {
         const categoryTemplates = usableTemplates.filter((tpl) => tpl.category === category);
         return (
-          <div key={category} className="flex flex-col gap-3">
-            <h3 className="text-sm font-semibold uppercase tracking-wide text-ink-500">
-              {t.has(`categories.${category}`) ? t(`categories.${category}`) : category}
-            </h3>
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <details key={category} className="group" open={categoryIndex === 0}>
+            <summary className="focus-ring flex cursor-pointer list-none items-center justify-between gap-2 rounded-lg py-1 hover:bg-ink-50">
+              <span className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-ink-500">
+                <span aria-hidden className="text-ink-400 transition-transform group-open:rotate-90">
+                  ▸
+                </span>
+                {t.has(`categories.${category}`) ? t(`categories.${category}`) : category}
+              </span>
+              <span className="text-xs font-normal normal-case tracking-normal text-ink-400">
+                {categoryTemplates.length}
+              </span>
+            </summary>
+            <div className="mt-3 grid gap-3 pb-1 sm:grid-cols-2 lg:grid-cols-3">
               {categoryTemplates.map((template) => {
                 const globalIndex = usableTemplates.indexOf(template);
                 return (
@@ -238,7 +246,7 @@ export function CreateStoryForm({
                 );
               })}
             </div>
-          </div>
+          </details>
         );
       })}
       <GenerateButton label={t('generate')} />

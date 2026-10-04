@@ -4,6 +4,7 @@ import { useFormState } from 'react-dom';
 import { useTranslations } from 'next-intl';
 import { submitDemoRequestAction } from '@/lib/actions/demo-request';
 import type { ActionResult } from '@/lib/actions/auth';
+import { useSafeFormReducer } from '@/lib/actions/use-safe-form-reducer';
 import { whatsappLink } from '@/lib/config/contact';
 import { SubmitButton } from '@/components/ui/SubmitButton';
 import { TextField } from '@/components/ui/Input';
@@ -11,9 +12,10 @@ import { TextField } from '@/components/ui/Input';
 export function DemoRequestForm({ locale }: { locale: string }) {
   const t = useTranslations('marketing.demoRequest');
   const action = submitDemoRequestAction.bind(null, locale);
-  const [state, formAction] = useFormState<ActionResult, FormData>(async (_prev, formData) => {
-    return action(formData);
-  }, {});
+  const [state, formAction] = useFormState<ActionResult, FormData>(
+    useSafeFormReducer(async (_prev, formData) => action(formData)),
+    {},
+  );
 
   const waLink = whatsappLink(t('whatsappMessage'));
 

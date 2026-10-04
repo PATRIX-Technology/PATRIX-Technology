@@ -4,6 +4,7 @@ import { useFormState } from 'react-dom';
 import { useTranslations } from 'next-intl';
 import { updateTenantBrandingAction } from '@/lib/actions/tenant';
 import type { ActionResult } from '@/lib/actions/auth';
+import { useSafeFormReducer } from '@/lib/actions/use-safe-form-reducer';
 import { SubmitButton } from '@/components/ui/SubmitButton';
 import { TextField } from '@/components/ui/Input';
 import type { Tenant, TenantType } from '@/types/database';
@@ -20,9 +21,10 @@ export function SettingsForm({
   const t = useTranslations('dashboard.settings');
   const tCommon = useTranslations('common');
   const action = updateTenantBrandingAction.bind(null, locale);
-  const [state, formAction] = useFormState<ActionResult, FormData>(async (_prev, formData) => {
-    return action(formData);
-  }, {});
+  const [state, formAction] = useFormState<ActionResult, FormData>(
+    useSafeFormReducer(async (_prev, formData) => action(formData)),
+    {},
+  );
   const isNursery = tenantType === 'nursery';
 
   return (

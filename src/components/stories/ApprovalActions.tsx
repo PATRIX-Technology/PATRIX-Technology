@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl';
 import { useFormState } from 'react-dom';
 import { approveStoryAction, rejectStoryAction } from '@/lib/actions/stories';
 import type { ActionResult } from '@/lib/actions/auth';
+import { useSafeFormReducer } from '@/lib/actions/use-safe-form-reducer';
 import { Button } from '@/components/ui/Button';
 import { SubmitButton } from '@/components/ui/SubmitButton';
 
@@ -22,15 +23,15 @@ export function ApprovalActions({
 
   const approveAction = approveStoryAction.bind(null, locale, storyId);
   const [approveState, approveFormAction] = useFormState<ActionResult, FormData>(
-    async () => approveAction(),
+    useSafeFormReducer(async () => approveAction()),
     {},
   );
 
   const [rejectState, rejectFormAction] = useFormState<ActionResult, FormData>(
-    async (_prev, formData) => {
+    useSafeFormReducer(async (_prev, formData) => {
       const reason = String(formData.get('reason') ?? '');
       return rejectStoryAction(locale, storyId, reason);
-    },
+    }),
     {},
   );
 

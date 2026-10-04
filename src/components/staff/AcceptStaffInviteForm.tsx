@@ -5,6 +5,7 @@ import { useFormState } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { acceptStaffInviteAction, type AcceptStaffInviteResult } from '@/lib/actions/staff-invites-public';
+import { useSafeFormReducer } from '@/lib/actions/use-safe-form-reducer';
 import { PASSWORD_MIN_LENGTH, PASSWORD_PATTERN } from '@/lib/domain/password';
 import { SubmitButton } from '@/components/ui/SubmitButton';
 import { TextField } from '@/components/ui/Input';
@@ -22,9 +23,10 @@ export function AcceptStaffInviteForm({
   const tAuth = useTranslations('auth');
   const router = useRouter();
   const action = acceptStaffInviteAction.bind(null, locale, token, email);
-  const [state, formAction] = useFormState<AcceptStaffInviteResult, FormData>(async (_prev, formData) => {
-    return action(formData);
-  }, {});
+  const [state, formAction] = useFormState<AcceptStaffInviteResult, FormData>(
+    useSafeFormReducer(async (_prev, formData) => action(formData)),
+    {},
+  );
 
   useEffect(() => {
     if (state?.redirectTo) router.push(state.redirectTo);

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { useFormState } from 'react-dom';
 import type { ActionResult } from '@/lib/actions/auth';
+import { useSafeFormReducer } from '@/lib/actions/use-safe-form-reducer';
 import { Button } from '@/components/ui/Button';
 import { SubmitButton } from '@/components/ui/SubmitButton';
 import { TextField } from '@/components/ui/Input';
@@ -42,11 +43,14 @@ export function ChildForm({
 }) {
   const tForm = useTranslations('children.form');
   const [avatar, setAvatar] = useState<AvatarConfig>(defaultValues?.avatarConfig ?? DEFAULT_AVATAR_CONFIG);
-  const [state, formAction] = useFormState<ActionResult, FormData>(async (_prev, formData) => {
-    const result = await action(formData);
-    if (!result.error) onSuccess();
-    return result;
-  }, {});
+  const [state, formAction] = useFormState<ActionResult, FormData>(
+    useSafeFormReducer(async (_prev, formData) => {
+      const result = await action(formData);
+      if (!result.error) onSuccess();
+      return result;
+    }),
+    {},
+  );
 
   return (
     <form action={formAction} className="flex flex-col gap-4">

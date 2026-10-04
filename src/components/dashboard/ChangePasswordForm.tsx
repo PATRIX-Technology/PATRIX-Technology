@@ -5,6 +5,7 @@ import { useFormState } from 'react-dom';
 import { useTranslations } from 'next-intl';
 import { changePasswordAction } from '@/lib/actions/auth';
 import type { ActionResult } from '@/lib/actions/auth';
+import { useSafeFormReducer } from '@/lib/actions/use-safe-form-reducer';
 import { PASSWORD_MIN_LENGTH, PASSWORD_PATTERN } from '@/lib/domain/password';
 import { SubmitButton } from '@/components/ui/SubmitButton';
 import { TextField } from '@/components/ui/Input';
@@ -20,9 +21,10 @@ export function ChangePasswordForm() {
   const showToast = useToast();
   const formRef = useRef<HTMLFormElement>(null);
   const submitCount = useRef(0);
-  const [state, formAction] = useFormState<ActionResult, FormData>(async (_prev, formData) => {
-    return changePasswordAction(formData);
-  }, {});
+  const [state, formAction] = useFormState<ActionResult, FormData>(
+    useSafeFormReducer(async (_prev, formData) => changePasswordAction(formData)),
+    {},
+  );
 
   useEffect(() => {
     if (submitCount.current === 0) return;

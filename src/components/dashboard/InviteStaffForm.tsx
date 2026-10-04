@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { useFormState } from 'react-dom';
 import { inviteStaffAction, type InviteStaffResult } from '@/lib/actions/tenant';
+import { useSafeFormReducer } from '@/lib/actions/use-safe-form-reducer';
 import { Button } from '@/components/ui/Button';
 import { SubmitButton } from '@/components/ui/SubmitButton';
 import { TextField } from '@/components/ui/Input';
@@ -12,10 +13,13 @@ export function InviteStaffForm({ locale }: { locale: string }) {
   const t = useTranslations('staffPage');
   const [copied, setCopied] = useState(false);
   const action = inviteStaffAction.bind(null, locale);
-  const [state, formAction] = useFormState<InviteStaffResult, FormData>(async (_prev, formData) => {
-    setCopied(false);
-    return action(formData);
-  }, {});
+  const [state, formAction] = useFormState<InviteStaffResult, FormData>(
+    useSafeFormReducer(async (_prev, formData) => {
+      setCopied(false);
+      return action(formData);
+    }),
+    {},
+  );
 
   async function handleCopy(url: string) {
     try {

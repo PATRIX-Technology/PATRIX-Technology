@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl';
 import { useFormState } from 'react-dom';
 import { suggestStoryTemplateAction } from '@/lib/actions/story-suggestions';
 import type { ActionResult } from '@/lib/actions/auth';
+import { useSafeFormReducer } from '@/lib/actions/use-safe-form-reducer';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { SubmitButton } from '@/components/ui/SubmitButton';
@@ -35,9 +36,10 @@ export function SuggestTemplateDialog({
   const [topic, setTopic] = useState('');
   const [description, setDescription] = useState('');
 
-  const [state, formAction] = useFormState<ActionResult, FormData>(async (_prev, formData) => {
-    return suggestStoryTemplateAction(formData);
-  }, {});
+  const [state, formAction] = useFormState<ActionResult, FormData>(
+    useSafeFormReducer(async (_prev, formData) => suggestStoryTemplateAction(formData)),
+    {},
+  );
 
   const submitted = state?.message === 'saved';
 

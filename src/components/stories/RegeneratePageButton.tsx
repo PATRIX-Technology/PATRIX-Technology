@@ -5,6 +5,7 @@ import { useFormState, useFormStatus } from 'react-dom';
 import { useTranslations } from 'next-intl';
 import { regeneratePageAction } from '@/lib/actions/stories';
 import type { ActionResult } from '@/lib/actions/auth';
+import { useSafeFormReducer } from '@/lib/actions/use-safe-form-reducer';
 import { Button } from '@/components/ui/Button';
 import { useToast } from '@/components/ui/Toast';
 
@@ -27,7 +28,10 @@ export function RegeneratePageButton({
   const t = useTranslations('stories');
   const showToast = useToast();
   const action = regeneratePageAction.bind(null, locale, storyId, pageId);
-  const [state, formAction] = useFormState<ActionResult, FormData>(async () => action(), {});
+  const [state, formAction] = useFormState<ActionResult, FormData>(
+    useSafeFormReducer(async () => action()),
+    {},
+  );
   const submitCount = useRef(0);
 
   useEffect(() => {

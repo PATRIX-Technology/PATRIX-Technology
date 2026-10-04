@@ -5,6 +5,7 @@ import { useFormState } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { completeOrganisationSignupAction, type ActionResult } from '@/lib/actions/auth';
+import { useSafeFormReducer } from '@/lib/actions/use-safe-form-reducer';
 import { SubmitButton } from '@/components/ui/SubmitButton';
 import { TextField } from '@/components/ui/Input';
 import { LegalAgreementCheckbox } from '@/components/auth/LegalAgreementCheckbox';
@@ -22,9 +23,10 @@ export function CompleteOrganisationForm({
   const tComplete = useTranslations('auth.completeOrganisation');
   const router = useRouter();
   const action = completeOrganisationSignupAction.bind(null, locale);
-  const [state, formAction] = useFormState<ActionResult, FormData>(async (_prev, formData) => {
-    return action(formData);
-  }, {});
+  const [state, formAction] = useFormState<ActionResult, FormData>(
+    useSafeFormReducer(async (_prev, formData) => action(formData)),
+    {},
+  );
 
   useEffect(() => {
     if (state?.redirectTo) router.push(state.redirectTo);

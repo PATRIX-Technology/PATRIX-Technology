@@ -5,6 +5,7 @@ import { useFormState } from 'react-dom';
 import { useTranslations } from 'next-intl';
 import { removeChildPhotoAction, uploadChildPhotoAction } from '@/lib/actions/children';
 import type { ActionResult } from '@/lib/actions/auth';
+import { useSafeFormReducer } from '@/lib/actions/use-safe-form-reducer';
 import { Button } from '@/components/ui/Button';
 import { SubmitButton } from '@/components/ui/SubmitButton';
 
@@ -30,7 +31,7 @@ export function PhotoUpload({
   const t = useTranslations('children.photoUpload');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploadState, uploadFormAction] = useFormState<ActionResult, FormData>(
-    async (_prev, formData) => uploadChildPhotoAction(locale, formData),
+    useSafeFormReducer(async (_prev, formData) => uploadChildPhotoAction(locale, formData)),
     {},
   );
   const [isRemoving, setIsRemoving] = useState(false);

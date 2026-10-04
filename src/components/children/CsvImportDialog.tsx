@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { useFormState } from 'react-dom';
 import { importChildrenCsvAction, type ImportCsvResult } from '@/lib/actions/children';
+import { useSafeFormReducer } from '@/lib/actions/use-safe-form-reducer';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { SubmitButton } from '@/components/ui/SubmitButton';
@@ -12,9 +13,10 @@ export function CsvImportDialog({ locale }: { locale: string }) {
   const t = useTranslations('children');
   const [open, setOpen] = useState(false);
   const action = importChildrenCsvAction.bind(null, locale);
-  const [state, formAction] = useFormState<ImportCsvResult, FormData>(async (_prev, formData) => {
-    return action(formData);
-  }, {});
+  const [state, formAction] = useFormState<ImportCsvResult, FormData>(
+    useSafeFormReducer(async (_prev, formData) => action(formData)),
+    {},
+  );
 
   return (
     <>

@@ -9,6 +9,7 @@ import {
   verifyNurserySignUpOtpAction,
   type ActionResult,
 } from '@/lib/actions/auth';
+import { useSafeFormReducer } from '@/lib/actions/use-safe-form-reducer';
 import { SubmitButton } from '@/components/ui/SubmitButton';
 import { TextField } from '@/components/ui/Input';
 import { CountryPhoneField } from '@/components/auth/CountryPhoneField';
@@ -24,16 +25,20 @@ export function PhoneNurserySignUpForm({ locale, referralCode }: { locale: strin
   const [phone, setPhone] = useState<string | null>(null);
   const [legalAccepted, setLegalAccepted] = useState(false);
 
-  const [sendState, sendFormAction] = useFormState<ActionResult, FormData>(async (_prev, formData) => {
-    const result = await sendNurserySignUpOtpAction(formData);
-    if (result && !result.error) setStep('code');
-    return result;
-  }, {});
+  const [sendState, sendFormAction] = useFormState<ActionResult, FormData>(
+    useSafeFormReducer(async (_prev, formData) => {
+      const result = await sendNurserySignUpOtpAction(formData);
+      if (result && !result.error) setStep('code');
+      return result;
+    }),
+    {},
+  );
 
   const verifyWithLocale = verifyNurserySignUpOtpAction.bind(null, locale);
-  const [verifyState, verifyFormAction] = useFormState<ActionResult, FormData>(async (_prev, formData) => {
-    return verifyWithLocale(formData);
-  }, {});
+  const [verifyState, verifyFormAction] = useFormState<ActionResult, FormData>(
+    useSafeFormReducer(async (_prev, formData) => verifyWithLocale(formData)),
+    {},
+  );
 
   useEffect(() => {
     if (verifyState?.redirectTo) router.push(verifyState.redirectTo);

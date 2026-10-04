@@ -4,6 +4,7 @@ import { useFormState, useFormStatus } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { createStoryAction, type CreateStoryResult } from '@/lib/actions/stories';
+import { useSafeFormReducer } from '@/lib/actions/use-safe-form-reducer';
 import { Button } from '@/components/ui/Button';
 import { useToast } from '@/components/ui/Toast';
 import { useEffect, useRef } from 'react';
@@ -140,9 +141,10 @@ export function CreateStoryForm({
   const showToast = useToast();
   const router = useRouter();
   const action = createStoryAction.bind(null, locale, childId);
-  const [state, formAction] = useFormState<CreateStoryResult, FormData>(async (_prev, formData) => {
-    return action(formData);
-  }, {});
+  const [state, formAction] = useFormState<CreateStoryResult, FormData>(
+    useSafeFormReducer(async (_prev, formData) => action(formData)),
+    {},
+  );
   const submitCount = useRef(0);
 
   useEffect(() => {

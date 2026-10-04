@@ -3,6 +3,7 @@
 import { useFormState } from 'react-dom';
 import { useTranslations } from 'next-intl';
 import { respondToConsentAction, type RespondToConsentResult } from '@/lib/actions/consent-public';
+import { useSafeFormReducer } from '@/lib/actions/use-safe-form-reducer';
 import { SubmitButton } from '@/components/ui/SubmitButton';
 
 export function ConsentResponseForm({ token }: { token: string }) {
@@ -10,13 +11,13 @@ export function ConsentResponseForm({ token }: { token: string }) {
 
   const grantAction = respondToConsentAction.bind(null, token, 'granted');
   const [grantState, grantFormAction] = useFormState<RespondToConsentResult, FormData>(
-    async () => grantAction(),
+    useSafeFormReducer(async () => grantAction()),
     {},
   );
 
   const declineAction = respondToConsentAction.bind(null, token, 'declined');
   const [declineState, declineFormAction] = useFormState<RespondToConsentResult, FormData>(
-    async () => declineAction(),
+    useSafeFormReducer(async () => declineAction()),
     {},
   );
 

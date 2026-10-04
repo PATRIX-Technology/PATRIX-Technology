@@ -6,6 +6,7 @@ import { useFormState } from 'react-dom';
 import QRCode from 'qrcode';
 import { requestConsentAction, withdrawConsentAction, type RequestConsentResult } from '@/lib/actions/children';
 import type { ActionResult } from '@/lib/actions/auth';
+import { useSafeFormReducer } from '@/lib/actions/use-safe-form-reducer';
 import { Button } from '@/components/ui/Button';
 import { SubmitButton } from '@/components/ui/SubmitButton';
 import { Badge } from '@/components/ui/Badge';
@@ -43,13 +44,13 @@ export function ConsentPanel({
 
   const requestAction = requestConsentAction.bind(null, locale, childId);
   const [requestState, requestFormAction] = useFormState<RequestConsentResult, FormData>(
-    async () => requestAction(includePhoto),
+    useSafeFormReducer(async () => requestAction(includePhoto)),
     {},
   );
 
   const withdrawAction = withdrawConsentAction.bind(null, locale, childId);
   const [withdrawState, withdrawFormAction] = useFormState<ActionResult, FormData>(
-    async () => withdrawAction(),
+    useSafeFormReducer(async () => withdrawAction()),
     {},
   );
 

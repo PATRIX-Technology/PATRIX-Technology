@@ -5,6 +5,7 @@ import { useFormState } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { signUpAction, type ActionResult } from '@/lib/actions/auth';
+import { useSafeFormReducer } from '@/lib/actions/use-safe-form-reducer';
 import { PASSWORD_MIN_LENGTH, PASSWORD_PATTERN } from '@/lib/domain/password';
 import { SubmitButton } from '@/components/ui/SubmitButton';
 import { TextField } from '@/components/ui/Input';
@@ -15,9 +16,10 @@ export function SignUpForm({ locale, referralCode }: { locale: string; referralC
   const tAuth = useTranslations('auth');
   const router = useRouter();
   const action = signUpAction.bind(null, locale);
-  const [state, formAction] = useFormState<ActionResult, FormData>(async (_prev, formData) => {
-    return action(formData);
-  }, {});
+  const [state, formAction] = useFormState<ActionResult, FormData>(
+    useSafeFormReducer(async (_prev, formData) => action(formData)),
+    {},
+  );
 
   useEffect(() => {
     if (state?.redirectTo) router.push(state.redirectTo);

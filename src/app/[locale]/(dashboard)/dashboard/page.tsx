@@ -48,10 +48,14 @@ export default async function DashboardOverviewPage({ params }: { params: { loca
         .eq('consent_status', 'pending'),
     ]);
 
+  // Each tile links to where that count actually lives — the children
+  // list (also where per-child consent status is shown) or the stories
+  // list — so a tile is an entry point into the relevant work, not just
+  // a number to look at.
   const stats = [
-    { label: t('childrenCount'), value: childrenCount ?? 0 },
-    { label: t('pendingApproval'), value: pendingApprovalCount ?? 0 },
-    { label: t('consentPending'), value: consentPendingCount ?? 0 },
+    { label: t('childrenCount'), value: childrenCount ?? 0, href: `/${params.locale}/dashboard/children` },
+    { label: t('pendingApproval'), value: pendingApprovalCount ?? 0, href: `/${params.locale}/dashboard/stories` },
+    { label: t('consentPending'), value: consentPendingCount ?? 0, href: `/${params.locale}/dashboard/children` },
   ];
 
   return (
@@ -65,10 +69,12 @@ export default async function DashboardOverviewPage({ params }: { params: { loca
       <SamplesAndPlans tenantId={context.tenantId} audience="nursery" locale={params.locale} />
       <div className="grid gap-4 sm:grid-cols-3">
         {stats.map((stat) => (
-          <Card key={stat.label}>
-            <CardTitle className="text-sm font-medium text-ink-500">{stat.label}</CardTitle>
-            <p className="mt-2 font-display text-3xl text-ink-900">{stat.value}</p>
-          </Card>
+          <Link key={stat.label} href={stat.href} className="focus-ring block rounded-xl2">
+            <Card className="cursor-pointer transition-colors hover:border-lagoon-700/50 hover:bg-ink-100">
+              <CardTitle className="text-sm font-medium text-ink-500">{stat.label}</CardTitle>
+              <p className="mt-2 font-display text-3xl text-ink-900">{stat.value}</p>
+            </Card>
+          </Link>
         ))}
       </div>
     </div>

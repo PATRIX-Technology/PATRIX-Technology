@@ -103,6 +103,10 @@ async function SamplesAndPlans({
   const supabase = await createSupabaseServerClient();
   const t = await getTranslations('stories');
   const tDemo = await getTranslations('marketing.demoRequest');
+  // Reuses the public landing page's own "Watch it in action" copy
+  // (marketing.demoVideo) rather than adding a new message key — see the
+  // portrait demo video block below.
+  const tDemoVideo = await getTranslations('marketing.demoVideo');
   const manifest = loadSampleStoryManifest();
 
   const [{ data: plans }, { data: subscription }] = await Promise.all([
@@ -134,6 +138,25 @@ async function SamplesAndPlans({
         ) : (
           <p className="mt-2 text-sm text-ink-500">{t('samplePreviewComingSoon')}</p>
         )}
+
+        {/* Same portrait phone-frame treatment as the public landing
+            page's demo video section (src/app/[locale]/page.tsx) — kept
+            locale-aware the same way the carousel above it is: one video
+            for the viewer's own current locale, not both side by side. */}
+        <div className="mt-8">
+          <p className="text-center text-sm font-medium text-ink-600">{tDemoVideo('title')}</p>
+          <div className="mx-auto mt-3 w-full max-w-[320px]">
+            <div className="overflow-hidden rounded-[2.25rem] border-[6px] border-ink-50 bg-ink-50 shadow-card">
+              <video
+                className="aspect-[9/16] w-full rounded-[1.75rem] bg-[rgb(var(--color-bg))] object-cover"
+                src={sampleLocale === 'ar' ? '/videos/demo-ar.mp4' : '/videos/demo-en.mp4'}
+                controls
+                playsInline
+                preload="metadata"
+              />
+            </div>
+          </div>
+        </div>
       </Card>
       <Card>
         <CardTitle>{tDemo('title')}</CardTitle>

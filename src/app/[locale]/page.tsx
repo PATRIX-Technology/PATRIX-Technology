@@ -153,14 +153,21 @@ export default function MarketingHome({ params }: { params: { locale: string } }
           <h2 className="font-display text-2xl text-ink-900 md:text-3xl">{t('demoVideo.title')}</h2>
           <p className="mx-auto mt-3 max-w-2xl text-ink-600">{t('demoVideo.body')}</p>
         </div>
-        <div className="mt-8 overflow-hidden rounded-xl2 border border-[rgb(var(--color-border))] shadow-card">
-          <video
-            className="w-full"
-            src={locale === 'ar' ? '/videos/demo-ar.mp4' : '/videos/demo-en.mp4'}
-            controls
-            playsInline
-            preload="metadata"
-          />
+        {/* Portrait (phone-screen-recording) demo video — see
+            docs/DECISIONS.md "Portrait tap-through demo videos replace the
+            landscape scroll recordings". Capped narrow and given a dark
+            rounded "phone frame" bezel so a 9:16 clip isn't stretched to
+            the old landscape section's full width. */}
+        <div className="mx-auto mt-8 w-full max-w-[320px]">
+          <div className="overflow-hidden rounded-[2.25rem] border-[6px] border-ink-50 bg-ink-50 shadow-card">
+            <video
+              className="aspect-[9/16] w-full rounded-[1.75rem] bg-[rgb(var(--color-bg))] object-cover"
+              src={locale === 'ar' ? '/videos/demo-ar.mp4' : '/videos/demo-en.mp4'}
+              controls
+              playsInline
+              preload="metadata"
+            />
+          </div>
         </div>
       </section>
 

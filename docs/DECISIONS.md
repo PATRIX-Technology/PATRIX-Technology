@@ -4309,6 +4309,33 @@ achievable yet with no transactional email provider configured
 (`docs/NEEDS_FROM_ME.md`); this closes the literal wording leak, which
 is the part that costs nothing to scan for at scale.
 
+## Portrait tap-through demo videos replace the landscape scroll recordings
+
+The landing page and dashboard home previously showed a 1280x720
+landscape screen recording that scrolled continuously through the
+hero, dashboard, theme picker, and finished story pages. Replaced
+with a portrait (1080x1920, phone-aspect) video for English and
+Arabic, built from hard-cut "scenes" with a brief tap-ripple cue at
+the next tappable element before each cut — simulating someone
+tapping through the app screen by screen, not scrolling it.
+
+Built from static HTML mockups (not a live recording) since this
+sandbox's network egress to the live Supabase backend and the
+deployed Vercel site is blocked, and the real dashboard needs a live
+session — see the repeated network-block findings earlier in this
+log/session history. Each mockup reuses real Tailwind tokens, real
+component markup, and real copy (`src/messages/{en,ar}.json`,
+`supabase/seed/templates.json`), and the "finished story" scenes use
+the actual generated sample-story images and captions from
+`public/images/marketing/sample-stories/{en,ar}/` rather than
+placeholder art.
+
+Shown in two places, both locale-matched to the viewer (one video at
+a time, same pattern the sample-story carousel already uses — see
+`SamplesAndPlans` in `src/app/[locale]/(dashboard)/dashboard/page.tsx`):
+the public landing page's "Watch it in action" section, and the
+logged-in dashboard home page beside the real `StoryCarousel`.
+
 ## Not yet built (explicitly out of scope for this build session)
 
 - Vendor moderation integration for image safety checks

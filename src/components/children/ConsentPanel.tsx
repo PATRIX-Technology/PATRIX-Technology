@@ -84,22 +84,36 @@ export function ConsentPanel({
     }
   }
 
-  async function getQrFile(): Promise<File | null> {
-    if (!qrDataUrl) return null;
-    const blob = await (await fetch(qrDataUrl)).blob();
-    return new File([blob], 'ownly-consent-qr.png', { type: 'image/png' });
+  // Synchronous data-URL -> File decode (no fetch/await) so this can run
+  // directly inside the click handler below with no gap before
+  // navigator.share(). Mobile Chrome/Safari require share() to be called
+  // within an unbroken chain of "user activation" from the click; an
+  // intervening await (the previous implementation used fetch(qrDataUrl)
+  // to get a Blob) breaks that chain, so share() throws
+  // NotAllowedError -- silently swallowed by the catch below, which is
+  // what made the button appear to just do nothing on a real phone.
+  function qrDataUrlToFile(dataUrl: string): File {
+    const [header, base64] = dataUrl.split(',');
+    const mime = /data:(.*);base64/.exec(header ?? '')?.[1] ?? 'image/png';
+    const binary = atob(base64 ?? '');
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+    return new File([bytes], 'ownly-consent-qr.png', { type: mime });
   }
 
   // Shares the QR code image itself (e.g. into WhatsApp as an attachment)
   // rather than the link as text — wa.me and mailto: links can only ever
   // carry text, so sending the actual PNG requires the OS share sheet.
   async function handleShareQr() {
-    const file = await getQrFile();
-    if (!file) return;
+    if (!qrDataUrl) return;
+    const file = qrDataUrlToFile(qrDataUrl);
     try {
       await navigator.share({ files: [file], text: shareText });
-    } catch {
-      // User cancelled the share sheet — nothing to do.
+    } catch (error) {
+      // AbortError (and Safari/old Chrome's "cancelled" string error) is
+      // just the user dismissing the share sheet -- not a failure.
+      if (error instanceof Error && error.name === 'AbortError') return;
+      showToast({ title: t('shareQrFailed'), description: t('shareDownloadQr'), tone: 'error' });
     }
   }
 

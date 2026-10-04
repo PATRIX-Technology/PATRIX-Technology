@@ -5,6 +5,7 @@ import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { getCurrentTenantContext } from '@/lib/domain/session';
 import { getMfaStatus } from '@/lib/domain/mfa';
 import { DashboardNav } from '@/components/dashboard/DashboardNav';
+import { GenerationProgressBanner } from '@/components/stories/GenerationProgressBanner';
 
 export default async function DashboardLayout({
   children,
@@ -55,6 +56,7 @@ export default async function DashboardLayout({
         }}
       />
       <main className="flex-1 bg-[rgb(var(--color-surface))] p-6 md:p-10">{children}</main>
+      <GenerationProgressBanner locale={params.locale} />
     </div>
   );
 }

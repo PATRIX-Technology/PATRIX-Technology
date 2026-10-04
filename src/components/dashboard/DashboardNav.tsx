@@ -117,7 +117,7 @@ export function DashboardNav({
       type="button"
       onClick={handleRefresh}
       aria-label={common('refresh')}
-      className="focus-ring flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[rgb(var(--color-border))] text-ink-600 transition-colors hover:bg-ink-100"
+      className="focus-ring flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-lagoon-900/50 text-lagoon-300 transition-colors hover:bg-lagoon-900/70"
     >
       <svg
         width="16"

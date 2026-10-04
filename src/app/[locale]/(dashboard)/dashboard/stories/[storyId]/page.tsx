@@ -112,11 +112,7 @@ export default async function StoryDetailPage({
           <Badge tone="info" className="mt-2">
             {t(`status.${status}`)}
           </Badge>
-          {stillGenerating && (
-            <p className="mt-2 text-sm text-ink-500">
-              Generating illustrations — this page updates automatically, no need to refresh.
-            </p>
-          )}
+          {stillGenerating && <p className="mt-2 text-sm text-ink-500">{t('generationNote')}</p>}
         </div>
         {status === 'APPROVED' && (
           <div className="flex gap-2">
@@ -134,7 +130,7 @@ export default async function StoryDetailPage({
 
       {(status === 'NEEDS_REVIEW' || status === 'GENERATED') && (
         <Card>
-          <CardTitle>Review &amp; approve</CardTitle>
+          <CardTitle>{t('reviewApproveTitle')}</CardTitle>
           <div className="mt-4">
             <ApprovalActions locale={params.locale} storyId={story.id} canApprove={allGenerated} />
           </div>
@@ -156,7 +152,7 @@ export default async function StoryDetailPage({
               )}
             </div>
             <div className="flex-1">
-              <p className="mb-2 text-sm font-medium text-ink-500">Page {page.page_number}</p>
+              <p className="mb-2 text-sm font-medium text-ink-500">{t('pageLabel', { number: page.page_number })}</p>
               <p className="mb-3 text-ink-800">{page.text}</p>
               <Badge tone={page.image_status === 'GENERATED' ? 'success' : 'warning'}>
                 {page.image_status}

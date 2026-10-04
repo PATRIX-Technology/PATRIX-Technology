@@ -277,3 +277,45 @@ export async function kickStoryWorkerAction(): Promise<{ processed: number } | {
     return { error: errorMessage(error) };
   }
 }
+
+export interface GenerationProgressResult {
+  storyIds: string[];
+  pagesGenerated: number;
+  pagesTotal: number;
+}
+
+/**
+ * Powers GenerationProgressBanner's poll — a lightweight read of how far
+ * the tenant's currently-generating stories have gotten, aggregated
+ * across all of them in one pair of queries rather than fetched per
+ * story. Mounted at the dashboard layout level (see GenerationProgressBanner),
+ * so this is the only way that banner — visible on every dashboard page,
+ * not just a single story's own detail page — knows what's in flight.
+ *
+ * A story counts as "in progress" by its own status rather than by
+ * checking every page's image_status directly: the worker (see
+ * src/lib/jobs/worker.ts generatePageImage) already flips a story to
+ * NEEDS_REVIEW the moment every page finishes, and to FAILED on a
+ * terminal per-page failure, so DRAFT/QUEUED/GENERATING is exactly "not
+ * yet settled" with no extra bookkeeping needed here.
+ */
+export async function getGenerationProgressAction(): Promise<GenerationProgressResult> {
+  const supabase = await createSupabaseServerClient();
+  const context = await getCurrentTenantContext(supabase);
+  if (!context) return { storyIds: [], pagesGenerated: 0, pagesTotal: 0 };
+
+  const { data: stories } = await supabase
+    .from('stories')
+    .select('id')
+    .eq('tenant_id', context.tenantId)
+    .in('status', ['DRAFT', 'QUEUED', 'GENERATING']);
+  const storyIds = (stories ?? []).map((s) => s.id as string);
+  if (storyIds.length === 0) return { storyIds: [], pagesGenerated: 0, pagesTotal: 0 };
+
+  const { data: pages } = await supabase.from('story_pages').select('image_status').in('story_id', storyIds);
+
+  const pagesTotal = pages?.length ?? 0;
+  const pagesGenerated = (pages ?? []).filter((p) => p.image_status === 'GENERATED').length;
+
+  return { storyIds, pagesGenerated, pagesTotal };
+}

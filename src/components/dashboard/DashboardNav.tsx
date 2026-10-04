@@ -94,7 +94,7 @@ export function DashboardNav({
       type="button"
       onClick={() => router.back()}
       aria-label={common('back')}
-      className="focus-ring flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[rgb(var(--color-border))] text-ink-600 transition-colors hover:bg-ink-100"
+      className="focus-ring flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-lagoon-900/50 text-lagoon-300 transition-colors hover:bg-lagoon-900/70"
     >
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className={isRtl ? 'rotate-180' : ''}>
         <path

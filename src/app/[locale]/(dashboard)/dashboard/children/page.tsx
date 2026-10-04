@@ -57,35 +57,45 @@ export default async function ChildrenPage({ params }: { params: { locale: strin
               exactly what a parent/staff member scans for at a glance;
               everything else is one tap away on the child's own page. */}
           <div className="grid gap-3 md:hidden">
-            {children.map((child) => (
-              <Link
-                key={child.id}
-                href={`/${params.locale}/dashboard/children/${child.id}`}
-                className="focus-ring block"
-              >
-                <Card className="flex items-center gap-4 p-4 transition-colors hover:border-lagoon-700 active:bg-ink-50">
-                  <AvatarPreview config={parseAvatarConfig(child.avatar_config)} className="h-12 w-12 shrink-0" />
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center justify-between gap-2">
-                      <p className="truncate font-medium text-ink-900">
-                        {[child.first_name, child.last_name].filter(Boolean).join(' ')}
+            {children.map((child) => {
+              const enName = [child.first_name, child.last_name].filter(Boolean).join(' ');
+              const arName = [child.arabic_first_name, child.arabic_last_name].filter(Boolean).join(' ');
+              // An Arabic-locale viewer wants the Arabic name up front, not
+              // buried as a secondary line under the English one -- falls
+              // back to English when no Arabic name is on file.
+              const showArabicFirst = params.locale === 'ar' && Boolean(arName);
+              const primaryName = showArabicFirst ? arName : enName;
+              const secondaryName = showArabicFirst ? enName : arName || null;
+              return (
+                <Link
+                  key={child.id}
+                  href={`/${params.locale}/dashboard/children/${child.id}`}
+                  className="focus-ring block"
+                >
+                  <Card className="flex items-center gap-4 p-4 transition-colors hover:border-lagoon-700 active:bg-ink-50">
+                    <AvatarPreview config={parseAvatarConfig(child.avatar_config)} className="h-12 w-12 shrink-0" />
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center justify-between gap-2">
+                        <p dir={showArabicFirst ? 'rtl' : undefined} className="truncate font-medium text-ink-900">
+                          {primaryName}
+                        </p>
+                        <Badge tone={CONSENT_TONE[child.consent_status as ConsentStatus]} className="shrink-0">
+                          {t(`consentStatus.${child.consent_status}`)}
+                        </Badge>
+                      </div>
+                      {secondaryName && (
+                        <p dir={showArabicFirst ? undefined : 'rtl'} className="truncate text-sm text-ink-600">
+                          {secondaryName}
+                        </p>
+                      )}
+                      <p className="truncate text-sm text-ink-500">
+                        {child.class_name ?? t('noClassAssigned')} · {child.preferred_language.toUpperCase()}
                       </p>
-                      <Badge tone={CONSENT_TONE[child.consent_status as ConsentStatus]} className="shrink-0">
-                        {t(`consentStatus.${child.consent_status}`)}
-                      </Badge>
                     </div>
-                    {child.arabic_first_name && (
-                      <p dir="rtl" className="truncate text-sm text-ink-600">
-                        {[child.arabic_first_name, child.arabic_last_name].filter(Boolean).join(' ')}
-                      </p>
-                    )}
-                    <p className="truncate text-sm text-ink-500">
-                      {child.class_name ?? t('noClassAssigned')} · {child.preferred_language.toUpperCase()}
-                    </p>
-                  </div>
-                </Card>
-              </Link>
-            ))}
+                  </Card>
+                </Link>
+              );
+            })}
           </div>
 
           {/* Full table — kept for a laptop/desktop viewport, where every

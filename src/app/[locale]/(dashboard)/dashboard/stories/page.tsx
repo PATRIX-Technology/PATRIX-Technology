@@ -39,7 +39,9 @@ export default async function StoriesPage({ params }: { params: { locale: string
   // sees an empty "No stories yet" list instead of their real stories.
   const { data: stories } = await supabase
     .from('stories')
-    .select('id, child_id, theme_key, status, locale, created_at, children!stories_child_id_fkey(first_name)')
+    .select(
+      'id, child_id, theme_key, status, locale, created_at, children!stories_child_id_fkey(first_name, arabic_first_name)',
+    )
     .eq('tenant_id', context.tenantId)
     .order('created_at', { ascending: false });
 
@@ -67,14 +69,18 @@ export default async function StoriesPage({ params }: { params: { locale: string
   // appear at all — a folder implies "there's something inside it".
   const childFolders = new Map<
     string,
-    { childName: string; stories: NonNullable<typeof stories> }
+    { childName: string; childNameIsArabic: boolean; stories: NonNullable<typeof stories> }
   >();
   for (const story of stories ?? []) {
-    const childName =
-      (story.children as unknown as { first_name: string } | null)?.first_name || t('noChildName');
+    const child = story.children as unknown as { first_name: string; arabic_first_name: string | null } | null;
+    // Arabic-locale viewers see the child's Arabic name first, same as the
+    // Children list -- falls back to the English name when no Arabic name
+    // is on file, rather than showing nothing.
+    const childNameIsArabic = params.locale === 'ar' && Boolean(child?.arabic_first_name);
+    const childName = (childNameIsArabic ? child?.arabic_first_name : child?.first_name) || t('noChildName');
     const existing = childFolders.get(story.child_id);
     if (existing) existing.stories.push(story);
-    else childFolders.set(story.child_id, { childName, stories: [story] });
+    else childFolders.set(story.child_id, { childName, childNameIsArabic, stories: [story] });
   }
   const sortedFolders = [...childFolders.values()].sort((a, b) => a.childName.localeCompare(b.childName));
 
@@ -103,14 +109,21 @@ export default async function StoriesPage({ params }: { params: { locale: string
       ) : (
         <div className="space-y-4">
           {sortedFolders.map((folder) => (
-            <details key={folder.stories[0]!.child_id} className="group" open>
-              <Card className="overflow-hidden p-0">
+            // <summary> must be a direct child of <details> -- nesting it
+            // inside <Card> (as this used to) means the browser finds no
+            // valid summary and silently injects its own default "Details"
+            // disclosure above this one, since <summary> isn't recognized
+            // as the designated summary unless it's a direct child (HTML
+            // spec; reported live as a phantom "▼ Details" row). Card now
+            // wraps the whole <details> instead of the other way around.
+            <Card key={folder.stories[0]!.child_id} className="overflow-hidden p-0">
+              <details className="group" open>
                 <summary className="focus-ring flex cursor-pointer list-none items-center justify-between gap-3 p-4 hover:bg-ink-100">
                   <span className="flex items-center gap-2 font-display text-lg text-ink-900">
                     <span aria-hidden className="text-ink-400 transition-transform group-open:rotate-90">
                       ▸
                     </span>
-                    {folder.childName}
+                    <span dir={folder.childNameIsArabic ? 'rtl' : undefined}>{folder.childName}</span>
                   </span>
                   <span className="text-xs text-ink-500">{t('storyCount', { count: folder.stories.length })}</span>
                 </summary>
@@ -148,8 +161,8 @@ export default async function StoriesPage({ params }: { params: { locale: string
                     ))}
                   </tbody>
                 </table>
-              </Card>
-            </details>
+              </details>
+            </Card>
           ))}
         </div>
       )}

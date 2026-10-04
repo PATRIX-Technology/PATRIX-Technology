@@ -48,48 +48,73 @@ export function GenerationProgressBanner({ locale }: { locale: string }) {
 
   useEffect(() => {
     let cancelled = false;
-    let timeoutId: ReturnType<typeof setTimeout>;
+    let timeoutId: ReturnType<typeof setTimeout> | undefined;
 
     async function tick() {
-      if (wasInProgress.current) {
-        try {
+      // A phone backgrounding this tab (switching apps, locking the
+      // screen) suspends its network connections; a poll in flight at
+      // that moment, or scheduled while hidden, previously rejected with
+      // a bare "TypeError: network error" the moment the tab came back
+      // -- uncaught, since only the kick call below was wrapped, which
+      // crashed the WHOLE page to the nearest error boundary (error.tsx)
+      // until a manual refresh. Reported live: "when I go out of the
+      // page to another app and come back ... then when I refresh it
+      // back normally". Two changes fix it: skip the network work
+      // entirely while hidden (resumed by the visibilitychange listener
+      // below, with an immediate tick), and wrap the *whole* tick body
+      // -- not just the kick -- so any other transient failure is
+      // swallowed the same best-effort way the kick already was.
+      if (document.visibilityState !== 'visible') return;
+
+      try {
+        if (wasInProgress.current) {
           await kickStoryWorkerAction();
-        } catch {
-          // Best-effort — next tick, or the scheduled cron, retries.
         }
-      }
-      const result = await getGenerationProgressAction();
-      if (cancelled) return;
+        const result = await getGenerationProgressAction();
+        if (cancelled) return;
 
-      if (result.storyIds.length > 0) {
-        wasInProgress.current = true;
-        setJustFinished(false);
-        setProgress(result);
-      } else if (wasInProgress.current) {
-        // The batch that was running has now fully settled (either
-        // ready for review or failed) — refresh so whichever page is
-        // open picks up the new status, show a brief "done" state (the
-        // last known progress stays on screen underneath it), then clear.
-        wasInProgress.current = false;
-        router.refresh();
-        setJustFinished(true);
-        setTimeout(() => {
-          if (!cancelled) {
-            setJustFinished(false);
-            setProgress(null);
-          }
-        }, 2500);
-      }
+        if (result.storyIds.length > 0) {
+          wasInProgress.current = true;
+          setJustFinished(false);
+          setProgress(result);
+        } else if (wasInProgress.current) {
+          // The batch that was running has now fully settled (either
+          // ready for review or failed) — refresh so whichever page is
+          // open picks up the new status, show a brief "done" state
+          // (the last known progress stays on screen underneath it),
+          // then clear.
+          wasInProgress.current = false;
+          router.refresh();
+          setJustFinished(true);
+          setTimeout(() => {
+            if (!cancelled) {
+              setJustFinished(false);
+              setProgress(null);
+            }
+          }, 2500);
+        }
 
-      if (!cancelled) {
-        timeoutId = setTimeout(tick, result.storyIds.length > 0 ? ACTIVE_POLL_MS : IDLE_POLL_MS);
+        if (!cancelled) {
+          timeoutId = setTimeout(tick, result.storyIds.length > 0 ? ACTIVE_POLL_MS : IDLE_POLL_MS);
+        }
+      } catch {
+        // Best-effort — next tick, or the scheduled cron, retries.
+        if (!cancelled) timeoutId = setTimeout(tick, IDLE_POLL_MS);
       }
     }
 
+    function handleVisibilityChange() {
+      if (document.visibilityState !== 'visible') return;
+      if (timeoutId) clearTimeout(timeoutId);
+      tick();
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
     tick();
     return () => {
       cancelled = true;
-      clearTimeout(timeoutId);
+      if (timeoutId) clearTimeout(timeoutId);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, [router]);
 

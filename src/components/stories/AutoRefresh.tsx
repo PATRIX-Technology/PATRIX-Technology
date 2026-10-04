@@ -28,19 +28,35 @@ export function AutoRefresh({ active, intervalMs = 4000 }: { active: boolean; in
 
     let cancelled = false;
     async function tick() {
+      // A phone backgrounding this tab (switching apps, locking the
+      // screen) suspends its network connections -- a tick in flight
+      // at that moment, or firing while hidden, previously could reject
+      // with a bare "TypeError: network error" the moment the tab came
+      // back. router.refresh() sat OUTSIDE the try/catch below, so that
+      // rejection went uncaught and crashed the whole page to the
+      // nearest error boundary (error.tsx) until a manual refresh.
+      // Skipping the tick entirely while hidden, and catching
+      // router.refresh() too, closes both paths.
+      if (document.visibilityState !== 'visible') return;
       try {
         await kickStoryWorkerAction();
+        if (!cancelled) router.refresh();
       } catch {
         // Best-effort — the next tick, or the scheduled cron, retries.
       }
-      if (!cancelled) router.refresh();
     }
 
+    function handleVisibilityChange() {
+      if (document.visibilityState === 'visible') tick();
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
     tick();
     const id = setInterval(tick, intervalMs);
     return () => {
       cancelled = true;
       clearInterval(id);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, [active, intervalMs, router]);
 

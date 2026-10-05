@@ -91,9 +91,10 @@ why it's actually priced and built as a subscription:
 
 ## Status disclosure for early conversations
 
-This is presently a working product foundation (Phase 1-2B): sign-up,
-children, consent, story generation with a free placeholder illustrator,
-approval, reader, and print-ready PDF export are all built and tested.
-Paid AI illustration and billing are architected but not yet
-vendor-connected — be transparent about this with early pilot customers
+This is presently a working product: sign-up, children, consent, story
+generation with real paid AI illustration (Gemini), staff approval,
+reader, and print-ready PDF export are all built, tested, and live.
+Stripe billing is fully wired but still running in test mode
+(`STRIPE_MODE=test`) — no live customer payment has been processed yet,
+so be transparent about that specific point with early pilot customers
 per `docs/NEEDS_FROM_ME.md`.

@@ -167,6 +167,11 @@
       "brandColorLabel": "Brand colour",
       "retentionLabel": "Data retention (days)",
       "retentionHint": "How long child and story data is kept before scheduled deletion.",
+      "logoLabel": "Nursery logo",
+      "logoHint": "Optional — appears as a small badge on every story PDF your children generate, alongside the Ownly mark.",
+      "logoAlt": "Nursery logo",
+      "uploadLogo": "Upload logo",
+      "removeLogo": "Remove logo",
       "privacyTitle": "Privacy",
       "privacyBody": "Every child's data is kept private to your own account, stored securely, and never shared with other families or organisations. Photos and images are only ever accessible through short-lived, private links.",
       "privacyFullPolicyLink": "Read our full Privacy Policy"

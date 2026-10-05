@@ -2,8 +2,11 @@
 
 import { revalidatePath } from 'next/cache';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
+import { createSupabaseServiceRoleClient } from '@/lib/supabase/service-role';
 import { getCurrentTenantContext } from '@/lib/domain/session';
 import { generateStaffInviteToken, buildStaffInviteUrl } from '@/lib/domain/staff-invites';
+import { sniffImageMimeType } from '@/lib/domain/children';
+import { STORY_ASSETS_BUCKET } from '@/lib/domain/storage';
 import type { ActionResult } from './auth';
 
 export async function updateTenantBrandingAction(locale: string, formData: FormData): Promise<ActionResult> {
@@ -36,6 +39,79 @@ export async function updateTenantBrandingAction(locale: string, formData: FormD
   }
 
   const { error } = await supabase.from('tenants').update(update).eq('id', context.tenantId);
+  if (error) return { error: error.message };
+
+  revalidatePath(`/${locale}/dashboard/settings`);
+  return {};
+}
+
+const MAX_LOGO_BYTES = 2 * 1024 * 1024; // 2MB -- a logo badge is drawn small, no need for anything larger
+
+/**
+ * Uploads a nursery's own logo, drawn as a small corner badge on every
+ * story PDF their children's stories generate (see
+ * src/lib/providers/pdf/render.ts) -- an optional branding touch, not a
+ * personalisation feature, so it carries none of the consent/opt-in
+ * machinery uploadChildPhotoAction has. Owner-only, same as the rest of
+ * branding, so a staff member can't change what goes out under the
+ * nursery's name.
+ */
+export async function uploadTenantLogoAction(locale: string, formData: FormData): Promise<ActionResult> {
+  const supabase = await createSupabaseServerClient();
+  const context = await getCurrentTenantContext(supabase);
+  if (!context) return { error: 'Not signed in.' };
+  if (context.role !== 'nursery_owner') return { error: 'Only the owner can update branding.' };
+
+  const file = formData.get('logo');
+  if (!(file instanceof File)) return { error: 'No logo provided.' };
+  if (file.size > MAX_LOGO_BYTES) {
+    return { error: 'Logo must be smaller than 2MB.' };
+  }
+
+  // Same reasoning as uploadChildPhotoAction: file.type is client-claimed
+  // and trivially spoofable, so the real decision is made from the bytes.
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  const sniffedType = sniffImageMimeType(bytes);
+  if (!sniffedType) {
+    return { error: 'Please upload a JPEG, PNG, or WEBP image.' };
+  }
+
+  const extension = sniffedType === 'image/png' ? 'png' : sniffedType === 'image/webp' ? 'webp' : 'jpg';
+  const assetPath = `${context.tenantId}/branding/logo.${extension}`;
+
+  const serviceClient = createSupabaseServiceRoleClient();
+  const { error: uploadError } = await serviceClient.storage
+    .from(STORY_ASSETS_BUCKET)
+    .upload(assetPath, bytes, { contentType: sniffedType, upsert: true });
+  if (uploadError) return { error: uploadError.message };
+
+  const { error: updateError } = await supabase
+    .from('tenants')
+    .update({ logo_asset_path: assetPath })
+    .eq('id', context.tenantId);
+  if (updateError) return { error: updateError.message };
+
+  revalidatePath(`/${locale}/dashboard/settings`);
+  return {};
+}
+
+export async function removeTenantLogoAction(locale: string): Promise<ActionResult> {
+  const supabase = await createSupabaseServerClient();
+  const context = await getCurrentTenantContext(supabase);
+  if (!context) return { error: 'Not signed in.' };
+  if (context.role !== 'nursery_owner') return { error: 'Only the owner can update branding.' };
+
+  const { data: tenant } = await supabase
+    .from('tenants')
+    .select('logo_asset_path')
+    .eq('id', context.tenantId)
+    .maybeSingle();
+  if (tenant?.logo_asset_path) {
+    const serviceClient = createSupabaseServiceRoleClient();
+    await serviceClient.storage.from(STORY_ASSETS_BUCKET).remove([tenant.logo_asset_path]);
+  }
+
+  const { error } = await supabase.from('tenants').update({ logo_asset_path: null }).eq('id', context.tenantId);
   if (error) return { error: error.message };
 
   revalidatePath(`/${locale}/dashboard/settings`);

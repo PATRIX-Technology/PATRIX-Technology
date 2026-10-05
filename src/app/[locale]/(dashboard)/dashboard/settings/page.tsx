@@ -3,9 +3,11 @@ import { getTranslations } from 'next-intl/server';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { getCurrentTenantContext } from '@/lib/domain/session';
 import { getMfaStatus } from '@/lib/domain/mfa';
+import { getSignedAssetUrl } from '@/lib/domain/storage';
 import { Card, CardTitle } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { SettingsForm } from '@/components/dashboard/SettingsForm';
+import { LogoUpload } from '@/components/dashboard/LogoUpload';
 import { ChangePasswordForm } from '@/components/dashboard/ChangePasswordForm';
 
 export default async function SettingsPage({ params }: { params: { locale: string } }) {
@@ -29,13 +31,18 @@ export default async function SettingsPage({ params }: { params: { locale: strin
   // 'needs_enrollment' (never enrolled, which is fine, it's optional).
   const mfaEnabled = mfaStatus.status === 'ok';
 
+  const logoUrl = tenant.logo_asset_path ? await getSignedAssetUrl(supabase, tenant.logo_asset_path) : null;
+
   return (
     <div className="space-y-6">
       <h1 className="font-display text-2xl text-ink-900">{t('title')}</h1>
       <Card>
         <CardTitle>{context.tenantType === 'nursery' ? t('orgBranding') : t('familySettings')}</CardTitle>
-        <div className="mt-4">
+        <div className="mt-4 flex flex-col gap-6">
           <SettingsForm locale={params.locale} tenant={tenant} tenantType={context.tenantType} />
+          {context.tenantType === 'nursery' && (
+            <LogoUpload locale={params.locale} hasLogo={Boolean(tenant.logo_asset_path)} logoUrl={logoUrl} />
+          )}
         </div>
       </Card>
       <Card>

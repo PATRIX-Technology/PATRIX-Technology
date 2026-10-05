@@ -19,6 +19,11 @@ export interface RenderStoryPdfInput {
   organisationName: string;
   locale: AppLocale;
   pages: RenderPageInput[];
+  /** The nursery's own logo (optional, uploaded in Settings) — drawn as a
+   * small badge in the opposite top corner from the Ownly watermark. Never
+   * SVG: only jpeg/png/webp ever reach Storage, see sniffImageMimeType. */
+  logoBytes?: Uint8Array;
+  logoContentType?: string;
 }
 
 const INK_COLOR = rgb(0.141, 0.11, 0.086);
@@ -96,6 +101,13 @@ export async function renderStoryPdf(input: RenderStoryPdfInput): Promise<Uint8A
   const captionMaxWidth = TRIM_WIDTH_PT - 70;
   const captionBumpRadius = 15;
 
+  // Embedded once and reused across every page's drawImage call -- embedding
+  // inside the loop would duplicate the image data once per page in the
+  // saved PDF.
+  const nurseryLogo = input.logoBytes
+    ? await embedImage(pdfDoc, input.logoBytes, input.logoContentType ?? 'image/png')
+    : null;
+
   for (const storyPage of input.pages) {
     const page = addPage();
     const image = await embedImage(pdfDoc, storyPage.imageBytes, storyPage.imageContentType);
@@ -114,6 +126,7 @@ export async function renderStoryPdf(input: RenderStoryPdfInput): Promise<Uint8A
     });
 
     drawCopyrightWatermark(page, fonts.latinRegular);
+    if (nurseryLogo) drawNurseryLogoBadge(page, nurseryLogo);
 
     const pageNumberY = BLEED_PT + 10;
 
@@ -210,6 +223,49 @@ function drawCopyrightWatermark(page: import('pdf-lib').PDFPage, textFont: impor
     size: 7,
     font: textFont,
     color: WATERMARK_TEXT_COLOR,
+  });
+}
+
+/**
+ * The nursery's own logo (optional, uploaded in Settings), drawn in the
+ * top-LEFT corner so it never collides with the Ownly mark's top-right
+ * badge — top corners are free on every page regardless of locale, since
+ * the caption band (English only) sits flush to the bottom. On a white
+ * backing plate so an arbitrary logo (any aspect ratio, any background)
+ * stays legible over a busy illustration, letterboxed to fit rather than
+ * stretched.
+ */
+function drawNurseryLogoBadge(page: import('pdf-lib').PDFPage, logo: import('pdf-lib').PDFImage): void {
+  const margin = 10;
+  const badgeHeight = 28;
+  const badgeMaxWidth = 90;
+  const padding = 4;
+
+  const innerHeight = badgeHeight - padding * 2;
+  const innerMaxWidth = badgeMaxWidth - padding * 2;
+  const fitScale = Math.min(innerMaxWidth / logo.width, innerHeight / logo.height);
+  const drawWidth = logo.width * fitScale;
+  const drawHeight = logo.height * fitScale;
+  const badgeWidth = drawWidth + padding * 2;
+
+  const badgeLeft = BLEED_PT + margin;
+  const badgeTop = PAGE_HEIGHT_PT - BLEED_PT - margin;
+  const badgeBottom = badgeTop - badgeHeight;
+
+  page.drawRectangle({
+    x: badgeLeft,
+    y: badgeBottom,
+    width: badgeWidth,
+    height: badgeHeight,
+    color: rgb(1, 1, 1),
+    opacity: 0.88,
+  });
+
+  page.drawImage(logo, {
+    x: badgeLeft + (badgeWidth - drawWidth) / 2,
+    y: badgeBottom + (badgeHeight - drawHeight) / 2,
+    width: drawWidth,
+    height: drawHeight,
   });
 }
 

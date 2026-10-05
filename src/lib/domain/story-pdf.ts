@@ -90,12 +90,33 @@ export async function renderApprovedStoryPdf(
   const child = story.children as unknown as { first_name: string; arabic_first_name: string | null } | null;
   const childName = (story.locale === 'ar' && child?.arabic_first_name) || child?.first_name || '';
 
+  // The nursery's own logo (optional, uploaded in Settings) -- fetched with
+  // the caller's own RLS-governed client, same as the page images above, so
+  // no new Storage policy is needed. Never let a missing/unreadable logo
+  // fail the whole PDF: a story still renders fine without one.
+  let logoBytes: Uint8Array | undefined;
+  let logoContentType: string | undefined;
+  const { data: tenantRow } = await supabase
+    .from('tenants')
+    .select('logo_asset_path')
+    .eq('id', context.tenantId)
+    .maybeSingle();
+  if (tenantRow?.logo_asset_path) {
+    const { data: logoData } = await supabase.storage.from(STORY_ASSETS_BUCKET).download(tenantRow.logo_asset_path);
+    if (logoData) {
+      logoBytes = new Uint8Array(await logoData.arrayBuffer());
+      logoContentType = logoData.type || 'image/png';
+    }
+  }
+
   const pdfBytes = await renderStoryPdf({
     title: templateRow?.title ?? story.theme_key.replace(/_/g, ' '),
     childName,
     organisationName: context.tenantName,
     locale: story.locale,
     pages: renderPages,
+    logoBytes,
+    logoContentType,
   });
 
   const preflight = await runPreflight({

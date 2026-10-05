@@ -68,6 +68,35 @@ describe('renderStoryPdf + runPreflight (English)', () => {
     expect(result.issues).toEqual([]);
     expect(result.ok).toBe(true);
   }, 30_000);
+
+  it('still renders a valid PDF when a nursery logo badge is included', async () => {
+    const pages = [
+      { pageNumber: 1, text: 'Maya loves rainbow vegetables.', imageBytes: onePxPng, imageContentType: 'image/png' },
+    ];
+
+    const pdfBytes = await renderStoryPdf({
+      title: 'The Rainbow Plate',
+      childName: 'Maya',
+      organisationName: 'Little Explorers Nursery',
+      locale: 'en',
+      pages,
+      logoBytes: onePxPng,
+      logoContentType: 'image/png',
+    });
+
+    expect(pdfBytes.length).toBeGreaterThan(0);
+
+    const result = await runPreflight({
+      pdfBytes,
+      expectedPageCount: pages.length,
+      locale: 'en',
+      pageTexts: pages.map((p) => p.text),
+      missingAssetPageNumbers: [],
+    });
+
+    expect(result.issues).toEqual([]);
+    expect(result.ok).toBe(true);
+  }, 30_000);
 });
 
 describe('renderStoryPdf + runPreflight (Arabic)', () => {

@@ -4662,3 +4662,62 @@ OTP step, and collecting 30 distinct numbers safely in one bulk pass is
 a different, harder problem not solved here. Every parent still has to
 open their own link and respond themselves — this only removes the
 staff-side repetition, not the consent itself.
+
+## Arabic PDF text: HarfBuzz + pdf-lib vector glyphs (6-page cover/back structure)
+
+Building the cover/back pages (Item 1 of the founder's 8-part feature
+request) needed real Arabic PDF text for the first time — every prior
+Arabic caption in this project was baked into the AI-generated
+illustration itself (see "Arabic captions baked into the illustration"
+above) specifically because no PDF text-drawing approach had ever
+correctly shaped Arabic from an embedded font. Cover/back content is
+templated (no AI call to bake it into), so this constraint had to
+actually be solved this time, not routed around.
+
+First attempt: `satori` (Vercel's React-to-SVG layout engine) +
+`@resvg/resvg-js` (rasterize SVG to PNG), rendering Arabic text to a
+small transparent PNG and embedding it as an image — chosen because an
+early test with short strings ("محمد سارة", "العربية") looked
+correct: right word order, letters visually joined. Building the real
+cover/back pages surfaced a case that test missed: rendering the actual
+template string "صحن قوس المطر" produced garbled output — the dots on
+ق/ف/ن rendered as disconnected marks floating above the line, unrelated
+to their base letters, and inter-word spacing partially collapsed.
+Confirmed by rendering to an actual PDF and visually inspecting it
+(including a zoomed crop), not assumed from the shape of the bug. Root
+cause: satori does basic Arabic letter-joining (GSUB contextual forms)
+but does not apply GPOS mark-to-base positioning, which is how this
+font (and most well-built Arabic fonts) attaches a dotted letter's dots
+to its base glyph. This was a real, previously-undetected gap in that
+"empirical verification" — the test strings happened to avoid the
+letters that expose it.
+
+Replaced with `harfbuzzjs` (the actual HarfBuzz shaping engine, compiled
+to WASM, MIT licensed, no native build step) doing real OpenType
+shaping — correct GSUB joining AND GPOS mark positioning — combined
+with `font.glyphToPath(glyphId)` (HarfBuzz's own per-glyph SVG path
+output) drawn directly as filled vector paths via pdf-lib's
+`page.drawSvgPath`, one glyph at a time, pen-advanced left-to-right
+using HarfBuzz's own shaped positions (HarfBuzz already reorders RTL
+runs into left-to-right rendering order, so no bidi handling is needed
+here). This draws real vector glyph outlines, not a raster image —
+sharper at print resolution and smaller PDF output than the satori/PNG
+path it replaced. `satori`, `@resvg/resvg-js`, and `opentype.js` were
+removed; `arabic-text-image.ts` was deleted and replaced with
+`src/lib/providers/pdf/arabic-text-vector.ts`. A bold static instance
+(`NotoNaskhArabic-Bold-Static.ttf`) was generated from the already-
+vendored variable font via the same `fonttools varLib.instancer`
+command documented in docs/LICENSES.md, for the cover title's bold
+weight.
+
+One non-obvious wrinkle: HarfBuzz's `glyphToPath` output is in a Y-down
+coordinate space, not the Y-up font-design space the rest of this file
+assumes for hand-authored SVG paths (e.g. the ring-logo watermark) —
+confirmed empirically (unflipped output rendered upside-down), fixed by
+wrapping each glyph's `drawSvgPath` call in a `pushGraphicsState` /
+`concatTransformationMatrix(1,0,0,-1,x,y)` / `popGraphicsState` triplet.
+
+This is the kind of gap "I tested it and it looked right" doesn't catch
+— the fix was to render the actual production string, not a
+convenient one, and to keep digging once something looked subtly off
+rather than ship the first result that rendered without throwing.

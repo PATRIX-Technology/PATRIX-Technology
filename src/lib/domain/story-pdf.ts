@@ -58,6 +58,18 @@ export async function renderApprovedStoryPdf(
     .eq('locale', story.locale)
     .maybeSingle();
 
+  // Cover/back pages are always bilingual regardless of the story's own
+  // locale (docs/DECISIONS.md "6-page structure: cover + back page"), so
+  // both title rows are needed here even though only one is the story's
+  // primary locale above.
+  const { data: templateRows } = await supabase
+    .from('story_theme_templates')
+    .select('title, locale')
+    .eq('theme_key', story.theme_key)
+    .in('locale', ['en', 'ar']);
+  const titleEn = templateRows?.find((t) => t.locale === 'en')?.title ?? templateRow?.title ?? story.theme_key.replace(/_/g, ' ');
+  const titleAr = templateRows?.find((t) => t.locale === 'ar')?.title ?? titleEn;
+
   const { data: pages } = await supabase
     .from('story_pages')
     .select('*')
@@ -89,6 +101,8 @@ export async function renderApprovedStoryPdf(
 
   const child = story.children as unknown as { first_name: string; arabic_first_name: string | null } | null;
   const childName = (story.locale === 'ar' && child?.arabic_first_name) || child?.first_name || '';
+  const childNameEn = child?.first_name || '';
+  const childNameAr = child?.arabic_first_name || childNameEn;
 
   // The nursery's own logo (optional, uploaded in Settings) -- fetched with
   // the caller's own RLS-governed client, same as the page images above, so
@@ -112,6 +126,10 @@ export async function renderApprovedStoryPdf(
   const pdfBytes = await renderStoryPdf({
     title: templateRow?.title ?? story.theme_key.replace(/_/g, ' '),
     childName,
+    titleEn,
+    titleAr,
+    childNameEn,
+    childNameAr,
     organisationName: context.tenantName,
     locale: story.locale,
     pages: renderPages,
@@ -119,9 +137,13 @@ export async function renderApprovedStoryPdf(
     logoContentType,
   });
 
+  // Preflight's expected page count now includes the templated cover +
+  // back pages added in render.ts (docs/DECISIONS.md "6-page structure:
+  // cover + back page") — they're real pages in the output PDF even
+  // though they aren't rows in story_pages.
   const preflight = await runPreflight({
     pdfBytes,
-    expectedPageCount: (pages ?? []).length,
+    expectedPageCount: (pages ?? []).length + 2,
     locale: story.locale,
     pageTexts: (pages ?? []).map((p) => p.text),
     missingAssetPageNumbers,

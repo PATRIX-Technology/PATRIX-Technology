@@ -17,6 +17,10 @@ describe('renderStoryPdf + runPreflight (English)', () => {
     const pdfBytes = await renderStoryPdf({
       title: 'The Rainbow Plate',
       childName: 'Maya',
+      titleEn: 'The Rainbow Plate',
+      titleAr: 'صحن قوس المطر',
+      childNameEn: 'Maya',
+      childNameAr: 'مايا',
       organisationName: 'Little Explorers Nursery',
       locale: 'en',
       pages,
@@ -26,7 +30,7 @@ describe('renderStoryPdf + runPreflight (English)', () => {
 
     const result = await runPreflight({
       pdfBytes,
-      expectedPageCount: pages.length,
+      expectedPageCount: pages.length + 2,
       locale: 'en',
       pageTexts: pages.map((p) => p.text),
       missingAssetPageNumbers: [],
@@ -52,6 +56,10 @@ describe('renderStoryPdf + runPreflight (English)', () => {
     const pdfBytes = await renderStoryPdf({
       title: 'Test',
       childName: 'Maya',
+      titleEn: 'Test',
+      titleAr: 'اختبار',
+      childNameEn: 'Maya',
+      childNameAr: 'مايا',
       organisationName: 'Org',
       locale: 'en',
       pages,
@@ -59,7 +67,7 @@ describe('renderStoryPdf + runPreflight (English)', () => {
 
     const result = await runPreflight({
       pdfBytes,
-      expectedPageCount: pages.length,
+      expectedPageCount: pages.length + 2,
       locale: 'en',
       pageTexts: pages.map((p) => p.text),
       missingAssetPageNumbers: [],
@@ -77,6 +85,10 @@ describe('renderStoryPdf + runPreflight (English)', () => {
     const pdfBytes = await renderStoryPdf({
       title: 'The Rainbow Plate',
       childName: 'Maya',
+      titleEn: 'The Rainbow Plate',
+      titleAr: 'صحن قوس المطر',
+      childNameEn: 'Maya',
+      childNameAr: 'مايا',
       organisationName: 'Little Explorers Nursery',
       locale: 'en',
       pages,
@@ -88,7 +100,7 @@ describe('renderStoryPdf + runPreflight (English)', () => {
 
     const result = await runPreflight({
       pdfBytes,
-      expectedPageCount: pages.length,
+      expectedPageCount: pages.length + 2,
       locale: 'en',
       pageTexts: pages.map((p) => p.text),
       missingAssetPageNumbers: [],
@@ -108,6 +120,10 @@ describe('renderStoryPdf + runPreflight (Arabic)', () => {
     const pdfBytes = await renderStoryPdf({
       title: 'صحن قوس المطر',
       childName: 'مايا',
+      titleEn: 'The Rainbow Plate',
+      titleAr: 'صحن قوس المطر',
+      childNameEn: 'Maya',
+      childNameAr: 'مايا',
       organisationName: 'حضانة المستكشفين الصغار',
       locale: 'ar',
       pages,
@@ -115,7 +131,7 @@ describe('renderStoryPdf + runPreflight (Arabic)', () => {
 
     const result = await runPreflight({
       pdfBytes,
-      expectedPageCount: pages.length,
+      expectedPageCount: pages.length + 2,
       locale: 'ar',
       pageTexts: pages.map((p) => p.text),
       missingAssetPageNumbers: [],
@@ -143,6 +159,10 @@ describe('renderStoryPdf + runPreflight (Arabic)', () => {
     const pdfBytes = await renderStoryPdf({
       title: 'first day school',
       childName: 'Hala',
+      titleEn: 'First Day of School',
+      titleAr: 'أول يوم في المدرسة',
+      childNameEn: 'Hala',
+      childNameAr: 'هالة',
       organisationName: 'test',
       locale: 'ar',
       pages,
@@ -150,7 +170,7 @@ describe('renderStoryPdf + runPreflight (Arabic)', () => {
 
     const result = await runPreflight({
       pdfBytes,
-      expectedPageCount: pages.length,
+      expectedPageCount: pages.length + 2,
       locale: 'ar',
       pageTexts: pages.map((p) => p.text),
       missingAssetPageNumbers: [],
@@ -165,6 +185,10 @@ describe('runPreflight failure modes', () => {
     const pdfBytes = await renderStoryPdf({
       title: 'Test',
       childName: 'Maya',
+      titleEn: 'Test',
+      titleAr: 'اختبار',
+      childNameEn: 'Maya',
+      childNameAr: 'مايا',
       organisationName: 'Org',
       locale: 'en',
       pages: [{ pageNumber: 1, text: 'Hello', imageBytes: onePxPng, imageContentType: 'image/png' }],
@@ -172,7 +196,7 @@ describe('runPreflight failure modes', () => {
 
     const result = await runPreflight({
       pdfBytes,
-      expectedPageCount: 1,
+      expectedPageCount: 3,
       locale: 'en',
       pageTexts: ['Hello'],
       missingAssetPageNumbers: [1],
@@ -186,6 +210,10 @@ describe('runPreflight failure modes', () => {
     const pdfBytes = await renderStoryPdf({
       title: 'Test',
       childName: 'Maya',
+      titleEn: 'Test',
+      titleAr: 'اختبار',
+      childNameEn: 'Maya',
+      childNameAr: 'مايا',
       organisationName: 'Org',
       locale: 'en',
       pages: [{ pageNumber: 1, text: 'Hello مرحبا', imageBytes: onePxPng, imageContentType: 'image/png' }],
@@ -193,7 +221,7 @@ describe('runPreflight failure modes', () => {
 
     const result = await runPreflight({
       pdfBytes,
-      expectedPageCount: 1,
+      expectedPageCount: 3,
       locale: 'en',
       pageTexts: ['Hello مرحبا'],
       missingAssetPageNumbers: [],
@@ -207,6 +235,10 @@ describe('runPreflight failure modes', () => {
     const pdfBytes = await renderStoryPdf({
       title: 'Test',
       childName: 'Maya',
+      titleEn: 'Test',
+      titleAr: 'اختبار',
+      childNameEn: 'Maya',
+      childNameAr: 'مايا',
       organisationName: 'Org',
       locale: 'en',
       pages: [{ pageNumber: 1, text: 'Hello', imageBytes: onePxPng, imageContentType: 'image/png' }],

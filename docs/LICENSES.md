@@ -12,6 +12,7 @@ generation)
 | `Inter-Regular-Static.ttf` | Inter (static instance, wght=400 opsz=14) | SIL Open Font License 1.1 | Generated from `Inter-Variable.ttf` above via `fonttools varLib.instancer` |
 | `Fraunces-Display-Static.ttf` | Fraunces (static instance, wght=600 opsz=72 SOFT=0 WONK=1) | SIL Open Font License 1.1 | Generated from `Fraunces-Variable.ttf` above via `fonttools varLib.instancer` |
 | `NotoNaskhArabic-Regular-Static.ttf` | Noto Naskh Arabic (static instance, wght=400) | SIL Open Font License 1.1 | Generated from `NotoNaskhArabic-Variable.ttf` above via `fonttools varLib.instancer` |
+| `NotoNaskhArabic-Bold-Static.ttf` | Noto Naskh Arabic (static instance, wght=700) | SIL Open Font License 1.1 | Generated from `NotoNaskhArabic-Variable.ttf` above via `fonttools varLib.instancer` |
 
 All are redistributed under the OFL, which explicitly permits bundling,
 embedding in documents (including PDFs), and modification — including the
@@ -31,6 +32,7 @@ weight/width/optical-size instance is ever needed:
 python3 -m fontTools.varLib.instancer assets/fonts/Inter-Variable.ttf wght=400 opsz=14 -o assets/fonts/Inter-Regular-Static.ttf
 python3 -m fontTools.varLib.instancer assets/fonts/Fraunces-Variable.ttf wght=600 opsz=72 SOFT=0 WONK=1 -o assets/fonts/Fraunces-Display-Static.ttf
 python3 -m fontTools.varLib.instancer assets/fonts/NotoNaskhArabic-Variable.ttf wght=400 -o assets/fonts/NotoNaskhArabic-Regular-Static.ttf
+python3 -m fontTools.varLib.instancer assets/fonts/NotoNaskhArabic-Variable.ttf wght=700 -o assets/fonts/NotoNaskhArabic-Bold-Static.ttf
 ```
 
 ## Icons / illustrations
@@ -52,6 +54,7 @@ python3 -m fontTools.varLib.instancer assets/fonts/NotoNaskhArabic-Variable.ttf 
 | @pdf-lib/fontkit | MIT |
 | archiver | MIT |
 | qrcode | MIT |
+| harfbuzzjs | MIT |
 | zod | MIT |
 | Tailwind CSS | MIT |
 | next-intl | MIT |

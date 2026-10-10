@@ -104,6 +104,14 @@ The story-generation job queue needs something to periodically hit
 Whichever you use, send the header
 `Authorization: Bearer <your CRON_SECRET>`.
 
+Separately, `/api/cron/retention-sweep` needs the same authorization,
+hit once a day — this is what actually enforces each organisation's
+`data_retention_days` setting (deletes children/stories once their
+configured window elapses). `.github/workflows/retention-sweep-cron.yml`
+does this automatically once the `APP_URL` and `CRON_SECRET` repository
+secrets are set (see `docs/NEEDS_FROM_ME.md`); without those secrets set,
+retention stays configurable in Settings but unenforced.
+
 ## 7. Post-deploy smoke test
 
 Run through `docs/TEST_CHECKLIST.md` items 1-8 against the real deployed

@@ -157,6 +157,14 @@ else has already been built and is documented in `docs/HANDOFF.md`.
    `docs/DECISIONS.md` "Defending against a mid-generation function
    timeout" for why this exists instead of Vercel's own Cron (Hobby
    plan restricts that to once a day, too infrequent to matter here).
+
+   These same two secrets now also drive
+   `.github/workflows/retention-sweep-cron.yml` (daily, see
+   `docs/DECISIONS.md` "Retention sweep: enforcing
+   data_retention_days") — if you've already added them for the story
+   worker, the retention sweep starts working automatically too, no
+   separate setup. If you haven't added them yet, both workflows are
+   blocked the same way until you do.
    Until you add these, stuck-page recovery still happens, just only
    when someone creates or regenerates a story in the app (that
    synchronously triggers the same worker) — see `docs/DECISIONS.md`

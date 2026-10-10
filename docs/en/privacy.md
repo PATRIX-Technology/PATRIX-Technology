@@ -38,9 +38,15 @@ signed URL that expires after 10 minutes.
 ## Retention & deletion
 
 Configurable per organisation (`tenants.data_retention_days`, default 730
-days / 24 months). Deleting a child cascades to every story, page, job,
-and consent record referencing them, and removes the underlying files
-from Storage — see `src/lib/domain/deletion.ts`. Withdrawing consent
+days / 24 months) and **enforced**, not just configurable: a daily
+scheduled job (`/api/cron/retention-sweep`, `src/lib/jobs/retention.ts`,
+`.github/workflows/retention-sweep-cron.yml`) deletes any child whose
+record has outlived their tenant's configured window, the same cascade
+a manual deletion triggers — every story, page, job, and consent record
+referencing them, plus the underlying files in Storage — see
+`src/lib/domain/deletion.ts`. Before this job existed, the column was
+read by Settings' UI and nothing else; see `docs/DECISIONS.md`
+"Retention sweep: enforcing data_retention_days". Withdrawing consent
 alone (without deleting the child record) removes that child's generated
 story assets specifically.
 

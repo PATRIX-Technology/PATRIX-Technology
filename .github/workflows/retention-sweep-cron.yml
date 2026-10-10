@@ -1,0 +1,39 @@
+name: Data retention sweep
+
+# Enforces tenants.data_retention_days — deletes a child's data (and
+# cascading stories/assets) once its configured retention window has
+# elapsed. This is what makes Privacy_Policy.md section 7 ("child and
+# story data is scheduled for deletion once that period elapses") an
+# actual behaviour of the system rather than a description of a Settings
+# field nothing reads back. See src/lib/jobs/retention.ts and
+# docs/DECISIONS.md "Retention sweep: enforcing data_retention_days".
+#
+# Runs once a day — retention is measured in days, so there is no benefit
+# to the 5-minute cadence the story-worker safety net uses.
+#
+# Needs the same two repository secrets as the story worker (see
+# docs/NEEDS_FROM_ME.md): APP_URL and CRON_SECRET. Without both set, this
+# job fails harmlessly on every run.
+on:
+  schedule:
+    - cron: '0 3 * * *'
+  workflow_dispatch: {}
+
+jobs:
+  trigger-retention-sweep:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Hit /api/cron/retention-sweep
+        run: |
+          if [ -z "$APP_URL" ] || [ -z "$CRON_SECRET" ]; then
+            echo "APP_URL and/or CRON_SECRET repository secrets are not set -- see docs/NEEDS_FROM_ME.md. Skipping."
+            exit 0
+          fi
+          status=$(curl -sS -o /dev/null -w '%{http_code}' -X GET "$APP_URL/api/cron/retention-sweep" -H "Authorization: Bearer $CRON_SECRET" || echo "curl_error")
+          echo "Retention sweep responded with HTTP $status"
+          if [ "$status" != "200" ]; then
+            echo "::warning::Retention sweep did not return 200 (got $status) -- check Vercel logs."
+          fi
+        env:
+          APP_URL: ${{ secrets.APP_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}

@@ -4546,3 +4546,51 @@ only ever reaches `'paid'` automatically — advancing to `'printing'`/
 Covered by 6 new integration tests (`tests/integration/print-orders.test.ts`)
 against real Postgres RLS; full suite (277 tests) and production build
 pass.
+
+**Retention sweep: enforcing `data_retention_days` (a real technical
+gap, not a legal-judgment one).** A full architecture audit against
+UAE PDPL/GDPR's *technical* requirements — security measures, access
+controls, consent, audit logging, retention, DSAR mechanics — turned up
+one genuine mismatch between what the Privacy Policy and the in-app
+Legal page promise and what the code actually did:
+`tenants.data_retention_days` (migration 0001, comment: "Enforced by a
+scheduled job, see docs/DECISIONS.md") was never actually read by any
+job. It was a Settings field a nursery owner could change, with no
+code anywhere that compared it to anything — so "child and story data
+is scheduled for deletion once that period elapses" (Privacy Policy
+section 7) was aspirational, not true. Everything else checked in this
+pass held up against the actual code: RLS tenant isolation, append-only
+service-role-only audit logging, MFA (TOTP) enforced via AAL2 for
+platform-owner/billing routes, the private Storage bucket with
+signed-URL-only access (no `getPublicUrl` call exists anywhere in the
+codebase), SMS-OTP identity verification on photo consent, and the
+deletion/consent-withdrawal cascades themselves (`src/lib/domain/
+deletion.ts`) — all genuinely match their documentation.
+
+Fixed with `src/lib/jobs/retention.ts` (`runRetentionSweepOnce`): scans
+every child alongside its tenant's `data_retention_days`, and calls the
+same `deleteChildCascade` a manual deletion uses once a child's age
+exceeds that window — same storage-then-rows ordering, same audit-log
+entry. Exposed at `/api/cron/retention-sweep`, authorized the same way
+as the existing story-worker cron (`isCronRequestAuthorized`,
+`CRON_SECRET`), and triggered daily by
+`.github/workflows/retention-sweep-cron.yml` — retention is measured in
+days, so the story worker's 5-minute cadence would be pure waste here.
+Reuses the same `APP_URL`/`CRON_SECRET` repository secrets the story
+worker already needs (see `docs/NEEDS_FROM_ME.md` item 4b), so no new
+secret to set up if those are already configured.
+
+This closes an engineering gap, not a legal one — "730 days is an
+appropriate retention period" and "deleting on day 731 rather than day
+700 satisfies PDPL's data-minimisation principle" remain exactly the
+kind of question a qualified UAE lawyer answers, per the standing
+position in `docs/NEEDS_FROM_ME.md` item 7. What changed is narrower
+and purely factual: the number in Settings now does something, instead
+of nothing. Unit-tested in `tests/unit/retention-sweep.test.ts`
+(date-math and per-tenant-window correctness, plus error aggregation so
+one failed deletion doesn't block the rest of the sweep) — the
+integration harness in `tests/integration/db/setup.ts` runs raw
+Postgres with no PostgREST layer, so it can't exercise a real
+supabase-js client the way this job uses one; `deleteChildCascade`
+itself has the same gap and was already untested at that layer before
+this change.

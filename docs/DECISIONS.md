@@ -4844,3 +4844,56 @@ per-printed-copy line. Those two numbers don't match today. This isn't
 resolved here: Phase G needs an explicit decision (new flat price
 across both flows, or two intentionally different price points for two
 different fulfillment paths) rather than me picking one silently.
+
+## Printed-copy pricing finalized: AED 69 standalone + bulk tiers (Phase G)
+
+Resolved the AED 50 vs AED 109 conflict flagged in "WhatsApp print
+order" above. Research (WebSearch, no verified UAE-currency competitor
+checkout price found anywhere — Wonderbly/Hooray Heroes/Dinkleboo all
+converted from USD/GBP/SGD home-market prices, landing in an AED
+66-165 range; one real Dubai kids'-book data point at AED 47-52)
+suggested AED 50 would read as cheap/competitive and AED 109 as solid
+mid-pack — neither looked expensive. The deciding input was the
+founder's own print-vendor finding: AED 45/book for an 8-page run.
+Subscription revenue already covers the digital generation cost, so a
+printed copy's own price only needs to clear the print cost plus card
+fees, not re-absorb AI cost too — at a flat AED 50, margin would be
+~AED 3.5/book (~7%) with zero room for anything else (packaging,
+operational overhead, price drift from the vendor); at the founder's
+original AED 109, margin is healthy but likely reads as expensive
+against the comparables found.
+
+Landed on a tiered structure instead of one flat number — delivers
+the founder's "AED 50" instinct as the genuine best bulk rate rather
+than an unsustainable standard price:
+
+- 1 book: AED 69 ($19) — new standalone price, down from AED 109/$29.
+- 10-49: AED 59. 50-99: AED 54. 100+: AED 49 + free delivery (a bulk
+  shipment's per-unit delivery cost collapses at that volume, unlike
+  at smaller quantities).
+
+Applied to the live app: `PRINT_ORDER_PRICE_MINOR` (single-item Stripe
++ WhatsApp price), the `printOrder.price` i18n strings (en/ar), and
+`docs/en/pricing.md`'s new "Printed copies" section with the full
+margin math. The bulk tiers (10+) are NOT automated in Stripe
+checkout — a nursery ordering in bulk goes through the WhatsApp flow
+(Phase F), where a human applies the bulk price by hand; this is
+exactly the judgement-call use case that flow was built for, not a
+gap. Added "5 free printed copies" to the existing Founding Partner
+offer for any nursery that also commits to an annual plan — a small,
+concrete trust-builder for a first customer who hasn't seen the
+physical product yet.
+
+Built `docs/en/sales/ownly-pricing-and-offer.pptx` (6 slides: cover,
+nursery subscription tiers, printed-copy bulk ladder, Founding Partner
+offer, family plans, contact/CTA) reusing the exact visual system
+already established in `nursery-pitch-deck.pptx` (same dark palette —
+14152B/1E2040/262A4D/F4F1E8/E2708A/E3AC3D/2FBFA6 — same Cambria/
+Calibri font pairing, same logo/footer pattern), for the founder to
+send directly to a nursery already waiting on pricing.
+
+**Not yet done**: mirroring this into `docs/ar/pricing.md` and
+producing an Arabic version of the slide deck — both pending time
+allowed. The founder asked for this urgently for an English-speaking
+conversation already in progress; Arabic versions are a reasonable
+fast-follow, not shipped yet.

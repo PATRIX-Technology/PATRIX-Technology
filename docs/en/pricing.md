@@ -74,7 +74,11 @@ even with the added labour.
 ### Launch offers
 
 - **Founding partner** — 50% off for 3 months, locked to a 12-month
-  term, for the first 10 nurseries who sign.
+  term, for the first 10 nurseries who sign. Add **5 free printed
+  copies** (at AED 69 standalone value, AED 225 at cost — a small,
+  concrete trust-builder for a first customer who has never seen a
+  physical book yet) to any founding-partner nursery that also
+  commits to an annual plan.
 - **Referral credit** — a manual sales concession: a nursery that
   refers another paying nursery gets 1 month free, applied by hand.
   Distinct from the automated "Invite & earn free stories" mechanic
@@ -158,6 +162,43 @@ outside the UAE (affects VAT applicability — see the VAT-inclusive
 note above, currently left `true` on the USD rows too, matching how
 the existing USD family plans were already set, pending an accountant's
 read on this rather than a guess made in code).
+
+## Printed copies (add-on, nursery and family alike)
+
+A physical printed copy of an already-approved digital story — ordered
+either via Stripe checkout or the WhatsApp flow (`print_orders` table,
+both covered in `docs/DECISIONS.md`). Real cost basis: **AED 45/book
+for an 8-page print run**, a founder-sourced vendor quote (not yet a
+signed contract — see `docs/NEEDS_FROM_ME.md`), landed cost unconfirmed
+(flag whether that figure already includes delivery before relying on
+it for margin). Digital generation cost is already covered by the
+underlying subscription — a printed copy's own price only needs to
+clear the print cost itself plus payment fees, not re-absorb the
+AI cost too.
+
+| Quantity | Price / book | Notes |
+|---|---|---|
+| 1 (standalone) | **AED 69** (≈$19) | Default checkout price — replaces the earlier AED 109/$29 placeholder |
+| 10-49 | **AED 59** | Nursery class-set pricing |
+| 50-99 | **AED 54** | Nursery multi-class pricing |
+| 100+ | **AED 49** + **free delivery** | The founder's original "AED 50" instinct, delivered as the genuine best rate at real volume — a full graduation/term-end print run for a nursery |
+
+Margin check at the standard AED 69 price: 69 − 45 (print) − ~2 (card
+fees) ≈ **AED 22/book (~32%)** — healthy. At the AED 49 bulk-100+ tier
+it compresses to ~AED 4/book before delivery cost, which is why free
+delivery is viable there (a single bulk shipment's per-unit delivery
+cost collapses at 100+ copies) but would not be at smaller quantities —
+don't extend free delivery below the 100-book tier without re-costing
+delivery first.
+
+**Not yet built**: automated bulk/tiered pricing in the Stripe checkout
+flow (`PrintOrderDialog.tsx`/`PRINT_ORDER_PRICE_MINOR` only know the
+single-item AED 69/$19 price today). A nursery ordering 10+ books
+currently goes through the WhatsApp flow (Phase F), where the bulk
+price is applied manually by whoever handles the order — exactly the
+kind of judgement call that flow was built for, not a gap to treat as
+broken. Automating bulk-tier checkout is real future work if volume
+orders become common enough to justify it.
 
 ## Sizing the Gemini spend cap
 

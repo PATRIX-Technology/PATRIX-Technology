@@ -1,23 +1,28 @@
 /**
  * Pricing and validation for a physical printed copy of an already
  * -generated digital storybook (see supabase/migrations/0037_print_orders.sql).
- * Prices are fixed, not computed from story length/page count — a single
- * flat price per currency keeps this launchable without a real print
- * -vendor cost quote yet; see docs/DECISIONS.md "Print orders: fixed price
- * until a vendor is contracted" for why, and revisit once
- * Logistics_Agreement.md (contracts/) is actually signed with a vendor.
+ * This is the STANDALONE single-copy price only — a nursery ordering in
+ * bulk (10+) goes through the WhatsApp flow (Phase F) instead, where a
+ * human applies the bulk-tier price from docs/en/pricing.md "Printed
+ * copies" by hand; there is no automated bulk-checkout path yet. Prices
+ * are fixed, not computed from story length/page count — see
+ * docs/DECISIONS.md "Print orders: fixed price until a vendor is
+ * contracted" for why, and revisit once Logistics_Agreement.md
+ * (contracts/) is actually signed with a vendor.
  */
 
 export type PrintOrderCurrency = 'aed' | 'usd';
 
 /** Amounts in the smallest currency unit (fils / cents), matching what
  * Stripe's price_data.unit_amount expects directly — no conversion at the
- * call site. AED figure chosen against the USD figure using the official
- * USD/AED peg (3.6725), rounded to a clean retail price, same convention
- * used for the subscription plans' AED pricing (see docs/en/pricing.md). */
+ * call site. Set against a founder-sourced print-vendor quote of AED
+ * 45/book (8-page run, not yet a signed contract — see
+ * docs/NEEDS_FROM_ME.md) plus card-processing fees, leaving roughly
+ * AED 22/book (~32%) margin — see docs/en/pricing.md "Printed copies"
+ * for the full bulk-tier ladder and the margin math this is based on. */
 export const PRINT_ORDER_PRICE_MINOR: Record<PrintOrderCurrency, number> = {
-  usd: 2900, // $29.00
-  aed: 10900, // AED 109.00
+  usd: 1900, // $19.00
+  aed: 6900, // AED 69.00
 };
 
 export interface ShippingAddressInput {

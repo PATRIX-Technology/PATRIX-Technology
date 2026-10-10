@@ -4721,3 +4721,51 @@ This is the kind of gap "I tested it and it looked right" doesn't catch
 — the fix was to render the actual production string, not a
 convenient one, and to keep digging once something looked subtly off
 rather than ship the first result that rendered without throwing.
+
+## Four new story themes: Ramadan, Eid, birthday, graduation (Phase D)
+
+Added per Item 5 of the founder's 8-part feature request — "Save Money"
+and "National Day" (also requested) already existed as templates, so
+only these 4 were genuinely new. Follows the existing
+`supabase/seed/templates.json` pattern exactly: one English + one
+Arabic row per theme, 4 pages each, written to the project's existing
+quality bar (same gender-agreement token system as every other
+template — see "Arabic gender-agreement audit of the story templates").
+
+- `ramadan_reflection` / `eid_celebration` (category `nurseries`,
+  mascot Grandma Amal) and `birthday_wishes` / `graduation_day`
+  (category `gifts`, mascot Marya the Fox) — matching the plan's
+  category assignment and the existing mascot "universe".
+- Ramadan/Eid are written from an inclusive, nursery-wide angle
+  (kindness, family, gratitude, sharing) rather than depicting the
+  child fasting or performing specific religious acts — consistent
+  with how `national_day_gratitude` handles a culturally specific
+  occasion for a diverse family/nursery audience.
+- 12 new `ArabicVerbKey` entries added to `src/lib/domain/pronouns.ts`
+  (`gave`, `helped`, `woke_up`, `wore`, `opened_gift`, `played`,
+  `blew_out_candles`, `made_a_wish`, `felt_excited`, `walked_proudly`,
+  `received_certificate`) — every new Arabic page was rendered through
+  `renderTemplate` for both `she`/`he` and inspected for (a) no
+  leftover `{...}` tokens and (b) correct, natural gender agreement
+  before being treated as done; several early drafts had to be reworked
+  mid-way through this check — Arabic grammatical gender doesn't track
+  English's in the places you'd expect: a verb whose *grammatical*
+  subject is "the family" (`العائلة`) or "everyone" (`الجميع`) is
+  invariant regardless of the child's own pronoun and must never be
+  routed through a child-gendered `{v:...}` token, and participles
+  (`مودعة`/`مودعا`, "surrounded", "saying goodbye") don't have a token
+  mechanism at all, so sentences built around one had to be rewritten
+  to avoid needing it rather than left half-tokenized.
+- Seeded into the live Supabase project as `native_review_status:
+  'draft'` (not `'reviewed'`) — `assertTemplateUsable`/
+  `CreateStoryForm.tsx`'s `usableTemplates` filter already keep any
+  draft template invisible to real nursery/family users, so this is
+  genuinely inert in production until someone with real Arabic fluency
+  reviews it, the same gate every existing template went through
+  before launch. `tests/unit/seed-templates.test.ts` was updated to
+  allow exactly these 4 themes to be draft (everything else about
+  them — schema, token resolution for both pronouns — is still
+  checked identically to every reviewed template).
+- 4 new icons added to `CreateStoryForm.tsx`'s `THEME_ICONS` (crescent
+  moon, lantern, balloon, graduation cap) so the picker renders
+  correctly the moment a reviewer flips the status.

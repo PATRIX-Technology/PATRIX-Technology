@@ -112,6 +112,53 @@ const THEME_ICONS: Record<string, JSX.Element> = {
       <circle cx="8" cy="16" r="0.9" fill="currentColor" />
     </>
   ),
+  ramadan_reflection: (
+    <>
+      <path
+        d="M15.5 4.5a8 8 0 1 0 4 11.3A6.5 6.5 0 0 1 15.5 4.5Z"
+        stroke="currentColor"
+        strokeWidth="1.7"
+        fill="none"
+        strokeLinejoin="round"
+      />
+      <path d="M18 3.5l.6 1.4 1.4.6-1.4.6-.6 1.4-.6-1.4-1.4-.6 1.4-.6.6-1.4Z" fill="currentColor" />
+    </>
+  ),
+  eid_celebration: (
+    <>
+      <path
+        d="M8 3h8l1 3H7l1-3Zm-2 5h12l-1.3 11.5a1 1 0 0 1-1 .9H8.3a1 1 0 0 1-1-.9L6 8Z"
+        stroke="currentColor"
+        strokeWidth="1.7"
+        fill="none"
+        strokeLinejoin="round"
+      />
+      <path d="M12 11v5M9.5 13h5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    </>
+  ),
+  birthday_wishes: (
+    <>
+      <path
+        d="M12 3a2.2 2.2 0 0 1 2.2 2.4c-.1 1.9-1.6 3.6-2.2 4.3-.6-.7-2.1-2.4-2.2-4.3A2.2 2.2 0 0 1 12 3Z"
+        stroke="currentColor"
+        strokeWidth="1.7"
+        fill="none"
+        strokeLinejoin="round"
+      />
+      <path d="M12 9.7v11" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+      <path d="M7 21c0-4 2-5 5-5s5 1 5 5" stroke="currentColor" strokeWidth="1.7" fill="none" strokeLinecap="round" />
+    </>
+  ),
+  graduation_day: (
+    <path
+      d="M12 4 2 9l10 5 10-5-10-5Zm-6 7.5V16c0 1.8 2.7 3 6 3s6-1.2 6-3v-4.5M20 9v6"
+      stroke="currentColor"
+      strokeWidth="1.7"
+      fill="none"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  ),
 };
 
 const FALLBACK_ICON = (

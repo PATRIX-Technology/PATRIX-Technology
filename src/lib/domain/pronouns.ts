@@ -92,6 +92,19 @@ export const ARABIC_VERB_KEYS = [
   'opened_water',
   'put_soap',
   'to_eat_snack',
+  // Added for the Ramadan/Eid/birthday/graduation templates (Phase D) —
+  // see docs/DECISIONS.md.
+  'gave',
+  'helped',
+  'woke_up',
+  'wore',
+  'opened_gift',
+  'played',
+  'blew_out_candles',
+  'made_a_wish',
+  'felt_excited',
+  'walked_proudly',
+  'received_certificate',
 ] as const;
 
 export type ArabicVerbKey = (typeof ARABIC_VERB_KEYS)[number];
@@ -183,6 +196,20 @@ export const ARABIC_CONJUGATIONS: Record<ArabicVerbKey, Record<Pronoun, string>>
   opened_water: { she: 'فتحت', he: 'فتح' },
   put_soap: { she: 'ووضعت', he: 'ووضع' },
   to_eat_snack: { she: 'لتأكل', he: 'ليأكل' },
+  gave: { she: 'أعطت', he: 'أعطى' },
+  helped: { she: 'ساعدت', he: 'ساعد' },
+  woke_up: { she: 'استيقظت', he: 'استيقظ' },
+  wore: { she: 'ارتدت', he: 'ارتدى' },
+  opened_gift: { she: 'فتحت هديتها', he: 'فتح هديته' },
+  played: { she: 'لعبت', he: 'لعب' },
+  blew_out_candles: { she: 'نفخت على الشموع', he: 'نفخ على الشموع' },
+  made_a_wish: { she: 'تمنت أمنية', he: 'تمنى أمنية' },
+  felt_excited: { she: 'شعرت بالحماس', he: 'شعر بالحماس' },
+  walked_proudly: { she: 'مشت بفخر', he: 'مشى بفخر' },
+  received_certificate: {
+    she: 'استلمت شهادتها',
+    he: 'استلم شهادته',
+  },
 };
 
 /**

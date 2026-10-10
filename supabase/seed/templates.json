@@ -556,5 +556,253 @@
         "image_prompt": "شخصية {child_name} تحمل بفخر صينية دونات مزينة بألوان زاهية، تقدمها لعائلة سعيدة ومحتفية في المنزل، شخصية الخبازة لارا تطل من باب المطبخ، مشهد دافئ وسعيد، أسلوب رسوم كتاب قصص."
       }
     ]
+  },
+  {
+    "theme_key": "ramadan_reflection",
+    "locale": "en",
+    "category": "nurseries",
+    "title": "The Kindness Moon",
+    "synopsis": "{child_name} watches the Ramadan moon rise and discovers that kindness and giving are what make {pronoun:possessive} favourite part of the month.",
+    "mascot_name": "Grandma Amal",
+    "native_review_status": "draft",
+    "pages": [
+      {
+        "order": 1,
+        "text": "The sky turned soft and dusky, and a thin silver moon appeared above the rooftops. \"Look, {mascot}!\" {child_name} said, pointing up. \"Ramadan is starting!\"",
+        "image_prompt": "{child_name}'s avatar pointing up at a crescent moon in a dusky sky, lanterns strung along a rooftop, cozy evening atmosphere, storybook illustration style."
+      },
+      {
+        "order": 2,
+        "text": "\"During Ramadan, families slow down and share more — kind words, kind hands, and kind hearts,\" said {mascot}, lighting a small lantern.",
+        "image_prompt": "{mascot}, a warm grandmother in traditional Emirati dress, lighting a small decorative lantern beside {child_name}'s avatar, warm indoor glow, storybook illustration style."
+      },
+      {
+        "order": 3,
+        "text": "{child_name} helped fill a basket with dates and bread to share with a neighbour down the street, then gave it to them with a smile.",
+        "image_prompt": "{child_name}'s avatar carefully carrying a basket of dates and bread toward a neighbour's door, warm sunset light, storybook illustration style."
+      },
+      {
+        "order": 4,
+        "text": "That night, the whole family gathered around the table for iftar, and {child_name} felt proud of the small kindness {pronoun:subject} had shared that day.",
+        "image_prompt": "{child_name}'s avatar sitting at a table full of food with family at sunset, lanterns glowing warmly, joyful gathering, storybook illustration style."
+      }
+    ]
+  },
+  {
+    "theme_key": "ramadan_reflection",
+    "locale": "ar",
+    "category": "nurseries",
+    "title": "قمر اللطف",
+    "synopsis": "{v:discovers_present} {child_name} أن اللطف والعطاء هما أجمل ما في رمضان، {v:while_looking} إلى الهلال الجديد.",
+    "mascot_name": "الجدة أمل",
+    "native_review_status": "draft",
+    "pages": [
+      {
+        "order": 1,
+        "text": "تلون السماء بالدكنة وظهر هلال رمضان الرفيع فوق الأسطح. {v:said} {child_name} {v:while_looking} إلى الأعلى: «انظري يا {mascot}! بدأ رمضان!»",
+        "image_prompt": "شخصية {child_name} تشير إلى هلال رمضان في سماء الغسق، فوانيس معلقة على سطح المنزل، أجواء مسائية دافئة، أسلوب رسوم كتاب قصص."
+      },
+      {
+        "order": 2,
+        "text": "قالت {mascot} وهي تضيء فانوسا صغيرا: «في رمضان، تهدأ العائلات وتتشارك أكثر: كلمات طيبة، وأيادي كريمة، وقلوب محبة.»",
+        "image_prompt": "{mascot}، جدة ترتدي اللباس التقليدي الإماراتي، تضيء فانوسا زخرفيا صغيرا بجانب شخصية {child_name}، إضاءة دافئة داخل المنزل، أسلوب رسوم كتاب قصص."
+      },
+      {
+        "order": 3,
+        "text": "{v:helped} {child_name} في ملء سلة بالتمر والخبز، ثم {v:gave} السلة لجار في الشارع بعناية وابتسامة.",
+        "image_prompt": "شخصية {child_name} تحمل بعناية سلة من التمر والخبز باتجاه باب أحد الجيران، ضوء غروب دافئ، أسلوب رسوم كتاب قصص."
+      },
+      {
+        "order": 4,
+        "text": "في ذلك المساء، جلست العائلة كلها حول المائدة للإفطار، {v:felt_proud} {child_name} بعمل{ps} اللطيف في ذلك اليوم.",
+        "image_prompt": "شخصية {child_name} تجلس إلى مائدة مليئة بالطعام مع العائلة عند الغروب، فوانيس مضيئة بدفء، لقاء عائلي سعيد، أسلوب رسوم كتاب قصص."
+      }
+    ]
+  },
+  {
+    "theme_key": "eid_celebration",
+    "locale": "en",
+    "category": "nurseries",
+    "title": "Eid Lantern Day",
+    "synopsis": "{child_name} wakes up to the joy of Eid morning — new clothes, family hugs, and a sweet surprise {pronoun:subject} can't wait to share.",
+    "mascot_name": "Grandma Amal",
+    "native_review_status": "draft",
+    "pages": [
+      {
+        "order": 1,
+        "text": "{child_name} woke up before the sun. Today was Eid! New clothes, soft and bright, were waiting to be worn.",
+        "image_prompt": "{child_name}'s avatar waking up happily in bed with bright new Eid clothes laid out nearby, morning sunlight, storybook illustration style."
+      },
+      {
+        "order": 2,
+        "text": "The whole family gathered at Grandma's house. \"Eid Mubarak!\" {mascot} said, wrapping {child_name} in the warmest hug.",
+        "image_prompt": "{mascot}, a warm grandmother in traditional Emirati dress, hugging {child_name}'s avatar warmly in a decorated living room, family gathered around, storybook illustration style."
+      },
+      {
+        "order": 3,
+        "text": "{mascot} handed {child_name} a small gift wrapped in gold paper. {child_name} opened it carefully, then decided to save one sweet to share with a friend.",
+        "image_prompt": "{child_name}'s avatar opening a small gold-wrapped gift, delighted expression, {mascot} smiling nearby, storybook illustration style."
+      },
+      {
+        "order": 4,
+        "text": "As the lanterns glowed outside, {child_name} hugged everyone goodbye, feeling excited for next Eid already.",
+        "image_prompt": "{child_name}'s avatar waving goodbye under glowing string lanterns at dusk, family waving back, warm festive mood, storybook illustration style."
+      }
+    ]
+  },
+  {
+    "theme_key": "eid_celebration",
+    "locale": "ar",
+    "category": "nurseries",
+    "title": "يوم فانوس العيد",
+    "synopsis": "{v:woke_up} {child_name} في صباح عيد مليء بالفرح: ملابس جديدة، عناق دافئ، ومفاجأة حلوة {v:wanted} مشاركتها مع صديق{ps}.",
+    "mascot_name": "الجدة أمل",
+    "native_review_status": "draft",
+    "pages": [
+      {
+        "order": 1,
+        "text": "{v:woke_up} {child_name} قبل شروق الشمس. اليوم هو العيد! كانت الملابس الجديدة الناعمة والزاهية بانتظار{ps} على السرير.",
+        "image_prompt": "شخصية {child_name} تستيقظ بسعادة في السرير، وملابس العيد الجديدة الزاهية موضوعة بجانبها، ضوء صباحي دافئ، أسلوب رسوم كتاب قصص."
+      },
+      {
+        "order": 2,
+        "text": "اجتمعت العائلة كلها في بيت الجدة. قالت {mascot} وهي تحتضن {child_name} بأدفأ عناق: «عيد مبارك!»",
+        "image_prompt": "{mascot}، جدة ترتدي اللباس التقليدي الإماراتي، تحتضن شخصية {child_name} بحرارة في غرفة معيشة مزينة، العائلة مجتمعة حولهما، أسلوب رسوم كتاب قصص."
+      },
+      {
+        "order": 3,
+        "text": "أعطت {mascot} {child_name} هدية صغيرة ملفوفة بورق ذهبي. {v:opened_gift} {child_name} بعناية، ثم {v:decided} الاحتفاظ بقطعة واحدة لمشاركتها مع صديق{ps}.",
+        "image_prompt": "شخصية {child_name} تفتح هدية صغيرة ملفوفة بورق ذهبي، تعبير سعيد، {mascot} تبتسم بجانبها، أسلوب رسوم كتاب قصص."
+      },
+      {
+        "order": 4,
+        "text": "مع توهج الفوانيس في الخارج، {v:hugged} {child_name} الجميع عند الوداع، و{v:felt_excited} لقدوم العيد القادم.",
+        "image_prompt": "شخصية {child_name} تلوح مودعة تحت فوانيس مضيئة عند الغسق، العائلة تلوح لها، أجواء احتفالية دافئة، أسلوب رسوم كتاب قصص."
+      }
+    ]
+  },
+  {
+    "theme_key": "birthday_wishes",
+    "locale": "en",
+    "category": "gifts",
+    "title": "The Wishing Candle",
+    "synopsis": "On {pronoun:possessive} birthday, {child_name} blows out the candles, makes a wish, and spends the whole day surrounded by friends and love.",
+    "mascot_name": "Marya the Fox",
+    "native_review_status": "draft",
+    "pages": [
+      {
+        "order": 1,
+        "text": "Balloons bounced by the door and a banner read \"Happy Birthday!\" {child_name} felt so excited for the party to start.",
+        "image_prompt": "{child_name}'s avatar standing by a front door decorated with colourful balloons and a Happy Birthday banner, excited expression, storybook illustration style."
+      },
+      {
+        "order": 2,
+        "text": "Friends arrived with gifts and laughter. {child_name} played fun games with them and {mascot} in the decorated garden.",
+        "image_prompt": "{child_name}'s avatar playing party games with friends and {mascot} the fox in a decorated garden, balloons and streamers, storybook illustration style."
+      },
+      {
+        "order": 3,
+        "text": "A cake with glowing candles was carried in, and everyone sang together. {child_name} made a wish and blew out every candle.",
+        "image_prompt": "{child_name}'s avatar blowing out candles on a birthday cake, friends and family singing around the table, warm candlelight, storybook illustration style."
+      },
+      {
+        "order": 4,
+        "text": "As the sun set, {child_name} hugged {pronoun:possessive} favourite people goodbye, {pronoun:possessive} heart full from the best birthday yet.",
+        "image_prompt": "{child_name}'s avatar hugging friends and family goodbye at sunset, balloons drifting, warm happy mood, storybook illustration style."
+      }
+    ]
+  },
+  {
+    "theme_key": "birthday_wishes",
+    "locale": "ar",
+    "category": "gifts",
+    "title": "شمعة الأمنية",
+    "synopsis": "{v:blew_out_candles} {child_name} شموع عيد ميلاد{ps} و{v:made_a_wish}، في يوم مليء بالأصدقاء والحب.",
+    "mascot_name": "ماريا الثعلبة",
+    "native_review_status": "draft",
+    "pages": [
+      {
+        "order": 1,
+        "text": "تطايرت البالونات الملونة قرب الباب، وكتبت لافتة: «عيد ميلاد سعيد!» {v:felt_excited} {child_name} لبدء الحفلة.",
+        "image_prompt": "شخصية {child_name} تقف قرب باب مزين ببالونات ملونة ولافتة مكتوب عليها عيد ميلاد سعيد، تعبير متحمس، أسلوب رسوم كتاب قصص."
+      },
+      {
+        "order": 2,
+        "text": "وصل الأصدقاء ومعهم الهدايا والضحكات. {v:played} {child_name} معهم ومع {mascot} ألعابا ممتعة في الحديقة المزينة.",
+        "image_prompt": "شخصية {child_name} تلعب ألعاب الحفلة مع أصدقائها و{mascot} في حديقة مزينة، بالونات وشرائط ملونة، أسلوب رسوم كتاب قصص."
+      },
+      {
+        "order": 3,
+        "text": "حضرت كعكة مضاءة بالشموع، وغنى الجميع معا. {v:made_a_wish} {child_name} ثم {v:blew_out_candles}.",
+        "image_prompt": "شخصية {child_name} تنفخ على شموع كعكة عيد الميلاد، الأصدقاء والعائلة يغنون حول الطاولة، ضوء شموع دافئ، أسلوب رسوم كتاب قصص."
+      },
+      {
+        "order": 4,
+        "text": "مع غروب الشمس، {v:hugged} {child_name} أحب الناس إلي{ps} عند الوداع، وشعر قلب{ps} بالامتلاء من أجمل عيد ميلاد.",
+        "image_prompt": "شخصية {child_name} تحتضن الأصدقاء والعائلة عند الوداع عند الغروب، بالونات تحلق في السماء، أجواء سعيدة دافئة، أسلوب رسوم كتاب قصص."
+      }
+    ]
+  },
+  {
+    "theme_key": "graduation_day",
+    "locale": "en",
+    "category": "gifts",
+    "title": "My Big Graduation Day",
+    "synopsis": "On graduation day, {child_name} proudly crosses the little stage, holds up a certificate, and promises never to forget {pronoun:possessive} nursery friends.",
+    "mascot_name": "Marya the Fox",
+    "native_review_status": "draft",
+    "pages": [
+      {
+        "order": 1,
+        "text": "{child_name} put on a small cap and gown, feeling a little nervous and very excited — today was graduation day!",
+        "image_prompt": "{child_name}'s avatar wearing a small graduation cap and gown, excited nervous smile, classroom decorated with balloons, storybook illustration style."
+      },
+      {
+        "order": 2,
+        "text": "{mascot} lined up the class and squeezed {child_name}'s hand. \"You've all worked so hard,\" {mascot} said with a warm smile.",
+        "image_prompt": "{mascot} the fox standing proudly beside a line of children in graduation caps, {child_name}'s avatar among them, classroom decorated for graduation, storybook illustration style."
+      },
+      {
+        "order": 3,
+        "text": "{child_name} walked proudly across the little stage and received {pronoun:possessive} certificate, while the whole room cheered.",
+        "image_prompt": "{child_name}'s avatar walking across a small stage holding up a certificate, cheering classmates and parents, confetti in the air, storybook illustration style."
+      },
+      {
+        "order": 4,
+        "text": "Afterwards, {child_name} hugged {pronoun:possessive} nursery friends tightly and promised never to forget them, even at big school.",
+        "image_prompt": "{child_name}'s avatar hugging classmates goodbye in a decorated classroom, warm emotional farewell, storybook illustration style."
+      }
+    ]
+  },
+  {
+    "theme_key": "graduation_day",
+    "locale": "ar",
+    "category": "gifts",
+    "title": "يوم تخرجي الكبير",
+    "synopsis": "{v:walked_proudly} {child_name} عبر المسرح الصغير و{v:received_certificate}، و{v:promised} بعدم نسيان أصدقاء الحضانة أبدا.",
+    "mascot_name": "ماريا الثعلبة",
+    "native_review_status": "draft",
+    "pages": [
+      {
+        "order": 1,
+        "text": "{v:wore} {child_name} قبعة ورداء تخرج صغيرين، {v:felt_worried} قليلا و{v:felt_excited} في الوقت نفسه. اليوم هو يوم التخرج!",
+        "image_prompt": "شخصية {child_name} ترتدي قبعة ورداء تخرج صغيرين، ابتسامة متحمسة وقليل من التوتر، فصل مزين بالبالونات، أسلوب رسوم كتاب قصص."
+      },
+      {
+        "order": 2,
+        "text": "رتبت {mascot} صف الأطفال وضغطت على يد {child_name} بلطف. قالت {mascot} بابتسامة دافئة: «لقد عملتم جميعا بجد كبير!»",
+        "image_prompt": "{mascot} تقف بفخر بجانب صف من الأطفال يرتدون قبعات التخرج، شخصية {child_name} بينهم، فصل مزين للتخرج، أسلوب رسوم كتاب قصص."
+      },
+      {
+        "order": 3,
+        "text": "{v:walked_proudly} {child_name} عبر المسرح الصغير و{v:received_certificate}، بينما صفق الجميع بحماس.",
+        "image_prompt": "شخصية {child_name} تمشي عبر مسرح صغير رافعة شهادة في الهواء، زملاء وأهل يصفقون، قصاصات ورقية ملونة في الهواء، أسلوب رسوم كتاب قصص."
+      },
+      {
+        "order": 4,
+        "text": "بعد ذلك، {v:hugged} {child_name} أصدقاء{ps} في الحضانة بقوة، و{v:promised} بعدم نسيانهم أبدا، حتى في المدرسة الكبيرة.",
+        "image_prompt": "شخصية {child_name} تحتضن زملاءها في الحضانة عند الوداع في فصل مزين، لحظة وداع دافئة ومؤثرة، أسلوب رسوم كتاب قصص."
+      }
+    ]
   }
 ]

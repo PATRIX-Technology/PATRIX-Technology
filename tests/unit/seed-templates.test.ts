@@ -30,6 +30,19 @@ const templates = raw.map((row, index) => ({
 const PRONOUNS: Pronoun[] = ['she', 'he'];
 const LEFTOVER_TOKEN = /\{[a-z_:]+\}/i;
 
+// Phase D (docs/DECISIONS.md) added these 4 themes in draft — written to a
+// high standard but not yet run through the same native-speaker review gate
+// every other template here has cleared. Everything else about them (schema,
+// token resolution, the review gate itself) is still checked below exactly
+// like every other template; only the "is it reviewed yet" assertion treats
+// them differently.
+const PENDING_NATIVE_REVIEW_THEMES = new Set([
+  'ramadan_reflection',
+  'eid_celebration',
+  'birthday_wishes',
+  'graduation_day',
+]);
+
 describe('seed template fixtures (supabase/seed/templates.json)', () => {
   it('has exactly one English + one Arabic row per theme', () => {
     const byTheme = new Map<string, Set<string>>();
@@ -54,13 +67,17 @@ describe('seed template fixtures (supabase/seed/templates.json)', () => {
     }
   });
 
-  it('every row (English and Arabic) is marked reviewed', () => {
+  it('every row (English and Arabic), except themes still pending native review, is marked reviewed', () => {
     // Arabic templates were run through Gemini with an explicit
     // token-preservation check and flipped to reviewed for the first
     // pilot — see docs/DECISIONS.md "Arabic content gating". That's a
     // real quality improvement over raw machine translation but still
     // not a substitute for native review before wider rollout.
     for (const row of templates) {
+      if (PENDING_NATIVE_REVIEW_THEMES.has(row.theme_key)) {
+        expect(row.native_review_status, row.theme_key).toBe('draft');
+        continue;
+      }
       expect(row.native_review_status, row.theme_key).toBe('reviewed');
     }
   });

@@ -4394,3 +4394,29 @@ logged-in dashboard home page beside the real `StoryCarousel`.
   the web-buildable parts of Phase 4, are now scaffolded; these three
   need a native app project, push credentials (APNs/FCM), and a print
   vendor contract respectively, none of which exist yet).
+
+## Photo consent copy: disclosing cross-border transfer at the point of consent
+
+**The gap**: this doc's "Family photo consent" entry above correctly
+flagged that sending a child's photo to Google Gemini is a cross-border
+transfer under UAE PDPL (Federal Decree-Law No. 45 of 2021), and that
+PDPL's consent-based lawful basis for such a transfer (Art. 22–23)
+requires the data subject's consent to be *specifically informed* of
+that transfer, not just of the processor's name. The existing consent
+copy (`familyConsentText` in `PhotoUpload.tsx`, and `parentPhotoNotice`
+on the nursery's public QR consent page) named Google Gemini but never
+said the photo may leave the UAE — that disclosure only existed on the
+general Legal/Privacy tab (`en.json`/`ar.json` lines ~566/611), which a
+parent granting consent at the upload moment or via the QR link has no
+obligation to have read.
+
+**Fix**: both consent strings (EN + AR, `src/messages/{en,ar}.json`)
+now say explicitly that the photo may be processed on Google's servers
+outside the UAE, at the exact moment consent is captured, alongside the
+existing disclosure of the named processor and the right to withdraw.
+This closes the specific, identifiable gap — it doesn't substitute for
+a full UAE/GCC-specific legal review (DPIA, data residency commitment,
+and retention SLA remain genuinely open, see `docs/en/privacy.md` "What
+is explicitly NOT done yet"), but the one PDPL requirement that bears
+directly on "can we rely on consent for this specific transfer" is now
+met in the product itself, not just asserted.

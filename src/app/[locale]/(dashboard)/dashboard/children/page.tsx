@@ -18,6 +18,35 @@ export default async function ChildrenPage({ params }: { params: { locale: strin
     .eq('tenant_id', context.tenantId)
     .order('created_at', { ascending: false });
 
+  // Bulk story generation (nursery-only, see the themeOptions prop below)
+  // needs one option per theme_key, not per template row -- each child
+  // renders in their OWN preferred_language, so the picker groups the
+  // en/ar rows of the same theme together rather than listing them
+  // separately. Only reviewed templates are offered, same gate as the
+  // single-child create-story form.
+  const { data: templateRows } = await supabase
+    .from('story_theme_templates')
+    .select('theme_key, locale, title, category')
+    .eq('is_active', true)
+    .eq('native_review_status', 'reviewed');
+  interface ThemeOptionDraft {
+    themeKey: string;
+    titleEn?: string;
+    titleAr?: string;
+    category: string;
+  }
+  const themeOptionsByKey = new Map<string, ThemeOptionDraft>();
+  for (const row of templateRows ?? []) {
+    const existing: ThemeOptionDraft =
+      themeOptionsByKey.get(row.theme_key) ?? { themeKey: row.theme_key, category: row.category };
+    if (row.locale === 'en') existing.titleEn = row.title;
+    if (row.locale === 'ar') existing.titleAr = row.title;
+    themeOptionsByKey.set(row.theme_key, existing);
+  }
+  const themeOptions = Array.from(themeOptionsByKey.values()).sort((a, b) =>
+    (a.titleEn ?? a.titleAr ?? '').localeCompare(b.titleEn ?? b.titleAr ?? ''),
+  );
+
   return (
     <div>
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
@@ -34,7 +63,11 @@ export default async function ChildrenPage({ params }: { params: { locale: strin
       {!children || children.length === 0 ? (
         <EmptyState title={t('empty')} />
       ) : (
-        <ChildrenListWithBulkConsent locale={params.locale} childrenList={children} />
+        <ChildrenListWithBulkConsent
+          locale={params.locale}
+          childrenList={children}
+          themeOptions={context.tenantType === 'nursery' ? themeOptions : []}
+        />
       )}
     </div>
   );

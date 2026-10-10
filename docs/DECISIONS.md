@@ -4769,3 +4769,41 @@ template — see "Arabic gender-agreement audit of the story templates").
 - 4 new icons added to `CreateStoryForm.tsx`'s `THEME_ICONS` (crescent
   moon, lantern, balloon, graduation cap) so the picker renders
   correctly the moment a reviewer flips the status.
+
+## Bulk story generation across the roster (Phase E)
+
+Per Item 4 of the founder's 8-part feature request: generate stories for
+an entire selected group of children from one theme in a single action,
+instead of opening each child's page individually — the same shape of
+request that led to bulk consent-link generation earlier.
+
+- `generateStoriesBulkAction` (`src/lib/actions/stories.ts`) takes a
+  `themeKey` (not a specific template row id) and loops the exact
+  single-story path — `createStoryForTenant` → the `create_story`
+  SECURITY DEFINER RPC — once per selected child, same consent/quota
+  enforcement as creating one story by hand, nothing new to re-validate
+  there. Each child's story renders in THAT child's own
+  `preferred_language`, resolved from the theme's en/ar template rows
+  per child — matching how the single-child form already resolves
+  locale from the child, rather than forcing one language across a
+  mixed-language roster.
+- Quota is enforced per call, inside the RPC — nothing here pre-checks
+  "is there enough quota for everyone" up front. If a tenant only has
+  enough quota left for some of the selected children, the RPC calls
+  that fit within it succeed in selection order and the rest fail with
+  the same `QuotaExceededError`, reported per child in the results
+  rather than aborting the whole batch — same resilient-per-row pattern
+  as `requestConsentBulkAction`. Proven against real Postgres (not
+  mocked) in `tests/integration/bulk-story-generation.test.ts`: with
+  quota for 2 and 3 children selected, exactly 2 stories are created,
+  `quotas.stories_used_this_period` lands at 2 (never overshoots), and
+  the 3rd call's own error message is what `createStoryForTenant`
+  pattern-matches into `QuotaExceededError`.
+- UI: `ChildrenListWithBulkConsent.tsx`'s existing "Select" mode (built
+  for bulk consent links) grew a second action, "Create stories for
+  selected", gated to nursery tenants with at least one reviewed theme
+  — a family account has 1-2 children and never needs this, same
+  rationale as CSV import being nursery-only. Picking a theme opens a
+  small picker (grouped by theme_key, not per-locale row) before
+  submitting; the results modal links each successfully-created story
+  straight to its reader page.

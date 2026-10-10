@@ -11,8 +11,9 @@ import {
   QuotaExceededError,
   MAX_MANUAL_REGENERATIONS_PER_PAGE,
 } from '@/lib/domain/stories';
-import { renderTemplate, StoryThemeTemplateSchema } from '@/lib/domain/templates';
+import { renderTemplate, StoryThemeTemplateSchema, type StoryThemeTemplate } from '@/lib/domain/templates';
 import { parseAvatarConfig } from '@/lib/domain/avatar';
+import { MAX_CSV_IMPORT_ROWS } from '@/lib/domain/children';
 import { enforceRateLimit, RateLimitExceededError } from '@/lib/rate-limit';
 import { runWorkerOnce } from '@/lib/jobs/worker';
 import { errorMessage } from '@/lib/errors';
@@ -318,4 +319,127 @@ export async function getGenerationProgressAction(): Promise<GenerationProgressR
   const pagesGenerated = (pages ?? []).filter((p) => p.image_status === 'GENERATED').length;
 
   return { storyIds, pagesGenerated, pagesTotal };
+}
+
+export interface BulkStoryResultRow {
+  childId: string;
+  childName: string;
+  storyId?: string;
+  error?: string;
+}
+
+export interface BulkStoryResult extends ActionResult {
+  results?: BulkStoryResultRow[];
+}
+
+/**
+ * Creates a story for several children at once from the same theme —
+ * same single-story path as createStoryAction (createStoryForTenant ->
+ * the create_story SECURITY DEFINER RPC), just looped, same pattern as
+ * requestConsentBulkAction (see docs/DECISIONS.md "Bulk story generation
+ * across the roster"). `themeKey` rather than a specific template row
+ * id: each child's story renders in THAT child's own
+ * preferred_language, matching how the single-child form already
+ * auto-resolves locale from the child rather than forcing one language
+ * on a mixed-language roster.
+ *
+ * Quota is enforced per call, inside the RPC, exactly as it is for a
+ * single story — nothing here checks remaining quota up front. If a
+ * tenant has only enough quota left for some of the selected children,
+ * those stories succeed in order and the rest fail with
+ * QuotaExceededError, reported per child in the results rather than
+ * aborting the whole batch.
+ */
+export async function generateStoriesBulkAction(
+  locale: string,
+  childIds: string[],
+  themeKey: string,
+): Promise<BulkStoryResult> {
+  const supabase = await createSupabaseServerClient();
+  const context = await getCurrentTenantContext(supabase);
+  if (!context) return { error: 'Not signed in.' };
+
+  const uniqueIds = Array.from(new Set(childIds));
+  if (uniqueIds.length === 0) return { error: 'No children selected.' };
+  if (uniqueIds.length > MAX_CSV_IMPORT_ROWS) {
+    return { error: `You can generate stories for at most ${MAX_CSV_IMPORT_ROWS} children at once.` };
+  }
+
+  const { data: templateRows } = await supabase
+    .from('story_theme_templates')
+    .select('*')
+    .eq('theme_key', themeKey)
+    .eq('is_active', true);
+  const templatesByLocale = new Map<string, StoryThemeTemplate>();
+  for (const row of templateRows ?? []) {
+    const parsed = StoryThemeTemplateSchema.safeParse(row);
+    if (parsed.success) templatesByLocale.set(parsed.data.locale, parsed.data);
+  }
+  if (templatesByLocale.size === 0) return { error: 'Theme not found.' };
+
+  const { data: children } = await supabase
+    .from('children')
+    .select('*')
+    .eq('tenant_id', context.tenantId)
+    .in('id', uniqueIds);
+  const childrenById = new Map((children ?? []).map((c) => [c.id as string, c]));
+
+  const results: BulkStoryResultRow[] = [];
+
+  for (const childId of uniqueIds) {
+    const child = childrenById.get(childId);
+    if (!child) {
+      results.push({ childId, childName: childId, error: 'Child not found.' });
+      continue;
+    }
+
+    const template = templatesByLocale.get(child.preferred_language);
+    if (!template || template.native_review_status !== 'reviewed') {
+      results.push({
+        childId,
+        childName: child.first_name,
+        error: `This theme is not yet available in ${child.preferred_language === 'ar' ? 'Arabic' : 'English'}.`,
+      });
+      continue;
+    }
+
+    // Same hard block as the single-child form — see
+    // docs/DECISIONS.md "Arabic name is required, not a silent
+    // fallback".
+    if (template.locale === 'ar' && !child.arabic_first_name) {
+      results.push({
+        childId,
+        childName: child.first_name,
+        error: `${child.first_name} needs an Arabic name on file before an Arabic story can be created.`,
+      });
+      continue;
+    }
+    const childName = template.locale === 'ar' ? child.arabic_first_name : child.first_name;
+
+    try {
+      const story = await createStoryForTenant(supabase, {
+        tenantId: context.tenantId,
+        childId: child.id,
+        childName,
+        pronoun: child.pronoun,
+        consentStatus: child.consent_status,
+        avatarConfig: parseAvatarConfig(child.avatar_config),
+        organisationName: context.tenantName,
+        template,
+        locale: template.locale,
+        createdBy: context.userId,
+      });
+      results.push({ childId, childName, storyId: story.id });
+    } catch (error) {
+      if (error instanceof ConsentRequiredError || error instanceof QuotaExceededError) {
+        results.push({ childId, childName, error: error.message });
+      } else {
+        results.push({ childId, childName, error: errorMessage(error) });
+      }
+    }
+  }
+
+  revalidatePath(`/${locale}/dashboard/children`);
+  revalidatePath(`/${locale}/dashboard/stories`);
+  return { results };
 }

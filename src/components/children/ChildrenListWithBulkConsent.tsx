@@ -5,6 +5,7 @@ import Link from 'next/link';
 import QRCode from 'qrcode';
 import { useTranslations } from 'next-intl';
 import { requestConsentBulkAction, type BulkConsentResultRow } from '@/lib/actions/children';
+import { generateStoriesBulkAction, type BulkStoryResultRow } from '@/lib/actions/stories';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
@@ -23,16 +24,34 @@ const CONSENT_TONE: Record<ConsentStatus, 'neutral' | 'warning' | 'success' | 'd
   withdrawn: 'danger',
 };
 
+export interface ThemeOption {
+  themeKey: string;
+  titleEn?: string;
+  titleAr?: string;
+  category: string;
+}
+
 /**
  * Renders the children roster (card list on mobile, table on desktop) with
- * an optional bulk "generate consent links" flow layered on top — see
- * docs/DECISIONS.md "Bulk consent-request generation". Deliberately
- * story-only: it only saves staff the repetitive navigation of requesting
- * the same base consent child by child. Nothing here pre-answers or skips
- * a parent's decision — each generated link still needs that parent to
- * open it and respond themselves, same as the single-child flow.
+ * two optional bulk flows layered on top of the same "Select" mode:
+ * generating consent links (see docs/DECISIONS.md "Bulk consent-request
+ * generation") and, for nursery tenants with at least one reviewed theme
+ * (`themeOptions`), creating a story for every selected child from one
+ * theme in a single pass (see docs/DECISIONS.md "Bulk story generation
+ * across the roster"). Neither flow pre-answers anything on a parent's or
+ * the system's behalf — consent links still need the parent's own
+ * response, and story generation still enforces consent and quota exactly
+ * as the single-child flow does, per child.
  */
-export function ChildrenListWithBulkConsent({ locale, childrenList }: { locale: string; childrenList: Child[] }) {
+export function ChildrenListWithBulkConsent({
+  locale,
+  childrenList,
+  themeOptions = [],
+}: {
+  locale: string;
+  childrenList: Child[];
+  themeOptions?: ThemeOption[];
+}) {
   const t = useTranslations('children');
   const showToast = useToast();
   const [selectMode, setSelectMode] = useState(false);
@@ -40,6 +59,11 @@ export function ChildrenListWithBulkConsent({ locale, childrenList }: { locale: 
   const [isPending, startTransition] = useTransition();
   const [results, setResults] = useState<BulkConsentResultRow[] | null>(null);
   const [qrByChild, setQrByChild] = useState<Record<string, string>>({});
+
+  const [themePickerOpen, setThemePickerOpen] = useState(false);
+  const [selectedThemeKey, setSelectedThemeKey] = useState('');
+  const [isStoryPending, startStoryTransition] = useTransition();
+  const [storyResults, setStoryResults] = useState<BulkStoryResultRow[] | null>(null);
 
   function enterSelectMode() {
     setSelectMode(true);
@@ -84,6 +108,21 @@ export function ChildrenListWithBulkConsent({ locale, childrenList }: { locale: 
     });
   }
 
+  function handleCreateStories() {
+    if (!selectedThemeKey) return;
+    const childIds = Array.from(selected);
+    startStoryTransition(async () => {
+      const result = await generateStoriesBulkAction(locale, childIds, selectedThemeKey);
+      if (result.error) {
+        showToast({ title: result.error, tone: 'error' });
+        return;
+      }
+      setStoryResults(result.results ?? []);
+      setThemePickerOpen(false);
+      exitSelectMode();
+    });
+  }
+
   async function copyLink(url: string) {
     try {
       await navigator.clipboard.writeText(url);
@@ -95,6 +134,9 @@ export function ChildrenListWithBulkConsent({ locale, childrenList }: { locale: 
 
   const succeeded = results?.filter((r) => r.consentUrl) ?? [];
   const failed = results?.filter((r) => !r.consentUrl) ?? [];
+
+  const storySucceeded = storyResults?.filter((r) => r.storyId) ?? [];
+  const storyFailed = storyResults?.filter((r) => !r.storyId) ?? [];
 
   return (
     <div>
@@ -110,6 +152,16 @@ export function ChildrenListWithBulkConsent({ locale, childrenList }: { locale: 
               <Button variant="secondary" size="sm" onClick={exitSelectMode}>
                 {t('bulkConsent.cancel')}
               </Button>
+              {themeOptions.length > 0 && (
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => setThemePickerOpen(true)}
+                  disabled={selected.size === 0}
+                >
+                  {t('bulkStories.createFor', { count: selected.size })}
+                </Button>
+              )}
               <Button variant="primary" size="sm" onClick={handleGenerate} disabled={selected.size === 0} isLoading={isPending}>
                 {t('bulkConsent.generateFor', { count: selected.size })}
               </Button>
@@ -319,6 +371,86 @@ export function ChildrenListWithBulkConsent({ locale, childrenList }: { locale: 
                   {t('bulkConsent.copy')}
                 </Button>
               </div>
+            ))}
+          </div>
+        </div>
+      </Modal>
+
+      <Modal open={themePickerOpen} onClose={() => setThemePickerOpen(false)} title={t('bulkStories.pickTheme')}>
+        <div className="flex flex-col gap-4">
+          <p className="text-sm text-ink-600">{t('bulkStories.pickThemeHint', { count: selected.size })}</p>
+          <div className="grid max-h-80 gap-2 overflow-y-auto">
+            {themeOptions.map((theme) => (
+              <label
+                key={theme.themeKey}
+                className={`focus-ring flex cursor-pointer items-center justify-between gap-3 rounded-lg border p-3 transition-colors ${
+                  selectedThemeKey === theme.themeKey
+                    ? 'border-lagoon-600 bg-lagoon-900/10'
+                    : 'border-[rgb(var(--color-border))] hover:bg-ink-50'
+                }`}
+              >
+                <span className="min-w-0">
+                  <span className="block truncate font-medium text-ink-900">{theme.titleEn ?? theme.titleAr}</span>
+                  {theme.titleAr && theme.titleEn && (
+                    <span dir="rtl" className="block truncate text-sm text-ink-500">
+                      {theme.titleAr}
+                    </span>
+                  )}
+                </span>
+                <input
+                  type="radio"
+                  name="bulk-theme"
+                  value={theme.themeKey}
+                  checked={selectedThemeKey === theme.themeKey}
+                  onChange={() => setSelectedThemeKey(theme.themeKey)}
+                  className="h-4 w-4 shrink-0"
+                />
+              </label>
+            ))}
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button variant="secondary" size="sm" onClick={() => setThemePickerOpen(false)}>
+              {t('bulkConsent.cancel')}
+            </Button>
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={handleCreateStories}
+              disabled={!selectedThemeKey}
+              isLoading={isStoryPending}
+            >
+              {t('bulkStories.createFor', { count: selected.size })}
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      <Modal open={storyResults !== null} onClose={() => setStoryResults(null)} title={t('bulkStories.resultsTitle')}>
+        <div className="flex flex-col gap-4">
+          {storySucceeded.length > 0 && (
+            <p className="text-sm text-ink-600">
+              {t('bulkStories.successCount', { count: storySucceeded.length })}
+            </p>
+          )}
+          {storyFailed.length > 0 && (
+            <div className="rounded-lg bg-coral-50 p-3 text-xs text-coral-700">
+              {storyFailed.map((row) => (
+                <p key={row.childId}>
+                  {row.childName}: {row.error}
+                </p>
+              ))}
+            </div>
+          )}
+          <div className="grid max-h-80 gap-2 overflow-y-auto">
+            {storySucceeded.map((row) => (
+              <Link
+                key={row.childId}
+                href={`/${locale}/dashboard/stories/${row.storyId}`}
+                className="focus-ring flex items-center justify-between gap-3 rounded-xl2 border border-[rgb(var(--color-border))] p-3 hover:border-lagoon-700"
+              >
+                <span className="font-medium text-ink-900">{row.childName}</span>
+                <span className="text-xs text-ink-500">{t('bulkStories.view')}</span>
+              </Link>
             ))}
           </div>
         </div>

@@ -282,6 +282,14 @@
       "copy": "Copy",
       "copied": "Link copied",
       "print": "Print"
+    },
+    "bulkStories": {
+      "createFor": "{count, plural, =0 {Create stories} one {Create story for # child} other {Create stories for # children}}",
+      "pickTheme": "Choose a theme",
+      "pickThemeHint": "{count, plural, one {Creates a story for # selected child, each in their own language.} other {Creates a story for all # selected children, each in their own language.}}",
+      "resultsTitle": "Stories created",
+      "successCount": "{count, plural, one {# story started} other {# stories started}}",
+      "view": "View →"
     }
   },
   "contactPage": {

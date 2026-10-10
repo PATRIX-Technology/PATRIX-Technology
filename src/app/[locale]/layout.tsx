@@ -31,7 +31,7 @@ export function generateStaticParams() {
 }
 
 export const metadata: Metadata = {
-  title: 'Ownly — Personalised storybooks for nurseries & schools',
+  title: 'Ownly',
   description:
     'Ownly creates personalised, illustrated storybooks that teach children values and habits — built for nurseries, schools, clinics and children\'s brands.',
   manifest: '/manifest.webmanifest',

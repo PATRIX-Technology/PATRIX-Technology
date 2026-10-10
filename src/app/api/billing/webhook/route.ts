@@ -80,6 +80,29 @@ async function handleEvent(
     case 'checkout.session.completed': {
       const session = event.data.object as Stripe.Checkout.Session;
 
+      // A print order's Checkout session is mode: 'payment' (see
+      // /api/print-orders/checkout) and carries print_order_id metadata
+      // instead of tenant_id/plan_id -- handle it separately before
+      // extractCheckoutMetadata, which THROWS when plan_id is missing
+      // (that throw is correct for a subscription session with bad
+      // metadata; it would be wrong to let it fire for a session that was
+      // never a subscription purchase in the first place).
+      if (session.mode === 'payment') {
+        const printOrderId = session.metadata?.print_order_id;
+        if (!printOrderId) return;
+
+        const paymentIntentId =
+          typeof session.payment_intent === 'string' ? session.payment_intent : session.payment_intent?.id;
+
+        const { error } = await serviceClient
+          .from('print_orders')
+          .update({ status: 'paid', stripe_payment_intent_id: paymentIntentId ?? null })
+          .eq('id', printOrderId)
+          .eq('status', 'pending');
+        if (error) throw error;
+        break;
+      }
+
       const { tenantId, planId } = extractCheckoutMetadata(session);
       if (!session.subscription) return;
 

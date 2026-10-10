@@ -10,6 +10,7 @@ import { ApprovalActions } from '@/components/stories/ApprovalActions';
 import { RegeneratePageButton } from '@/components/stories/RegeneratePageButton';
 import { DownloadButton } from '@/components/stories/DownloadButton';
 import { AutoRefresh } from '@/components/stories/AutoRefresh';
+import { PrintOrderDialog } from '@/components/stories/PrintOrderDialog';
 import type { StoryStatus } from '@/types/database';
 
 export default async function StoryDetailPage({
@@ -124,6 +125,7 @@ export default async function StoryDetailPage({
             >
               {t('downloadPdf')}
             </DownloadButton>
+            <PrintOrderDialog storyId={story.id} />
           </div>
         )}
       </div>

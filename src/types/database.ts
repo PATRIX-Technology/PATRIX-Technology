@@ -33,6 +33,7 @@ export type StoryStatus =
   | 'FAILED';
 export type PageImageStatus = 'PENDING' | 'QUEUED' | 'GENERATING' | 'GENERATED' | 'FAILED';
 export type JobStatus = 'QUEUED' | 'RUNNING' | 'SUCCEEDED' | 'FAILED';
+export type PrintOrderStatus = 'pending' | 'paid' | 'printing' | 'shipped' | 'cancelled';
 export type JobType = 'GENERATE_PAGE_IMAGE' | 'RENDER_PDF';
 export type SubscriptionStatus = 'trialing' | 'active' | 'past_due' | 'canceled' | 'incomplete';
 

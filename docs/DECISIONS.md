@@ -4478,3 +4478,71 @@ by 5 new integration tests in `tests/integration/consent.test.ts` run
 against real Postgres (not mocks), including that a non-photo request is
 completely unaffected and that the masked phone never leaks the raw
 number.
+
+## Printed storybooks: a scoped-down, real version of a mismatched request
+
+**What was asked**: a prompt requesting three "modules" — a Gemini/Stripe
+backend with a "purge uploaded photo from server temp directories" routine,
+a Card Element checkout UI with AED/USD, mandatory bilingual consent
+copy, new `Privacy_Policy.md`/`Terms_And_Conditions.md` files in a
+`public/legal` folder, and `Logistics_Agreement.md`/`DPA_Schedule.md`
+contracts for print shops and couriers (Aramex/DHL named specifically).
+
+**Why it wasn't built as written**: it described a different business —
+print-on-demand custom anime merchandise with real named courier
+relationships — not Ownly. Concretely wrong for this codebase: (a) a
+second, conflicting one-time payment flow alongside the subscription
+billing already live; (b) a "purge server temp directories" routine with
+no basis in the real architecture (Vercel serverless, no local temp
+files — the photo already lives in and is deleted from Supabase Storage,
+per the consent-withdrawal path); (c) `public/legal/*.md` files nothing
+in the app would ever serve (the real Legal page reads `legalPage.*` from
+`src/messages/{en,ar}.json`, not static markdown — see
+`src/app/[locale]/legal/page.tsx`); (d) vendor contracts naming Aramex/DHL
+as if already contracted, when no print or logistics vendor exists.
+Confirmed with the founder before building anything (see chat) — the real
+want was simpler and legitimate: order a **physical printed copy of the
+same personalised digital storybook**, not separate merchandise.
+
+**What was actually built**:
+- `supabase/migrations/0037_print_orders.sql` — `print_orders` table,
+  tenant-isolated RLS (insert/select only, `status` can only start
+  `'pending'`; advancing to `'paid'`/etc. is deliberately left to the
+  service role via the webhook, same separation as `subscriptions`).
+- `src/lib/domain/print-orders.ts` — fixed AED/USD pricing (no vendor
+  quote exists yet, see `docs/NEEDS_FROM_ME.md` item 12) and server-side
+  shipping-address validation.
+- `/api/print-orders/checkout` — a Stripe Checkout session, `mode:
+  'payment'` (one-off, never `'subscription'`), consistent with the
+  existing `/api/billing/checkout` pattern rather than a custom Card
+  Element integration — less PCI surface, built-in 3DS, Stripe's own
+  recommended path for an account still in UAE onboarding review.
+- `/api/billing/webhook` extended: `checkout.session.completed` now
+  branches on `session.mode` before calling `extractCheckoutMetadata`
+  (which throws on missing `plan_id`) — a print order's session has no
+  `plan_id` at all, so without this branch a real print-order payment
+  would have crashed the webhook handler. Found and fixed while wiring
+  this in, not reported.
+- `PrintOrderDialog.tsx` — AED/USD toggle, shipping form, and the exact
+  mandatory bilingual consent checkbox (English + Arabic shown together,
+  not swapped per locale), gating "Pay now" client-side; the actual
+  enforcement is server-side in the checkout route regardless of what the
+  client sends.
+- Legal content: new numbered sections added to the real ToS/Privacy tabs
+  (`legalPage.tos`/`legalPage.privacy` in both locale files) covering
+  prepaid-only/no-refund-once-printing, the photo-quality likeness
+  disclaimer, and what's shared with a print/logistics partner —
+  subsequent section numbers renumbered to stay sequential.
+- `contracts/Logistics_Agreement.md` + `contracts/DPA_Schedule.md` —
+  reusable templates (bracketed fields, no vendor named) for whichever
+  print/courier partner actually gets contracted, explicitly marked as
+  drafts requiring legal review, same stance as every other
+  founder-facing legal template built this session.
+
+**What's still genuinely missing** (see `docs/NEEDS_FROM_ME.md` item 12):
+no print or logistics vendor is chosen or contracted, so `print_orders`
+only ever reaches `'paid'` automatically — advancing to `'printing'`/
+`'shipped'` is a manual step until a real vendor integration exists.
+Covered by 6 new integration tests (`tests/integration/print-orders.test.ts`)
+against real Postgres RLS; full suite (277 tests) and production build
+pass.

@@ -347,6 +347,24 @@ program replaces gifting".
     screen can't show you (see `docs/DECISIONS.md` "Arabic PDF text
     shaping" for the one known nuance to check first).
 
+12. **Choose and contract an actual print/logistics partner** before the
+    "Order a printed copy" feature (migration `0037_print_orders.sql`,
+    `src/components/stories/PrintOrderDialog.tsx`) goes live for real
+    customers. Right now a customer can pay for a printed book — the
+    Stripe checkout, order record, and shipping-address capture are all
+    real and tested — but nothing automatically sends that order to a
+    printer afterward; `print_orders.status` sits at `'paid'` until a
+    human (you, or whoever runs fulfilment) manually moves it to
+    `'printing'`/`'shipped'`, since there's no vendor API to call yet.
+    `contracts/Logistics_Agreement.md` and `contracts/DPA_Schedule.md`
+    are ready-to-send templates for this — have a UAE lawyer review them,
+    fill in the bracketed terms with your chosen vendor (a local UAE
+    print shop, or a courier like Aramex/DHL for the delivery leg), and
+    get both signed before taking a real paying order. The fixed prices
+    in `src/lib/domain/print-orders.ts` (`PRINT_ORDER_PRICE_MINOR`) are
+    placeholders too — set them against your actual vendor cost once you
+    have a quote, not before.
+
 ---
 
 Nothing above blocks the rest of the product from working. Everything

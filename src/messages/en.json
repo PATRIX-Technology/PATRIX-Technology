@@ -360,6 +360,25 @@
     "declined": "No problem — no story will be created.",
     "withdrawn": "Consent withdrawn. Story files are being deleted."
   },
+  "printOrder": {
+    "orderButton": "Order a printed copy",
+    "dialogTitle": "Order a printed copy",
+    "currencyLabel": "Currency",
+    "price": { "aed": "AED 109.00", "usd": "$29.00" },
+    "fields": {
+      "name": "Full name",
+      "phone": "Mobile number",
+      "addressLine1": "Address line 1",
+      "addressLine2": "Address line 2 (optional)",
+      "city": "City",
+      "countryCode": "Country (e.g. AE)"
+    },
+    "consentEn": "I certify that I am the parent or legal guardian of the child, I consent to this personalised storybook being printed and shipped to the address above, and I agree to the Prepaid-Only, No-Refund Sales Terms for this custom-printed product once printing has begun.",
+    "consentAr": "أقر بأنني ولي الأمر أو الوصي القانوني على الطفل، وأوافق على طباعة وشحن كتاب القصة المخصص هذا إلى العنوان أعلاه، كما أوافق على شروط الدفع المسبق وعدم الاسترجاع لهذا المنتج المطبوع المخصص بعد بدء الطباعة.",
+    "payNow": "Pay now — {price}",
+    "errorTitle": "Couldn't start checkout",
+    "errorGeneric": "Something went wrong. Please try again."
+  },
   "stories": {
     "title": "Stories",
     "samplePreviewTitle": "Sample stories",
@@ -526,26 +545,30 @@
         },
         {
           "heading": "5. Subscriptions and billing",
-          "body": "Paid plans are billed in AED through our payment processor (Stripe). You can view your current plan and usage at any time from the Usage & Plan tab. You may cancel a subscription at any time; cancellation takes effect at the end of the current billing period."
+          "body": "Paid plans are billed in AED or USD through our payment processor (Stripe). You can view your current plan and usage at any time from the Usage & Plan tab. You may cancel a subscription at any time; cancellation takes effect at the end of the current billing period."
         },
         {
-          "heading": "6. Acceptable use",
+          "heading": "6. Printed storybooks (custom products)",
+          "body": "A printed copy of your child's storybook is a separate, one-off, 100% prepaid purchase in AED or USD, placed only after the digital story is fully generated and approved. Because each copy is printed specifically for your child, once printing has begun your order cannot be cancelled, changed, or refunded, except where the item arrives damaged or defective, or as otherwise required by UAE consumer protection law. Estimated delivery timelines are provided at checkout and are not guaranteed; delays caused by our printing or shipping partners or by customs are outside our control. Because illustration quality depends in part on the reference photo you provide, we are not liable for how closely the printed illustration resembles your child if the uploaded photo was low-resolution, poorly lit, obscured, or otherwise of limited quality — the \"request a free regeneration\" option in Section 3 remains available before you place a print order, and we recommend using it if a page doesn't look right first."
+        },
+        {
+          "heading": "7. Acceptable use",
           "body": "You agree to only submit photos and information you have the right and appropriate consent to use, and not to request story content that is unsafe, hateful, or inappropriate for children. We may suspend accounts that violate this."
         },
         {
-          "heading": "7. Termination",
+          "heading": "8. Termination",
           "body": "You may close your account at any time from Settings. We may suspend or terminate accounts for breach of these Terms. On termination, you have a reasonable window to export any approved stories before account data is deleted per our retention settings."
         },
         {
-          "heading": "8. Liability",
+          "heading": "9. Liability",
           "body": "To the extent permitted by UAE law, Ownly's total liability arising from your use of the platform is limited to the fees you paid in the three months preceding a claim. Nothing in these Terms excludes liability that cannot lawfully be excluded."
         },
         {
-          "heading": "9. Governing law",
+          "heading": "10. Governing law",
           "body": "These Terms are governed by the laws of the United Arab Emirates as applied in the Emirate of Dubai, without prejudice to any mandatory federal law."
         },
         {
-          "heading": "10. Changes to these Terms",
+          "heading": "11. Changes to these Terms",
           "body": "We may update these Terms from time to time. We'll update the \"Last updated\" date above, and will flag material changes more prominently in the app."
         }
       ]
@@ -570,27 +593,31 @@
           "body": "Google (Gemini API) to generate story text and illustrations; Supabase to host our database, authentication, and file storage; Stripe to process payments; Twilio to deliver SMS login codes; and Resend to deliver account emails. Each of these providers only receives the data necessary to perform its specific function."
         },
         {
-          "heading": "5. Where your data is processed",
+          "heading": "5. Printed storybooks and shipping",
+          "body": "If you order a printed copy of a storybook, we share only what's needed to fulfil that order — the recipient's name, phone number, and delivery address, and the approved story file itself — with our printing and/or courier partner(s). We require these partners to use that information solely to produce and deliver your order, and not to store, sell, or otherwise use it for any other purpose (see our DPA_Schedule.md template in /contracts, required of every such partner before they receive any order data). We never share a child's reference photo with a printing or logistics partner — only the finished, already-illustrated storybook file."
+        },
+        {
+          "heading": "6. Where your data is processed",
           "body": "Our primary infrastructure is hosted with Supabase and Vercel. Generating story illustrations and text involves sending the relevant content to Google's Gemini API, which may process data on servers outside the UAE. We only work with providers that maintain appropriate data protection safeguards."
         },
         {
-          "heading": "6. How long we keep it",
+          "heading": "7. How long we keep it",
           "body": "Organisations can configure a data retention period in Settings; child and story data is scheduled for deletion once that period elapses. You can also request deletion of your account and associated data at any time — see \"Your rights\" below."
         },
         {
-          "heading": "7. Your rights",
+          "heading": "8. Your rights",
           "body": "You can request access to, correction of, export of, or deletion of your personal data at any time. See the Data Protection (PDPL) tab for the full list of your rights under UAE law and how to exercise them."
         },
         {
-          "heading": "8. Children's data",
+          "heading": "9. Children's data",
           "body": "A child's photo and name are only ever processed with the explicit, informed consent of a parent or legal guardian, collected through our in-app consent flow before any image is generated. We never use a child's photo, name, or story data for advertising or behavioural profiling."
         },
         {
-          "heading": "9. Security",
+          "heading": "10. Security",
           "body": "Data is encrypted in transit. Story images are served only through short-lived, private signed links, never public URLs. Optional two-factor authentication (MFA) is available on every account, and mandatory for account owners handling billing."
         },
         {
-          "heading": "10. Contact us",
+          "heading": "11. Contact us",
           "body": "For any privacy question or request, reach out on our {contact} page and we'll get back to you."
         }
       ]
@@ -616,7 +643,7 @@
         },
         {
           "heading": "5. Cross-border data transfer",
-          "body": "Generating story content involves sending relevant data to Google's Gemini API, which may process it outside the UAE. We only use service providers who maintain data protection standards consistent with PDPL requirements for cross-border transfers."
+          "body": "Generating story content involves sending relevant data to Google's Gemini API, which may process it outside the UAE. If you order a printed storybook, your name, phone number, and delivery address are also shared with our printing/logistics partner, strictly bound by a data processing agreement (see /contracts/DPA_Schedule.md) to use that data only to fulfil your order. We only use service providers who maintain data protection standards consistent with PDPL requirements for cross-border transfers."
         },
         {
           "heading": "6. Data breach notification",

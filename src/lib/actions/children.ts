@@ -4,7 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { createSupabaseServiceRoleClient } from '@/lib/supabase/service-role';
 import { getCurrentTenantContext } from '@/lib/domain/session';
-import { ChildFormSchema, parseChildrenCsv, sniffImageMimeType } from '@/lib/domain/children';
+import { ChildFormSchema, parseChildrenCsv, sniffImageMimeType, MAX_CSV_IMPORT_ROWS } from '@/lib/domain/children';
 import { DEFAULT_AVATAR_CONFIG } from '@/lib/domain/avatar';
 import { buildConsentScope, generateConsentToken } from '@/lib/domain/consent';
 import { deleteChildCascade, deleteStoryAssetsForChild, deleteChildPhoto } from '@/lib/domain/deletion';
@@ -243,6 +243,78 @@ export async function requestConsentAction(
   const origin = (process.env.CONSENT_LINK_BASE_URL ?? 'http://localhost:3000').replace(/\/$/, '');
   revalidatePath(`/${locale}/dashboard/children/${childId}`);
   return { consentUrl: `${origin}/${locale}/consent/${token}` };
+}
+
+export interface BulkConsentResultRow {
+  childId: string;
+  childName: string;
+  consentUrl?: string;
+  error?: string;
+}
+
+export interface BulkConsentResult extends ActionResult {
+  results?: BulkConsentResultRow[];
+}
+
+/**
+ * Generates a story-consent link (+ QR, built client-side from the URL) for
+ * several children in one pass, instead of opening each child's page
+ * individually — see docs/DECISIONS.md "Bulk consent-request generation".
+ *
+ * Deliberately story-only, never photo: a photo-scoped request needs a real
+ * parent phone number per child for the OTP step (migration 0036), and
+ * there is no safe way to collect 30 distinct numbers in one bulk action.
+ * Nothing here skips or pre-answers any parent's decision — it only saves
+ * staff the repetitive navigation of generating the same kind of link
+ * child by child; each parent still has to grant it themselves.
+ */
+export async function requestConsentBulkAction(locale: string, childIds: string[]): Promise<BulkConsentResult> {
+  const supabase = await createSupabaseServerClient();
+  const context = await getCurrentTenantContext(supabase);
+  if (!context) return { error: 'Not signed in.' };
+
+  const uniqueIds = Array.from(new Set(childIds));
+  if (uniqueIds.length === 0) return { error: 'No children selected.' };
+  if (uniqueIds.length > MAX_CSV_IMPORT_ROWS) {
+    return { error: `You can generate links for at most ${MAX_CSV_IMPORT_ROWS} children at once.` };
+  }
+
+  const { data: children } = await supabase
+    .from('children')
+    .select('id, first_name')
+    .eq('tenant_id', context.tenantId)
+    .in('id', uniqueIds);
+  const childrenById = new Map((children ?? []).map((c) => [c.id as string, c.first_name as string]));
+
+  const origin = (process.env.CONSENT_LINK_BASE_URL ?? 'http://localhost:3000').replace(/\/$/, '');
+  const results: BulkConsentResultRow[] = [];
+
+  for (const childId of uniqueIds) {
+    const childName = childrenById.get(childId);
+    if (!childName) {
+      results.push({ childId, childName: childId, error: 'Child not found.' });
+      continue;
+    }
+
+    const { token, tokenHash } = generateConsentToken();
+    const { error } = await supabase.from('consent_requests').insert({
+      tenant_id: context.tenantId,
+      child_id: childId,
+      token_hash: tokenHash,
+      requested_by: context.userId,
+      scope: { story: true, photo: false },
+    });
+    if (error) {
+      results.push({ childId, childName, error: error.message });
+      continue;
+    }
+
+    await supabase.from('children').update({ consent_status: 'pending' }).eq('id', childId);
+    results.push({ childId, childName, consentUrl: `${origin}/${locale}/consent/${token}` });
+  }
+
+  revalidatePath(`/${locale}/dashboard/children`);
+  return { results };
 }
 
 export async function withdrawConsentAction(locale: string, childId: string): Promise<ActionResult> {

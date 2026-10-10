@@ -270,6 +270,18 @@
       "pending": "Pending",
       "granted": "Granted",
       "withdrawn": "Withdrawn"
+    },
+    "bulkConsent": {
+      "select": "Select",
+      "cancel": "Cancel",
+      "selectedCount": "{count, plural, =0 {No children selected} one {# child selected} other {# children selected}}",
+      "selectChild": "Select {name}",
+      "generateFor": "{count, plural, =0 {Generate consent links} one {Generate link for # child} other {Generate links for # children}}",
+      "resultsTitle": "Consent links generated",
+      "successCount": "{count, plural, one {# link ready to share} other {# links ready to share}}",
+      "copy": "Copy",
+      "copied": "Link copied",
+      "print": "Print"
     }
   },
   "contactPage": {

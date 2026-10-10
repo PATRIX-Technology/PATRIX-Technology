@@ -4620,3 +4620,45 @@ Drive folder with the same letterhead + Times New Roman treatment as
 every other legal doc. The policy itself commits to asking for consent
 first if a non-essential cookie is ever added later — so this doesn't
 need revisiting unless that changes.
+
+**Production bug: migrations 0036 and 0037 were committed but never
+applied to the live Supabase project.** Reported as "Could not find the
+'parent_phone' column of 'consent_requests' in the schema cache" on the
+real app. There is no CI/CD step in this repo that applies new
+migrations to the live project on push — every migration so far had
+been applied manually via the Supabase MCP tools in-session, and this
+pair was committed without that follow-up step actually happening.
+Confirmed via `list_migrations` (stopped at `story_template_categories`,
+0035) and fixed by applying both 0036 and 0037 directly against the
+live project. No code changed; the repo and the database simply
+disagreed about what schema existed. Worth remembering for any future
+migration: committing the `.sql` file is not the same action as
+applying it, and nothing currently catches the gap automatically.
+
+**Bulk consent-request generation.** A nursery raised a real UX problem
+with the per-child consent flow: generating a link for 20-30 children
+one at a time, each requiring its own page visit, is a genuine chore.
+The request that prompted this was actually broader — letting a
+nursery self-certify "all parents already consented" and skip the
+parent-facing flow entirely, e.g. a blanket checkbox at CSV import
+time. Declined that version: it would mean a nursery's say-so
+substitutes for a parent's own explicit, verifiable action, which is
+exactly the distinction the DPIA, Privacy Policy, and the OTP work
+(migration 0036) all rely on — a nursery is not the data subject's
+guardian from PDPL's perspective merely by asserting it is. Building an
+opt-out there would be a real regression dressed up as convenience.
+
+Built instead: `requestConsentBulkAction` (`src/lib/actions/children.ts`)
+creates a consent_requests row for several children in one call — same
+insert path and RLS as the single-child action, just looped — and
+`ChildrenListWithBulkConsent` (`src/components/children/`) adds a
+"Select" mode to the existing roster view (replacing the inline
+card/table JSX that used to live in `children/page.tsx`) with a results
+panel showing each child's link + QR code (same `qrcode` library and
+generation pattern as `ConsentPanel.tsx`) and a print button for a
+physical handout sheet. Deliberately story-only, never photo: a
+photo-scoped request needs a real parent phone number per child for the
+OTP step, and collecting 30 distinct numbers safely in one bulk pass is
+a different, harder problem not solved here. Every parent still has to
+open their own link and respond themselves — this only removes the
+staff-side repetition, not the consent itself.

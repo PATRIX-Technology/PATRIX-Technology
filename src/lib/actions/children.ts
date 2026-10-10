@@ -10,6 +10,7 @@ import { buildConsentScope, generateConsentToken } from '@/lib/domain/consent';
 import { deleteChildCascade, deleteStoryAssetsForChild, deleteChildPhoto } from '@/lib/domain/deletion';
 import { flags } from '@/lib/flags';
 import { STORY_ASSETS_BUCKET } from '@/lib/domain/storage';
+import { normalizePhoneNumber } from '@/lib/domain/phone';
 import type { ActionResult } from './auth';
 
 export async function addChildAction(locale: string, formData: FormData): Promise<ActionResult> {
@@ -175,6 +176,7 @@ export async function requestConsentAction(
   locale: string,
   childId: string,
   includePhotoRequest = false,
+  parentPhoneInput = '',
 ): Promise<RequestConsentResult> {
   const supabase = await createSupabaseServerClient();
   const context = await getCurrentTenantContext(supabase);
@@ -204,6 +206,20 @@ export async function requestConsentAction(
     legalReviewCompleted: flags.photoPersonalizationLegalReviewComplete,
   });
 
+  // A photo-scoped request is only answerable after the parent proves
+  // they hold this exact phone via SMS OTP (see migration 0036 and
+  // docs/DECISIONS.md "Photo consent: phone verification on the public
+  // link") -- staff must supply a real number to request photo consent at
+  // all. Base (non-photo) requests are unaffected: no phone, no OTP step,
+  // same lightweight link-sharing flow as before.
+  let parentPhone: string | null = null;
+  if (scope.photo) {
+    parentPhone = normalizePhoneNumber(parentPhoneInput);
+    if (!parentPhone) {
+      return { error: 'A valid parent mobile number is required to request photo consent.' };
+    }
+  }
+
   const { token, tokenHash } = generateConsentToken();
   const { error } = await supabase.from('consent_requests').insert({
     tenant_id: context.tenantId,
@@ -211,6 +227,7 @@ export async function requestConsentAction(
     token_hash: tokenHash,
     requested_by: context.userId,
     scope,
+    parent_phone: parentPhone,
   });
   if (error) return { error: error.message };
 

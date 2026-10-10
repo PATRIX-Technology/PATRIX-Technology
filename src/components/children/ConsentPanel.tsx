@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/Button';
 import { SubmitButton } from '@/components/ui/SubmitButton';
 import { Badge } from '@/components/ui/Badge';
 import { useToast } from '@/components/ui/Toast';
+import { CountryPhoneField } from '@/components/auth/CountryPhoneField';
 import type { ConsentStatus } from '@/types/database';
 
 const TONE: Record<ConsentStatus, 'neutral' | 'warning' | 'success' | 'danger'> = {
@@ -40,11 +41,12 @@ export function ConsentPanel({
   const showToast = useToast();
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const [includePhoto, setIncludePhoto] = useState(false);
+  const [parentPhone, setParentPhone] = useState<string | null>(null);
   const [canShareFiles, setCanShareFiles] = useState(false);
 
   const requestAction = requestConsentAction.bind(null, locale, childId);
   const [requestState, requestFormAction] = useFormState<RequestConsentResult, FormData>(
-    useSafeFormReducer(async () => requestAction(includePhoto)),
+    useSafeFormReducer(async () => requestAction(includePhoto, parentPhone ?? '')),
     {},
   );
 
@@ -147,7 +149,13 @@ export function ConsentPanel({
               {t('photoConsentCheckboxLabel')}
             </label>
           )}
-          <SubmitButton variant="secondary" className="self-start">
+          {includePhoto && (
+            <div className="max-w-xs">
+              <CountryPhoneField label={t('parentPhoneLabel')} onChange={setParentPhone} />
+              <p className="mt-1 text-xs text-ink-500">{t('parentPhoneHelp')}</p>
+            </div>
+          )}
+          <SubmitButton variant="secondary" className="self-start" disabled={includePhoto && !parentPhone}>
             {t('sendLink')}
           </SubmitButton>
         </form>

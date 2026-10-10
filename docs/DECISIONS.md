@@ -4420,3 +4420,61 @@ and retention SLA remain genuinely open, see `docs/en/privacy.md` "What
 is explicitly NOT done yet"), but the one PDPL requirement that bears
 directly on "can we rely on consent for this specific transfer" is now
 met in the product itself, not just asserted.
+
+## Photo consent: phone verification on the public link (migration 0036)
+
+**The gap**: the DPIA ("Ownly - Data Protection Impact Assessment (DPIA) -
+Photo Personalisation") flagged that the nursery's public consent link had
+no check that the person clicking it was actually the child's parent or
+guardian — a random 192-bit token in a URL/QR code was the entire trust
+model (`consent-public.ts`'s own comment on this). For base story consent
+(name + avatar, no photo) that's a proportionate risk for a link a nursery
+shares directly with a known parent. For PHOTO consent specifically — an
+identifiable image of a child, sent to a third-party AI processor outside
+the UAE — it isn't: a forwarded link or screenshot could let the wrong
+person consent to a child's photo being used.
+
+**What exists to build on, and what doesn't**: the app already has phone
+OTP via Supabase Auth's native `signInWithOtp`/`verifyOtp` (used for
+nursery/family sign-in, `auth.ts`/`family.ts`), with Twilio configured as
+the SMS provider at the Supabase-project level, not called directly from
+this codebase. That mechanism is tightly coupled to creating a full auth
+session, though — there's no standalone "prove you hold this phone number"
+primitive independent of signing someone in. Rather than hand-roll a
+second OTP/SMS mechanism, this reuses the same Supabase Auth OTP call
+purely to verify phone ownership, then immediately signs the resulting
+session back out (`verifyConsentOtpAction` in `consent-public.ts`) — the
+consent page never signs anyone into an account.
+
+**What shipped**: migration `0036_consent_photo_phone_verification.sql`
+adds `parent_phone` and `otp_verified_at` to `consent_requests`, and three
+RPC changes:
+- `get_consent_request_info` now also returns `otp_required`,
+  `otp_verified`, and a masked phone (`***********67`) — never the raw
+  number, which stays reachable only through the token-gated RPCs below.
+- `send_consent_otp_target(raw_token)` returns the raw phone for a
+  pending, photo-scoped request only, so the server action can hand it to
+  `signInWithOtp` without the browser ever seeing it.
+- `mark_consent_otp_verified(raw_token)` records verification after a
+  real `verifyOtp()` success.
+- `respond_to_consent` now raises if the request's scope includes photo
+  and `otp_verified_at` is still null — the actual enforcement point, not
+  just a UI gate: even a direct RPC call can't bypass it.
+
+`requestConsentAction` (`children.ts`) requires and normalizes a parent
+phone number (reusing `normalizePhoneNumber`/`CountryPhoneField`, same as
+the rest of phone auth) only when the staff member checks "also ask for a
+photo" — base consent requests are completely unaffected, matching the
+DPIA's own "necessity and proportionality" framing rather than adding
+friction where the actual risk (an identifiable child photo, cross-border)
+isn't present. `ConsentResponseForm.tsx` shows the OTP step only when
+`otpRequired && !otpVerified`; the grant/decline buttons never render
+until that's satisfied, backed by the database check above.
+
+Per-SMS cost applies here the same as the existing OTP sends (see
+`docs/NEEDS_FROM_ME.md`'s Twilio budget note) — this adds at most one SMS
+per photo-scoped consent request, not a new unbounded cost line. Covered
+by 5 new integration tests in `tests/integration/consent.test.ts` run
+against real Postgres (not mocks), including that a non-photo request is
+completely unaffected and that the masked phone never leaks the raw
+number.

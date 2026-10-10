@@ -37,7 +37,12 @@ export default async function ConsentPage({
                 })}
               </p>
             )}
-            <ConsentResponseForm token={params.token} />
+            <ConsentResponseForm
+              token={params.token}
+              otpRequired={info.otpRequired ?? false}
+              otpVerified={info.otpVerified ?? false}
+              parentPhoneMasked={info.parentPhoneMasked}
+            />
           </>
         )}
       </Card>

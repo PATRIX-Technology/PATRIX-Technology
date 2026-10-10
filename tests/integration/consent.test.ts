@@ -114,4 +114,98 @@ describe('consent workflow', () => {
     );
     await otherClient.end();
   });
+
+  describe('photo-scoped requests require phone verification (migration 0036)', () => {
+    it('rejects granting a photo-scoped request until the phone is OTP-verified', async () => {
+      const rawToken = 'test-token-photo-unverified';
+      await db.adminClient.query(
+        `insert into consent_requests (tenant_id, child_id, token_hash, scope, parent_phone)
+         values ($1, $2, $3, '{"story": true, "photo": true}'::jsonb, '+971500000001')`,
+        [tenantId, childId, sha256(rawToken)],
+      );
+
+      const anonClient = await db.connectAs({ role: 'anon' });
+      await expect(anonClient.query(`select respond_to_consent($1, 'granted')`, [rawToken])).rejects.toThrow(
+        /phone verification is required/i,
+      );
+      await anonClient.end();
+    });
+
+    it('allows granting a photo-scoped request after mark_consent_otp_verified', async () => {
+      const rawToken = 'test-token-photo-verified';
+      await db.adminClient.query(
+        `insert into consent_requests (tenant_id, child_id, token_hash, scope, parent_phone)
+         values ($1, $2, $3, '{"story": true, "photo": true}'::jsonb, '+971500000002')`,
+        [tenantId, childId, sha256(rawToken)],
+      );
+
+      const anonClient = await db.connectAs({ role: 'anon' });
+      await anonClient.query('select mark_consent_otp_verified($1)', [rawToken]);
+      await anonClient.query(`select respond_to_consent($1, 'granted')`, [rawToken]);
+      await anonClient.end();
+
+      const { rows } = await db.adminClient.query(
+        `select status, otp_verified_at from consent_requests where token_hash = $1`,
+        [sha256(rawToken)],
+      );
+      expect(rows[0].status).toBe('granted');
+      expect(rows[0].otp_verified_at).not.toBeNull();
+    });
+
+    it('does not require phone verification for a non-photo request', async () => {
+      const rawToken = 'test-token-story-only';
+      await db.adminClient.query(
+        `insert into consent_requests (tenant_id, child_id, token_hash, scope)
+         values ($1, $2, $3, '{"story": true, "photo": false}'::jsonb)`,
+        [tenantId, childId, sha256(rawToken)],
+      );
+
+      const anonClient = await db.connectAs({ role: 'anon' });
+      await anonClient.query(`select respond_to_consent($1, 'granted')`, [rawToken]);
+      await anonClient.end();
+
+      const { rows } = await db.adminClient.query(
+        `select status from consent_requests where token_hash = $1`,
+        [sha256(rawToken)],
+      );
+      expect(rows[0].status).toBe('granted');
+    });
+
+    it('send_consent_otp_target returns the phone only for a pending photo-scoped request', async () => {
+      const rawToken = 'test-token-otp-target';
+      await db.adminClient.query(
+        `insert into consent_requests (tenant_id, child_id, token_hash, scope, parent_phone)
+         values ($1, $2, $3, '{"story": true, "photo": true}'::jsonb, '+971500000003')`,
+        [tenantId, childId, sha256(rawToken)],
+      );
+
+      const anonClient = await db.connectAs({ role: 'anon' });
+      const { rows } = await anonClient.query('select send_consent_otp_target($1) as phone', [rawToken]);
+      expect(rows[0].phone).toBe('+971500000003');
+
+      const { rows: nonPhotoRows } = await anonClient.query('select send_consent_otp_target($1) as phone', [
+        'test-token-double-answer',
+      ]);
+      expect(nonPhotoRows[0].phone).toBeNull();
+      await anonClient.end();
+    });
+
+    it('get_consent_request_info reports otp_required and a masked phone, never the raw number', async () => {
+      const rawToken = 'test-token-lookup-masked';
+      await db.adminClient.query(
+        `insert into consent_requests (tenant_id, child_id, token_hash, scope, parent_phone)
+         values ($1, $2, $3, '{"story": true, "photo": true}'::jsonb, '+971501234567')`,
+        [tenantId, childId, sha256(rawToken)],
+      );
+
+      const anonClient = await db.connectAs({ role: 'anon' });
+      const { rows } = await anonClient.query('select * from get_consent_request_info($1)', [rawToken]);
+      await anonClient.end();
+
+      expect(rows[0].otp_required).toBe(true);
+      expect(rows[0].otp_verified).toBe(false);
+      expect(rows[0].parent_phone_masked).toBe('***********67');
+      expect(rows[0].parent_phone_masked).not.toContain('971501234567');
+    });
+  });
 });

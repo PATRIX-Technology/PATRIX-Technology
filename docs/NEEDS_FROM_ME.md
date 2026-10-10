@@ -295,15 +295,20 @@ program replaces gifting".
    offers — the closest is Mumbai), so the *entire* database, not only
    the Gemini photo calls, is a cross-border transfer, for every tenant,
    all the time. Counsel needs to assess that, not just the AI piece.
-7a. **Request and accept Supabase's and Google's own standard Data
-    Processing Addendum (DPA).** This is not something I can do for
-    you — it's a commercial agreement each vendor offers its customers
-    (Supabase via its dashboard/account settings, Google via Google
-    Cloud's standard terms for API customers) and needs your account to
-    request/accept it. It's a concrete, available-today step that
-    strengthens the cross-border position regardless of how item 7's
-    broader legal-basis question is ultimately answered — do this even
-    before counsel finishes their review, not instead of it.
+7a. **Supabase's and Google's own standard Data Processing Addenda
+    (DPA) — resolved by default, no action taken.** Neither vendor's
+    dashboard exposes a separate "accept the DPA" toggle for an
+    account at our tier (confirmed by checking both — there's nothing
+    to click). For both, the DPA (supabase.com/legal/dpa;
+    cloud.google.com/terms/data-processing-addendum) is incorporated
+    by reference into the Terms of Service every account holder
+    already agreed to on sign-up — so it already applies, without a
+    separate action. You judged a written support-confirmation email
+    from each vendor unnecessary on top of that; that's a reasonable
+    call for this stage, not a compliance gap. If a diligence partner
+    (e.g. a safeguarding reviewer) ever asks for a vendor's signed DPA
+    specifically rather than a reference to their standard terms, that
+    email is still available as a next step then.
 8. **Confirmation of VAT treatment** for the displayed plan prices
    (`plans.vat_inclusive`) — this depends on your business registration
    and is a decision for your accountant, not me.

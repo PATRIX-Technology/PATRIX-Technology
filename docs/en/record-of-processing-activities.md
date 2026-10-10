@@ -37,14 +37,13 @@ partner (once contracted, row 6 above only).
 - **Row 3's exact Gemini processing location** — Google's API documentation
   does not commit to a single fixed region the way Supabase does; this is
   flagged for counsel alongside DPIA gap #1.
-- **A signed DPA with Supabase and with Google** — both vendors offer
-  their own standard Data Processing Addendum for customers (Supabase's
-  via its dashboard/legal terms, Google's via Google Cloud's standard
-  terms for API customers). Requesting and accepting these is a real,
-  concrete action available today, independent of the broader "is
-  consent alone sufficient" legal question in the DPIA — it strengthens
-  the position regardless of how that question is ultimately answered.
-  Not yet done; added to `docs/NEEDS_FROM_ME.md`.
+- **Supabase's and Google's standard DPAs** — resolved by default.
+  Neither vendor's dashboard exposes a separate acceptance step at our
+  account tier; both DPAs (supabase.com/legal/dpa;
+  cloud.google.com/terms/data-processing-addendum) are incorporated by
+  reference into the Terms of Service already agreed to on sign-up, so
+  they already apply without a further action. See
+  `docs/NEEDS_FROM_ME.md` item 7a.
 - **Whether this record itself satisfies PDPL's own documentation
   expectations** (PDPL doesn't mandate a ROPA by that name the way GDPR
   Art. 30 does) — counsel to confirm during the broader DPIA review.

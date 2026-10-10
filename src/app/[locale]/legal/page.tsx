@@ -4,8 +4,8 @@ import { Card } from '@/components/ui/Card';
 import { HomeLink } from '@/components/brand/HomeLink';
 import { Logo } from '@/components/brand/Logo';
 
-type LegalTab = 'tos' | 'privacy' | 'pdpl';
-const TABS: LegalTab[] = ['tos', 'privacy', 'pdpl'];
+type LegalTab = 'tos' | 'privacy' | 'pdpl' | 'cookies';
+const TABS: LegalTab[] = ['tos', 'privacy', 'pdpl', 'cookies'];
 
 // Public page — reachable signed-out as well as signed-in, which matters
 // for PDPL: a privacy policy only a logged-in user can see isn't doing

@@ -522,7 +522,8 @@
     "tabs": {
       "tos": "Terms of Service",
       "privacy": "Privacy Policy",
-      "pdpl": "Data Protection (PDPL)"
+      "pdpl": "Data Protection (PDPL)",
+      "cookies": "Cookie Policy"
     },
     "tos": {
       "heading": "Terms of Service",
@@ -652,6 +653,39 @@
         {
           "heading": "7. Data protection contact",
           "body": "Our designated data protection contact point will be published here once our Meydan Free Zone incorporation is complete. Until then, direct any request through our {contact} page."
+        }
+      ]
+    },
+    "cookies": {
+      "heading": "Cookie Policy",
+      "sections": [
+        {
+          "heading": "1. What cookies are",
+          "body": "A cookie is a small text file a website stores in your browser. We use cookies only to operate the sign-in session itself — nothing is used for advertising, tracking, or analytics."
+        },
+        {
+          "heading": "2. The only cookie we set",
+          "body": "A single authentication cookie (set by Supabase, the service that runs our sign-in) keeps you signed in between page loads. It lasts up to 30 days if you check \"Remember me\" when you sign in, or clears automatically when you close your browser if you don't."
+        },
+        {
+          "heading": "3. What we don't use cookies for",
+          "body": "We don't set cookies for analytics, advertising, or behavioural tracking, and your language (English/Arabic) is stored in the page URL, not a cookie. A child's photo, name, and story data are never touched by a cookie of any kind."
+        },
+        {
+          "heading": "4. Third-party cookies",
+          "body": "If you start a payment (a subscription or a printed storybook order), you're redirected to Stripe's own secure payment page, which sets its own cookies under Stripe's domain — governed by Stripe's cookie and privacy policy, not ours. We never see or control those cookies."
+        },
+        {
+          "heading": "5. Your choices",
+          "body": "You can block or delete cookies in your browser settings at any time. Because our only cookie keeps you signed in, blocking it simply signs you out and asks you to sign in again next time — it won't affect your account, your child's data, or your stories."
+        },
+        {
+          "heading": "6. Changes to this policy",
+          "body": "If we ever add a cookie for a new purpose (for example, product analytics), we'll update this page first and, if that cookie isn't strictly necessary to run the service, ask for your consent before setting it."
+        },
+        {
+          "heading": "7. Contact us",
+          "body": "For any question about cookies, reach out on our {contact} page and we'll get back to you."
         }
       ]
     }

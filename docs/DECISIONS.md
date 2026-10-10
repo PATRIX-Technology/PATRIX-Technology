@@ -4594,3 +4594,29 @@ Postgres with no PostgREST layer, so it can't exercise a real
 supabase-js client the way this job uses one; `deleteChildCascade`
 itself has the same gap and was already untested at that layer before
 this change.
+
+**Cookie Policy: a real gap, not a legal-judgment one.** Checking
+cookie usage directly in the code (`src/middleware.ts`,
+`src/lib/supabase/server.ts`, `src/lib/supabase/client.ts`) found Ownly
+sets exactly one cookie: the Supabase Auth session cookie (`sb-*`,
+`httpOnly: false` deliberately so the browser client can read it, see
+"Session cookie hardening" above), up to 30 days if "Remember me" is
+checked or cleared on browser close otherwise. Locale is carried in the
+URL path, not a cookie (confirmed in `src/components/ui/
+LocaleSwitcher.tsx`'s own comment), and no analytics, advertising, or
+tracking script exists in the codebase. Stripe's own hosted Checkout
+page sets its own cookies under its own domain during payment, outside
+Ownly's control.
+
+Because only a strictly-necessary cookie is in use, no cookie-consent
+banner is required under GDPR Art. 5(3)/ePrivacy's necessity exemption
+or PDPL's general transparency principle — but disclosure is still
+good practice, so added a seventh Legal tab: `legalPage.cookies` in
+`src/messages/en.json`/`ar.json`, rendered by `src/app/[locale]/legal/
+page.tsx` (one line added to `TABS`), mirrored to `public/legal/
+Cookie_Policy.md`/`.ar.md`, and uploaded as "Ownly - Cookie Policy"
+(EN) and "Ownly - Cookie Policy (Arabic)" in the "04 Legal & Terms"
+Drive folder with the same letterhead + Times New Roman treatment as
+every other legal doc. The policy itself commits to asking for consent
+first if a non-essential cookie is ever added later — so this doesn't
+need revisiting unless that changes.

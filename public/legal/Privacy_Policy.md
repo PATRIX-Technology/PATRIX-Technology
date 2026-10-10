@@ -2,7 +2,7 @@
 
 *Last updated: October 2026*
 
-> **Status: derived from the live, in-app Legal page** (src/messages/en.json, `legalPage.privacy` and `legalPage.pdpl`) — this file mirrors that canonical content, merged into one standalone document for external use (e.g. a Stripe onboarding review packet or a printed copy). The in-app page at /legal is the always-current version; update that source first, then regenerate this file.
+> **Status: derived from the live, in-app Legal page** (src/messages/en.json, `legalPage.privacy` and `legalPage.pdpl`) — this file mirrors that canonical content, merged into one standalone document for external use. The in-app page at /legal is the always-current version; update that source first, then regenerate this file.
 
 > Ownly is a brand operated by its founding team, currently completing incorporation as a licensed entity in Meydan Free Zone, Dubai, UAE. This page will be updated with the full registered legal name and trade license number once incorporation is complete.
 
@@ -30,13 +30,11 @@ If you order a printed copy of a storybook, we share only what's needed to fulfi
 
 ## 6. Where your data is processed
 
-Our primary infrastructure is hosted with Supabase and Vercel. Generating story illustrations and text involves sending the relevant content to Google's Gemini API, which may process data on servers outside the UAE. We only work with providers that maintain appropriate data protection safeguards.
-
-If you separately consent to photo-based personalisation (see "Children's data" below), a reference photo is sent to Google's Gemini API once per illustration request, with an explicit instruction to produce a stylised illustration, never a photo-realistic copy. We do not store or use that photo ourselves beyond generating that illustration. We use Gemini under Google's paid-service API terms, under which Google does not use our prompts, files, or responses — including any photo — to train or improve its own models; this protection applies specifically to paid-tier usage, which is what we use.
+Our database, authentication, and file storage are hosted by Supabase in AWS's ap-southeast-1 region (Singapore); our application itself runs on Vercel's global edge network. This means all account, child, and story data is processed outside the UAE, not only the specific illustration requests sent to Google's Gemini API below. We only work with providers that maintain appropriate data protection safeguards, and this is one of the specific items flagged for formal legal review — see the "UAE PDPL Compliance" section below.
 
 ## 7. How long we keep it
 
-Organisations can configure a data retention period in Settings; child and story data is scheduled for deletion once that period elapses. You can also request deletion of your account and associated data at any time — see "Your rights" below.
+Organisations can configure a data retention period in Settings (730 days / 24 months by default); child and story data is scheduled for deletion once that period elapses. If you request deletion of your account, a child's record, or your data generally, we commit to completing that deletion within 30 days of a verified request, even if it falls before your organisation's configured retention period would otherwise trigger it — see "Your rights" below.
 
 ## 8. Your rights
 
@@ -74,11 +72,11 @@ Contact us via our /contact page with your request. We will verify your identity
 
 ### 16. Cross-border data transfer
 
-Generating story content involves sending relevant data to Google's Gemini API, which may process it outside the UAE. If you order a printed storybook, your name, phone number, and delivery address are also shared with our printing/logistics partner, strictly bound by a data processing agreement (see /contracts/DPA_Schedule.md) to use that data only to fulfil your order. We only use service providers who maintain data protection standards consistent with PDPL requirements for cross-border transfers.
+Our core infrastructure (database, authentication, file storage) is hosted outside the UAE, in AWS's ap-southeast-1 (Singapore) region via Supabase — this applies to all account, child, and story data, not only AI processing. Generating story content additionally involves sending relevant data to Google's Gemini API, which may process it outside the UAE. If you order a printed storybook, your name, phone number, and delivery address are also shared with our printing/logistics partner, strictly bound by a data processing agreement (see /contracts/DPA_Schedule.md) to use that data only to fulfil your order. The specific legal basis for each of these transfers is under active review with qualified UAE counsel — see our Data Protection Impact Assessment for the current status.
 
 ### 17. Data breach notification
 
-In the event of a data breach affecting your personal data, we will notify affected users and, where required by law, the relevant UAE data protection authority, without undue delay.
+In the event of a data breach affecting your personal data, we will notify affected users and, where required by law, the relevant UAE data protection authority, without undue delay — our internal breach-response procedure targets notifying the authority no later than 72 hours after a breach is confirmed, pending confirmation of the exact UAE PDPL deadline with counsel.
 
 ### 18. Data protection contact
 

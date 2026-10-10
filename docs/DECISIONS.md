@@ -4807,3 +4807,40 @@ request that led to bulk consent-link generation earlier.
   small picker (grouped by theme_key, not per-locale row) before
   submitting; the results modal links each successfully-created story
   straight to its reader page.
+
+## WhatsApp print order: a manual-fulfillment alternative to Stripe checkout (Phase F)
+
+Per Item 3 of the founder's 8-part feature request: an "Order Story"
+flow that formats order details and opens a WhatsApp link to the
+admin/owner's number for forwarding to a printing center — distinct
+from the Stripe-paid checkout already built (migration 0037,
+`/api/print-orders/checkout`).
+
+Reused the `print_orders` table rather than building a second order
+system: `createWhatsAppPrintOrderAction`
+(`src/lib/actions/print-orders.ts`) runs the exact same
+validation/consent/approved-story checks as the Stripe route, inserts
+the same shape of row (`status: 'pending'`, no
+`stripe_checkout_session_id` — already proven to pass RLS by the
+existing `print_orders` test suite's own fixture, which never sets that
+column either), then hands back a `wa.me` link
+(`src/lib/config/contact.ts`'s existing `whatsappLink()`) pre-filled
+with the order summary. The link targets the SAME number the Contact Us
+page uses — Ownly's own support/ops line, not a print vendor directly
+— since "admin/owner... for forwarding to a printing center" reads as
+Ownly staff relaying the job to whichever vendor is contracted, not
+every nursery owner having their own vendor relationship. `PrintOrderDialog.tsx`
+now offers "Order via WhatsApp instead" beneath the existing "Pay now",
+reusing the same shipping-address fields and mandatory consent
+checkbox already captured there — nothing added is skippable that the
+paid path requires.
+
+**Flagging, not silently resolving**: this reuses the already-live
+Stripe price (AED 109 / $29 — `PRINT_ORDER_PRICE_MINOR`) for
+consistency with the checkout flow already in production. The
+founder's later instruction for Phase G's pricing packages describes a
+different figure — "50 AED printed" — for the packages doc's
+per-printed-copy line. Those two numbers don't match today. This isn't
+resolved here: Phase G needs an explicit decision (new flat price
+across both flows, or two intentionally different price points for two
+different fulfillment paths) rather than me picking one silently.

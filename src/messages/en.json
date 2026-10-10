@@ -396,6 +396,9 @@
     "consentEn": "I certify that I am the parent or legal guardian of the child, I consent to this personalised storybook being printed and shipped to the address above, and I agree to the Prepaid-Only, No-Refund Sales Terms for this custom-printed product once printing has begun.",
     "consentAr": "أقر بأنني ولي الأمر أو الوصي القانوني على الطفل، وأوافق على طباعة وشحن كتاب القصة المخصص هذا إلى العنوان أعلاه، كما أوافق على شروط الدفع المسبق وعدم الاسترجاع لهذا المنتج المطبوع المخصص بعد بدء الطباعة.",
     "payNow": "Pay now — {price}",
+    "or": "or",
+    "orderViaWhatsApp": "Order via WhatsApp instead",
+    "whatsAppHint": "Sends your order details to our team on WhatsApp — we'll follow up to arrange payment and confirm your order.",
     "errorTitle": "Couldn't start checkout",
     "errorGeneric": "Something went wrong. Please try again."
   },

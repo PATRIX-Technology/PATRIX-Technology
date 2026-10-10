@@ -6,6 +6,7 @@ import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { useToast } from '@/components/ui/Toast';
 import type { PrintOrderCurrency } from '@/lib/domain/print-orders';
+import { createWhatsAppPrintOrderAction } from '@/lib/actions/print-orders';
 
 /**
  * Orders a physical printed copy of an already-approved story. The
@@ -23,6 +24,7 @@ export function PrintOrderDialog({ storyId }: { storyId: string }) {
   const [currency, setCurrency] = useState<PrintOrderCurrency>(locale === 'ar' ? 'aed' : 'usd');
   const [consentChecked, setConsentChecked] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [whatsappSubmitting, setWhatsappSubmitting] = useState(false);
   const [fields, setFields] = useState({
     shippingName: '',
     shippingPhone: '',
@@ -71,7 +73,27 @@ export function PrintOrderDialog({ storyId }: { storyId: string }) {
     }
   }
 
-  const payDisabled = submitting || !consentChecked || !requiredFieldsFilled;
+  async function handleWhatsAppOrder() {
+    setWhatsappSubmitting(true);
+    try {
+      const result = await createWhatsAppPrintOrderAction(storyId, currency, consentChecked, {
+        ...fields,
+        shippingCountry: fields.shippingCountry.trim().toUpperCase(),
+      });
+      if (result.error || !result.whatsappUrl) {
+        showToast({ title: t('errorTitle'), description: result.error ?? t('errorGeneric'), tone: 'error' });
+        setWhatsappSubmitting(false);
+        return;
+      }
+      window.location.href = result.whatsappUrl;
+    } catch {
+      showToast({ title: t('errorTitle'), description: t('errorGeneric'), tone: 'error' });
+      setWhatsappSubmitting(false);
+    }
+  }
+
+  const payDisabled = submitting || whatsappSubmitting || !consentChecked || !requiredFieldsFilled;
+  const whatsappDisabled = submitting || whatsappSubmitting || !consentChecked || !requiredFieldsFilled;
 
   return (
     <>
@@ -157,6 +179,17 @@ export function PrintOrderDialog({ storyId }: { storyId: string }) {
           <Button variant="primary" onClick={handlePay} disabled={payDisabled} isLoading={submitting}>
             {t('payNow', { price: t(`price.${currency}`) })}
           </Button>
+
+          <div className="flex items-center gap-3 text-xs text-ink-400">
+            <span className="h-px flex-1 bg-[rgb(var(--color-border))]" />
+            {t('or')}
+            <span className="h-px flex-1 bg-[rgb(var(--color-border))]" />
+          </div>
+
+          <Button variant="secondary" onClick={handleWhatsAppOrder} disabled={whatsappDisabled} isLoading={whatsappSubmitting}>
+            {t('orderViaWhatsApp')}
+          </Button>
+          <p className="text-xs text-ink-500">{t('whatsAppHint')}</p>
         </div>
       </Modal>
     </>

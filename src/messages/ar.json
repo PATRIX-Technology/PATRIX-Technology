@@ -396,6 +396,9 @@
     "consentEn": "I certify that I am the parent or legal guardian of the child, I consent to this personalised storybook being printed and shipped to the address above, and I agree to the Prepaid-Only, No-Refund Sales Terms for this custom-printed product once printing has begun.",
     "consentAr": "أقر بأنني ولي الأمر أو الوصي القانوني على الطفل، وأوافق على طباعة وشحن كتاب القصة المخصص هذا إلى العنوان أعلاه، كما أوافق على شروط الدفع المسبق وعدم الاسترجاع لهذا المنتج المطبوع المخصص بعد بدء الطباعة.",
     "payNow": "ادفع الآن — {price}",
+    "or": "أو",
+    "orderViaWhatsApp": "اطلب عبر واتساب بدلا من ذلك",
+    "whatsAppHint": "يرسل تفاصيل طلبك إلى فريقنا عبر واتساب — سنتواصل معك لترتيب الدفع وتأكيد طلبك.",
     "errorTitle": "تعذّر بدء الدفع",
     "errorGeneric": "حدث خطأ ما. يرجى المحاولة مرة أخرى."
   },

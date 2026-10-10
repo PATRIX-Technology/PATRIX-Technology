@@ -281,7 +281,21 @@ program replaces gifting".
    am not a lawyer and none of this constitutes legal compliance advice.
    Anything marked `PENDING LEGAL REVIEW` in this repo needs a real
    review before you rely on it commercially, especially given this
-   product handles children's data.
+   product handles children's data. This now includes a materially
+   bigger question than originally scoped: Supabase has no UAE or GCC
+   region at all (confirmed by checking the actual list of regions it
+   offers — the closest is Mumbai), so the *entire* database, not only
+   the Gemini photo calls, is a cross-border transfer, for every tenant,
+   all the time. Counsel needs to assess that, not just the AI piece.
+7a. **Request and accept Supabase's and Google's own standard Data
+    Processing Addendum (DPA).** This is not something I can do for
+    you — it's a commercial agreement each vendor offers its customers
+    (Supabase via its dashboard/account settings, Google via Google
+    Cloud's standard terms for API customers) and needs your account to
+    request/accept it. It's a concrete, available-today step that
+    strengthens the cross-border position regardless of how item 7's
+    broader legal-basis question is ultimately answered — do this even
+    before counsel finishes their review, not instead of it.
 8. **Confirmation of VAT treatment** for the displayed plan prices
    (`plans.vat_inclusive`) — this depends on your business registration
    and is a decision for your accountant, not me.

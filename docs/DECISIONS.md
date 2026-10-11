@@ -5742,3 +5742,33 @@ viable, left the original Drive file exactly as it was, and delivered
 the corrected `.pptx` directly to the founder to re-upload himself (or
 for a future session to retry, if a more suitable upload path becomes
 available). Documented here so this isn't silently dropped.
+
+## Stale sample PDFs: checked the database, confirmed regeneration needs real spend
+
+Checked whether any *existing* approved story in the live database is
+already in the current 8-page format, to export its PDF as a free,
+no-new-cost fix for the two stale 4-page samples (Amira EN, Lara AR,
+in "11 Product Samples") — same pattern as the Drive-doc text fixes.
+
+**Every approved story in production, Amira's and Lara's included, is
+still the old 4-page format** (`select ... from stories where status =
+'APPROVED'` — every row's `page_count` is 4, none is 6). The 8-page
+extension (Phase D / task #132) only changed the *template* definitions
+new stories draw from; it didn't retroactively regenerate anyone's
+already-approved story. So there is no existing 8-page story anywhere
+to export — fixing this isn't a text edit or a re-export, it requires
+actually generating a brand-new story end to end (real Gemini image
+calls, ~$1.50-3 in real spend for one or two sample stories) through
+the live app, then approving it, before a PDF can be exported at all.
+
+Not doing this without the founder's say-so: it's real money spent on
+his card for a specific, narrow purpose (fixing stale product-sample
+files), not something implied by "make sure the docs are okay." Flagged
+to him directly rather than spending it unilaterally. Worth noting for
+whenever this does happen: even a freshly-exported real PDF would still
+need to get into the Drive folder, and a PDF with real embedded
+illustrations will be considerably larger than the 60KB pptx that just
+hit the base64 upload ceiling above — so the same Drive re-upload
+limitation documented in the pptx entry above will very likely apply
+here too, probably worse. Plan for a direct hand-off (as with the pptx)
+rather than an automatic Drive swap.

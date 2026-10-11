@@ -5904,3 +5904,70 @@ swaps them in himself. The four customer-facing TEMPLATE/SAMPLE pitch
 decks were deliberately left untouched — confirmed earlier this
 session they carry no numeric pricing table at all, so there's nothing
 in them to annotate.
+
+## Bulk print-order dialog: per-copy price + next-tier nudge
+
+Founder clarified (via a follow-up question, since his first phrasing
+read like a subscription-tier pricing request): the bulk print-order
+popup should show the per-copy price for the current quantity and,
+when a bigger order would unlock a cheaper tier, nudge the buyer with
+how many more copies to add and what the better price would be —
+nothing to do with the nursery's subscription plan, purely the
+existing 1-9 / 10-49 / 50-99 / 100+ quantity-tier ladder already in
+`print-orders.ts`.
+
+Added `getNextPrintOrderTier(quantity)` to
+`src/lib/domain/print-orders.ts` (next tier above the current quantity,
+or `null` once already at the 100+ tier) and wired it into
+`BulkPrintOrderDialog.tsx`: a per-copy price line under the existing
+total, and — only while a better tier is reachable — a saffron-toned
+nudge line ("add N more copies to unlock AED X/copy", with a separate
+string for the 100+ tier's free-delivery wording). Reused the app's
+existing saffron/warning token rather than inventing a new color.
+`npx tsc`, `eslint`, the full unit suite (165 tests), and `npm run
+build` all clean before commit.
+
+## New "PRICING" slide added to all 4 customer-facing pitch decks
+
+Founder asked for updated pricing slides to send to customers — the
+four TEMPLATE/SAMPLE decks (EN + AR, template + Sunshine Kids sample)
+had no pricing content at all, as noted in the entry above. Rather than
+retrofit a numeric table into an existing slide, added a dedicated
+"PRICING" slide to each deck, inserted right after "Watch It In
+Action" and before "Your Pilot" (so pricing lands right where a real
+sales conversation would ask for it, before the trial pitch) — built
+by duplicating the "Your Pilot" slide's own stat-card + checkmark-list
+layout via `add_slide.py` rather than designing a new layout from
+scratch, so it matches the deck's existing visual language exactly.
+
+Content: the three subscription tiers (Starter AED 749/mo, Growth AED
+1,949/mo, Network AED 5,249/mo) as stat cards, then four checkmark
+bullets covering monthly/annual billing, the Founding Partner 50%-off
+offer, the printed-copy add-on (from AED 58/copy bulk, UAE delivery
+only — consistent with the caveat added everywhere else pricing
+appears), and the family-plan cross-sell. The two Arabic decks got a
+full native-register translation (not machine-literal), reusing the
+exact Arabic-numeral/"درهم" currency convention already established in
+`docs/ar/pricing.md`, and the footer page-number shifted on the
+displaced "Your Pilot" slide in all four files. All four validated
+(`validate.py --original`) and visually re-rendered via
+`soffice`+`pdftoppm` before delivery, not just schema-checked.
+
+## "Old Slides" Drive folder + archived superseded decks
+
+Founder asked for a full staleness check across every pptx in the
+Ownly Drive "Slides & Pitch Decks" folder and its subfolders, with
+anything superseded moved into a new "Old Slides" subfolder rather
+than deleted. Created that folder and, after reading each candidate's
+actual content (not just its filename) to confirm it was either an
+exact duplicate or an earlier incomplete draft missing content the
+live version has, moved 8 files into it: two earlier passes of the
+internal strategy deck, two earlier passes of the sales rep reference
+deck, and four pre-"-3" drafts of the pilot template deck (including
+one missing the bilingual-pitch slide entirely). The three other
+Internal-subfolder decks — Data Protection Partner Overview,
+Compliance/Legal QA Status, Data Safeguarding Overview — were already
+confirmed current in the full-sweep audit earlier this session and
+were deliberately not rebuilt a second time; flagged to the founder
+directly rather than left implicit, since "check if stale, rebuild all
+of them" could otherwise read as "rebuild everything regardless."

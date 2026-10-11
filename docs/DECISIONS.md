@@ -6009,3 +6009,83 @@ validated) before delivery; every Google Doc edit re-read in full
 afterward to confirm `occurrencesChanged` matched expectations in both
 languages, per the usual verification discipline for this kind of
 batch `replaceAllText` edit.
+
+## Pricing split into pilot-phase vs. standard-rate tables, with suggestion quotas and the full print ladder; a real Google Docs corruption incident and recovery
+
+Founder asked for every pricing presentation (repo docs, both Google
+Docs, all pitch decks) to be restructured from one combined pricing
+table per audience into two: a "Founding Partner launch pricing"
+table (the first-10-nurseries, 50%-off-first-3-months rate) and a
+separate "standard pricing" table (month 4 onward / the only rate that
+ever applied to families, since no pilot phase exists for B2C), with
+an explicit instruction to verify no tier sells below AI cost at the
+discounted rate, plus the story-suggestion quota and the full
+printed-copy bulk ladder added as columns/tables alongside the
+existing digital-story quota. Confirmed via margin math before
+building anything: at the Founding Partner rate, Starter (~63%),
+Growth (~43.5%) and Network (~48%, after halving its quota to 250/mo
+for those 3 months specifically) all stay profitable — no tier was
+ever priced below the ~$1.50/story (~AED 5.51) planning cost. Scope
+and print-pricing detail level (full bulk ladder vs. a single
+representative price) were confirmed with the founder before editing
+anything live.
+
+Updated `docs/en/pricing.md` / `docs/ar/pricing.md` (both the B2B and
+B2C sections split into Founding Partner / Standard / Printed-copies
+tables) and the "Pricing, Subscriptions & Launch Strategy" Google Doc
+(EN+AR), each table now carrying Plan, price, digital-story quota,
+story-suggestion quota, and (B2B only) seats, plus a separate 4-tier
+printed-copy table per audience.
+
+**A serious mistake happened and was fully recovered during this
+work, worth recording in detail.** While inserting three chained
+tables into the Google Doc in one batch, the position math used for
+the second and third `insertTable` calls anchored on the first
+table's *pristine* post-insert end index, not accounting for the
+cell text that had just been typed into that table — every
+`insertText` call lands at an index at or before that pristine end,
+shifting everything after it (including where the next table needed
+to go) forward by the inserted text's length. The correct anchor for
+chaining is `table_end + total_UTF-16_length_of_all_inserted_cell_text`
+("actual end"), not the pristine `table_end`. Using the smaller,
+wrong value caused the second and third tables to be inserted *inside*
+the first table's cell content, and a subsequent `deleteContentRange`
+(computed with the same wrong math, intended to remove the old table
+being replaced) deleted real wanted content instead — permanently
+destroying the first ~18 characters of the "Managed-service add-on"
+bullet and most of the "story allowance is a shared pool" bullet's
+text in the live document. The corruption briefly left the document's
+own structure malformed enough that `read_doc` started failing with
+persistent Cloudflare 502 errors specifically for that file (confirmed
+not a general outage: other documents and the lighter-weight Drive
+text-export read both kept working throughout).
+
+Recovery did not rely on guesswork against the live document. Built
+an offline simulator (`Seg`/`Doc` classes modeling the affected region
+as position-tracked segments with `delete`/`insert`/`index_of`
+operations matching Google's own index math exactly) seeded with the
+known original pre-edit content, then replayed the exact sequence of
+the already-sent buggy requests to compute precise, verified ground
+truth of the document's real corrupted state — cross-checked against
+an independently observed corruption artifact before trusting it. Used
+that verified state to construct a fully-simulated recovery (wipe and
+rebuild the B2B region including retyping the two lost bullets'
+original text, verbatim, plus restoring `createParagraphBullets`
+formatting; delete-and-rebuild the still-intact-but-never-replaced old
+B2C table), sent as one batch, and re-read the live document in full
+afterward to confirm it before considering the fix done — the same
+discipline was then applied to the AR half of the restructuring,
+using the now-corrected `actual_end` chaining formula from the start,
+and likewise re-read and confirmed clean after sending. No corruption
+occurred on the AR pass. The lesson carried forward: a clean/
+no-errors API response from `update_doc` is not sufficient evidence
+that a batch of chained structural edits landed correctly — the
+corrupting batch also returned no errors — so every such edit now
+gets a full re-read verification before being reported as done,
+independent of what the write call itself reports.
+
+Still pending as of this entry: the same two-table restructuring for
+the "What to Present to B2B Customers" Google Doc and for the 4
+customer-facing pitch decks plus the Internal Strategy and Sales Rep
+Reference decks (their existing single pricing slide/table per
+audience needs to become two, per the same pattern).

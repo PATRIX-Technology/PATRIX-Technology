@@ -77,6 +77,22 @@ export function getPrintOrderUnitPriceMinor(quantity: number, currency: PrintOrd
   return getPrintOrderBulkTier(quantity)?.priceMinor[currency] ?? PRINT_ORDER_PRICE_MINOR[currency];
 }
 
+export interface NextPrintOrderTier {
+  /** How many more copies to add to the current order to reach this tier. */
+  copiesNeeded: number;
+  tier: PrintOrderBulkTier;
+}
+
+/** The next better-priced tier above the given quantity, for an "add N
+ * more copies to unlock AED X/copy" nudge in the bulk order dialog --
+ * null once the order is already in the top (100+) tier, since there's
+ * nothing better to unlock. */
+export function getNextPrintOrderTier(quantity: number): NextPrintOrderTier | null {
+  const next = PRINT_ORDER_BULK_TIERS.find((tier) => quantity < tier.minQty);
+  if (!next) return null;
+  return { copiesNeeded: next.minQty - quantity, tier: next };
+}
+
 export interface ShippingAddressInput {
   shippingName: string;
   shippingPhone: string;

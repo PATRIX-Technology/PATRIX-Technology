@@ -407,6 +407,9 @@
     "bulkDialogTitle": "طلب {count, plural, one {نسخة مطبوعة واحدة} other {# نسخة مطبوعة}}",
     "bulkTotal": "{count, plural, one {نسخة واحدة} other {# نسخة}} — الإجمالي {total}",
     "bulkFreeDelivery": "توصيل مجاني",
+    "bulkPerCopy": "{price}/نسخة",
+    "bulkNextTierNudge": "أضف {count, plural, one {نسخة واحدة أخرى} other {# نسخة أخرى}} لفتح سعر {price}/نسخة",
+    "bulkNextTierNudgeFreeDelivery": "أضف {count, plural, one {نسخة واحدة أخرى} other {# نسخة أخرى}} لفتح سعر {price}/نسخة + توصيل مجاني",
     "bulkPayNow": "ادفع الآن — {total}",
     "errorTitle": "تعذّر بدء الدفع",
     "errorGeneric": "حدث خطأ ما. يرجى المحاولة مرة أخرى."

@@ -407,6 +407,9 @@
     "bulkDialogTitle": "Order {count, plural, one {# printed copy} other {# printed copies}}",
     "bulkTotal": "{count, plural, one {# copy} other {# copies}} — total {total}",
     "bulkFreeDelivery": "free delivery",
+    "bulkPerCopy": "{price}/copy",
+    "bulkNextTierNudge": "Add {count, plural, one {# more copy} other {# more copies}} to unlock {price}/copy",
+    "bulkNextTierNudgeFreeDelivery": "Add {count, plural, one {# more copy} other {# more copies}} to unlock {price}/copy + free delivery",
     "bulkPayNow": "Pay now — {total}",
     "errorTitle": "Couldn't start checkout",
     "errorGeneric": "Something went wrong. Please try again."

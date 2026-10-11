@@ -5,7 +5,12 @@ import { useLocale, useTranslations } from 'next-intl';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { useToast } from '@/components/ui/Toast';
-import { getPrintOrderBulkTier, getPrintOrderUnitPriceMinor, type PrintOrderCurrency } from '@/lib/domain/print-orders';
+import {
+  getNextPrintOrderTier,
+  getPrintOrderBulkTier,
+  getPrintOrderUnitPriceMinor,
+  type PrintOrderCurrency,
+} from '@/lib/domain/print-orders';
 import type { TenantType } from '@/types/database';
 
 export interface BulkPrintOrderItem {
@@ -67,6 +72,7 @@ export function BulkPrintOrderDialog({
   const unitPrice = getPrintOrderUnitPriceMinor(items.length, currency) / 100;
   const total = unitPrice * items.length;
   const bulkTier = getPrintOrderBulkTier(items.length);
+  const nextTier = getNextPrintOrderTier(items.length);
 
   async function handlePay() {
     setSubmitting(true);
@@ -131,13 +137,26 @@ export function BulkPrintOrderDialog({
           ))}
         </div>
 
-        <p className="text-sm text-ink-600">
-          {t('bulkTotal', { count: items.length, total: `${total.toFixed(2)} ${currency.toUpperCase()}` })}
-        </p>
+        <div className="space-y-0.5">
+          <p className="text-sm text-ink-600">
+            {t('bulkTotal', { count: items.length, total: `${total.toFixed(2)} ${currency.toUpperCase()}` })}
+          </p>
+          <p className="text-xs text-ink-500">
+            {t('bulkPerCopy', { price: `${unitPrice.toFixed(2)} ${currency.toUpperCase()}` })}
+          </p>
+        </div>
         {bulkTier && (
           <p className="rounded-lg bg-lagoon-900/30 px-3 py-2 text-xs text-lagoon-300">
             {locale === 'ar' ? bulkTier.label.ar : bulkTier.label.en}
             {bulkTier.freeDelivery && ` — ${t('bulkFreeDelivery')}`}
+          </p>
+        )}
+        {nextTier && items.length > 0 && (
+          <p className="rounded-lg bg-saffron-900/30 px-3 py-2 text-xs text-saffron-300">
+            {t(nextTier.tier.freeDelivery ? 'bulkNextTierNudgeFreeDelivery' : 'bulkNextTierNudge', {
+              count: nextTier.copiesNeeded,
+              price: `${(nextTier.tier.priceMinor[currency] / 100).toFixed(2)} ${currency.toUpperCase()}`,
+            })}
           </p>
         )}
 

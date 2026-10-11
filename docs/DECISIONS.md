@@ -5118,3 +5118,77 @@ columns with the same regex: 0 dirty across the board. **Worth
 rechecking**: re-run that same regex sweep after any future bulk
 content write to this table, rather than assuming a clean source file
 guarantees a clean stored row.
+
+## Subscription prices raised 1.5x to restore pre-8-page margins
+
+**Context**: the 8-page extension (4→6 interior pages) raised
+per-story AI cost by exactly 1.5x ($1.00→$1.50/story), which
+compressed every subscription tier's margin at its original price —
+Starter 82%→72%, Growth 72%→58%, Network 48%→21%. Founder decision:
+raise every tier's price, not only Network's, to fix this.
+
+**Mechanism**: every price (monthly and annual, AED and USD, nursery
+and family tiers alike) was multiplied by the exact same 1.5x the cost
+rose, then rounded to a clean number. This isn't an arbitrary "raise
+prices" call — scaling price by the same factor as cost restores the
+*original* margin percentage exactly, by construction:
+`(1.5P − 1.5C) / 1.5P = (P − C) / P`. Applied uniformly ("for all, not
+only Network" — the founder's own words) rather than picking a
+different target margin per tier.
+
+| Plan | Old monthly | New monthly | Old annual | New annual |
+|---|---|---|---|---|
+| Starter (AED) | 499 | 749 | 4,790 | 7,185 |
+| Growth (AED) | 1,299 | 1,949 | 12,490 | 18,735 |
+| Network (AED) | 3,499 | 5,249 | 33,490 | 50,235 |
+| Starter (USD) | 135 | 199 | 1,299 | 1,949 |
+| Growth (USD) | 349 | 525 | 3,349 | 5,025 |
+| Network (USD) | 949 | 1,425 | 9,109 | 13,665 |
+| Family (USD) | 9 | 14 | 90 | 135 |
+| Family Plus (USD) | 19 | 29 | 190 | 285 |
+
+Verified: new margins land back at ~82%/~72%/~48% for
+Starter/Growth/Network (matching the pre-8-page figures almost
+exactly, since the scaling is exact; the small drift is rounding to
+clean numbers) and ~69%/~65% for Family/Family Plus (slightly better
+than their pre-increase ~89%/~84%, since $9→$14 and $19→$29 both
+rounded up from the exact 1.5x value of $13.50/$28.50).
+
+Applied to both the seed script (`scripts/seed-platform-data.mjs`) and
+directly to the live `plans` table via SQL (project
+`euvatttmismzvfhpleqn`) — read back and confirmed identical across
+all 8 rows. `docs/en/pricing.md` and `docs/en/budget.md` (totals,
+breakeven counts) updated to match; `docs/ar/pricing.md` and
+`docs/ar/budget.md` likewise.
+
+**Not yet done**: no real Stripe Products/Prices exist for these plans
+yet (`plans.stripe_price_id_monthly`/`_annual` — checkout reads a
+pre-created Stripe Price by ID, not `price_data`), so this changed
+only the app's own pricing data, not a live Stripe charge. Whoever
+creates the real Stripe Products before the first paying customer
+needs to create them at these new prices, not the superseded ones.
+
+## Story suggestions: fixed count per period, not per hour
+
+**Context**: founder decision — a story-template suggestion cap
+should reset with the subscription billing period ("10 this month"),
+not act as a sliding-window rate limit ("10 per hour, forever," which
+is what the prior build actually did via `enforceRateLimit` in
+`src/lib/actions/story-suggestions.ts`).
+
+**Fix** (migration `0038_suggestion_quota_per_period.sql`): moved the
+limit into the same `quotas`/`plans` machinery the story-generation
+quota already uses, instead of the Redis/in-memory rate limiter.
+`plans.suggestion_requests_per_month` is the per-plan allowance
+(10/20/30 for Starter/Growth/Network, 3/5 for Family/Family Plus — the
+same numbers the old per-hour map used, just reinterpreted as a
+per-period count); `quotas.suggestions_included_this_period` /
+`suggestions_used_this_period` track it, synced at checkout by
+`sync_quota_to_plan` (0016, extended) alongside the story allowance,
+and both reset together on the same period rollover. A new
+`consume_suggestion_quota` RPC (mirroring `consume_story_quota`
+exactly) replaces the rate-limit check in
+`suggestStoryTemplateAction`. Migration applied directly to the live
+project; all 8 plan rows' `suggestion_requests_per_month` updated to
+match. `docs/en/pricing.md`/`docs/ar/pricing.md`'s "Story suggestions"
+column header changed from "/ hour" to "/ month" accordingly.

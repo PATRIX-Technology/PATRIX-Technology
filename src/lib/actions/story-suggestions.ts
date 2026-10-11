@@ -2,44 +2,8 @@
 
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { getCurrentTenantContext } from '@/lib/domain/session';
-import { enforceRateLimit, RateLimitExceededError } from '@/lib/rate-limit';
-import { getClientIp } from '@/lib/request-ip';
 import type { StorySuggestionStatus } from '@/types/database';
 import type { ActionResult } from './auth';
-
-/**
- * How many suggestions a tenant may submit per hour, keyed by their
- * current plan — a higher-tier subscriber gets a higher cap. Deliberately
- * modest at every tier since this is a feedback form, not core product
- * usage: even the top nursery plan doesn't need a high ceiling. Tenants
- * with no active subscription row yet (checkout not completed, or a plan
- * that's been removed from the `plans` table) get the lowest tier's limit
- * rather than the old flat 10/hour default.
- */
-const SUGGESTION_RATE_LIMIT_BY_PLAN_KEY: Record<string, number> = {
-  family: 3,
-  family_plus: 5,
-  starter: 10,
-  starter_usd: 10,
-  growth: 20,
-  growth_usd: 20,
-  network: 30,
-  network_usd: 30,
-};
-const DEFAULT_SUGGESTION_RATE_LIMIT = 3;
-
-async function getSuggestionRateLimit(
-  supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>,
-  tenantId: string,
-): Promise<number> {
-  const { data } = await supabase
-    .from('subscriptions')
-    .select('plans(key)')
-    .eq('tenant_id', tenantId)
-    .maybeSingle();
-  const planKey = (data?.plans as unknown as { key: string } | null)?.key;
-  return (planKey && SUGGESTION_RATE_LIMIT_BY_PLAN_KEY[planKey]) || DEFAULT_SUGGESTION_RATE_LIMIT;
-}
 
 /**
  * Saves a nursery/family's story-idea suggestion — see
@@ -50,19 +14,29 @@ async function getSuggestionRateLimit(
  * offers afterwards is an optional, submitter-initiated fast path on
  * top of that (founder's own number, no WhatsApp Business API or
  * per-message cost involved), never a substitute for the saved row.
+ *
+ * The submission cap is a fixed number per subscription billing
+ * period (plans.suggestion_requests_per_month, synced into
+ * quotas.suggestions_included_this_period at checkout), not a
+ * sliding-window rate limit — see docs/DECISIONS.md "Story
+ * suggestions: fixed count per period, not per hour". Enforced by
+ * consume_suggestion_quota (migration 0038), the same
+ * check-and-increment pattern already used for story generation
+ * quota.
  */
 export async function suggestStoryTemplateAction(formData: FormData): Promise<ActionResult> {
   const supabase = await createSupabaseServerClient();
   const context = await getCurrentTenantContext(supabase);
   if (!context) return { error: 'Sign in first.' };
 
-  try {
-    const ip = await getClientIp();
-    const limit = await getSuggestionRateLimit(supabase, context.tenantId);
-    await enforceRateLimit(`story-suggestion:${ip}:${context.userId}`, limit, 60 * 60 * 1000);
-  } catch (error) {
-    if (error instanceof RateLimitExceededError) return { error: error.message };
-    throw error;
+  const { data: allowed, error: quotaError } = await supabase.rpc('consume_suggestion_quota', {
+    target_tenant_id: context.tenantId,
+  });
+  if (quotaError) return { error: quotaError.message };
+  if (!allowed) {
+    return {
+      error: "You've used all your story suggestions for this billing period. They reset when your subscription renews.",
+    };
   }
 
   const topic = String(formData.get('topic') ?? '').trim();

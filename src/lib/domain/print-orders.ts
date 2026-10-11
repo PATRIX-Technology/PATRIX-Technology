@@ -15,14 +15,14 @@ export type PrintOrderCurrency = 'aed' | 'usd';
 
 /** Amounts in the smallest currency unit (fils / cents), matching what
  * Stripe's price_data.unit_amount expects directly — no conversion at the
- * call site. Set against a founder-sourced print-vendor quote of AED
- * 45/book (8-page run, not yet a signed contract — see
- * docs/NEEDS_FROM_ME.md) plus card-processing fees, leaving roughly
- * AED 22/book (~32%) margin — see docs/en/pricing.md "Printed copies"
- * for the full bulk-tier ladder and the margin math this is based on. */
+ * call site. Priced at an 80% markup on the founder-sourced AED 45/book
+ * print-vendor quote (8-page run, not yet a signed contract — see
+ * docs/NEEDS_FROM_ME.md): AED 45 x 1.8 = AED 81 — see docs/en/pricing.md
+ * "Printed copies" for the full bulk-tier ladder and the margin math this
+ * is based on. */
 export const PRINT_ORDER_PRICE_MINOR: Record<PrintOrderCurrency, number> = {
-  usd: 1900, // $19.00
-  aed: 6900, // AED 69.00
+  usd: 2200, // $22.00
+  aed: 8100, // AED 81.00
 };
 
 export interface ShippingAddressInput {

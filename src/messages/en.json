@@ -384,7 +384,7 @@
     "orderButton": "Order a printed copy",
     "dialogTitle": "Order a printed copy",
     "currencyLabel": "Currency",
-    "price": { "aed": "AED 69.00", "usd": "$19.00" },
+    "price": { "aed": "AED 81.00", "usd": "$22.00" },
     "fields": {
       "name": "Full name",
       "phone": "Mobile number",

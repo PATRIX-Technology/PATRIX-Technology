@@ -14,11 +14,12 @@ estimates, not quotes.
 | Business licence renewal | 7,000 | As specified by the founder |
 | Vercel Pro (1 seat) | 881 | $20/mo confirmed current rate; usage beyond the included credit bills separately |
 | Supabase Pro (1 project) | 1,102 | $25/mo confirmed current rate; usage beyond the included quota bills separately |
+| Claude subscription (support/engineering/product team) | 960 | AED 80/mo, founder-added this round — the AI tooling behind this app's own build/support work, distinct from the Gemini line below (that's the cost of *generating customer stories*, this is the cost of *building and running the business*) |
 | Domain renewal (.ae) | 150 | AED 120-180/yr across registrars; a generic `.com` runs closer to AED 55/yr |
 | Business email (Google Workspace, 1 user) | 264 | Not yet set up — every proposal/contact document in this repo assumes a real @ownly address |
 | Apple Developer Program | 364 | Only if the iOS app is actually submitted; renews yearly |
 | Bookkeeping, VAT & corporate tax filing | 9,000 | Estimate, not a quote — UAE Corporate Tax (9% above AED 375k) and quarterly VAT filing need an accountant regardless of revenue |
-| **Subtotal, fixed recurring** | **18,761** | |
+| **Subtotal, fixed recurring** | **19,721** | |
 
 ## AI generation — variable, scales with usage
 
@@ -50,9 +51,9 @@ a constant.
 
 | | Annual (AED) |
 |---|---|
-| Fixed recurring (above) | 18,761 |
+| Fixed recurring (above) | 19,721 |
 | AI generation (Year 1 estimate) | 7,500 |
-| **Subtotal, recurring** | **26,261** |
+| **Subtotal, recurring** | **27,221** |
 
 ## One-time — year 1 only
 
@@ -68,22 +69,22 @@ a constant.
 Stripe processing fees, confirmed live: **2.9% + AED 1 per domestic
 UAE card transaction, 3.9% + AED 1 + 1% FX for international cards.**
 This comes out of revenue automatically per transaction, not as a
-separate budget line. At the 70-90% gross margins validated in
+separate budget line. At the ~48-82% gross margins validated in
 `docs/en/pricing.md`, a ~3% processing fee barely moves the number — a
-Growth-tier AED 1,299/mo subscription nets about AED 38 in Stripe fees.
+Growth-tier AED 1,949/mo subscription nets about AED 57 in Stripe fees.
 
 ## Totals
 
 | | AED |
 |---|---|
-| Recurring (every year) | 26,261 |
+| Recurring (every year) | 27,221 |
 | One-time (year 1 only) | 20,092 |
-| 15% contingency buffer | 6,953 |
-| **Year 1 total** | **53,306** |
+| 15% contingency buffer | 7,097 |
+| **Year 1 total** | **54,410** |
 | | |
-| Recurring (every year) | 26,261 |
-| 15% contingency buffer | 3,939 |
-| **Year 2+ ongoing total** | **30,200** |
+| Recurring (every year) | 27,221 |
+| 15% contingency buffer | 4,083 |
+| **Year 2+ ongoing total** | **31,304** |
 
 Year 2+'s recurring line still includes the AED 7,500 AI-generation
 estimate — realistic only if growth stays roughly where Year 1 left
@@ -101,23 +102,22 @@ How many of a single tier, subscribed for a full year, would cover the
 entire Year 1 budget on its own (net of that tier's own AI cost, before
 Stripe fees):
 
-- **Starter**: ~13 nurseries × 12 months
-- **Growth**: ~6 nurseries × 12 months
-- **Network**: ~6 nurseries × 12 months
+- **Starter**: ~8 nurseries × 12 months
+- **Growth**: ~4 nurseries × 12 months
+- **Network**: ~2 nurseries × 12 months
 
-(Recalculated against the corrected AED 53,306 Year 1 total above,
-using the $1.50/story real-world AI cost from `docs/en/pricing.md`.
-Network's breakeven count roughly doubled versus the 4-page-era
-calculation — its gross margin compressed from ~48% to ~21% when the
-story grew from 4 to 6 interior pages, since AI cost scales with volume
-while Network's flat monthly fee doesn't. See "Nursery Partner Program"
-margin note in `docs/en/pricing.md` for the pricing decision this
-raises for the founder before launch.)
+(Recalculated against the AED 54,410 Year 1 total above, using the
+$1.50/story real-world AI cost from `docs/en/pricing.md` and the
+subscription prices raised 1.5x there — see `docs/DECISIONS.md`
+"Subscription prices raised 1.5x to restore pre-8-page margins". Every
+tier's breakeven count dropped sharply from the pre-price-increase
+figures (~13/~6/~6) since the price raise restored each tier's margin
+*and* raised the absolute AED amount of that margin per nursery.)
 
 In practice the mix will vary, and pilot/founding-partner discounts
 (see `docs/en/pricing.md`) mean early months contribute less than full
 price. Track the real number as soon as nurseries are signed: cumulative
-net contribution ÷ 53,306 gives exact progress through Year 1's budget.
+net contribution ÷ 54,410 gives exact progress through Year 1's budget.
 
 See also `docs/en/pricing.md` for what's charged and the nursery
 referral program these numbers assume.

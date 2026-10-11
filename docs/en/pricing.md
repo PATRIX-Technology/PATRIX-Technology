@@ -54,30 +54,36 @@ from (
 ```
 
 The 8-page extension raised per-story AI cost by 50% (4→6 images),
-which compresses every tier's margin at its original price: Starter
-from ~82% to ~72% (still healthy), Growth from ~72% to ~58%, and
-**Network from ~48% to ~21%** — the last one because AI cost scales
-with volume while the platform fee doesn't, and now does so at a
-higher per-story rate. Network in particular needs a pricing decision
-before launch: either raise its monthly price, cap/reduce its story
-quota, or accept the thinner margin as the cost of serving the
-highest-volume tier — flagging this for the founder rather than
-deciding it here.
+which would have compressed every tier's margin at its original
+price: Starter from ~82% to ~72%, Growth from ~72% to ~58%, and
+Network from ~48% to ~21% — the last one hit hardest because AI cost
+scales with volume while a flat monthly fee doesn't.
+
+**Resolved: every subscription price raised by the same 1.5× the AI
+cost rose, across every tier** (nursery and family alike, not only
+Network — a founder decision, not something decided here). Scaling
+price by the exact same factor the cost rose restores each tier's
+*original* margin percentage exactly, by construction:
+`(1.5P − 1.5C) / 1.5P = (P − C) / P`. The new prices are in the table
+below; see `docs/DECISIONS.md` "Subscription prices raised 1.5x to
+restore pre-8-page margins" for the full numbers and the live
+`plans` table update.
 
 ## B2B — nurseries & schools
 
-| Plan | Monthly | Annual (≈2 months free) | Stories / month | Seats included | Story suggestions / hour | COGS/mo | Gross margin | Best for |
+| Plan | Monthly | Annual (≈2 months free) | Stories / month | Seats included | Story suggestions / month | COGS/mo | Gross margin | Best for |
 |---|---|---|---|---|---|---|---|---|
-| **Starter** | AED 499 | AED 4,790 | 25 | 3 | 10 | AED 138 | ~72% | A single nursery branch piloting the product |
-| **Growth** | AED 1,299 | AED 12,490 | 100 | 10 | 20 | AED 551 | ~58% | A multi-branch nursery or a school |
-| **Network** | AED 3,499 | AED 33,490 | 500 | 50 | 30 | AED 2,753 | ~21% | A nursery group, hospital, or bank running a campaign across many locations |
+| **Starter** | AED 749 | AED 7,185 | 25 | 3 | 10 | AED 138 | ~82% | A single nursery branch piloting the product |
+| **Growth** | AED 1,949 | AED 18,735 | 100 | 10 | 20 | AED 551 | ~72% | A multi-branch nursery or a school |
+| **Network** | AED 5,249 | AED 50,235 | 500 | 50 | 30 | AED 2,753 | ~48% | A nursery group, hospital, or bank running a campaign across many locations |
 
-"Story suggestions / hour" is the built, live rate limit
-(`SUGGESTION_RATE_LIMIT_BY_PLAN_KEY` in
-`src/lib/actions/story-suggestions.ts`) on how often a tenant can
-submit a new story-theme idea for Ownly to consider adding to the
-template library — a real, already-shipped feature worth naming in the
-offer, not a roadmap item.
+Prices raised from the original AED 499/1,299/3,499 — see "Cost basis"
+above for why. "Story suggestions / month" is a fixed number per
+billing period (`plans.suggestion_requests_per_month`, enforced by
+`consume_suggestion_quota` — migration 0038), the same quota mechanism
+as the story allowance itself, **not** a per-hour rate limit like an
+earlier build of this feature used — see `docs/DECISIONS.md` "Story
+suggestions: fixed count per period, not per hour".
 
 ### Self-serve vs. managed
 
@@ -85,17 +91,17 @@ Every tier above is **self-serve** (nursery staff use the dashboard
 themselves) by default. A **managed-service** add-on — Ownly's team
 creates and submits stories against a class roster and theme calendar
 for the nursery to approve — is priced as a flat **+40% uplift** on the
-base plan (e.g. Growth becomes AED 1,819/mo). Margin stays above 60%
+base plan (e.g. Growth becomes AED 2,729/mo). Margin stays above 60%
 even with the added labour.
 
 ### Launch offers
 
 - **Founding partner** — 50% off for 3 months, locked to a 12-month
   term, for the first 10 nurseries who sign. Add **5 free printed
-  copies** (at AED 69 standalone value, AED 225 at cost — a small,
-  concrete trust-builder for a first customer who has never seen a
-  physical book yet) to any founding-partner nursery that also
-  commits to an annual plan.
+  copies** (at AED 81 standalone value each, AED 225 total print cost
+  to us — a small, concrete trust-builder for a first customer who has
+  never seen a physical book yet) to any founding-partner nursery that
+  also commits to an annual plan.
 - **Referral credit** — a manual sales concession: a nursery that
   refers another paying nursery gets 1 month free, applied by hand.
   Distinct from the automated "Invite & earn free stories" mechanic
@@ -126,10 +132,13 @@ even with the added labour.
   below — this one pays in stories, to whoever did the inviting
   (nursery or family alike), not cash to a nursery specifically.
 - **Family** (built — `plans.key = 'family'`, `audience = 'family'`):
-  $9/month for 1 story/month — cheaper per-story than a one-off
-  purchase would be, for recurring use. 3 story-template suggestions/hour.
-- **Family Plus** (built — `plans.key = 'family_plus'`): $19/month for
-  3 stories/month. 5 story-template suggestions/hour.
+  $14/month for 1 story/month — cheaper per-story than a one-off
+  purchase would be, for recurring use. 3 story-template
+  suggestions/month. Raised from $9, same 1.5× reasoning as the
+  nursery tiers above — family's per-story AI cost rose the same way.
+- **Family Plus** (built — `plans.key = 'family_plus'`): $29/month
+  (raised from $19) for 3 stories/month. 5 story-template
+  suggestions/month.
 
 **Why this is monthly, not a one-off pack**: every plan here — family
 and nursery alike — is a story *allowance that resets each period*,
@@ -169,9 +178,9 @@ market/competitor data for nurseries outside the UAE:
 
 | Tier | AED/mo | USD/mo | AED/yr | USD/yr |
 |---|---|---|---|---|
-| Starter | 499 | 135 | 4,790 | 1,299 |
-| Growth | 1,299 | 349 | 12,490 | 3,349 |
-| Network | 3,499 | 949 | 33,490 | 9,109 |
+| Starter | 749 | 199 | 7,185 | 1,949 |
+| Growth | 1,949 | 525 | 18,735 | 5,025 |
+| Network | 5,249 | 1,425 | 50,235 | 13,665 |
 
 Still worth resolving once a merchant-of-record setup is chosen: which
 entity is actually the seller of record for a USD sale to a nursery
@@ -193,24 +202,30 @@ underlying subscription — a printed copy's own price only needs to
 clear the print cost itself plus payment fees, not re-absorb the
 AI cost too.
 
-| Quantity | Price / book | Notes |
-|---|---|---|
-| 1 (standalone) | **AED 69** (≈$19) | Default checkout price — replaces the earlier AED 109/$29 placeholder |
-| 10-49 | **AED 59** | Nursery class-set pricing |
-| 50-99 | **AED 54** | Nursery multi-class pricing |
-| 100+ | **AED 49** + **free delivery** | The founder's original "AED 50" instinct, delivered as the genuine best rate at real volume — a full graduation/term-end print run for a nursery |
+Standalone price set at an **80% markup** on the AED 45 cost (founder
+decision): AED 45 × 1.8 = **AED 81**. Bulk tiers below keep the same
+relative discount curve the old AED 59/54/49 tiers had off the old
+AED 69 standalone price, just rescaled onto the new AED 81 base.
 
-Margin check at the standard AED 69 price: 69 − 45 (print) − ~2 (card
-fees) ≈ **AED 22/book (~32%)** — healthy. At the AED 49 bulk-100+ tier
-it compresses to ~AED 4/book before delivery cost, which is why free
-delivery is viable there (a single bulk shipment's per-unit delivery
-cost collapses at 100+ copies) but would not be at smaller quantities —
-don't extend free delivery below the 100-book tier without re-costing
-delivery first.
+| Quantity | Price / book | Markup on cost | Notes |
+|---|---|---|---|
+| 1 (standalone) | **AED 81** (≈$22) | 80% | Default checkout price — replaces the earlier AED 69/$19 price |
+| 10-49 | **AED 69** | 53% | Nursery class-set pricing |
+| 50-99 | **AED 63** | 40% | Nursery multi-class pricing |
+| 100+ | **AED 58** + **free delivery** | 29% | A full graduation/term-end print run for a nursery |
+
+Margin check at the standard AED 81 price: 81 − 45 (print) − ~2 (card
+fees) ≈ **AED 34/book (~42% gross margin)** — healthy, and better than
+the old AED 69 price's ~32%. At the AED 58 bulk-100+ tier it's ~AED
+13/book before delivery cost (up from ~AED 4/book at the old AED 49
+tier), which is why free delivery is viable there (a single bulk
+shipment's per-unit delivery cost collapses at 100+ copies) but would
+not be at smaller quantities — don't extend free delivery below the
+100-book tier without re-costing delivery first.
 
 **Not yet built**: automated bulk/tiered pricing in the Stripe checkout
 flow (`PrintOrderDialog.tsx`/`PRINT_ORDER_PRICE_MINOR` only know the
-single-item AED 69/$19 price today). A nursery ordering 10+ books
+single-item AED 81/$22 price today). A nursery ordering 10+ books
 currently goes through the WhatsApp flow (Phase F), where the bulk
 price is applied manually by whoever handles the order — exactly the
 kind of judgement call that flow was built for, not a gap to treat as
@@ -264,15 +279,14 @@ gracefully instead of as a mid-month surprise.
 ## Nursery Partner Program (referral commission)
 
 Each subscribed nursery can get a unique referral link/QR code; a
-parent who buys a family story pack or subscription through it earns
-the nursery a commission, paid monthly, on top of — not instead of —
-their own subscription. This turns every nursery customer into a sales
-channel for the family product. At a 20% commission rate: 1 story pack
-($15) → nursery earns AED 11, your margin ~70%; 6 story pack ($69) →
-nursery earns AED 51, margin ~67%; Family monthly ($9/mo, 1 story) →
-nursery earns AED 7/mo recurring, margin ~63%. All figures use the
-$1.50/story COGS from the cost basis above (updated for the 6-image
-story), not the $0.606 theoretical minimum.
+parent who subscribes to a family plan through it earns the nursery a
+commission, paid monthly, on top of — not instead of — their own
+subscription. This turns every nursery customer into a sales channel
+for the family product. At a 20% commission rate: Family ($14/mo, 1
+story) → nursery earns AED 10/mo recurring, your margin ~69%; Family
+Plus ($29/mo, 3 stories) → nursery earns AED 21/mo recurring, margin
+~65%. All figures use the $1.50/story COGS from the cost basis above
+(updated for the 6-image story), not the $0.606 theoretical minimum.
 
 **Framing note**: describe this to nurseries as "your share" or
 "partner commission" — never as a percentage of "our costs after AI

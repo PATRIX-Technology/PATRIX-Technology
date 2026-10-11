@@ -219,6 +219,11 @@ export interface Plan {
   currency: string;
   vat_inclusive: boolean;
   stories_per_month: number;
+  /** Fixed number of story-template suggestions a tenant on this plan may
+   * submit per billing period — synced into quotas.suggestions_included_this_period
+   * at checkout (sync_quota_to_plan, 0038). Not a rate limit; resets with
+   * the billing period like stories_per_month does. */
+  suggestion_requests_per_month: number;
   seats_included: number;
   stripe_price_id_monthly: string | null;
   stripe_price_id_annual: string | null;
@@ -261,6 +266,8 @@ export interface Quota {
   tenant_id: string;
   stories_included_this_period: number;
   stories_used_this_period: number;
+  suggestions_included_this_period: number;
+  suggestions_used_this_period: number;
   period_start: string;
   period_end: string;
   hard_cap: boolean;

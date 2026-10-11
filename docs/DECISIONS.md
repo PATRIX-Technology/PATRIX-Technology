@@ -5806,9 +5806,55 @@ Decks" via a quick text-snippet read rather than assuming the original
 - **`Ownly_Data_Protection_Partner_Overview.pptx` is current** —
   privacy/PDPL/safeguarding content only, no pricing or page-count
   claims to go stale.
-- Not yet checked: `Ownly_Compliance_Legal_QA_Status.pptx` and
-  `Ownly_Data_Safeguarding_Overview-1.pptx` in the "Internal" subfolder
-  (legal/compliance status, not pricing/features — lower priority given
-  what the founder actually asked about), and `V1-Ownly_Pilot_Deck*`
-  (looks like a superseded short draft, not factually stale, just
-  missing slides the full TEMPLATE decks have).
+- Not yet checked: `V1-Ownly_Pilot_Deck*` (looks like a superseded short
+  draft, not factually stale, just missing slides the full TEMPLATE
+  decks have), and the four legal-boilerplate docs in "04 Legal & Terms"
+  (Cookie Policy EN/AR, ROPA, DPIA) — spot-checked their framing, found
+  nothing pricing/feature-dated, didn't do a full line-by-line read.
+
+## Full Ownly Drive sweep: every subfolder, prompted by the founder asking directly
+
+Widened the check to every subfolder under the Ownly root (14 folders)
+rather than stopping at the two already found stale. Findings:
+
+**Fixed:**
+- `README - How to add real samples here` (11 Product Samples) claimed
+  the folder was "currently empty" — it isn't; it holds the same two
+  stale 4-page samples (Amira EN, Lara AR) flagged earlier this session.
+  Rewrote to say plainly that they're outdated and why, rather than
+  leaving a description that doesn't match what's actually in the
+  folder.
+
+**Checked, confirmed current, no changes needed:** Pricing &
+Subscriptions & Launch Strategy doc, Master Backlog & Roadmap, Next
+Steps Plan, Budget & Spend Plan (its $50/mo Gemini cap note matches the
+live `global_spend_cap` row exactly), Sales Commission Agreement
+Template (rates are static 12/5/12 config, not tied to product pricing),
+Marketing & Social Plan (all the seasonal story themes it lists are
+now actually built), Meydan Registration Checklist, B2B Nursery Service
+Agreement Template (prices are bracketed placeholders referencing "the
+current Pricing document," never hardcoded — can't go stale by
+design), Logistics & Print Fulfilment Agreement template (correctly
+scoped as a future bulk-vendor contract, doesn't claim anything about
+today's availability), Data Safeguarding Overview pptx.
+
+**Found, not a correction but a real gap worth flagging directly to the
+founder:** `Ownly_Compliance_Legal_QA_Status.pptx` (Internal subfolder)
+states plainly that a real print/logistics vendor must be **contracted
+before fulfilling any real printed-storybook order** — consistent with
+`docs/en/pricing.md`'s own note that the AED 45/book print cost is "a
+founder-sourced vendor quote, not yet a signed contract." This is a
+genuine, still-open operational dependency, not stale information.
+
+It sits in tension with how this session just described printed copies
+in the internal strategy deck and the sales rep reference ("Already
+Live... no print partner needed") — that framing is accurate about the
+*software*: the Stripe checkout, bulk-tier pricing, and `print_orders`
+row all work today. It does not mean Ownly can yet physically produce
+and ship a book if a real customer pays for one. A sales rep repeating
+"no print partner needed" to a nursery, verbatim, could set up a
+real fulfillment failure the moment someone actually pays. Flagged to
+the founder rather than silently patched into those two decks, since
+it's a live business decision (ship with a manual/ad-hoc fulfillment
+workaround vs. hold off marketing printed copies until a vendor is
+signed), not a wording fix.

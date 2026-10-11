@@ -5687,3 +5687,58 @@ exported from the live app, not a text edit) — to be flagged to the
 founder rather than silently regenerated, since the PDF regeneration
 needs either his own action or a different technical approach than the
 Drive-doc edits above.
+
+## Internal strategy pptx fixed locally; Drive re-upload hit a real tool limit
+
+`Ownly_Internal_Strategy_Deck-9.pptx` ("01 Slides & Pitch Decks/Internal")
+had the same class of staleness as the two Google Docs above, concentrated
+in cost/pricing figures and one roadmap overclaim:
+
+- Cost-per-story stat and the "golden pricing rule" floor (AED 3.67 /
+  AED 12+) were pre-8-page-extension numbers — updated to AED 5.51 /
+  AED 18+, matching the current $1.50/story cost basis.
+- B2C pricing ($9–$19/mo) and the B2B ladder (AED 499/1,299/3,499)
+  updated to the current post-1.5x-scale prices (Family/Family Plus
+  $14/$29, Starter/Growth/Network AED 749/1,949/5,249), in both the
+  "how we make money" summary slide and the two full pricing tables
+  (UAE and international draft).
+- Removed the "Single Story (draft, not yet live)" row/line from both
+  pricing tables — this product doesn't exist anywhere in current
+  pricing docs; it was carried over from an earlier planning pass and
+  never built or scoped since. Table XML surgery (row + graphicFrame
+  height) rather than a text-only edit, verified by re-rendering the
+  deck to images.
+- "Seasonal stories like birthdays/Eid are roadmap, not built" —
+  Birthday, Eid, Ramadan, and Graduation templates shipped this session
+  (Phase D); rewrote to say so.
+- The Network founding-partner quota-halving mechanism (live pricing
+  logic, not reflected anywhere in the deck) added to both the B2B
+  table's footnote and the launch-offer-economics slide, alongside the
+  5-free-printed-copies founding-partner bonus.
+- "Printed / Physical Storybooks ... via a future B2B print partner.
+  Longer-term, no partner selected yet." — flatly wrong now; printed
+  copies are live today via Stripe Checkout with automated bulk-tier
+  pricing, no partner dependency. Rewrote the slide to mark this item
+  "Already Live" and adjusted its surrounding framing (the slide's
+  closing caution line previously implied nothing on it was built yet).
+
+Fixed via direct OOXML editing (unzip → edit `ppt/slides/slideN.xml` →
+rezip), validated with the pptx skill's `validate.py` against the
+original, and visually verified by rendering every changed slide to an
+image — no overflow, no leftover empty table row, no broken layout.
+
+**Could not push the corrected file back into the Drive folder.** The
+Drive connector's only content-upload path (`create_file`) takes the
+whole file inline as base64 text; a 60KB `.pptx` blows up to a base64
+payload of roughly 80-90K tokens, which exceeds what a single tool
+result can return to me to read back (hard capped around 25K tokens)
+and what I could reliably hand-transcribe across multiple partial reads
+without risking silent corruption of a binary file — a wrong byte
+anywhere in a base64 stream breaks the archive. This is a real
+limitation of the available tools, not something to force around by
+guessing at the missing bytes. Renamed the live Drive file to
+`OLD-...` and back to test an in-place swap, confirmed it wasn't
+viable, left the original Drive file exactly as it was, and delivered
+the corrected `.pptx` directly to the founder to re-upload himself (or
+for a future session to retry, if a more suitable upload path becomes
+available). Documented here so this isn't silently dropped.

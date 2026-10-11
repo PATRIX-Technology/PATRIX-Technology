@@ -154,7 +154,7 @@
       {
         "order": 5,
         "text": "بعد أسبوع، {v:smiled} {child_name} ابتسامة عريضة لـ{mascot}، لتظهر صف أسنان لامع بالكامل. هتفت {mascot}: «لم تبق ولا حشرة سكر واحدة!» وصفقت كفها بكف{ps} بفرح.",
-        "image_prompt": "شخصية {child_name} تبتسم ابتسامة عريضة لتُظهر أسنانا لامعة ونظيفة، الثعلب الكرتوني يصفق بحماس، فصل حضانة مبهج، أسلوب رسوم كتاب قصص."
+        "image_prompt": "شخصية {child_name} تبتسم ابتسامة عريضة لتظهر أسنانا لامعة ونظيفة، الثعلب الكرتوني يصفق بحماس، فصل حضانة مبهج، أسلوب رسوم كتاب قصص."
       },
       {
         "order": 6,
@@ -445,7 +445,7 @@
       },
       {
         "order": 6,
-        "text": "Soon, every child at nursery sang the handwashing song before snack time, bubbles sparkling on every hand. {child_name} wore a tiny paper cape, proud to be the nursery's very first Bubble Hero.",
+        "text": "Soon, every child at nursery sang the handwashing song before snack time, bubbles sparkling on every hand. {child_name} wore a tiny paper cape, proud to be the first Bubble Hero at nursery.",
         "image_prompt": "A group of cartoon children washing hands together and singing, {child_name}'s avatar wearing a small paper cape, cartoon fox mascot cheering, cheerful nursery classroom, storybook illustration style."
       }
     ]
@@ -481,7 +481,7 @@
       },
       {
         "order": 5,
-        "text": "في الأسبوع التالي، أسست {mascot} «نادي أبطال الفقاعات» في الحضانة، و{v:was_first_member} {child_name}. ومعا، علّما الصغار أغنية غسل اليدين السرية.",
+        "text": "في الأسبوع التالي، أسست {mascot} «نادي أبطال الفقاعات» في الحضانة، و{v:was_first_member} {child_name}. ومعا، علما الصغار أغنية غسل اليدين السرية.",
         "image_prompt": "الثعلب الكرتوني وشخصية {child_name} يعلمان أطفالا أصغر أغنية غسل اليدين عند مغاسل الحضانة، ملصق صغير مكتوب عليه «نادي أبطال الفقاعات» على الحائط، أسلوب رسوم كتاب قصص."
       },
       {
@@ -999,7 +999,7 @@
       },
       {
         "order": 2,
-        "text": "{mascot} lined up the class and squeezed {child_name}'s hand. \"You've all worked so hard,\" {mascot} said with a warm smile.",
+        "text": "{mascot} lined up the class and gave {child_name} an encouraging smile. \"You've all worked so hard,\" {mascot} said with a warm smile.",
         "image_prompt": "{mascot} the fox standing proudly beside a line of children in graduation caps, {child_name}'s avatar among them, classroom decorated for graduation, storybook illustration style."
       },
       {
@@ -1040,7 +1040,7 @@
       },
       {
         "order": 2,
-        "text": "رتبت {mascot} صف الأطفال وضغطت على يد {child_name} بلطف. قالت {mascot} بابتسامة دافئة: «لقد عملتم جميعا بجد كبير!»",
+        "text": "رتبت {mascot} صف الأطفال وابتسمت لـ{child_name} ابتسامة مشجعة. قالت {mascot} بابتسامة دافئة: «لقد عملتم جميعا بجد كبير!»",
         "image_prompt": "{mascot} تقف بفخر بجانب صف من الأطفال يرتدون قبعات التخرج، شخصية {child_name} بينهم، فصل مزين للتخرج، أسلوب رسوم كتاب قصص."
       },
       {

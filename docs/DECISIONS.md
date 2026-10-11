@@ -5490,3 +5490,52 @@ The single-child `ConsentPanel.tsx` already had a share mechanism (task
 narrower, more reliable text-link share for the bulk case specifically
 (desktop browsers commonly lack file-sharing via `navigator.share`,
 which `wa.me` doesn't need).
+
+## Fixed: native_review_status gate wrongly applied to English templates (3 places)
+
+**Caught live**: a real nursery test account with an already-approved
+English `healthy_eating` story showed "No approved themes are available
+in this child's language yet." on the create-story form — zero themes,
+for an English-preferring child, in a tenant that had successfully
+created an English story before. Root cause, confirmed directly against
+the live DB:
+
+```
+select locale, native_review_status, count(*) from story_theme_templates group by 1,2;
+ en | draft    | 13
+ ar | reviewed | 13
+```
+
+Every English template row has always been `native_review_status =
+'draft'` — English was never put through the native-review process (see
+"Arabic native review pass" above); the field is inert for English rows
+by design, and the actual runtime gate
+(`assertTemplateUsable` in `src/lib/domain/templates.ts`) correctly only
+checks it for `locale === 'ar'`. Three places in the app disagreed with
+that gate and checked `native_review_status` without the locale guard,
+each silently breaking for every English-preferring child:
+
+1. `children/[childId]/page.tsx` (the single-child create-story form) —
+   introduced in this same session's "Bilingual template names in the
+   story picker" fix, by checking "whichever locale the child prefers"
+   instead of always checking the Arabic row. This is what the
+   screenshot caught.
+2. `children/page.tsx` (bulk theme picker) — pre-existing, from the
+   original Phase E build: filtered at the SQL level on
+   `native_review_status = 'reviewed'` across both locales, so no
+   English row was ever fetched at all. Themes still appeared (from the
+   Arabic rows), but with blank/Arabic-only names for an English-UI
+   nursery owner.
+3. `generateStoriesBulkAction` in `src/lib/actions/stories.ts` (actually
+   creating the bulk stories) — pre-existing, same bug: checked the
+   selected template's `native_review_status` regardless of its locale,
+   so submitting the bulk-generate form for an English child failed
+   every time with "This theme is not yet available in English" — a
+   false error, since English was never meant to need this gate at all.
+
+All three now check `row.locale === 'ar'` (or `template.locale === 'ar'`)
+before looking at `native_review_status`, matching `assertTemplateUsable`
+exactly. #2 and #3 were real, user-facing bugs independent of anything
+changed in this session — found by auditing every other use of this
+field once #1 turned out to be a regression, rather than assuming the
+rest of the codebase was fine.

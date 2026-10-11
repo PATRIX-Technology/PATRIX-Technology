@@ -26,26 +26,40 @@ export default async function ChildrenPage({ params }: { params: { locale: strin
   // single-child create-story form.
   const { data: templateRows } = await supabase
     .from('story_theme_templates')
-    .select('theme_key, locale, title, category')
+    .select('theme_key, locale, title, category, native_review_status')
     .eq('is_active', true)
-    .eq('native_review_status', 'reviewed');
+    .in('locale', ['en', 'ar']);
   interface ThemeOptionDraft {
     themeKey: string;
     titleEn?: string;
     titleAr?: string;
     category: string;
+    reviewed: boolean;
   }
   const themeOptionsByKey = new Map<string, ThemeOptionDraft>();
   for (const row of templateRows ?? []) {
     const existing: ThemeOptionDraft =
-      themeOptionsByKey.get(row.theme_key) ?? { themeKey: row.theme_key, category: row.category };
+      themeOptionsByKey.get(row.theme_key) ?? { themeKey: row.theme_key, category: row.category, reviewed: true };
     if (row.locale === 'en') existing.titleEn = row.title;
     if (row.locale === 'ar') existing.titleAr = row.title;
+    // Always check the Arabic row specifically -- matches
+    // assertTemplateUsable's actual gate (src/lib/domain/templates.ts:
+    // locale === 'ar' && native_review_status !== 'reviewed'). English
+    // rows' native_review_status is inert -- filtering at the SQL level
+    // on native_review_status = 'reviewed' (the previous version of this
+    // query) silently excluded every English row from ever being fetched
+    // at all, since every English row in the live DB is 'draft' -- so
+    // an English-UI nursery owner saw Arabic-only theme names in the
+    // bulk picker. Same root cause as the single-child create-story form
+    // fix -- see docs/DECISIONS.md.
+    if (row.locale === 'ar' && row.native_review_status !== 'reviewed') {
+      existing.reviewed = false;
+    }
     themeOptionsByKey.set(row.theme_key, existing);
   }
-  const themeOptions = Array.from(themeOptionsByKey.values()).sort((a, b) =>
-    (a.titleEn ?? a.titleAr ?? '').localeCompare(b.titleEn ?? b.titleAr ?? ''),
-  );
+  const themeOptions = Array.from(themeOptionsByKey.values())
+    .filter((opt) => opt.reviewed)
+    .sort((a, b) => (a.titleEn ?? a.titleAr ?? '').localeCompare(b.titleEn ?? b.titleAr ?? ''));
 
   return (
     <div>

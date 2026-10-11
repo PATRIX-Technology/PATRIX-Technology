@@ -394,7 +394,17 @@ export async function generateStoriesBulkAction(
     }
 
     const template = templatesByLocale.get(child.preferred_language);
-    if (!template || template.native_review_status !== 'reviewed') {
+    // Only an Arabic template is actually gated on native_review_status
+    // -- see assertTemplateUsable in src/lib/domain/templates.ts and
+    // docs/DECISIONS.md. Every English template row in the live DB is
+    // 'draft' (English was never put through this review process), so
+    // checking it regardless of locale (the previous version of this
+    // check) silently failed bulk generation for every English-
+    // preferring child, every time, with no way to fix it short of
+    // marking English templates 'reviewed' too -- which would have been
+    // fixing the data to work around a check that was wrong to begin
+    // with.
+    if (!template || (template.locale === 'ar' && template.native_review_status !== 'reviewed')) {
       results.push({
         childId,
         childName: child.first_name,

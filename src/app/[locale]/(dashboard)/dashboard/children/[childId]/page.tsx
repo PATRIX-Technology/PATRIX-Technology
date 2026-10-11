@@ -68,10 +68,17 @@ export default async function ChildDetailPage({
     if (row.locale === child.preferred_language) entry.id = row.id;
     if (row.locale === 'en') entry.titleEn = row.title;
     if (row.locale === 'ar') entry.titleAr = row.title;
-    // Only the locale actually offered to this child has to clear native
-    // review -- see assertTemplateUsable in src/lib/domain/templates.ts,
-    // which gates locale === 'ar' only; English rows are inert here too.
-    if (row.locale === child.preferred_language && row.native_review_status !== 'reviewed') {
+    // Always check the Arabic row specifically, matching the actual
+    // runtime gate (assertTemplateUsable in src/lib/domain/templates.ts:
+    // `locale === 'ar' && native_review_status !== 'reviewed'`). English
+    // rows' native_review_status is inert -- every English row in the
+    // live DB is 'draft' (English was never put through this review
+    // process), so gating on "whichever locale the child prefers" (the
+    // previous, buggy version of this check) blocked every template for
+    // every English-preferring child, full stop. Caught from a live
+    // screenshot: "Create a story" showing zero themes for a child whose
+    // tenant already had an approved English story.
+    if (row.locale === 'ar' && row.native_review_status !== 'reviewed') {
       entry.reviewed = false;
     }
     templatesByTheme.set(row.theme_key, entry);

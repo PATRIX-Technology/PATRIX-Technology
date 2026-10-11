@@ -30,13 +30,24 @@ const templates = raw.map((row, index) => ({
 const PRONOUNS: Pronoun[] = ['she', 'he'];
 const LEFTOVER_TOKEN = /\{[a-z_:]+\}/i;
 
-// Phase D (docs/DECISIONS.md) added these 4 themes in draft — written to a
-// high standard but not yet run through the same native-speaker review gate
-// every other template here has cleared. Everything else about them (schema,
-// token resolution, the review gate itself) is still checked below exactly
-// like every other template; only the "is it reviewed yet" assertion treats
-// them differently.
+// The 8-page extension (docs/DECISIONS.md "8-page structure: extending
+// every template") appended 2 new, not-yet-native-reviewed pages to every
+// theme, including the 9 that had already cleared review at 4 pages — so
+// every theme is back in draft until a native speaker reviews the new
+// Arabic pages 5-6. Everything else about them (schema, token resolution,
+// the review gate itself) is still checked below exactly like every other
+// template; only the "is it reviewed yet" assertion treats them
+// differently.
 const PENDING_NATIVE_REVIEW_THEMES = new Set([
+  'healthy_eating',
+  'brushing_teeth',
+  'first_day_school',
+  'new_sibling',
+  'honesty',
+  'hand_washing',
+  'saving_money',
+  'national_day_gratitude',
+  'donut_maker',
   'ramadan_reflection',
   'eid_celebration',
   'birthday_wishes',

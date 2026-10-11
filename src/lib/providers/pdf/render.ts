@@ -68,8 +68,10 @@ const WATERMARK_TEXT_COLOR = rgb(0.996, 0.996, 0.996);
 
 /**
  * Renders a full print-ready PDF: a cover page, one page per story page
- * (illustration full-bleed), and a back page — 6 pages total for the
- * current 4-interior-page template length. A bare interior-pages-only
+ * (illustration full-bleed), and a back page — the page count is always
+ * the template's interior-page count plus 2 (8 pages for today's
+ * 6-interior-page templates); this loop never hardcodes a total. A bare
+ * interior-pages-only
  * PDF (no cover/back) was the deliberate design for a long time — see
  * docs/DECISIONS.md "PDF cover/dedication page removed" for why, and
  * "6-page structure: cover + back page" for why that was revisited: a

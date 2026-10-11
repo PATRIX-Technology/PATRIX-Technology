@@ -46,7 +46,7 @@ const CAPTION_TEXT_COLOR = '#241c16';
  * show the Ownly logo in their own header, so repeating it as a badge
  * on top of the illustration read as a sticker, not a frame. Deliberately
  * its own small state machine (not a full carousel library) since it
- * only ever needs four pages and prev/next/dot navigation — see
+ * only ever needs a handful of pages and prev/next/dot navigation — see
  * docs/DECISIONS.md "Real sample stories generated for the landing/home
  * page carousel".
  *

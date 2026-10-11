@@ -23,19 +23,21 @@ estimates, not quotes.
 ## AI generation — variable, scales with usage
 
 Unlike the line items above, this isn't a subscription with a fixed
-price — it's metered per story at the real **$1.00/story** cost
-validated in `docs/en/pricing.md`. An earlier version of this budget
-used a flat AED 20,000/year placeholder here; that was an
+price — it's metered per story at the real **$1.50/story** cost
+validated in `docs/en/pricing.md` (updated from $1.00/story when the
+story's interior page count grew from 4 to 6 — see `docs/DECISIONS.md`
+"8-page structure: extending every template"). An earlier version of
+this budget used a flat AED 20,000/year placeholder here; that was an
 unvalidated round number, not a calculation, and overstated realistic
-Year 1 usage by roughly 4-5x. Built bottoms-up instead:
+Year 1 usage even at the current cost basis. Built bottoms-up instead:
 
 | Phase | Stories | AI cost |
 |---|---|---|
-| Free pilots (≈5 pilots, ~20-25 children each) | ≈100-150 | ≈$100-150 |
-| Ramp to 3-5 paying nurseries by year end (Starter/Growth mix) | ≈900-1,000 | ≈$900-1,000 |
-| **Realistic Year 1 total** | **≈1,000-1,100** | **≈$1,000-1,100 (AED 3,700-4,000)** |
+| Free pilots (≈5 pilots, ~20-25 children each) | ≈100-150 | ≈$150-225 |
+| Ramp to 3-5 paying nurseries by year end (Starter/Growth mix) | ≈900-1,000 | ≈$1,350-1,500 |
+| **Realistic Year 1 total** | **≈1,000-1,100** | **≈$1,500-1,650 (AED 5,510-6,060)** |
 
-**Budgeted line: AED 5,000** — the bottoms-up estimate plus headroom
+**Budgeted line: AED 7,500** — the bottoms-up estimate plus headroom
 for pilots that run longer or regenerate more pages than expected.
 This is a *planning* number, separate from the *safety cap* you set in
 Google AI Studio (`aistudio.google.com/spend`), which should stay
@@ -49,8 +51,8 @@ a constant.
 | | Annual (AED) |
 |---|---|
 | Fixed recurring (above) | 18,761 |
-| AI generation (Year 1 estimate) | 5,000 |
-| **Subtotal, recurring** | **23,761** |
+| AI generation (Year 1 estimate) | 7,500 |
+| **Subtotal, recurring** | **26,261** |
 
 ## One-time — year 1 only
 
@@ -74,16 +76,16 @@ Growth-tier AED 1,299/mo subscription nets about AED 38 in Stripe fees.
 
 | | AED |
 |---|---|
-| Recurring (every year) | 23,761 |
+| Recurring (every year) | 26,261 |
 | One-time (year 1 only) | 20,092 |
-| 15% contingency buffer | 6,578 |
-| **Year 1 total** | **50,431** |
+| 15% contingency buffer | 6,953 |
+| **Year 1 total** | **53,306** |
 | | |
-| Recurring (every year) | 23,761 |
-| 15% contingency buffer | 3,564 |
-| **Year 2+ ongoing total** | **27,325** |
+| Recurring (every year) | 26,261 |
+| 15% contingency buffer | 3,939 |
+| **Year 2+ ongoing total** | **30,200** |
 
-Year 2+'s recurring line still includes the AED 5,000 AI-generation
+Year 2+'s recurring line still includes the AED 7,500 AI-generation
 estimate — realistic only if growth stays roughly where Year 1 left
 it. If the nursery base has grown by then (which is the goal), rerun
 the AI generation calculation above against actual signed nurseries
@@ -99,17 +101,23 @@ How many of a single tier, subscribed for a full year, would cover the
 entire Year 1 budget on its own (net of that tier's own AI cost, before
 Stripe fees):
 
-- **Starter**: ~10 nurseries × 12 months
-- **Growth**: ~5 nurseries × 12 months
-- **Network**: ~3 nurseries × 12 months
+- **Starter**: ~13 nurseries × 12 months
+- **Growth**: ~6 nurseries × 12 months
+- **Network**: ~6 nurseries × 12 months
 
-(Recalculated against the corrected AED 50,431 Year 1 total above,
-using the $1.00/story real-world AI cost from `docs/en/pricing.md`.)
+(Recalculated against the corrected AED 53,306 Year 1 total above,
+using the $1.50/story real-world AI cost from `docs/en/pricing.md`.
+Network's breakeven count roughly doubled versus the 4-page-era
+calculation — its gross margin compressed from ~48% to ~21% when the
+story grew from 4 to 6 interior pages, since AI cost scales with volume
+while Network's flat monthly fee doesn't. See "Nursery Partner Program"
+margin note in `docs/en/pricing.md` for the pricing decision this
+raises for the founder before launch.)
 
 In practice the mix will vary, and pilot/founding-partner discounts
 (see `docs/en/pricing.md`) mean early months contribute less than full
 price. Track the real number as soon as nurseries are signed: cumulative
-net contribution ÷ 50,431 gives exact progress through Year 1's budget.
+net contribution ÷ 53,306 gives exact progress through Year 1's budget.
 
 See also `docs/en/pricing.md` for what's charged and the nursery
 referral program these numbers assume.

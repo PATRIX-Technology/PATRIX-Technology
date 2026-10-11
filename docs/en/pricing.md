@@ -13,30 +13,35 @@ VAT is 5%.
 
 ## Cost basis (validated, not estimated)
 
-Every story renders exactly 4 illustrated pages
-(`supabase/seed/templates.json`) through Gemini at 2K resolution, at
-**$0.101/image** — the constant the app's own spend tracking already
-uses (`GEMINI_COST_PER_IMAGE_USD` in `.env.local`). A clean 4-image
-story prices at $0.404 (≈ AED 1.48) in raw AI cost — confirmed again
-directly against the founder's live Supabase project: every story that
-finished cleanly (no retries) landed at exactly $0.404. Real observed
-*total* spend runs higher — **$1.00/story (≈ AED 3.67)** is the
-founder's own conservative planning figure from actual AI Studio
-billing, and it's what all planning below uses.
+Every story renders 6 illustrated interior pages
+(`supabase/seed/templates.json`, extended from 4 to 6 — see
+`docs/DECISIONS.md` "8-page structure: extending every template") through
+Gemini at 2K resolution, at **$0.101/image** — the constant the app's own
+spend tracking already uses (`GEMINI_COST_PER_IMAGE_USD` in `.env.local`).
+The cover and back page added around those interior pages are templated
+(reuse the child's existing avatar and story data) and cost nothing extra
+in Gemini calls — see `docs/DECISIONS.md` "6-page structure: cover + back
+page". A clean 6-image story prices at **$0.606 (≈ AED 2.22)** in raw AI
+cost — the theoretical floor at this page count. Real observed *total*
+spend runs higher — **$1.50/story (≈ AED 5.51)** is the updated planning
+figure, scaled up from the founder's original $1.00/story figure in the
+same proportion as the page-count increase (4 → 6 images is a 1.5×
+multiplier), preserving the same retry/safety-margin headroom it was
+built with. All planning below uses $1.50/story.
 
-**Why the gap, concretely** (found and fixed the same day): one
-testing session spent $23 in real Google billing but only produced 3
-finished stories — roughly $7.67/story, not $0.404. The cause wasn't
-the AI cost itself; it was two infrastructure bugs that made a single
-requested story cost several retried Gemini calls before finishing (a
-generation job that could get silently stuck forever, and a retry
-mechanism that burned through a job's attempts on bad timing rather
-than a real failure — see `docs/DECISIONS.md`). Both are fixed now.
-The $1.00/story planning figure already has headroom built in above
-the $0.404 floor for legitimate retries (safety-check rejections, a
-rare bad generation) — keep using it, but re-run the query below
-periodically to confirm the gap stays small now that the two bugs
-above are gone, rather than assuming it's permanently settled.
+**Why there's a gap at all, concretely** (found and fixed the same day,
+back when the story was still 4 pages): one testing session spent $23 in
+real Google billing but only produced 3 finished stories — roughly
+$7.67/story, far above the then-$0.404 floor. The cause wasn't the AI
+cost itself; it was two infrastructure bugs that made a single requested
+story cost several retried Gemini calls before finishing (a generation
+job that could get silently stuck forever, and a retry mechanism that
+burned through a job's attempts on bad timing rather than a real failure
+— see `docs/DECISIONS.md`). Both are fixed now. The $1.50/story planning
+figure keeps headroom built in above the $0.606 floor for legitimate
+retries (safety-check rejections, a rare bad generation) — keep using
+it, but re-run the query below periodically to confirm the gap stays
+small, rather than assuming it's permanently settled.
 
 ```sql
 select avg(story_total) as avg_cost_per_story, count(*)
@@ -48,19 +53,31 @@ from (
 ) t;
 ```
 
-Starter and Growth still clear 70%+ gross margin at their original
-prices. Network compresses to ~48% because AI cost scales with volume
-while the platform fee doesn't — still healthy, but the tier to watch
-if real usage keeps tracking the $1/story rate rather than the
-theoretical $0.404 minimum.
+The 8-page extension raised per-story AI cost by 50% (4→6 images),
+which compresses every tier's margin at its original price: Starter
+from ~82% to ~72% (still healthy), Growth from ~72% to ~58%, and
+**Network from ~48% to ~21%** — the last one because AI cost scales
+with volume while the platform fee doesn't, and now does so at a
+higher per-story rate. Network in particular needs a pricing decision
+before launch: either raise its monthly price, cap/reduce its story
+quota, or accept the thinner margin as the cost of serving the
+highest-volume tier — flagging this for the founder rather than
+deciding it here.
 
 ## B2B — nurseries & schools
 
-| Plan | Monthly | Annual (≈2 months free) | Stories / month | Seats included | COGS/mo | Gross margin | Best for |
-|---|---|---|---|---|---|---|---|
-| **Starter** | AED 499 | AED 4,790 | 25 | 3 | AED 92 | ~82% | A single nursery branch piloting the product |
-| **Growth** | AED 1,299 | AED 12,490 | 100 | 10 | AED 367 | ~72% | A multi-branch nursery or a school |
-| **Network** | AED 3,499 | AED 33,490 | 500 | 50 | AED 1,836 | ~48% | A nursery group, hospital, or bank running a campaign across many locations |
+| Plan | Monthly | Annual (≈2 months free) | Stories / month | Seats included | Story suggestions / hour | COGS/mo | Gross margin | Best for |
+|---|---|---|---|---|---|---|---|---|
+| **Starter** | AED 499 | AED 4,790 | 25 | 3 | 10 | AED 138 | ~72% | A single nursery branch piloting the product |
+| **Growth** | AED 1,299 | AED 12,490 | 100 | 10 | 20 | AED 551 | ~58% | A multi-branch nursery or a school |
+| **Network** | AED 3,499 | AED 33,490 | 500 | 50 | 30 | AED 2,753 | ~21% | A nursery group, hospital, or bank running a campaign across many locations |
+
+"Story suggestions / hour" is the built, live rate limit
+(`SUGGESTION_RATE_LIMIT_BY_PLAN_KEY` in
+`src/lib/actions/story-suggestions.ts`) on how often a tenant can
+submit a new story-theme idea for Ownly to consider adding to the
+template library — a real, already-shipped feature worth naming in the
+offer, not a roadmap item.
 
 ### Self-serve vs. managed
 
@@ -110,9 +127,9 @@ even with the added labour.
   (nursery or family alike), not cash to a nursery specifically.
 - **Family** (built — `plans.key = 'family'`, `audience = 'family'`):
   $9/month for 1 story/month — cheaper per-story than a one-off
-  purchase would be, for recurring use.
+  purchase would be, for recurring use. 3 story-template suggestions/hour.
 - **Family Plus** (built — `plans.key = 'family_plus'`): $19/month for
-  3 stories/month.
+  3 stories/month. 5 story-template suggestions/hour.
 
 **Why this is monthly, not a one-off pack**: every plan here — family
 and nursery alike — is a story *allowance that resets each period*,
@@ -210,34 +227,34 @@ customer still has quota left. That's a real outage, not graceful
 degradation.
 
 **Rule of thumb: required cap ≈ (sum of every active tenant's monthly
-story quota) × $1.00 × 1.3**, capped at whichever is lower of that
+story quota) × $1.50 × 1.3**, capped at whichever is lower of that
 number and Google's current tier ceiling. Re-check this every time a
 new nursery contract closes — it changes with every signed deal, not
 just once at launch. Reference points: 1 Growth nursery (100
-stories/mo) needs ≈$130; 3 Growth nurseries need ≈$390; 1 Network
-customer (500 stories/mo) needs ≈$650.
+stories/mo) needs ≈$195; 3 Growth nurseries need ≈$585; 1 Network
+customer (500 stories/mo) needs ≈$975.
 
 Two different numbers matter here, and they're not the same thing —
 don't confuse a spending *plan* with a safety *ceiling*:
 
 - **Google's own mandatory Tier 1 cap is ~$250/month**, hard, not
   adjustable without applying for a Tier 2 upgrade (needs a payment
-  history with Google first). At $1/story that's ≈250 stories/month,
+  history with Google first). At $1.50/story that's ≈167 stories/month,
   platform-wide — the binding external constraint once you have even a
   single Network customer plus a couple of Growth accounts.
 - **Realistic Year 1 expected spend is far lower than that** — see
   `docs/en/budget.md`'s bottoms-up calculation (free pilots plus a
-  realistic ramp to 3-5 paying nurseries): roughly $1,000-1,100 for the
-  whole year, averaging under $100/month. An earlier version of this
+  realistic ramp to 3-5 paying nurseries): roughly $1,500-1,650 for the
+  whole year, averaging under $140/month. An earlier version of this
   doc used a flat AED 20,000/year (~$454/month) placeholder here; that
   was an unvalidated guess, not a calculation, and overstated real
-  Year 1 usage by 4-5x.
+  Year 1 usage.
 
 Practically: don't set the AI Studio spend **cap** to match your
 budgeted **spend** — the cap needs headroom above expected usage so it
 doesn't hard-block a good month, while the budget line is what you
-actually plan to spend. Start the cap around **$150-200/month** (safely
-under the $250 Tier 1 ceiling, comfortably above the ~$85-100/month
+actually plan to spend. Start the cap around **$175-220/month** (safely
+under the $250 Tier 1 ceiling, comfortably above the ~$125-140/month
 realistic Year 1 average), and apply for Tier 2 once committed volume
 approaches the ceiling rather than after exceeding it. Switch from AI
 Studio's experimental per-project cap to Gemini's Prepay billing with
@@ -251,11 +268,11 @@ parent who buys a family story pack or subscription through it earns
 the nursery a commission, paid monthly, on top of — not instead of —
 their own subscription. This turns every nursery customer into a sales
 channel for the family product. At a 20% commission rate: 1 story pack
-($15) → nursery earns AED 11, your margin stays ~73%; 6 story pack
-($69) → nursery earns AED 51, margin ~71%; Family monthly ($9/mo) →
-nursery earns AED 7/mo recurring, margin ~69%. All figures use the
-$1.00/story COGS from the cost basis above, not the $0.404 theoretical
-minimum.
+($15) → nursery earns AED 11, your margin ~70%; 6 story pack ($69) →
+nursery earns AED 51, margin ~67%; Family monthly ($9/mo, 1 story) →
+nursery earns AED 7/mo recurring, margin ~63%. All figures use the
+$1.50/story COGS from the cost basis above (updated for the 6-image
+story), not the $0.606 theoretical minimum.
 
 **Framing note**: describe this to nurseries as "your share" or
 "partner commission" — never as a percentage of "our costs after AI
@@ -329,7 +346,7 @@ wait for them to hit the wall.
 **Month 1 close — recompute, don't assume.**
 Re-run the cost-basis query above against *their* actual `story_pages`
 rows specifically. This is the first real-world data point that isn't
-founder test data — it either confirms the $1.00/story planning
+founder test data — it either confirms the $1.50/story planning
 figure or tells you it needs revising before nursery #2 signs at the
 same price. Also recheck the AI Studio spend cap sizing math (above)
 against combined real usage, not the Year 1 estimate.

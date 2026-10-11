@@ -105,6 +105,32 @@ export const ARABIC_VERB_KEYS = [
   'felt_excited',
   'walked_proudly',
   'received_certificate',
+  // Added for the 8-page extension (pages 5-6 on every theme) — see
+  // docs/DECISIONS.md "8-page structure: extending every template".
+  'chose',
+  'placed',
+  'visited',
+  'got',
+  'taught',
+  'noticed',
+  'remembered',
+  'took_hand',
+  'holds_baby_carefully',
+  'realized',
+  'felt_light',
+  'did_it_before',
+  'was_first_member',
+  'carried_tray',
+  'asked',
+  'beamed_with_pride',
+  'made_it',
+  'filled_jar',
+  'did_them',
+  'continues_kindness',
+  'shares_on_eid',
+  'found_card',
+  'collects_artwork',
+  'felt_brave_again',
 ] as const;
 
 export type ArabicVerbKey = (typeof ARABIC_VERB_KEYS)[number];
@@ -209,6 +235,45 @@ export const ARABIC_CONJUGATIONS: Record<ArabicVerbKey, Record<Pronoun, string>>
   received_certificate: {
     she: 'استلمت شهادتها',
     he: 'استلم شهادته',
+  },
+  chose: { she: 'اختارت', he: 'اختار' },
+  placed: { she: 'وضعت', he: 'وضع' },
+  visited: { she: 'زارت', he: 'زار' },
+  got: { she: 'حصلت', he: 'حصل' },
+  taught: { she: 'علمت', he: 'علم' },
+  noticed: { she: 'لاحظت', he: 'لاحظ' },
+  remembered: { she: 'تذكرت', he: 'تذكر' },
+  took_hand: { she: 'أخذت', he: 'أخذ' },
+  holds_baby_carefully: {
+    she: 'تحمله بعناية وتدعم رأسه',
+    he: 'يحمله بعناية ويدعم رأسه',
+  },
+  realized: { she: 'أدركت', he: 'أدرك' },
+  felt_light: { she: 'شعرت بالخفة', he: 'شعر بالخفة' },
+  did_it_before: { she: 'فعلت', he: 'فعل' },
+  was_first_member: {
+    she: 'كانت أول عضو فيه',
+    he: 'كان أول عضو فيه',
+  },
+  carried_tray: { she: 'حملت', he: 'حمل' },
+  asked: { she: 'سألت', he: 'سأل' },
+  beamed_with_pride: {
+    she: 'أشرق وجهها فخرا',
+    he: 'أشرق وجهه فخرا',
+  },
+  made_it: { she: 'صنعتها', he: 'صنعها' },
+  filled_jar: { she: 'ملأت', he: 'ملأ' },
+  did_them: { she: 'قامت', he: 'قام' },
+  continues_kindness: {
+    she: 'تستمر باللطف',
+    he: 'يستمر باللطف',
+  },
+  shares_on_eid: { she: 'تشارك في العيد', he: 'يشارك في العيد' },
+  found_card: { she: 'وجدت', he: 'وجد' },
+  collects_artwork: { she: 'تجمع', he: 'يجمع' },
+  felt_brave_again: {
+    she: 'شعرت بالشجاعة مجددا',
+    he: 'شعر بالشجاعة مجددا',
   },
 };
 

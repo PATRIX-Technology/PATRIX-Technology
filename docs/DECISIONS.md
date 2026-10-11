@@ -4897,3 +4897,117 @@ producing an Arabic version of the slide deck — both pending time
 allowed. The founder asked for this urgently for an English-speaking
 conversation already in progress; Arabic versions are a reasonable
 fast-follow, not shipped yet.
+
+## 8-page structure: extending every template (4 → 6 interior pages)
+
+The founder found a print vendor doing 8-page books (cover + 6 interior
++ back) for AED 45 — a better print economics basis than the 6-page
+(cover + 4 interior + back) structure Phase B shipped — and asked to
+move to it. Confirmed this is a good trade: the AED 45/8-page quote is
+already what `docs/en/pricing.md`'s "Printed copies" section was built
+on (it was already describing an 8-page print run before this change,
+an inconsistency with the still-4-interior-page digital product that
+this decision resolves), and a slightly longer story is a reasonable
+product improvement on its own, not purely a print-cost accommodation.
+
+**Approach taken**: appended 2 new pages (order 5-6) after the
+existing, already-reviewed 4 pages in every theme — not rewritten or
+inserted into the existing narrative. This was the lowest-regression-risk
+option: the 9 themes with `native_review_status: 'reviewed'` keep their
+original approved pages 1-4 completely untouched; only new content was
+added. Wrote natural "epilogue/next-step" continuations per theme (e.g.
+healthy_eating's rainbow plate becomes a nursery-wide "Rainbow Week";
+honesty's truth-tree lesson gets paid forward to a friend) rather than
+padding, in both English and Arabic, following the existing
+gender-agreement token rules (`{v:...}` / `{ps}` — see "Arabic
+gender-agreement audit of the story templates"). Added 24 new
+`ArabicVerbKey` entries to `src/lib/domain/pronouns.ts` for the new
+Arabic verbs these pages needed (`chose`, `visited`, `noticed`,
+`remembered`, `realized`, `beamed_with_pride`, etc. — see that file for
+the full list); every `{v:...}` token across all 13 themes' new pages
+was verified to resolve against the conjugation dictionary before
+calling this done (`node` script cross-checking `templates.json`
+against `ARABIC_VERB_KEYS`/`ARABIC_CONJUGATIONS`, not just eyeballed).
+
+**Review-status honesty**: all 26 rows (13 themes × 2 locales) were
+flipped to `native_review_status: 'draft'`, including the 9 that were
+previously `'reviewed'` — their pages 1-4 are still the same reviewed
+content, but the row now carries 2 new, not-yet-native-reviewed pages,
+so claiming the whole row is "reviewed" would be false. Per
+`assertTemplateUsable`, this blocks Arabic usage for those 9 themes
+until a native speaker reviews pages 5-6 (English has no such gate, so
+English usage is unaffected). This is a real, accepted regression in
+Arabic template availability — judged low real-world impact since the
+product is pre-pilot ("before registering the company"), but it is a
+regression and the founder should know: **Arabic generation for all 13
+themes needs a native-review pass on the new pages 5-6 before the
+pilot goes live with Arabic-speaking families.** `tests/unit/seed-templates.test.ts`'s
+`PENDING_NATIVE_REVIEW_THEMES` set was updated to all 13 themes to
+match.
+
+**Code changes**: `render.ts`'s page-count doc comment (previously said
+"6 pages total", now describes the count as always
+`template.pages.length + 2`, already-dynamic code, no logic change),
+`sample-stories.ts` and `StoryCarousel.tsx` comments updated from
+"four-page"/"four pages" to match. `story-pdf.ts`'s
+`expectedPageCount: (pages ?? []).length + 2` was already page-count-
+agnostic — no code change needed there, confirmed by a dedicated
+read-only audit subagent pass before starting this work (also
+confirmed `preflight.ts`'s `expectedPageCount` check and its unrelated
+`trimBox.size() !== 4` — a PDF TrimBox rectangle literal, not a
+story-page assumption — needed no changes).
+
+**Cost/margin consequence, flagged not silently absorbed**: 50% more
+Gemini image calls per story (4→6) raises the theoretical AI-cost floor
+from $0.404 to $0.606/story and the founder's planning figure from
+$1.00 to $1.50/story (scaled by the same 1.5× ratio, preserving the
+original retry/safety headroom). This compresses gross margin at every
+B2B tier's *unchanged* price: Starter ~82%→~72%, Growth ~72%→~58%,
+**Network ~48%→~21%**. Network's compression is the one that actually
+matters — its breakeven nursery-count in `docs/en/budget.md` roughly
+doubled (3→6). Updated `docs/en/pricing.md`, `docs/ar/pricing.md`,
+`docs/en/budget.md`, `docs/ar/budget.md` with the recalculated figures
+throughout (COGS/mo, margin %, spend-cap sizing, breakeven counts).
+**Not resolved here, flagged for the founder**: whether to raise
+Network's price, cap/reduce its story quota, or accept the thinner
+margin — a genuine pricing decision, not something to pick silently.
+Customer-facing prices (subscription AED 499/1,299/3,499, printed
+AED 69/59/54/49) are unchanged — only internal COGS/margin figures
+moved.
+
+**Story-suggestion limits surfaced in offers**: per the founder's
+request, added the already-built, already-live
+`SUGGESTION_RATE_LIMIT_BY_PLAN_KEY` rate limits
+(`src/lib/actions/story-suggestions.ts`) as a column/bullet in
+`docs/en/pricing.md`, `docs/ar/pricing.md`, and the
+`ownly-pricing-and-offer.pptx` deck (slides 2 and 5) — 10/20/30 per
+hour for Starter/Growth/Network, 3/5 per hour for Family/Family Plus.
+This was a real, shipped feature that had never been named in any
+customer-facing pricing material before.
+
+**Deck rebuilt**: `docs/en/sales/ownly-pricing-and-offer.pptx` slides 2
+and 5 regenerated (script at the working scratchpad, not committed —
+same pptxgenjs pattern as its first build) to add the suggestion-limit
+bullet to every plan card; validated (`validate.py`) and visually QA'd
+via `soffice`/`pdftoppm` render before replacing the committed file.
+`nursery-pitch-deck.pptx` was checked and contains no page-count or
+pricing claims needing updates — confirmed via `markitdown`, not
+assumed.
+
+**Still pending at time of writing**: `docs/ar/pricing.md` previously
+had no "Printed copies" section at all (flagged as a gap in the prior
+"Printed-copy pricing finalized" entry's "Not yet done" note) — added
+it in this pass, translated from the English section, including the
+"5 free printed copies" Founding Partner addition that the Arabic
+Launch offers section was also missing. Marketing sample-story assets
+(`public/images/marketing/sample-stories/`) still show the old 4-page
+stories and need regenerating via `npm run generate-sample-stories` —
+deliberately NOT run automatically here since it costs real money (new
+Gemini image calls against the live Supabase project) and writes to
+production `is_platform_sample` rows; needs the founder's go-ahead or a
+deliberate follow-up session with Supabase access confirmed working
+(Supabase MCP was disconnected for part of this session). The seed
+data in `supabase/seed/templates.json` also has NOT yet been reseeded
+to the live database for the same reason (Supabase MCP connectivity) —
+this needs re-running before the 8-page structure is live for real
+users, not just in the repo.

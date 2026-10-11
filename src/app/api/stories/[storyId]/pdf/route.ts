@@ -10,6 +10,10 @@ export const runtime = 'nodejs';
 // 60 is the Hobby plan's ceiling for this config value — see
 // docs/DECISIONS.md "maxDuration must not exceed the Hobby ceiling".
 export const maxDuration = 60;
+// This route reads the session cookie (via createSupabaseServerClient),
+// which should already force dynamic rendering -- stated explicitly so
+// it's never accidentally statically optimized.
+export const dynamic = 'force-dynamic';
 
 export async function GET(_request: Request, { params }: { params: { storyId: string } }) {
   const supabase = await createSupabaseServerClient();

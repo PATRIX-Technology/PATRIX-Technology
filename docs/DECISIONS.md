@@ -5011,3 +5011,52 @@ data in `supabase/seed/templates.json` also has NOT yet been reseeded
 to the live database for the same reason (Supabase MCP connectivity) —
 this needs re-running before the 8-page structure is live for real
 users, not just in the repo.
+
+## Production build crash: harfbuzzjs WASM bundled as a client asset
+
+`npm run build` failed at "Collecting page data" for
+`/api/stories/[storyId]/pdf` with an opaque `TypeError: t is not a
+function` inside a minified pdf-lib parsing frame — pre-existing,
+confirmed via `git stash` to predate the 8-page work above, so likely
+introduced (and never caught) when HarfBuzz replaced satori for Arabic
+PDF text (see "Arabic PDF text: HarfBuzz + pdf-lib vector glyphs").
+`npm run dev`, every unit test, and a direct `node -e "require(...)"`
+of the already-compiled route all worked fine, which pointed away from
+application logic and toward something specific to Next's own
+build-time module analysis.
+
+**Root cause**: `harfbuzzjs` ships its own WASM binary and loads it via
+Node's `fs` at runtime — fine for a plain Node script, but webpack
+(which Next.js uses to bundle every server route, including Route
+Handlers) doesn't know that. Left to its default rules, webpack treated
+the `.wasm` file as a client-style static asset and compiled the import
+down to a public-path URL *string* (confirmed by inspecting the built
+chunk: `t.exports=r.p+"static/media/harfbuzz.<hash>.wasm"`) instead of
+leaving the real file-read in place. Something downstream in
+harfbuzzjs's own init path then calls a method on what it expects to be
+WASM bytes/a buffer but is actually that bare string, throwing the
+cryptic `t is not a function` deep inside pdf-lib's parser (unrelated
+code that happened to share a minified `t` identifier in the same
+webpack chunk — chasing the literal stack trace by byte offset into
+that chunk was a dead end; `force-dynamic` on the route and other
+variations were tried and ruled out before finding this).
+
+**Fix**: `next.config.mjs` now sets
+`experimental.serverComponentsExternalPackages: ['harfbuzzjs']`, which
+tells Next.js to skip webpack bundling for this package on the server
+and let Node's own `require()` resolve it (and its WASM file) exactly
+as it would outside a bundler. `npm run build` passes cleanly after
+this change — verified, not assumed. Also added
+`export const dynamic = 'force-dynamic'` to the PDF route itself
+(independently correct per Next's own guidance for any route reading
+the session cookie, even though it turned out not to be what fixed
+this specific crash) so the route is never a candidate for static
+optimization regardless.
+
+**Worth rechecking**: no other server-only package in this codebase
+embeds its own WASM/native binary the same way harfbuzzjs does, so
+this is believed to be a one-off, not a class of bug — but if another
+route ever fails the same "Collecting page data" step with a similarly
+opaque error, check whether a new dependency needs the same
+`serverComponentsExternalPackages` treatment before assuming it's
+application logic.

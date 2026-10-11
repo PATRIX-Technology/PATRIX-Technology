@@ -5,6 +5,17 @@ const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts');
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  // harfbuzzjs loads its own WASM binary via Node's fs at runtime: left
+  // to webpack's default bundling, it instead emits the .wasm as a
+  // client-style asset (a public-path URL string, not real bytes),
+  // which breaks even at build time when Next's page-data collection
+  // touches this import chain — see docs/DECISIONS.md "pdf route build
+  // crash: force-dynamic". Marking it external skips webpack bundling
+  // for this package on the server, so plain require() loads it
+  // (and its WASM file) exactly like a normal Node.js script would.
+  experimental: {
+    serverComponentsExternalPackages: ['harfbuzzjs'],
+  },
   images: {
     remotePatterns: [
       {

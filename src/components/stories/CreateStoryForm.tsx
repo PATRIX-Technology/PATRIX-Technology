@@ -289,18 +289,34 @@ export function CreateStoryForm({
         const primaryLabel = labels ? (locale === 'ar' ? labels.ar : labels.en) : category;
         const secondaryLabel = labels ? (locale === 'ar' ? labels.en : labels.ar) : null;
         return (
-          // Always expanded -- no collapse/toggle -- so every category's
-          // colored header and cards are visible on page load, not hidden
-          // behind a dropdown the owner has to click open first.
-          <section key={category}>
-            <div className={`flex items-center justify-between gap-2 rounded-xl px-3 py-2 ${accent.header}`}>
+          // A collapsible dropdown per category -- closed by default, so
+          // the picker opens compact rather than as one long always
+          // -expanded scroll, while still reading as a deliberate, colored
+          // section once opened (not the bare-triangle plain <details>
+          // this replaced the first time around).
+          <details key={category} className="group overflow-hidden rounded-xl2 border border-[rgb(var(--color-border))]">
+            <summary
+              className={`focus-ring flex cursor-pointer list-none items-center justify-between gap-2 px-4 py-3 transition-colors hover:brightness-110 ${accent.header}`}
+            >
               <span className="flex items-baseline gap-2 text-sm font-semibold">
                 <span>{primaryLabel}</span>
                 {secondaryLabel && <span className="font-normal opacity-80">{secondaryLabel}</span>}
               </span>
-              <span className="text-xs font-normal opacity-70">{categoryTemplates.length}</span>
-            </div>
-            <div className="mt-3 grid gap-3 pb-1 sm:grid-cols-2 lg:grid-cols-3">
+              <span className="flex items-center gap-2">
+                <span className="text-xs font-normal opacity-70">{categoryTemplates.length}</span>
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  aria-hidden
+                  className="transition-transform duration-200 group-open:rotate-180"
+                >
+                  <path d="m6 9 6 6 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </span>
+            </summary>
+            <div className="grid gap-3 p-4 pt-3 sm:grid-cols-2 lg:grid-cols-3">
               {categoryTemplates.map((template) => {
                 const globalIndex = usableTemplates.indexOf(template);
                 const primaryTitle = locale === 'ar' ? template.titleAr : template.titleEn;
@@ -331,7 +347,7 @@ export function CreateStoryForm({
                 );
               })}
             </div>
-          </section>
+          </details>
         );
       })}
       <GenerateButton label={t('generate')} />

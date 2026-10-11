@@ -5539,3 +5539,24 @@ exactly. #2 and #3 were real, user-facing bugs independent of anything
 changed in this session — found by auditing every other use of this
 field once #1 turned out to be a regression, rather than assuming the
 rest of the codebase was fine.
+
+## Story theme picker: back to a collapsible dropdown, styled this time
+
+**Decision: reverted the "always expanded" category layout from the
+earlier fix in this session, per the founder's follow-up after seeing it
+live** — with 13 templates across 5 categories, always-expanded reads as
+one long scroll rather than a compact picker, and he asked for it back
+as a dropdown specifically. The complaint this session's earlier fix
+addressed (the picker's categories were invisible behind a bare,
+undecorated `<details>`/`▸` toggle, not the "colored, modern" boxes
+asked for) is a different problem from "should categories collapse at
+all" — the fix here keeps the colored, bilingual category headers and
+bilingual template card titles from that earlier pass, and just restores
+collapse/expand on top of them: each category is a `<details>` again,
+closed by default, with a proper chevron icon (SVG, rotates on open via
+`group-open:rotate-180`) replacing the old bare `▸` character, a
+hover-brightened colored header, and a bordered container so the whole
+thing reads as one deliberate dropdown component rather than a floating
+color bar. `CreateStoryForm.tsx` only — the Stories list's bulk-order
+picker (`StoriesListWithBulkOrder.tsx`) is a different, separate
+component not touched by this change.

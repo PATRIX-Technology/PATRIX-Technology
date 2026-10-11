@@ -272,16 +272,19 @@ gap to close before it could ever matter, not an active bug.
 
 ## Printed copies (add-on, nursery and family alike)
 
-A physical printed copy of an already-approved digital story — ordered
-either via Stripe checkout or the WhatsApp flow (`print_orders` table,
-both covered in `docs/DECISIONS.md`). Real cost basis: **AED 45/book
-for an 8-page print run**, a founder-sourced vendor quote (not yet a
-signed contract — see `docs/NEEDS_FROM_ME.md`), landed cost unconfirmed
-(flag whether that figure already includes delivery before relying on
-it for margin). Digital generation cost is already covered by the
-underlying subscription — a printed copy's own price only needs to
-clear the print cost itself plus payment fees, not re-absorb the
-AI cost too.
+A physical printed copy of an already-approved digital story, ordered
+and paid via Stripe checkout (`print_orders` table, covered in
+`docs/DECISIONS.md`) — **UAE delivery only**; there is no international
+fulfillment path today. Real cost basis: **AED 45/book for an 8-page
+print run**, a founder-sourced vendor quote (not yet a signed contract
+— see `docs/NEEDS_FROM_ME.md`), landed cost unconfirmed (flag whether
+that figure already includes delivery before relying on it for
+margin). **The ordering and pricing mechanism is live; fulfillment is
+not** — don't accept or promise a real customer's print order until a
+print vendor is actually under signed contract, not just quoted. Digital
+generation cost is already covered by the underlying subscription — a
+printed copy's own price only needs to clear the print cost itself plus
+payment fees, not re-absorb the AI cost too.
 
 Standalone price set at an **80% markup** on the AED 45 cost (founder
 decision): AED 45 × 1.8 = **AED 81**. Bulk tiers below keep the same

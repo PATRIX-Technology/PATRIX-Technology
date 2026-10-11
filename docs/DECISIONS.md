@@ -5858,3 +5858,49 @@ the founder rather than silently patched into those two decks, since
 it's a live business decision (ship with a manual/ad-hoc fulfillment
 workaround vs. hold off marketing printed copies until a vendor is
 signed), not a wording fix.
+
+## Printed-copy caveat + UAE-only delivery, added everywhere pricing appears
+
+Founder's follow-up: add the vendor-not-signed caveat to the two decks
+above, add a printed-hardcopy note to *every* pricing table ("all
+prices we currently have are without the printed hardcopy storybook
+right?"), and make explicit that print fulfillment is UAE-only. Done
+across every place that quotes a price for this product:
+
+- **Internal strategy deck**: added a printed-copies callout to the
+  "How Ownly Makes Money" summary slide, a bullet to each of the B2C
+  and B2B pricing-ladder slides, and rewrote the "Printed / Physical
+  Storybooks" slide to split "ordering and pricing are live" from
+  "fulfilment is not — don't accept a real order until the vendor
+  contract is signed." All new shapes cloned from the deck's own
+  existing bullet/callout pattern (dot + text box, or the dark
+  rounded-rect callout used for the golden-pricing-rule note),
+  positioned to clear the footer with room to spare — verified by
+  re-rendering every changed slide to an image, not just validated
+  XML.
+- **Sales rep reference deck**: same three edits (Family pricing
+  slide, Nursery pricing slide, "What's Coming Next" slide), since this
+  is literally the document a rep reads from.
+- **`docs/en/pricing.md` / `docs/ar/pricing.md`** (the repo's own
+  source of truth): the "Printed copies" section still said orders
+  came "either via Stripe checkout or the WhatsApp flow" — the same
+  stale WhatsApp-ordering claim fixed in the Google Doc version earlier
+  this session, missed here. Fixed, and added the UAE-only +
+  vendor-not-signed caveat in the same pass.
+- **Google Drive "Pricing, Subscriptions & Launch Strategy" doc**:
+  added the UAE-only + "ordering is live, fulfilment isn't" caveat to
+  its own printed-copies section (EN+AR) — it already correctly said
+  the WhatsApp path was gone, just didn't have this caveat yet.
+- **"What to Present to B2B Customers" sales script**: this is the
+  live meeting-script doc, and it didn't mention printed copies at
+  all — added a short paragraph after the subscription pricing table
+  (EN+AR) framing it as a direction to mention, not a delivery to
+  promise, with the same UAE-only/vendor caveat phrased as an
+  instruction to the rep reading it.
+
+Delivered the two updated `.pptx` files directly (same Drive-upload
+binary-size limitation as before — see the entry above); the founder
+swaps them in himself. The four customer-facing TEMPLATE/SAMPLE pitch
+decks were deliberately left untouched — confirmed earlier this
+session they carry no numeric pricing table at all, so there's nothing
+in them to annotate.

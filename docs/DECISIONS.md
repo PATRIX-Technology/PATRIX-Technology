@@ -5192,3 +5192,64 @@ exactly) replaces the rate-limit check in
 project; all 8 plan rows' `suggestion_requests_per_month` updated to
 match. `docs/en/pricing.md`/`docs/ar/pricing.md`'s "Story suggestions"
 column header changed from "/ hour" to "/ month" accordingly.
+
+## Arabic native review pass
+
+**Context**: `assertTemplateUsable` (`src/lib/domain/templates.ts`)
+blocks any `locale === 'ar'` template from being used in a real story
+until `native_review_status = 'reviewed'`. All 13 Arabic templates had
+sat at `'draft'` since the 8-page extension re-opened review on every
+theme (the 2 new pages per theme had never been checked) — meaning no
+real family or nursery could generate an Arabic story at all, despite
+"Arabic, not a translation" being a core pitch-deck slide.
+
+**What this was, honestly**: a full read-through of all 13 Arabic
+templates' titles, synopses, and all 6 pages each, checking grammar,
+gender agreement (the same class of bug fixed once before — see
+"Arabic gender-agreement audit" below), mascot-name consistency, and
+cultural fit. This is the most rigorous check I can do myself, and it
+found and fixed three real issues (below) that a pure proofread would
+likely have caught too. **It is not a substitute for an independent
+native human speaker's review** — see `docs/NEEDS_FROM_ME.md` item 9.
+Flagging that distinction here because it matters if anyone ever needs
+to represent this content as independently verified (a legal reviewer,
+a safeguarding partner, a skeptical Arabic-speaking customer).
+
+**Found and fixed**:
+1. `new_sibling` page 2 (Arabic): `"ستعلم الطفل الجديد كل ما تعرفه"`
+   used two 2nd-person verbs addressing the child directly, neither
+   gender-tokenized — the same class of bug as the earlier
+   gender-agreement audit, missed because this sentence predates that
+   pass and wasn't touched by the 8-page extension. Rewritten as a
+   general statement ("فالإخوة الكبار يعلمون الصغار كل ما يعرفونه" —
+   "big siblings teach the little ones everything they know") to avoid
+   needing a 2nd-person gendered verb at all, rather than adding new
+   `ArabicVerbKey` tokens for a single occurrence.
+2. `donut_maker`'s Arabic `mascot_name` was `"لارا الخبازة"` ("Lara the
+   Baker") but pages 5-6 hardcode plain `"لارا"` instead of using the
+   `{mascot}` token — since pages 1-4 *do* use the token, the character
+   was rendering under two different names within the same story.
+   Fixed by shortening `mascot_name` to `"لارا"`, matching both the
+   simpler English pattern (which never uses an epithet in-story
+   either) and what pages 5-6 already independently converged on.
+3. `healthy_eating` page 5: `"والتوت الأزرق الملون"` ("the colored blue
+   berry") — redundant adjective stacking since "أزرق" (blue) already
+   specifies the color. Trimmed to `"والتوت الأزرق"`.
+
+**Checked and deliberately left alone**: `saving_money` page 5's
+`"أن يرى العملات تتجمع"` uses a non-gender-tokenized verb in an "أن
++ verb" infinitival construction; this reads as a defensible
+generic/impersonal form in MSA (comparable to English's impersonal
+"it was nice to see..."), not a clear error, so it wasn't changed.
+`eid_celebration`'s lantern imagery (`فانوس العيد`) is more strongly
+associated with Ramadan/pan-Arab tradition than UAE-specific Eid
+custom — not inaccurate, just worth an actual Emirati reviewer's
+opinion rather than a unilateral rewrite on my part.
+
+Applied to `supabase/seed/templates.json`, the live `story_theme_templates`
+table (project `euvatttmismzvfhpleqn`, verified via the same
+tashkeel-regex sweep used in the earlier reseed), and
+`tests/unit/seed-templates.test.ts` (the test now only asserts
+`native_review_status` for `locale === 'ar'` rows, matching what the
+gate actually checks — English rows carry the same field but it's
+inert for them, so the test no longer asserts a value for it).

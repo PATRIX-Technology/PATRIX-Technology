@@ -47,7 +47,7 @@
     "title": "صحن قوس المطر",
     "synopsis": "{v:learns_present} {child_name} أن أكل الأطعمة بألوان قوس المطر يعطي{ps} القوة والطاقة.",
     "mascot_name": "ماريا الثعلبة",
-    "native_review_status": "draft",
+    "native_review_status": "reviewed",
     "pages": [
       {
         "order": 1,
@@ -71,7 +71,7 @@
       },
       {
         "order": 5,
-        "text": "بعد أيام قليلة، أعلنت الحضانة عن «أسبوع قوس المطر»: على كل طفل أن يجلب فاكهة أو خضارا ملونة ليشاركها. {v:went} {child_name} مع العائلة إلى السوق، و{v:chose} الملفوف البنفسجي والتوت الأزرق الملون.",
+        "text": "بعد أيام قليلة، أعلنت الحضانة عن «أسبوع قوس المطر»: على كل طفل أن يجلب فاكهة أو خضارا ملونة ليشاركها. {v:went} {child_name} مع العائلة إلى السوق، و{v:chose} الملفوف البنفسجي والتوت الأزرق.",
         "image_prompt": "شخصية {child_name} وعائلتها يتسوقون معا في سوق ملون، يختارون الملفوف البنفسجي والتوت الأزرق، الثعلب الكرتوني يلمح من سلة التسوق، أسلوب رسوم كتاب قصص."
       },
       {
@@ -129,7 +129,7 @@
     "title": "رحلة الابتسامة الحلوة",
     "synopsis": "{v:discovers_present} {child_name} مع {mascot} متعة تنظيف الأسنان كل ليلة لتبقى ابتسامت{ps} لامعة.",
     "mascot_name": "ماريا الثعلبة",
-    "native_review_status": "draft",
+    "native_review_status": "reviewed",
     "pages": [
       {
         "order": 1,
@@ -211,7 +211,7 @@
     "title": "يوم الشجاعة الكبير",
     "synopsis": "{v:feels_present} {child_name} بالقلق في أول يوم ل{ps} في {organisation}، إلى أن تساعد{ps} {mascot} على إيجاد شجاعت{ps}.",
     "mascot_name": "ماريا الثعلبة",
-    "native_review_status": "draft",
+    "native_review_status": "reviewed",
     "pages": [
       {
         "order": 1,
@@ -293,7 +293,7 @@
     "title": "نجمتنا الصغيرة الجديدة",
     "synopsis": "{v:learns_present} {child_name} كيف {v:older_sibling_copula} {v:older_sibling_noun} عندما ينضم طفل جديد إلى العائلة.",
     "mascot_name": "ماريا الثعلبة",
-    "native_review_status": "draft",
+    "native_review_status": "reviewed",
     "pages": [
       {
         "order": 1,
@@ -302,7 +302,7 @@
       },
       {
         "order": 2,
-        "text": "قالت {mascot}: «أن {v:older_sibling_copula} {v:older_sibling_noun} فهذه قوة خاصة، ستعلم الطفل الجديد كل ما تعرفه.»",
+        "text": "قالت {mascot}: «أن {v:older_sibling_copula} {v:older_sibling_noun} فهذه قوة خاصة — فالإخوة الكبار يعلمون الصغار كل ما يعرفونه.»",
         "image_prompt": "الثعلب الكرتوني يتحدث إلى شخصية {child_name} بجانب سرير الطفل، عباءة صغيرة تظهر بشكل مرح على كتفي {child_name}، أسلوب رسوم كتاب قصص."
       },
       {
@@ -375,7 +375,7 @@
     "title": "شجرة الصدق",
     "synopsis": "{v:learns_present} {child_name} أن قول الحقيقة، حتى لو كان صعبا، يجعل{ps} {v:feels_present} بالراحة والفخر.",
     "mascot_name": "ماريا الثعلبة",
-    "native_review_status": "draft",
+    "native_review_status": "reviewed",
     "pages": [
       {
         "order": 1,
@@ -457,7 +457,7 @@
     "title": "أبطال الفقاعات",
     "synopsis": "يصبح {child_name} و{mascot} بطلي الفقاعات، ويطردان الجراثيم قبل وقت الوجبة الخفيفة.",
     "mascot_name": "ماريا الثعلبة",
-    "native_review_status": "draft",
+    "native_review_status": "reviewed",
     "pages": [
       {
         "order": 1,
@@ -539,7 +539,7 @@
     "title": "وعد الحصالة",
     "synopsis": "{v:learns_present} {child_name} أن توفير القليل شيئا فشيئا يكبر ليصبح شيئا رائعا.",
     "mascot_name": "ماريا الثعلبة",
-    "native_review_status": "draft",
+    "native_review_status": "reviewed",
     "pages": [
       {
         "order": 1,
@@ -621,7 +621,7 @@
     "title": "اليوم الوطني لدولة الإمارات",
     "synopsis": "{v:discovers_present} {child_name} أسباب فخر{ps} وحب{ps} لوطن{ps} في اليوم الوطني لدولة الإمارات.",
     "mascot_name": "الجدة أمل",
-    "native_review_status": "draft",
+    "native_review_status": "reviewed",
     "pages": [
       {
         "order": 1,
@@ -702,8 +702,8 @@
     "category": "entertainment",
     "title": "لارا صانعة الدونات",
     "synopsis": "{v:tried} {child_name} صنع الدونات وتزيينها مع {mascot}، و{v:learned} أن القليل من الصبر والكثير من الإبداع يجعلان كل شيء ألذ.",
-    "mascot_name": "لارا الخبازة",
-    "native_review_status": "draft",
+    "mascot_name": "لارا",
+    "native_review_status": "reviewed",
     "pages": [
       {
         "order": 1,
@@ -785,7 +785,7 @@
     "title": "قمر اللطف",
     "synopsis": "{v:discovers_present} {child_name} أن اللطف والعطاء هما أجمل ما في رمضان، {v:while_looking} إلى الهلال الجديد.",
     "mascot_name": "الجدة أمل",
-    "native_review_status": "draft",
+    "native_review_status": "reviewed",
     "pages": [
       {
         "order": 1,
@@ -867,7 +867,7 @@
     "title": "يوم فانوس العيد",
     "synopsis": "{v:woke_up} {child_name} في صباح عيد مليء بالفرح: ملابس جديدة، عناق دافئ، ومفاجأة حلوة {v:wanted} مشاركتها مع صديق{ps}.",
     "mascot_name": "الجدة أمل",
-    "native_review_status": "draft",
+    "native_review_status": "reviewed",
     "pages": [
       {
         "order": 1,
@@ -949,7 +949,7 @@
     "title": "شمعة الأمنية",
     "synopsis": "{v:blew_out_candles} {child_name} شموع عيد ميلاد{ps} و{v:made_a_wish}، في يوم مليء بالأصدقاء والحب.",
     "mascot_name": "ماريا الثعلبة",
-    "native_review_status": "draft",
+    "native_review_status": "reviewed",
     "pages": [
       {
         "order": 1,
@@ -1031,7 +1031,7 @@
     "title": "يوم تخرجي الكبير",
     "synopsis": "{v:walked_proudly} {child_name} عبر المسرح الصغير و{v:received_certificate}، و{v:promised} بعدم نسيان أصدقاء الحضانة أبدا.",
     "mascot_name": "ماريا الثعلبة",
-    "native_review_status": "draft",
+    "native_review_status": "reviewed",
     "pages": [
       {
         "order": 1,

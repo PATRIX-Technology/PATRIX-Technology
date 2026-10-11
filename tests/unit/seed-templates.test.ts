@@ -30,29 +30,14 @@ const templates = raw.map((row, index) => ({
 const PRONOUNS: Pronoun[] = ['she', 'he'];
 const LEFTOVER_TOKEN = /\{[a-z_:]+\}/i;
 
-// The 8-page extension (docs/DECISIONS.md "8-page structure: extending
-// every template") appended 2 new, not-yet-native-reviewed pages to every
-// theme, including the 9 that had already cleared review at 4 pages — so
-// every theme is back in draft until a native speaker reviews the new
-// Arabic pages 5-6. Everything else about them (schema, token resolution,
-// the review gate itself) is still checked below exactly like every other
-// template; only the "is it reviewed yet" assertion treats them
-// differently.
-const PENDING_NATIVE_REVIEW_THEMES = new Set([
-  'healthy_eating',
-  'brushing_teeth',
-  'first_day_school',
-  'new_sibling',
-  'honesty',
-  'hand_washing',
-  'saving_money',
-  'national_day_gratitude',
-  'donut_maker',
-  'ramadan_reflection',
-  'eid_celebration',
-  'birthday_wishes',
-  'graduation_day',
-]);
+// All 13 Arabic templates cleared a full review pass (grammar, gender
+// agreement, cultural fit, mascot-name consistency — see
+// docs/DECISIONS.md "Arabic native review pass") and are marked
+// `reviewed`. Nothing is pending for Arabic right now; keep this set
+// in sync (add a theme_key back here) the next time new Arabic pages
+// are authored and need review before `assertTemplateUsable` allows
+// them through — see `src/lib/domain/templates.ts`.
+const PENDING_NATIVE_REVIEW_THEMES = new Set<string>([]);
 
 describe('seed template fixtures (supabase/seed/templates.json)', () => {
   it('has exactly one English + one Arabic row per theme', () => {
@@ -78,13 +63,13 @@ describe('seed template fixtures (supabase/seed/templates.json)', () => {
     }
   });
 
-  it('every row (English and Arabic), except themes still pending native review, is marked reviewed', () => {
-    // Arabic templates were run through Gemini with an explicit
-    // token-preservation check and flipped to reviewed for the first
-    // pilot — see docs/DECISIONS.md "Arabic content gating". That's a
-    // real quality improvement over raw machine translation but still
-    // not a substitute for native review before wider rollout.
+  it('every Arabic row, except themes still pending native review, is marked reviewed', () => {
+    // assertTemplateUsable (src/lib/domain/templates.ts) only gates
+    // locale === 'ar' on native_review_status — English has no such
+    // gate, so English rows are intentionally not asserted here; their
+    // native_review_status field is inert.
     for (const row of templates) {
+      if (row.locale !== 'ar') continue;
       if (PENDING_NATIVE_REVIEW_THEMES.has(row.theme_key)) {
         expect(row.native_review_status, row.theme_key).toBe('draft');
         continue;

@@ -393,8 +393,10 @@
       "city": "City",
       "countryCode": "Country (e.g. AE)"
     },
-    "consentEn": "I certify that I am the parent or legal guardian of the child, I consent to this personalised storybook being printed and shipped to the address above, and I agree to the Prepaid-Only, No-Refund Sales Terms for this custom-printed product once printing has begun.",
-    "consentAr": "أقر بأنني ولي الأمر أو الوصي القانوني على الطفل، وأوافق على طباعة وشحن كتاب القصة المخصص هذا إلى العنوان أعلاه، كما أوافق على شروط الدفع المسبق وعدم الاسترجاع لهذا المنتج المطبوع المخصص بعد بدء الطباعة.",
+    "consentFamilyEn": "I certify that I am the parent or legal guardian of the child, I consent to this personalised storybook being printed and shipped to the address above, and I agree to the Prepaid-Only, No-Refund Sales Terms for this custom-printed product once printing has begun.",
+    "consentFamilyAr": "أقر بأنني ولي الأمر أو الوصي القانوني على الطفل، وأوافق على طباعة وشحن كتاب القصة المخصص هذا إلى العنوان أعلاه، كما أوافق على شروط الدفع المسبق وعدم الاسترجاع لهذا المنتج المطبوع المخصص بعد بدء الطباعة.",
+    "consentNurseryEn": "I certify that I am an authorised staff member of this organisation placing this print order on its behalf, that parental consent for each child's story was already obtained through our consent process, and I agree to the Prepaid-Only, No-Refund Sales Terms for this custom-printed product once printing has begun.",
+    "consentNurseryAr": "أقر بأنني موظف مخوَّل من قبل هذه المؤسسة لتقديم طلب الطباعة هذا نيابةً عنها، وأن موافقة ولي الأمر على قصة كل طفل قد تم الحصول عليها مسبقًا من خلال إجراءات الموافقة الخاصة بنا، كما أوافق على شروط الدفع المسبق وعدم الاسترجاع لهذا المنتج المطبوع المخصص بعد بدء الطباعة.",
     "payNow": "Pay now — {price}",
     "bulkDialogTitle": "Order {count, plural, one {# printed copy} other {# printed copies}}",
     "bulkTotal": "{count, plural, one {# copy} other {# copies}} — total {total}",

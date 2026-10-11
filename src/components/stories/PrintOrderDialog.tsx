@@ -6,6 +6,7 @@ import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { useToast } from '@/components/ui/Toast';
 import type { PrintOrderCurrency } from '@/lib/domain/print-orders';
+import type { TenantType } from '@/types/database';
 
 /**
  * Orders a physical printed copy of one already-approved story, paid for
@@ -22,7 +23,7 @@ import type { PrintOrderCurrency } from '@/lib/domain/print-orders';
  * /api/print-orders/checkout rejects consentAccepted !== true regardless
  * of what the client sends).
  */
-export function PrintOrderDialog({ storyId }: { storyId: string }) {
+export function PrintOrderDialog({ storyId, tenantType }: { storyId: string; tenantType: TenantType }) {
   const t = useTranslations('printOrder');
   const locale = useLocale();
   const showToast = useToast();
@@ -154,9 +155,9 @@ export function PrintOrderDialog({ storyId }: { storyId: string }) {
               className="mt-0.5 h-4 w-4 shrink-0"
             />
             <span className="space-y-2">
-              <span className="block">{t('consentEn')}</span>
+              <span className="block">{t(tenantType === 'nursery' ? 'consentNurseryEn' : 'consentFamilyEn')}</span>
               <span dir="rtl" className="block text-end">
-                {t('consentAr')}
+                {t(tenantType === 'nursery' ? 'consentNurseryAr' : 'consentFamilyAr')}
               </span>
             </span>
           </label>

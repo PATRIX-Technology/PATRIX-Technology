@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { ClickableRow } from '@/components/ui/ClickableRow';
 import { BulkPrintOrderDialog, type BulkPrintOrderItem } from '@/components/stories/BulkPrintOrderDialog';
-import type { StoryStatus } from '@/types/database';
+import type { StoryStatus, TenantType } from '@/types/database';
 
 const STATUS_TONE: Record<StoryStatus, 'neutral' | 'warning' | 'success' | 'danger' | 'info'> = {
   DRAFT: 'neutral',
@@ -47,7 +47,15 @@ export interface ChildFolder {
  * the WhatsApp no-payment bypass" -- this is the actual bulk-order-and-pay
  * flow the founder asked for, not the removed per-story WhatsApp bypass.
  */
-export function StoriesListWithBulkOrder({ locale, folders }: { locale: string; folders: ChildFolder[] }) {
+export function StoriesListWithBulkOrder({
+  locale,
+  folders,
+  tenantType,
+}: {
+  locale: string;
+  folders: ChildFolder[];
+  tenantType: TenantType;
+}) {
   const t = useTranslations('stories');
   const [selectMode, setSelectMode] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -207,6 +215,7 @@ export function StoriesListWithBulkOrder({ locale, folders }: { locale: string; 
         onClose={() => {
           setBulkOrderOpen(false);
         }}
+        tenantType={tenantType}
       />
     </div>
   );

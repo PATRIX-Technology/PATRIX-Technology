@@ -5411,3 +5411,32 @@ This was true before this change too (the single-order "Pay Now" button
 was equally non-functional) -- the bug being fixed here is that the
 WhatsApp bypass was the only thing that *did* work, which is backwards
 from what should be reachable before Stripe exists.
+
+## Print-order consent checkbox: tenant-aware wording
+
+**Problem, caught by the founder from a live nursery test account
+screenshot:** `PrintOrderDialog`/`BulkPrintOrderDialog` showed the same
+consent sentence to every tenant type: *"I certify that I am the parent
+or legal guardian of the child..."* A nursery owner or staff member
+ordering printed copies for a classroom batch has no basis to certify
+that -- they are not the child's parent or guardian, and the actual
+legal basis for printing (parental consent already captured through
+`consent_requests`, per-child, before the story could even be generated)
+is a completely different fact than what the checkbox was asking them to
+certify. This wasn't a translation gap or a styling issue -- the English
+and Arabic text agreed with each other, both were just wrong for a
+nursery tenant.
+
+**Fix:** split the consent string into `consentFamilyEn/Ar` (unchanged --
+correct for a family account, where the account owner genuinely is the
+child's parent/guardian) and `consentNurseryEn/Ar` (new: certifies the
+person is an authorised staff member ordering on the organisation's
+behalf, and that parental consent for each child was already obtained
+through Ownly's own consent process -- not reasserting it here). Both
+`PrintOrderDialog` and `BulkPrintOrderDialog` now take a `tenantType`
+prop and select the matching pair; both call sites
+(`stories/[storyId]/page.tsx`, `stories/page.tsx`) already had
+`context.tenantType` on hand to pass through. No schema change --
+`consent_accepted_at` still just records when the box was checked; which
+sentence was shown is a function of tenant type at render time, same as
+every other tenant-type-conditional UI in this app.

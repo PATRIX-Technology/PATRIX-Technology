@@ -96,7 +96,7 @@ export default async function StoriesPage({ params }: { params: { locale: string
       {!stories || stories.length === 0 ? (
         <EmptyState title={t('emptyTitle')} body={t('emptyBody')} />
       ) : (
-        <StoriesListWithBulkOrder locale={params.locale} folders={sortedFolders} />
+        <StoriesListWithBulkOrder locale={params.locale} folders={sortedFolders} tenantType={context.tenantType} />
       )}
     </div>
   );

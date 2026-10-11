@@ -125,7 +125,7 @@ export default async function StoryDetailPage({
             >
               {t('downloadPdf')}
             </DownloadButton>
-            <PrintOrderDialog storyId={story.id} />
+            <PrintOrderDialog storyId={story.id} tenantType={context.tenantType} />
           </div>
         )}
       </div>

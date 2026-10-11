@@ -6,6 +6,7 @@ import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { useToast } from '@/components/ui/Toast';
 import { PRINT_ORDER_PRICE_MINOR, type PrintOrderCurrency } from '@/lib/domain/print-orders';
+import type { TenantType } from '@/types/database';
 
 export interface BulkPrintOrderItem {
   storyId: string;
@@ -30,10 +31,12 @@ export function BulkPrintOrderDialog({
   items,
   open,
   onClose,
+  tenantType,
 }: {
   items: BulkPrintOrderItem[];
   open: boolean;
   onClose: () => void;
+  tenantType: TenantType;
 }) {
   const t = useTranslations('printOrder');
   const locale = useLocale();
@@ -179,9 +182,9 @@ export function BulkPrintOrderDialog({
             className="mt-0.5 h-4 w-4 shrink-0"
           />
           <span className="space-y-2">
-            <span className="block">{t('consentEn')}</span>
+            <span className="block">{t(tenantType === 'nursery' ? 'consentNurseryEn' : 'consentFamilyEn')}</span>
             <span dir="rtl" className="block text-end">
-              {t('consentAr')}
+              {t(tenantType === 'nursery' ? 'consentNurseryAr' : 'consentFamilyAr')}
             </span>
           </span>
         </label>

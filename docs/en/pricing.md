@@ -102,6 +102,26 @@ even with the added labour.
   to us — a small, concrete trust-builder for a first customer who has
   never seen a physical book yet) to any founding-partner nursery that
   also commits to an annual plan.
+
+  **Network-tier exception — quota halved during the 3 discounted
+  months only.** A straight 50% price cut only stays profitable on a
+  tier whose normal margin is above 50%: Starter (~82%) and Growth
+  (~72%) both clear that easily even at half price (AED 374.50/mo and
+  AED 974.50/mo respectively, both comfortably above their AED 138 and
+  AED 551 AI cost). **Network sits at ~48%**, just under the line, so
+  a flat 50% discount at the full 500-story quota prices below cost:
+  AED 2,624.50/mo revenue against AED 2,753/mo AI cost — a real loss
+  of ≈AED 129/mo (≈AED 386 over the 3 months), before Stripe fees. Fix:
+  halve the quota alongside the price for a Network founding partner
+  specifically — **250 stories/mo for the 3 discounted months**, full
+  500/mo once full price starts in month 4 — which holds the margin at
+  the same ~48% (price and cost scale by the same factor, so the ratio
+  is unchanged) at zero added cost. The "50% off" pitch stays identical
+  for every tier; only Network's pilot-phase allowance is sized to
+  match. This is a manual step today (set `quotas.stories_included_this_period`
+  to 250 for that tenant alongside the Stripe coupon, both set up by
+  hand for the first 10 nurseries anyway — see "Operating playbook"
+  below), not something `sync_quota_to_plan` does automatically.
 - **Referral credit** — a manual sales concession: a nursery that
   refers another paying nursery gets 1 month free, applied by hand.
   Distinct from the automated "Invite & earn free stories" mechanic
@@ -304,6 +324,13 @@ as payees). This is the plan, not yet the implementation.
   annually; don't invoice net-30 for small accounts. Network-tier
   nursery groups, hospitals, and banks often need a formal PO/invoice
   process — be ready to send manual Stripe invoices for those.
+- **If a founding partner signs on Network**: set
+  `quotas.stories_included_this_period` to 250 for their tenant (not
+  the default 500) for the first 3 months, alongside the Stripe
+  coupon for the 50% discount — both manual steps anyway at this
+  volume. Reset it to 500 once full price starts in month 4. See "Cost
+  basis" → "Launch offers" above for why: at Network's own ~48%
+  margin, halving only the price (not the quota) prices below cost.
 - **Onboarding**: personally walk the first ~10 nurseries through setup
   rather than a self-serve email link — this is an unfamiliar product
   category, and the first week determines retention.

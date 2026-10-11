@@ -179,34 +179,34 @@ else has already been built and is documented in `docs/HANDOFF.md`.
    project (item 1 above), I'll set `global_spend_cap.monthly_cap_usd` to
    500 for you — just confirming here in writing since it's real money.
 
-## Before enabling photo-based personalisation (optional)
+## Photo-based personalisation — enabled for pilot without legal review (your explicit decision)
 
-5a. **A qualified legal review of photo-based personalisation**, covering
-   at minimum: UAE/GCC child-data and biometric-adjacent data handling,
-   what the consent flow needs to say to parents, and how long an
-   uploaded photo should be retained. The code is fully built and
-   gated behind this — `FEATURE_PHOTO_PERSONALIZATION` and
-   `PHOTO_PERSONALIZATION_LEGAL_REVIEW_COMPLETE` both default to `off`,
-   and a nursery also has to explicitly opt in per-tenant — but nobody
-   should be able to upload a child's photo until this review is done.
-   See `docs/DECISIONS.md` "Photo personalisation wiring".
+5a. **Status: live as of 2026-10-11, on your explicit instruction, without
+   a qualified legal review ever happening.** This item originally asked
+   for a UAE/GCC lawyer to review child-data/biometric-adjacent handling,
+   consent wording, and retention before either feature flag turned on.
+   That review didn't happen — you were shown an unattributed AI-written
+   compliance memo, told plainly that it isn't a legal review, and
+   instructed to proceed anyway, citing it being an early MVP and not
+   wanting to hire counsel right now. Both flags are now `true` in
+   Vercel. See `docs/DECISIONS.md` "Photo personalisation: founder-
+   accepted risk, no counsel review" for the full record and the
+   residual gaps that decision leaves open (cross-border transfer via
+   Supabase/Gemini, the nursery-vs-family consent distinction, the
+   unreviewed checkbox wording) — nothing below is resolved by this
+   change, only unblocked.
 
-   You asked whether UAE law specifically requires consent for a
-   *family* account's own parent uploading their own child's photo —
-   I can't answer that; it's exactly this item. What I did instead:
-   built the mechanism so a family tenant *can* grant photo consent
-   (previously it was hard-blocked with no way to grant it at all), via
-   one required checkbox shown directly on the upload screen at the
-   moment of upload — not the nursery's separate multi-step request
-   flow, since a family account's owner IS the child's parent/guardian,
-   so there's no separate party to ask. That checkbox is a pragmatic
-   default, not a legal conclusion: please have this reviewed alongside
-   everything else in this item before turning
-   `PHOTO_PERSONALIZATION_LEGAL_REVIEW_COMPLETE` on for real — including
-   whether the checkbox's exact wording is sufficient, or needs to say
-   more (e.g. naming Google Gemini as the processor, retention period,
-   right to withdraw). See `docs/DECISIONS.md` "Family photo consent: a
-   single checkbox at upload time".
+   The consent mechanism itself is unchanged and still fully enforced:
+   tenant opt-in, per-child consent requests, phone-OTP verification for
+   nursery-requested photo consent, and the family single-checkbox-at-
+   upload flow. See `docs/DECISIONS.md` "Family photo consent: a single
+   checkbox at upload time" for how that one works.
+
+   Worth revisiting before this scales past a handful of pilot nurseries:
+   a real UAE PDPL opinion gets cheaper to ignore the smaller you are,
+   and more expensive to have skipped the bigger you get — particularly
+   once nursery staff (not parents) are routinely the ones requesting
+   consent for children who aren't their own.
 
 ## Before enabling billing
 

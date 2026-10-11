@@ -19,12 +19,18 @@ export const flags = {
   photoPersonalization: boolFlag(process.env.FEATURE_PHOTO_PERSONALIZATION, false),
 
   /**
-   * Separate, deliberately distinct flag from photoPersonalization above:
-   * confirms a qualified legal review of photo-based personalisation has
-   * actually been completed (see docs/NEEDS_FROM_ME.md item 4a-equivalent
-   * for photos). Two flags rather than one so "I turned on the feature
-   * flag to test it" can never be mistaken for "legal review is done" —
-   * both must independently be true.
+   * Separate, deliberately distinct flag from photoPersonalization above.
+   * Despite its name, this does NOT mean a licensed lawyer reviewed photo
+   * personalisation — no such review has happened. The founder explicitly
+   * decided to launch the pilot without external counsel, accepting the
+   * compliance risk himself based on general SaaS consent/deletion norms
+   * rather than a UAE-specific legal opinion. See docs/DECISIONS.md
+   * "Photo personalisation: founder-accepted risk, no counsel review" for
+   * the full record, including the residual gaps that decision leaves
+   * open (cross-border transfer via Supabase/Gemini, nursery-specific
+   * child-data handling, unreviewed consent-checkbox wording). Kept as a
+   * separate flag from photoPersonalization above so the two can still be
+   * toggled independently if that ever matters again.
    */
   photoPersonalizationLegalReviewComplete: boolFlag(
     process.env.PHOTO_PERSONALIZATION_LEGAL_REVIEW_COMPLETE,

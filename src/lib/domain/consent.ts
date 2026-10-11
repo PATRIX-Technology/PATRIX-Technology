@@ -35,6 +35,12 @@ export function buildConsentUrl(baseUrl: string, token: string): string {
  */
 export interface PhotoGateInput {
   tenantOptedIntoPhoto: boolean;
+  /**
+   * Name is historical — see flags.ts's comment on
+   * photoPersonalizationLegalReviewComplete. This records whether the
+   * founder has signed off on launching without a licensed legal review,
+   * not that one happened.
+   */
   legalReviewCompleted: boolean;
 }
 

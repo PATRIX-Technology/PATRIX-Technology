@@ -5253,3 +5253,51 @@ tashkeel-regex sweep used in the earlier reseed), and
 `native_review_status` for `locale === 'ar'` rows, matching what the
 gate actually checks — English rows carry the same field but it's
 inert for them, so the test no longer asserts a value for it).
+
+## Photo personalisation: founder-accepted risk, no counsel review
+
+**Decision: enabled for pilot on the founder's explicit, written
+instruction, without a licensed legal review.** `docs/NEEDS_FROM_ME.md`
+item 5a asked for a qualified UAE/GCC legal review (child-data and
+biometric-adjacent handling, consent wording, retention) before
+`PHOTO_PERSONALIZATION_LEGAL_REVIEW_COMPLETE` was turned on — that
+review never happened. Instead, the founder was shown an unattributed,
+AI-generated compliance memo (no named lawyer, firm, license, or
+signature) addressing the four questions this project raised, and
+after being told explicitly that this does not constitute a legal
+review, instructed: *"we are not hiring an external lawyer right
+now... I need you to drop the requirement for a human legal review at
+this stage... Proceed immediately."*
+
+Both `FEATURE_PHOTO_PERSONALIZATION` and
+`PHOTO_PERSONALIZATION_LEGAL_REVIEW_COMPLETE` were set to `true` in
+Vercel (production + preview) on 2026-10-11 per that instruction. The
+existing runtime consent mechanism was not changed and is unaffected
+by this entry — tenant opt-in, per-child consent requests, phone-OTP
+verification for nursery-requested photo consent, and the family
+single-checkbox-at-upload flow (see "Family photo consent: a single
+checkbox at upload time" below) all still gate every photo upload
+exactly as before. What changed is only that the two flags no longer
+block those mechanisms from being reached. The flag and field names
+themselves ("legal review complete") were left unchanged in the env
+var (renaming it risked more code churn than the moment called for),
+but their code comments (`src/lib/flags.ts`,
+`src/lib/domain/consent.ts`) were corrected to say plainly that no
+such review occurred — so nobody reading the code later mistakes this
+for one.
+
+Known gaps this decision leaves open, carried over unresolved from
+`docs/NEEDS_FROM_ME.md` items 5a and 7, not re-litigated here but worth
+revisiting before scaling past a pilot:
+- The family-account consent checkbox's exact wording was never
+  reviewed for sufficiency (naming Google Gemini as processor,
+  retention period, right to withdraw).
+- Supabase has no UAE/GCC region (closest is Mumbai) and Gemini is a
+  US-based processor — every photo, not only the AI call, is a
+  cross-border transfer, for every tenant, all the time. Unassessed
+  by counsel.
+- The nursery-side flow involves staff requesting consent for a child
+  who is not their own and not the requesting account's dependant —
+  a materially different relationship than a family account's own
+  parent uploading their own child's photo, which the "legal opinion"
+  above did not distinguish or address at all.

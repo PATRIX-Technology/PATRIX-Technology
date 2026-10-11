@@ -14,7 +14,14 @@ import { ClickableRow } from '@/components/ui/ClickableRow';
 import { AvatarPreview } from '@/components/children/AvatarPreview';
 import { parseAvatarConfig } from '@/lib/domain/avatar';
 import { useToast } from '@/components/ui/Toast';
+import { whatsappShareLink } from '@/lib/config/contact';
 import type { Child, ConsentStatus } from '@/types/database';
+
+const WHATSAPP_ICON = (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+    <path d="M12 2a10 10 0 0 0-8.6 15L2 22l5.2-1.4A10 10 0 1 0 12 2Zm5.6 14.3c-.2.6-1.4 1.2-2 1.3-.5.1-1.1.1-1.8-.1a16 16 0 0 1-2.2-.8 12 12 0 0 1-4.5-4 13 13 0 0 1-1-1.6c-.3-.5-.6-1.2-.6-1.9 0-.9.5-1.4.7-1.6.2-.2.4-.3.6-.3h.5c.2 0 .4 0 .6.4l.8 1.9c.1.2.1.4 0 .6l-.3.5-.3.4c-.1.1-.2.3 0 .5.3.5.9 1.3 1.7 1.9.8.7 1.6 1 1.9 1.2.3.1.4.1.6-.1l.6-.7c.2-.2.4-.2.6-.1l1.7.9c.2.1.4.2.4.4.1.3.1.8-.1 1.4Z" />
+  </svg>
+);
 
 const CONSENT_TONE: Record<ConsentStatus, 'neutral' | 'warning' | 'success' | 'danger'> = {
   not_requested: 'neutral',
@@ -362,14 +369,20 @@ export function ChildrenListWithBulkConsent({
                   <p className="font-medium text-ink-900">{row.childName}</p>
                   <code className="mt-1 block truncate text-xs text-ink-500">{row.consentUrl}</code>
                 </div>
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  className="print:hidden"
-                  onClick={() => copyLink(row.consentUrl!)}
-                >
-                  {t('bulkConsent.copy')}
-                </Button>
+                <div className="flex shrink-0 gap-2 print:hidden">
+                  <a
+                    href={whatsappShareLink(`${t('bulkConsent.whatsappMessage', { name: row.childName })} ${row.consentUrl}`)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="focus-ring inline-flex items-center gap-1.5 rounded-lg bg-lagoon-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-lagoon-700"
+                  >
+                    {WHATSAPP_ICON}
+                    {t('bulkConsent.whatsapp')}
+                  </a>
+                  <Button variant="secondary" size="sm" onClick={() => copyLink(row.consentUrl!)}>
+                    {t('bulkConsent.copy')}
+                  </Button>
+                </div>
               </div>
             ))}
           </div>

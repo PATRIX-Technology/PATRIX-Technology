@@ -281,7 +281,9 @@
       "successCount": "{count, plural, one {# link ready to share} other {# links ready to share}}",
       "copy": "Copy",
       "copied": "Link copied",
-      "print": "Print"
+      "print": "Print",
+      "whatsapp": "WhatsApp",
+      "whatsappMessage": "Please review and grant consent for {name}'s personalised story:"
     },
     "bulkStories": {
       "createFor": "{count, plural, =0 {Create stories} one {Create story for # child} other {Create stories for # children}}",

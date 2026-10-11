@@ -5463,3 +5463,30 @@ Sanity-checked against the doc's own aside that the old AED 69 price
 was "$19" — recomputing AED 69 at that ratio gives $18.74, which rounds
 to exactly $19, so the ratio holds. Revisit if an accountant sets a
 different AED/USD peg than the implicit ~3.68 this assumes.
+
+## WhatsApp share button on bulk consent links
+
+**Decision: added a direct "WhatsApp" button next to each child's
+consent link** in the bulk-consent results modal
+(`ChildrenListWithBulkConsent.tsx`), per the founder's request after
+seeing the modal only offered "Copy" per row. Staff generating 9+
+consent links at once previously had to copy each link and paste it
+into a separate WhatsApp chat by hand.
+
+This needed a new link shape, not the existing `whatsappLink()` helper
+(`src/lib/config/contact.ts`): that one is hardcoded to Ownly's own
+support number, correct for the Contact page's "message us" use, wrong
+here — the message needs to go to the *parent*, whose number Ownly
+deliberately does not collect for the bulk story-only consent flow (see
+`requestConsentBulkAction`'s own comment on why: no safe way to collect
+30 distinct numbers in one bulk action). New `whatsappShareLink(message)`
+omits the destination number entirely (`https://wa.me/?text=...`), which
+opens WhatsApp with the message pre-filled and lets staff pick the
+parent from their own contacts/chat list — the standard "share to
+anyone" WhatsApp deep link shape, not a message to Ownly.
+
+The single-child `ConsentPanel.tsx` already had a share mechanism (task
+#97, `navigator.share()` with the QR image) — left as-is; this is a
+narrower, more reliable text-link share for the bulk case specifically
+(desktop browsers commonly lack file-sharing via `navigator.share`,
+which `wa.me` doesn't need).

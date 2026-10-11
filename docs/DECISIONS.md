@@ -5772,3 +5772,43 @@ hit the base64 upload ceiling above — so the same Drive re-upload
 limitation documented in the pptx entry above will very likely apply
 here too, probably worse. Plan for a direct hand-off (as with the pptx)
 rather than an automatic Drive swap.
+
+## Sales Rep Reference deck was stale too — found by widening the sweep
+
+The founder asked, after seeing the Drive folder listing, whether the
+other pptx files nearby (templates, sales rep, partner, pricing/features
+decks) were also current. Checked every pptx in "01 Slides & Pitch
+Decks" via a quick text-snippet read rather than assuming the original
+6-item audit list was exhaustive:
+
+- **`Ownly_Sales_Rep_Reference-2.pptx` was stale and the highest-stakes
+  find yet** — it's the literal script a sales rep quotes prices from,
+  and it still carried AED 499/1,299/3,499 and $9/$19/month (vs. the
+  current AED 749/1,949/5,249 and $14/$29), the same shelved "Single
+  Story" product as the internal strategy deck, and the same
+  "printed books via a future print partner, longer-term" line — except
+  here a rep could tell a real nursery printed copies aren't available
+  when they've been live via Stripe all session. A rep working from the
+  old figures would under-quote every tier and undersell an already-live
+  feature. Fixed with the same OOXML-surgery approach as the internal
+  strategy deck (remove the stale table row, update the three price
+  cells, rewrite the "what's coming next" slide to split out printed
+  copies as shipped vs. the two still-roadmap items), validated and
+  visually QA'd, same Drive-upload limitation hit and handled the same
+  way (renamed the live file `OLD_...`, delivered the corrected file
+  directly).
+- **The four customer-facing pitch decks (TEMPLATE EN/AR,
+  SAMPLE_Sunshine_Kids EN/AR) are current** — they don't carry a numeric
+  pricing table at all (qualitative pitch content only: what-is-Ownly,
+  why-us, the pilot/founding-partner offer), and their "National Day,
+  Eid, birthdays, new siblings" line is already accurate now that those
+  templates are live. Nothing to fix.
+- **`Ownly_Data_Protection_Partner_Overview.pptx` is current** —
+  privacy/PDPL/safeguarding content only, no pricing or page-count
+  claims to go stale.
+- Not yet checked: `Ownly_Compliance_Legal_QA_Status.pptx` and
+  `Ownly_Data_Safeguarding_Overview-1.pptx` in the "Internal" subfolder
+  (legal/compliance status, not pricing/features — lower priority given
+  what the founder actually asked about), and `V1-Ownly_Pilot_Deck*`
+  (looks like a superseded short draft, not factually stale, just
+  missing slides the full TEMPLATE decks have).

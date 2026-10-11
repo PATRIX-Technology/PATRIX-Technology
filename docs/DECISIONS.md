@@ -5645,3 +5645,45 @@ thing reads as one deliberate dropdown component rather than a floating
 color bar. `CreateStoryForm.tsx` only — the Stories list's bulk-order
 picker (`StoriesListWithBulkOrder.tsx`) is a different, separate
 component not touched by this change.
+
+## Drive-doc staleness audit: Master Backlog & Next Steps Plan corrected
+
+Per the founder's "make sure everything working fine and all docs are
+okay" request, a background audit flagged six Drive documents as
+describing app behavior that no longer matches the live product. Fixed
+two of them this pass (text-only Google Docs edits, both EN+AR):
+
+- **Master Backlog & Roadmap**: the regeneration rule ("once per page
+  within 10 minutes") was rewritten to the current story-wide-once rule;
+  "Longer-term: hardcopy/printed books via a B2B print partner" was
+  rewritten to reflect that paid, bulk-tier printed orders are already
+  live via Stripe; and the Section F item framing "4 vs 10 page
+  discrepancy to resolve" — both numbers were already wrong before this
+  fix — was replaced with a confirmation that stories are 8 pages
+  (cover + 6 AI-illustrated interior pages + back), matching the cost
+  basis used throughout the Pricing document.
+- **Next Steps Plan**: the stale AED 12.15/story cost assumption was
+  updated to the current $1.50/story (≈ AED 5.51); a wrong cross-reference
+  sent the reader to the Master Backlog doc for the "National Day Hero"
+  story concept, which actually lives in the Pricing document, Section 2
+  — fixed; and the "Story Suggestion Feature — Outstanding Requirements"
+  section (Telegram-only routing needing an email provider, flat
+  10/hour rate limit) was rewritten as resolved — the feature now saves
+  to `story_template_suggestions` with a dashboard list and an optional
+  WhatsApp forward link, and the submission cap is per-tier
+  (`plans.suggestion_requests_per_month`), not an hourly limit.
+
+Both docs were re-read in full after editing to confirm no
+`replaceAllText` substring collision corrupted anything else — a
+recurring risk with short/numeric search strings in this session,
+caught here too (one Arabic replacement initially introduced a
+transcription typo of its own, caught on the verification re-read and
+corrected in a follow-up batch).
+
+Remaining audit items not yet addressed: the internal strategy `.pptx`
+deck (pricing/cost-basis/theme/print-status all stale) and the two
+4-page sample PDFs in "11 Product Samples" (need a real 8-page story
+exported from the live app, not a text edit) — to be flagged to the
+founder rather than silently regenerated, since the PDF regeneration
+needs either his own action or a different technical approach than the
+Drive-doc edits above.

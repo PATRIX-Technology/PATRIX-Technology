@@ -62,6 +62,7 @@ a constant.
 | UAE trademark registration, one class | 10,000 | AED 6,500 government fee alone; AED 8,500-12,000 all-in with an agent — the formal legal clearance still needed for "Ownly" (the informal searches done for "Khayali" and "TooniX" don't carry over to a third, different name — see `docs/NEEDS_FROM_ME.md` item 2) |
 | Legal review | 10,000 | Contract templates (the proposal/order form in `docs/en/sales/`), PDPL/privacy-policy review — both flagged in `docs/NEEDS_FROM_ME.md` |
 | Google Play Console registration | 92 | One-time, not annual |
+| Founding-partner printed-copy bonus | up to 2,250 | Capped, contingent cost — see `docs/en/pricing.md` "Launch offers": the first 10 founding-partner nurseries get 5 free printed copies each if they also commit to an annual plan (5 × AED 45 print cost × 10 nurseries = AED 2,250 max). **Excluded from the subtotal below** — this only happens if founding partners actually sign and commit annually, which is a sign the launch is working, not a baseline cost to plan around. Track it as it accrues rather than budgeting for the worst case. |
 | **Subtotal, one-time** | **20,092** | |
 
 ## Variable — not a fixed line

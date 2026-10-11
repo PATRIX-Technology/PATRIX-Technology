@@ -80,7 +80,7 @@ restore pre-8-page margins" for the full numbers and the live
 
 ## B2B — nurseries & schools
 
-| Plan | Monthly | Annual (≈2 months free) | Stories / month | Seats included | Story suggestions / month | COGS/mo | Gross margin | Best for |
+| Plan | Monthly | Annual (≈2 months free) | Digital stories / month | Seats included | Story suggestions / month | COGS/mo | Gross margin | Best for |
 |---|---|---|---|---|---|---|---|---|
 | **Starter** | AED 749 | AED 7,185 | 25 | 3 | 10 | AED 138 | ~82% | A single nursery branch piloting the product |
 | **Growth** | AED 1,949 | AED 18,735 | 100 | 10 | 20 | AED 551 | ~72% | A multi-branch nursery or a school |
@@ -93,6 +93,15 @@ billing period (`plans.suggestion_requests_per_month`, enforced by
 as the story allowance itself, **not** a per-hour rate limit like an
 earlier build of this feature used — see `docs/DECISIONS.md` "Story
 suggestions: fixed count per period, not per hour".
+
+**The quota above is digital stories only — it includes zero printed
+copies.** A nursery's subscription never requires or assumes printing;
+whether to print any of those 25/100/500 stories, and how many, is the
+nursery's own choice, made per order in "Printed copies" below. The
+more copies a nursery actually orders at once, the cheaper each copy
+gets automatically (down to AED 58/copy, free delivery, at 100+ copies
+in one order) — that bulk curve is about print *order* size, and is
+completely independent of which subscription tier the nursery is on.
 
 ### Self-serve vs. managed
 
@@ -161,14 +170,19 @@ even with the added labour.
   below — this one pays in stories, to whoever did the inviting
   (nursery or family alike), not cash to a nursery specifically.
 - **Family** (built — `plans.key = 'family'`, AED twin `family_aed`,
-  `audience = 'family'`): $14 / AED 50 per month for 1 story/month —
-  cheaper per-story than a one-off purchase would be, for recurring
-  use. 3 story-template suggestions/month. Raised from $9, same 1.5×
-  reasoning as the nursery tiers above — family's per-story AI cost
-  rose the same way.
+  `audience = 'family'`): $14 / AED 50 per month for 1 digital
+  story/month — cheaper per-story than a one-off purchase would be,
+  for recurring use. 3 story-template suggestions/month. Raised from
+  $9, same 1.5× reasoning as the nursery tiers above — family's
+  per-story AI cost rose the same way.
 - **Family Plus** (built — `plans.key = 'family_plus'`, AED twin
   `family_plus_aed`): $29 / AED 105 per month (raised from $19) for 3
-  stories/month. 5 story-template suggestions/month.
+  digital stories/month. 5 story-template suggestions/month.
+
+As with the nursery tiers above, this is a digital-story quota only —
+a printed copy of any story is always a separate, optional purchase a
+family chooses per order, never something the monthly price includes
+or requires.
 
 **Why this is monthly, not a one-off pack**: every plan here — family
 and nursery alike — is a story *allowance that resets each period*,
@@ -271,6 +285,15 @@ annual billing". No coupon has actually been created in Stripe yet
 gap to close before it could ever matter, not an active bug.
 
 ## Printed copies (add-on, nursery and family alike)
+
+**Entirely optional, decided per order — never bundled into or implied
+by a subscription.** A nursery's monthly story quota (see "B2B —
+nurseries & schools" above) is digital only; whether to print any of
+it, and how many copies, is a choice the nursery makes each time it
+places a print order, not something the plan commits them to. The
+price per copy drops automatically the more copies go into that one
+order, down to AED 58/copy with free delivery at 100+ copies — see the
+bulk table below.
 
 A physical printed copy of an already-approved digital story, ordered
 and paid via Stripe checkout (`print_orders` table, covered in

@@ -199,8 +199,8 @@
       },
       {
         "order": 6,
-        "text": "{child_name} walked over and said, \"Everyone feels wobbly on their first day — even me!\" and took the new friend's hand. Together they walked in, two brave steps instead of one.",
-        "image_prompt": "{child_name}'s avatar taking the hand of a new nervous classmate and walking together into the classroom, cartoon fox mascot smiling from behind, warm colours, storybook illustration style."
+        "text": "{child_name} walked over and said, \"Everyone feels wobbly on their first day — even me!\" Together, they walked in side by side, two brave steps instead of one.",
+        "image_prompt": "{child_name}'s avatar walking side by side with a new nervous classmate into the classroom, cartoon fox mascot smiling from behind, warm colours, storybook illustration style."
       }
     ]
   },
@@ -240,8 +240,8 @@
       },
       {
         "order": 6,
-        "text": "{v:went} {child_name} إليه و{v:said}: «كل شخص يشعر بالتوتر في يومه الأول، حتى أنا!» ثم {v:took_hand} يد الصديق الجديد. ومعا، {v:went_together_dual} خطوتين شجاعتين بدل خطوة واحدة.",
-        "image_prompt": "شخصية {child_name} تأخذ بيد زميل جديد متوتر وتمشي معه إلى داخل الفصل، الثعلب الكرتوني يبتسم من الخلف، ألوان دافئة، أسلوب رسوم كتاب قصص."
+        "text": "{v:went} {child_name} إليه و{v:said}: «كل شخص يشعر بالتوتر في يومه الأول، حتى أنا!» ومعا، {v:went_together_dual} جنبا إلى جنب، خطوتين شجاعتين بدل خطوة واحدة.",
+        "image_prompt": "شخصية {child_name} تمشي جنبا إلى جنب مع زميل جديد متوتر إلى داخل الفصل، الثعلب الكرتوني يبتسم من الخلف، ألوان دافئة، أسلوب رسوم كتاب قصص."
       }
     ]
   },

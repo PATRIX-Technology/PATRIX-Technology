@@ -114,7 +114,6 @@ export const ARABIC_VERB_KEYS = [
   'taught',
   'noticed',
   'remembered',
-  'took_hand',
   'holds_baby_carefully',
   'realized',
   'felt_light',
@@ -243,7 +242,6 @@ export const ARABIC_CONJUGATIONS: Record<ArabicVerbKey, Record<Pronoun, string>>
   taught: { she: 'علمت', he: 'علم' },
   noticed: { she: 'لاحظت', he: 'لاحظ' },
   remembered: { she: 'تذكرت', he: 'تذكر' },
-  took_hand: { she: 'أخذت', he: 'أخذ' },
   holds_baby_carefully: {
     she: 'تحمله بعناية وتدعم رأسه',
     he: 'يحمله بعناية ويدعم رأسه',

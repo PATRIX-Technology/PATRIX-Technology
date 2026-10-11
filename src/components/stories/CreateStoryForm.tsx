@@ -8,21 +8,46 @@ import { useSafeFormReducer } from '@/lib/actions/use-safe-form-reducer';
 import { Button } from '@/components/ui/Button';
 import { useToast } from '@/components/ui/Toast';
 import { useEffect, useRef } from 'react';
-import type { ConsentStatus, NativeReviewStatus } from '@/types/database';
+import type { ConsentStatus } from '@/types/database';
 
 interface TemplateOption {
   id: string;
   theme_key: string;
-  title: string;
-  locale: string;
+  titleEn: string;
+  titleAr: string;
   category: string;
-  native_review_status: NativeReviewStatus;
 }
 
 // Display order for known categories; anything else (a future category
 // seeded without updating this list) is appended after, alphabetically,
 // rather than dropped — see docs/DECISIONS.md "Story template categories".
 const CATEGORY_ORDER = ['family', 'nurseries', 'gifts', 'educational', 'entertainment'];
+
+// Hard-coded bilingual pair per category, shown together regardless of the
+// active UI language — see docs/DECISIONS.md "Bilingual template names in
+// the story picker". Kept in sync by hand with messages/{en,ar}.json's
+// `stories.categories` block (next-intl only ever surfaces one locale at a
+// time, which is exactly what this can't use).
+const CATEGORY_LABELS: Record<string, { en: string; ar: string }> = {
+  family: { en: 'Family', ar: 'العائلة' },
+  nurseries: { en: 'Nurseries', ar: 'الحضانات' },
+  gifts: { en: 'Gifts', ar: 'الهدايا' },
+  educational: { en: 'Educational', ar: 'تعليمية' },
+  entertainment: { en: 'Super Heroes (Entertainment)', ar: 'الأبطال الخارقون (ترفيه)' },
+};
+
+// One accent per category (background tint for the section header, border
+// accent for its cards) so categories read as visually distinct blocks
+// rather than one undifferentiated list — see item 5 of the founder's
+// request ("visually appealing, modern, colored, well-structured").
+const CATEGORY_ACCENTS: Record<string, { header: string; cardBorder: string }> = {
+  family: { header: 'bg-coral-900/30 text-coral-300', cardBorder: 'hover:border-coral-700' },
+  nurseries: { header: 'bg-lagoon-900/40 text-lagoon-300', cardBorder: 'hover:border-lagoon-700' },
+  gifts: { header: 'bg-saffron-900/30 text-saffron-300', cardBorder: 'hover:border-saffron-600' },
+  educational: { header: 'bg-lagoon-900/40 text-lagoon-300', cardBorder: 'hover:border-lagoon-700' },
+  entertainment: { header: 'bg-coral-900/30 text-coral-300', cardBorder: 'hover:border-coral-700' },
+};
+const DEFAULT_ACCENT = { header: 'bg-ink-800 text-ink-300', cardBorder: 'hover:border-ink-600' };
 
 const THEME_ICONS: Record<string, JSX.Element> = {
   healthy_eating: (
@@ -218,7 +243,10 @@ export function CreateStoryForm({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state]);
 
-  const usableTemplates = templates.filter((tpl) => tpl.native_review_status === 'reviewed');
+  // Review-status filtering now happens server-side (both locale rows have
+  // to clear the gate before a theme is passed down at all) -- see the
+  // query in children/[childId]/page.tsx.
+  const usableTemplates = templates;
   const consentGranted = consentStatus === 'granted';
 
   const categories = Array.from(new Set(usableTemplates.map((tpl) => tpl.category))).sort((a, b) => {
@@ -254,28 +282,33 @@ export function CreateStoryForm({
       }}
       className="flex flex-col gap-6"
     >
-      {categories.map((category, categoryIndex) => {
+      {categories.map((category) => {
         const categoryTemplates = usableTemplates.filter((tpl) => tpl.category === category);
+        const labels = CATEGORY_LABELS[category];
+        const accent = CATEGORY_ACCENTS[category] ?? DEFAULT_ACCENT;
+        const primaryLabel = labels ? (locale === 'ar' ? labels.ar : labels.en) : category;
+        const secondaryLabel = labels ? (locale === 'ar' ? labels.en : labels.ar) : null;
         return (
-          <details key={category} className="group" open={categoryIndex === 0}>
-            <summary className="focus-ring flex cursor-pointer list-none items-center justify-between gap-2 rounded-lg py-1 hover:bg-ink-50">
-              <span className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-ink-500">
-                <span aria-hidden className="text-ink-400 transition-transform group-open:rotate-90">
-                  ▸
-                </span>
-                {t.has(`categories.${category}`) ? t(`categories.${category}`) : category}
+          // Always expanded -- no collapse/toggle -- so every category's
+          // colored header and cards are visible on page load, not hidden
+          // behind a dropdown the owner has to click open first.
+          <section key={category}>
+            <div className={`flex items-center justify-between gap-2 rounded-xl px-3 py-2 ${accent.header}`}>
+              <span className="flex items-baseline gap-2 text-sm font-semibold">
+                <span>{primaryLabel}</span>
+                {secondaryLabel && <span className="font-normal opacity-80">{secondaryLabel}</span>}
               </span>
-              <span className="text-xs font-normal normal-case tracking-normal text-ink-400">
-                {categoryTemplates.length}
-              </span>
-            </summary>
+              <span className="text-xs font-normal opacity-70">{categoryTemplates.length}</span>
+            </div>
             <div className="mt-3 grid gap-3 pb-1 sm:grid-cols-2 lg:grid-cols-3">
               {categoryTemplates.map((template) => {
                 const globalIndex = usableTemplates.indexOf(template);
+                const primaryTitle = locale === 'ar' ? template.titleAr : template.titleEn;
+                const secondaryTitle = locale === 'ar' ? template.titleEn : template.titleAr;
                 return (
                   <label
                     key={template.id}
-                    className="group relative flex cursor-pointer flex-col gap-3 rounded-xl2 border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface-raised))] p-4 transition-all hover:-translate-y-0.5 hover:border-lagoon-700 hover:shadow-card has-[:checked]:border-saffron-500 has-[:checked]:shadow-card has-[:checked]:ring-2 has-[:checked]:ring-saffron-500/35"
+                    className={`group relative flex cursor-pointer flex-col gap-3 rounded-xl2 border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface-raised))] p-4 transition-all hover:-translate-y-0.5 hover:shadow-card has-[:checked]:border-saffron-500 has-[:checked]:shadow-card has-[:checked]:ring-2 has-[:checked]:ring-saffron-500/35 ${accent.cardBorder}`}
                   >
                     <input type="radio" name="templateId" value={template.id} required className="peer sr-only" />
                     <span
@@ -286,7 +319,10 @@ export function CreateStoryForm({
                       </svg>
                     </span>
                     <div>
-                      <p className="font-medium text-ink-800">{template.title}</p>
+                      <p className="font-medium text-ink-800">{primaryTitle}</p>
+                      <p className="text-sm text-ink-500" dir={locale === 'ar' ? 'ltr' : 'rtl'}>
+                        {secondaryTitle}
+                      </p>
                     </div>
                     <span className="absolute end-3 top-3 text-xs font-semibold text-saffron-400 opacity-0 peer-checked:opacity-100">
                       ✓
@@ -295,7 +331,7 @@ export function CreateStoryForm({
                 );
               })}
             </div>
-          </details>
+          </section>
         );
       })}
       <GenerateButton label={t('generate')} />

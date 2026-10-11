@@ -5301,3 +5301,40 @@ revisiting before scaling past a pilot:
   a materially different relationship than a family account's own
   parent uploading their own child's photo, which the "legal opinion"
   above did not distinguish or address at all.
+
+## Bilingual template names in the story picker; category picker no longer collapsed
+
+**Decision: fixed two real gaps the founder flagged as "still not seeing
+changes" after an earlier pass (tasks #125/#128) had marked this done.**
+Direct code inspection showed the earlier work was incomplete/regressed:
+
+1. `CreateStoryForm.tsx`'s category sections were wrapped in `<details>`/
+   `<summary>` (added later, in "Make story category picker collapsible"),
+   collapsed by default except the first category — so the "colored,
+   modern category boxes" the founder asked for were hidden behind a
+   dropdown toggle on page load, not the immediately-visible showcase
+   requested. Replaced with always-expanded `<section>` blocks; no
+   toggle, no collapse.
+2. The story-create page queried `story_theme_templates` filtered to only
+   `child.preferred_language`, so each card's title and each category's
+   label only ever rendered in one language — never both at once, which
+   item 2 of the founder's request explicitly asked for ("category names
+   must always display in both languages regardless of the active UI
+   language toggle"). Fixed by fetching both locale rows per theme in
+   `children/[childId]/page.tsx`, merging them into `{titleEn, titleAr}`
+   per template, and rendering both on every card (active locale's title
+   first, the other beneath it) and on every category header, via a
+   small hard-coded `CATEGORY_LABELS` dict in `CreateStoryForm.tsx`
+   (next-intl only ever exposes one locale's string at a time, which
+   can't satisfy "both, always").
+
+Also added a per-category color accent (`CATEGORY_ACCENTS`) on the
+section header and card hover border, so categories read as visually
+distinct blocks rather than one undifferentiated list.
+
+Not touched by this fix, and still real open items from the founder's
+original 8-part request: Phase C (bilingual text baked into one
+illustration, as opposed to bilingual *names/labels* in the UI, which
+is what this entry fixes) remains unbuilt — see task #127. The cover/
+back pages added in "Add 6-page PDF structure" render bilingually
+already; the interior story pages do not.

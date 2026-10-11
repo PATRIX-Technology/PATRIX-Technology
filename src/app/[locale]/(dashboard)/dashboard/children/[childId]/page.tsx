@@ -42,11 +42,41 @@ export default async function ChildDetailPage({
     .maybeSingle();
   if (!child) notFound();
 
-  const { data: templates } = await supabase
+  // Fetch both locales' rows per theme (not just child.preferred_language)
+  // so the picker can show every template's name in English and Arabic at
+  // once, regardless of which language is active -- see
+  // docs/DECISIONS.md "Bilingual template names in the story picker".
+  const { data: templateRows } = await supabase
     .from('story_theme_templates')
     .select('id, theme_key, title, locale, category, native_review_status')
     .eq('is_active', true)
-    .eq('locale', child.preferred_language);
+    .in('locale', ['en', 'ar']);
+
+  const templatesByTheme = new Map<
+    string,
+    { id: string; theme_key: string; titleEn: string; titleAr: string; category: string; reviewed: boolean }
+  >();
+  for (const row of templateRows ?? []) {
+    const entry = templatesByTheme.get(row.theme_key) ?? {
+      id: '',
+      theme_key: row.theme_key,
+      titleEn: '',
+      titleAr: '',
+      category: row.category,
+      reviewed: true,
+    };
+    if (row.locale === child.preferred_language) entry.id = row.id;
+    if (row.locale === 'en') entry.titleEn = row.title;
+    if (row.locale === 'ar') entry.titleAr = row.title;
+    // Only the locale actually offered to this child has to clear native
+    // review -- see assertTemplateUsable in src/lib/domain/templates.ts,
+    // which gates locale === 'ar' only; English rows are inert here too.
+    if (row.locale === child.preferred_language && row.native_review_status !== 'reviewed') {
+      entry.reviewed = false;
+    }
+    templatesByTheme.set(row.theme_key, entry);
+  }
+  const templates = Array.from(templatesByTheme.values()).filter((tpl) => tpl.id && tpl.reviewed);
 
   const { data: stories } = await supabase
     .from('stories')
@@ -58,7 +88,9 @@ export default async function ChildDetailPage({
   // snake_case theme_key (always English regardless of locale) — see
   // docs/DECISIONS.md "Arabic gender-agreement audit of the story
   // templates" for why that distinction matters here specifically.
-  const titleByThemeKey = new Map((templates ?? []).map((tpl) => [tpl.theme_key, tpl.title]));
+  const titleByThemeKey = new Map(
+    templates.map((tpl) => [tpl.theme_key, child.preferred_language === 'ar' ? tpl.titleAr : tpl.titleEn]),
+  );
 
   const { data: tenant } = await supabase
     .from('tenants')

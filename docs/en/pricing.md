@@ -80,12 +80,54 @@ restore pre-8-page margins" for the full numbers and the live
 
 ## B2B — nurseries & schools
 
-| Plan | Monthly | Annual (≈2 months free) | Digital stories / month | Seats included | Story suggestions / month | COGS/mo | Gross margin | Best for |
-|---|---|---|---|---|---|---|---|---|
-| **Starter** | AED 749 | AED 7,185 | 25 | 3 | 10 | AED 138 | ~82% | A single nursery branch piloting the product |
-| **Growth** | AED 1,949 | AED 18,735 | 100 | 10 | 20 | AED 551 | ~72% | A multi-branch nursery or a school |
-| **Network** | AED 5,249 | AED 50,235 | 500 | 50 | 30 | AED 2,753 | ~48% | A nursery group, hospital, or bank running a campaign across many locations |
+Every nursery runs through two pricing phases: a 100%-free pilot class
+(no price — see "Launch offers" below), then the discounted
+**Founding Partner launch rate** for the first 3 months after
+converting to paid (limited to the first 10 nurseries who sign), then
+the **standard rate** for the rest of that 12-month term and every
+term after. Shown below as two separate tables so a rep never
+conflates pilot-phase pricing with the standard rate a nursery settles
+into.
 
+### Founding Partner launch pricing (months 1–3, first 10 nurseries only)
+
+| Plan | Founding Partner price | Digital stories / month | Story suggestions / month | Seats included |
+|---|---|---|---|---|
+| **Starter** | AED 374.50/mo | 25 | 10 | 3 |
+| **Growth** | AED 974.50/mo | 100 | 20 | 10 |
+| **Network** | AED 2,624.50/mo | 250 (halved for these 3 months only — see below) | 30 | 50 |
+
+**Confirmed no tier sells at a loss at this rate.** Starter nets ~63%
+margin even at 50% off (AED 374.50 revenue vs. AED 138 AI cost), Growth
+~43.5% (AED 974.50 vs. AED 551). Network is the one tier where a flat
+50% cut at the full 500-story quota *would* price below cost (AED
+2,624.50 revenue vs. AED 2,753 AI cost — a real ≈AED 129/mo loss) —
+fixed by halving Network's quota to 250 stories/mo for these 3 months
+only, which holds its margin at the same ~48% as standard pricing
+(price and cost scale by the same factor). Full 500/mo resumes
+automatically once standard pricing starts in month 4. This quota
+halving is a manual step today (set
+`quotas.stories_included_this_period` to 250 for that tenant alongside
+the Stripe coupon, both already set up by hand for the first 10
+nurseries anyway), not something `sync_quota_to_plan` does
+automatically yet.
+
+Founding Partner nurseries that also commit to an annual plan get **5
+free printed copies** (AED 81 standalone value each, AED 225 total
+print cost to us) as a trust-builder for a first customer who hasn't
+seen a physical book yet.
+
+### Standard pricing (month 4 onward, and every nursery not on the Founding Partner offer)
+
+| Plan | Monthly | Annual (≈2 months free) | Digital stories / month | Story suggestions / month | Seats included | COGS/mo | Gross margin |
+|---|---|---|---|---|---|---|---|
+| **Starter** | AED 749 | AED 7,185 | 25 | 10 | 3 | AED 138 | ~82% |
+| **Growth** | AED 1,949 | AED 18,735 | 100 | 20 | 10 | AED 551 | ~72% |
+| **Network** | AED 5,249 | AED 50,235 | 500 | 30 | 50 | AED 2,753 | ~48% |
+
+Best for: Starter — a single nursery branch piloting the product;
+Growth — a multi-branch nursery or a school; Network — a nursery
+group, hospital, or bank running a campaign across many locations.
 Prices raised from the original AED 499/1,299/3,499 — see "Cost basis"
 above for why. "Story suggestions / month" is a fixed number per
 billing period (`plans.suggestion_requests_per_month`, enforced by
@@ -94,14 +136,29 @@ as the story allowance itself, **not** a per-hour rate limit like an
 earlier build of this feature used — see `docs/DECISIONS.md` "Story
 suggestions: fixed count per period, not per hour".
 
-**The quota above is digital stories only — it includes zero printed
-copies.** A nursery's subscription never requires or assumes printing;
-whether to print any of those 25/100/500 stories, and how many, is the
-nursery's own choice, made per order in "Printed copies" below. The
-more copies a nursery actually orders at once, the cheaper each copy
-gets automatically (down to AED 58/copy, free delivery, at 100+ copies
-in one order) — that bulk curve is about print *order* size, and is
-completely independent of which subscription tier the nursery is on.
+**Both tables above are digital stories only — zero printed copies in
+either one.** A nursery's subscription never requires or assumes
+printing; whether to print any of those stories, and how many, is the
+nursery's own choice, made per order (see the printed-copy table
+immediately below — same ladder for both the launch and standard
+phases). The more copies a nursery actually orders at once, the
+cheaper each copy gets automatically — that bulk curve is about print
+*order* size, and is completely independent of which pricing phase or
+subscription tier the nursery is on.
+
+### Printed copies — B2B (optional add-on, same ladder at every tier and every pricing phase)
+
+| Quantity | Price / book | Markup on cost | Notes |
+|---|---|---|---|
+| 1 (standalone) | **AED 81** (≈$22) | 80% | Default checkout price — replaces the earlier AED 69/$19 price |
+| 10-49 | **AED 69** | 53% | Nursery class-set pricing |
+| 50-99 | **AED 63** | 40% | Nursery multi-class pricing |
+| 100+ | **AED 58** + **free delivery** | 29% | A full graduation/term-end print run for a nursery |
+
+Full cost basis, margin math, and fulfillment status in "Printed
+copies" below — this is the same ladder, repeated here so it's visible
+alongside the subscription prices rather than only further down the
+doc.
 
 ### Self-serve vs. managed
 
@@ -114,32 +171,13 @@ even with the added labour.
 
 ### Launch offers
 
-- **Founding partner** — 50% off for 3 months, locked to a 12-month
-  term, for the first 10 nurseries who sign. Add **5 free printed
-  copies** (at AED 81 standalone value each, AED 225 total print cost
-  to us — a small, concrete trust-builder for a first customer who has
-  never seen a physical book yet) to any founding-partner nursery that
-  also commits to an annual plan.
-
-  **Network-tier exception — quota halved during the 3 discounted
-  months only.** A straight 50% price cut only stays profitable on a
-  tier whose normal margin is above 50%: Starter (~82%) and Growth
-  (~72%) both clear that easily even at half price (AED 374.50/mo and
-  AED 974.50/mo respectively, both comfortably above their AED 138 and
-  AED 551 AI cost). **Network sits at ~48%**, just under the line, so
-  a flat 50% discount at the full 500-story quota prices below cost:
-  AED 2,624.50/mo revenue against AED 2,753/mo AI cost — a real loss
-  of ≈AED 129/mo (≈AED 386 over the 3 months), before Stripe fees. Fix:
-  halve the quota alongside the price for a Network founding partner
-  specifically — **250 stories/mo for the 3 discounted months**, full
-  500/mo once full price starts in month 4 — which holds the margin at
-  the same ~48% (price and cost scale by the same factor, so the ratio
-  is unchanged) at zero added cost. The "50% off" pitch stays identical
-  for every tier; only Network's pilot-phase allowance is sized to
-  match. This is a manual step today (set `quotas.stories_included_this_period`
-  to 250 for that tenant alongside the Stripe coupon, both set up by
-  hand for the first 10 nurseries anyway — see "Operating playbook"
-  below), not something `sync_quota_to_plan` does automatically.
+- **Free pilot** — one trial class, up to 25 children, 100% free, 4–6
+  weeks from kickoff to finished storybooks. No price, so no table row
+  for it — see the Founding Partner table above for what a nursery
+  pays once it converts.
+- **Founding partner** — the discounted launch-phase pricing in the
+  table above, for the first 10 nurseries who sign, locked into a
+  12-month term.
 - **Referral credit** — a manual sales concession: a nursery that
   refers another paying nursery gets 1 month free, applied by hand.
   Distinct from the automated "Invite & earn free stories" mechanic
@@ -169,17 +207,37 @@ even with the added labour.
   to be confused with the cash-commission "Nursery Partner Program"
   below — this one pays in stories, to whoever did the inviting
   (nursery or family alike), not cash to a nursery specifically.
-- **Family** (built — `plans.key = 'family'`, AED twin `family_aed`,
-  `audience = 'family'`): $14 / AED 50 per month for 1 digital
-  story/month — cheaper per-story than a one-off purchase would be,
-  for recurring use. 3 story-template suggestions/month. Raised from
-  $9, same 1.5× reasoning as the nursery tiers above — family's
-  per-story AI cost rose the same way.
-- **Family Plus** (built — `plans.key = 'family_plus'`, AED twin
-  `family_plus_aed`): $29 / AED 105 per month (raised from $19) for 3
-  digital stories/month. 5 story-template suggestions/month.
 
-As with the nursery tiers above, this is a digital-story quota only —
+Families don't have a pilot/Founding-Partner phase — no free trial
+class exists on this side (see "No free trial" above) — so there's
+only one pricing table, not two.
+
+| Plan | Monthly | Annual (≈2 months free) | Digital stories / month | Story suggestions / month |
+|---|---|---|---|---|
+| **Family** | $14 / AED 50 | $135 / AED 495 | 1 | 3 |
+| **Family Plus** | $29 / AED 105 | $285 / AED 1,045 | 3 | 5 |
+
+- **Family** (built — `plans.key = 'family'`, AED twin `family_aed`,
+  `audience = 'family'`): cheaper per-story than a one-off purchase
+  would be, for recurring use. Raised from $9, same 1.5× reasoning as
+  the nursery tiers above — family's per-story AI cost rose the same
+  way.
+- **Family Plus** (built — `plans.key = 'family_plus'`, AED twin
+  `family_plus_aed`): raised from $19.
+
+### Printed copies — family (optional add-on, same ladder as B2B)
+
+| Quantity | Price / book | Markup on cost | Notes |
+|---|---|---|---|
+| 1 (standalone) | **AED 81** (≈$22) | 80% | Default checkout price |
+| 10-49 | **AED 69** | 53% | A family ordering for a class gift or school event |
+| 50-99 | **AED 63** | 40% | Larger group order |
+| 100+ | **AED 58** + **free delivery** | 29% | Rare for a single family, but the same ladder applies |
+
+Full cost basis, margin math, and fulfillment status in "Printed
+copies" below.
+
+As with the nursery tables above, this is a digital-story quota only —
 a printed copy of any story is always a separate, optional purchase a
 family chooses per order, never something the monthly price includes
 or requires.

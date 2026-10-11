@@ -396,9 +396,9 @@
     "consentEn": "I certify that I am the parent or legal guardian of the child, I consent to this personalised storybook being printed and shipped to the address above, and I agree to the Prepaid-Only, No-Refund Sales Terms for this custom-printed product once printing has begun.",
     "consentAr": "أقر بأنني ولي الأمر أو الوصي القانوني على الطفل، وأوافق على طباعة وشحن كتاب القصة المخصص هذا إلى العنوان أعلاه، كما أوافق على شروط الدفع المسبق وعدم الاسترجاع لهذا المنتج المطبوع المخصص بعد بدء الطباعة.",
     "payNow": "ادفع الآن — {price}",
-    "or": "أو",
-    "orderViaWhatsApp": "اطلب عبر واتساب بدلا من ذلك",
-    "whatsAppHint": "يرسل تفاصيل طلبك إلى فريقنا عبر واتساب — سنتواصل معك لترتيب الدفع وتأكيد طلبك.",
+    "bulkDialogTitle": "طلب {count, plural, one {نسخة مطبوعة واحدة} other {# نسخة مطبوعة}}",
+    "bulkTotal": "{count, plural, one {نسخة واحدة} other {# نسخة}} — الإجمالي {total}",
+    "bulkPayNow": "ادفع الآن — {total}",
     "errorTitle": "تعذّر بدء الدفع",
     "errorGeneric": "حدث خطأ ما. يرجى المحاولة مرة أخرى."
   },
@@ -457,6 +457,13 @@
     "bulkZipFailedTitle": "تعذر تحميل ملف ZIP",
     "bulkZipFailedBody": "الملف غير جاهز بعد، أو حدث خطأ ما. حاول مرة أخرى بعد قليل.",
     "storyCount": "{count, plural, zero {لا قصص} one {قصة واحدة} two {قصتان} few {# قصص} many {# قصة} other {# قصة}}",
+    "bulkOrder": {
+      "select": "اختر للطباعة",
+      "cancel": "إلغاء",
+      "selectedCount": "{count, plural, =0 {لم يتم اختيار أي قصة} one {تم اختيار قصة واحدة} other {تم اختيار # قصة}}",
+      "orderFor": "{count, plural, =0 {طلب نسخ مطبوعة} one {طلب نسخة مطبوعة واحدة} other {طلب # نسخة مطبوعة}}",
+      "selectStory": "اختر {title}"
+    },
     "noChildName": "طفل بلا اسم",
     "emptyTitle": "لا توجد قصص حتى الآن",
     "emptyBody": "أنشئ قصة من صفحة ملف الطفل.",

@@ -1,25 +1,10 @@
-import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { getCurrentTenantContext } from '@/lib/domain/session';
-import { Card } from '@/components/ui/Card';
-import { Badge } from '@/components/ui/Badge';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { DownloadButton } from '@/components/stories/DownloadButton';
 import { SuggestTemplateDialog } from '@/components/stories/SuggestTemplateDialog';
-import { ClickableRow } from '@/components/ui/ClickableRow';
-import type { StoryStatus } from '@/types/database';
-
-const STATUS_TONE: Record<StoryStatus, 'neutral' | 'warning' | 'success' | 'danger' | 'info'> = {
-  DRAFT: 'neutral',
-  QUEUED: 'neutral',
-  GENERATING: 'info',
-  GENERATED: 'info',
-  NEEDS_REVIEW: 'warning',
-  APPROVED: 'success',
-  REJECTED: 'danger',
-  FAILED: 'danger',
-};
+import { StoriesListWithBulkOrder, type ChildFolder } from '@/components/stories/StoriesListWithBulkOrder';
 
 export default async function StoriesPage({ params }: { params: { locale: string } }) {
   const supabase = await createSupabaseServerClient();
@@ -67,10 +52,7 @@ export default async function StoriesPage({ params }: { params: { locale: string
   // One folder per child, so a nursery with several stories per kid isn't
   // just a flat, hard-to-scan list. Children with no story left do not
   // appear at all — a folder implies "there's something inside it".
-  const childFolders = new Map<
-    string,
-    { childName: string; childNameIsArabic: boolean; stories: NonNullable<typeof stories> }
-  >();
+  const childFolders = new Map<string, ChildFolder>();
   for (const story of stories ?? []) {
     const child = story.children as unknown as { first_name: string; arabic_first_name: string | null } | null;
     // Arabic-locale viewers see the child's Arabic name first, same as the
@@ -78,9 +60,16 @@ export default async function StoriesPage({ params }: { params: { locale: string
     // is on file, rather than showing nothing.
     const childNameIsArabic = params.locale === 'ar' && Boolean(child?.arabic_first_name);
     const childName = (childNameIsArabic ? child?.arabic_first_name : child?.first_name) || t('noChildName');
+    const storyRow = {
+      id: story.id,
+      theme_key: story.theme_key,
+      status: story.status,
+      locale: story.locale,
+      title: titleByThemeKeyLocale.get(`${story.theme_key}:${story.locale}`) ?? story.theme_key.replace(/_/g, ' '),
+    };
     const existing = childFolders.get(story.child_id);
-    if (existing) existing.stories.push(story);
-    else childFolders.set(story.child_id, { childName, childNameIsArabic, stories: [story] });
+    if (existing) existing.stories.push(storyRow);
+    else childFolders.set(story.child_id, { childId: story.child_id, childName, childNameIsArabic, stories: [storyRow] });
   }
   const sortedFolders = [...childFolders.values()].sort((a, b) => a.childName.localeCompare(b.childName));
 
@@ -107,64 +96,7 @@ export default async function StoriesPage({ params }: { params: { locale: string
       {!stories || stories.length === 0 ? (
         <EmptyState title={t('emptyTitle')} body={t('emptyBody')} />
       ) : (
-        <div className="space-y-4">
-          {sortedFolders.map((folder) => (
-            // <summary> must be a direct child of <details> -- nesting it
-            // inside <Card> (as this used to) means the browser finds no
-            // valid summary and silently injects its own default "Details"
-            // disclosure above this one, since <summary> isn't recognized
-            // as the designated summary unless it's a direct child (HTML
-            // spec; reported live as a phantom "▼ Details" row). Card now
-            // wraps the whole <details> instead of the other way around.
-            <Card key={folder.stories[0]!.child_id} className="overflow-hidden p-0">
-              <details className="group" open>
-                <summary className="focus-ring flex cursor-pointer list-none items-center justify-between gap-3 p-4 hover:bg-ink-100">
-                  <span className="flex items-center gap-2 font-display text-lg text-ink-900">
-                    <span aria-hidden className="text-ink-400 transition-transform group-open:rotate-90">
-                      ▸
-                    </span>
-                    <span dir={folder.childNameIsArabic ? 'rtl' : undefined}>{folder.childName}</span>
-                  </span>
-                  <span className="text-xs text-ink-500">{t('storyCount', { count: folder.stories.length })}</span>
-                </summary>
-                <table className="w-full border-t border-[rgb(var(--color-border))] text-sm">
-                  <thead>
-                    <tr className="border-b border-[rgb(var(--color-border))] text-left text-ink-500">
-                      <th className="p-4">{t('columnTheme')}</th>
-                      <th className="p-4">{t('columnLanguage')}</th>
-                      <th className="p-4">{t('columnStatus')}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {folder.stories.map((story) => (
-                      <ClickableRow
-                        key={story.id}
-                        href={`/${params.locale}/dashboard/stories/${story.id}`}
-                        className="border-b border-[rgb(var(--color-border))] last:border-0"
-                      >
-                        <td className="p-4">
-                          <Link
-                            href={`/${params.locale}/dashboard/stories/${story.id}`}
-                            className="focus-ring font-medium text-ink-900 hover:text-lagoon-700"
-                          >
-                            {titleByThemeKeyLocale.get(`${story.theme_key}:${story.locale}`) ??
-                              story.theme_key.replace(/_/g, ' ')}
-                          </Link>
-                        </td>
-                        <td className="p-4 text-ink-600">{story.locale.toUpperCase()}</td>
-                        <td className="p-4">
-                          <Badge tone={STATUS_TONE[story.status as StoryStatus]}>
-                            {t(`status.${story.status}`)}
-                          </Badge>
-                        </td>
-                      </ClickableRow>
-                    ))}
-                  </tbody>
-                </table>
-              </details>
-            </Card>
-          ))}
-        </div>
+        <StoriesListWithBulkOrder locale={params.locale} folders={sortedFolders} />
       )}
     </div>
   );

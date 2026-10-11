@@ -396,9 +396,9 @@
     "consentEn": "I certify that I am the parent or legal guardian of the child, I consent to this personalised storybook being printed and shipped to the address above, and I agree to the Prepaid-Only, No-Refund Sales Terms for this custom-printed product once printing has begun.",
     "consentAr": "أقر بأنني ولي الأمر أو الوصي القانوني على الطفل، وأوافق على طباعة وشحن كتاب القصة المخصص هذا إلى العنوان أعلاه، كما أوافق على شروط الدفع المسبق وعدم الاسترجاع لهذا المنتج المطبوع المخصص بعد بدء الطباعة.",
     "payNow": "Pay now — {price}",
-    "or": "or",
-    "orderViaWhatsApp": "Order via WhatsApp instead",
-    "whatsAppHint": "Sends your order details to our team on WhatsApp — we'll follow up to arrange payment and confirm your order.",
+    "bulkDialogTitle": "Order {count, plural, one {# printed copy} other {# printed copies}}",
+    "bulkTotal": "{count, plural, one {# copy} other {# copies}} — total {total}",
+    "bulkPayNow": "Pay now — {total}",
     "errorTitle": "Couldn't start checkout",
     "errorGeneric": "Something went wrong. Please try again."
   },
@@ -457,6 +457,13 @@
     "bulkZipFailedTitle": "Couldn't download the ZIP",
     "bulkZipFailedBody": "The file isn't ready yet, or something went wrong. Try again in a moment.",
     "storyCount": "{count, plural, one {# story} other {# stories}}",
+    "bulkOrder": {
+      "select": "Select for printing",
+      "cancel": "Cancel",
+      "selectedCount": "{count, plural, =0 {No stories selected} one {# story selected} other {# stories selected}}",
+      "orderFor": "{count, plural, =0 {Order printed copies} one {Order # printed copy} other {Order # printed copies}}",
+      "selectStory": "Select {title}"
+    },
     "noChildName": "Unnamed child",
     "emptyTitle": "No stories yet",
     "emptyBody": "Create one from a child's profile page.",

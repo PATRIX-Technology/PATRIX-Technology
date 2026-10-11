@@ -79,3 +79,10 @@ export function validateShippingAddress(input: Partial<ShippingAddressInput>): V
 export function isPrintOrderCurrency(value: unknown): value is PrintOrderCurrency {
   return value === 'aed' || value === 'usd';
 }
+
+/** One Stripe Checkout session holds one line item per story in the
+ * batch -- this caps that array at a sane size (well under Stripe's own
+ * 100-line-item limit per session) so a single request can't be used to
+ * build an absurdly large checkout. A single-story order is a batch of
+ * one. */
+export const MAX_BULK_PRINT_ORDER_STORIES = 50;

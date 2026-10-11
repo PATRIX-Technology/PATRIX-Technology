@@ -5338,3 +5338,76 @@ illustration, as opposed to bilingual *names/labels* in the UI, which
 is what this entry fixes) remains unbuilt — see task #127. The cover/
 back pages added in "Add 6-page PDF structure" render bilingually
 already; the interior story pages do not.
+
+## Bulk print ordering, paid online, replaces the WhatsApp no-payment bypass
+
+**Problem, in the founder's own words:** "orders need to be able to do
+bulk generation of template story for number of bulk childrens then be
+able to order a bulk together with paying the price online then that
+will come to me on whatsapp for the order so I can pass it to the
+printer center... not like what we have now to let customer order via
+whatsapp lol or not even having that bulk options."
+
+Both halves of that complaint were accurate on inspection of the actual
+code (task #130's "completed" mark was wrong on this point): the only
+customer-reachable print-order path was `createWhatsAppPrintOrderAction`
+in `src/lib/actions/print-orders.ts`, a no-payment bypass -- it inserted
+a `print_orders` row with no Stripe session at all ("to be collected
+separately — not paid online" was written directly into the WhatsApp
+message it generated) and handed the *customer* a wa.me link to message
+Ownly's own number. The real Stripe-paid path existed but was strictly
+one story at a time, with no way to select several children's stories
+and check out together.
+
+**Fix:**
+- `supabase/migrations/0039_print_order_batches.sql`: added a nullable
+  `print_orders.batch_id`, shared across every row paid for in the same
+  Stripe Checkout session. A single-story order is a batch of one.
+- `/api/print-orders/checkout`: contract changed from one `storyId` to
+  an array `storyIds` (deduped, capped at `MAX_BULK_PRINT_ORDER_STORIES`
+  = 50). Validates every id belongs to the tenant and is `APPROVED`,
+  reporting exactly which ones failed rather than silently ordering
+  fewer than requested. Inserts one `print_orders` row per story sharing
+  a fresh `batch_id`, builds one Stripe Checkout session with one line
+  item per story, and the single-story `PrintOrderDialog` now just calls
+  this same endpoint with a one-element array.
+- `src/lib/actions/print-orders.ts` (the WhatsApp no-payment bypass) —
+  **deleted**, along with its button in `PrintOrderDialog.tsx`. Every
+  print order is paid for online now; there is no unpaid path left.
+- New `StoriesListWithBulkOrder.tsx` (stories list page) + extracted
+  `BulkPrintOrderDialog.tsx`: a "Select for printing" mode, same pattern
+  as `ChildrenListWithBulkConsent.tsx`, lets the owner check any number
+  of `APPROVED` stories across any child's folder and pay for all of
+  them in one checkout.
+- Webhook (`/api/billing/webhook`): `checkout.session.completed` for a
+  print-order session now reads `metadata.batch_id` (not the old single
+  `print_order_id`) and marks every row sharing that batch paid together
+  in one update, then calls `notifyOwnerOfPaidPrintOrderBatch`.
+
+**What "comes to me on WhatsApp" actually means here, stated plainly so
+it isn't overclaimed:** there is no WhatsApp Business API account
+configured (that needs a Twilio WhatsApp sender or a Meta Cloud API
+app -- a real "need from you" item, not something fabricable from here),
+so a server process cannot push a message into WhatsApp on its own.
+What `notifyOwnerOfPaidPrintOrderBatch` (`src/lib/notifications/email.ts`)
+actually does: sends the founder an email immediately and automatically
+via the same Resend integration the book-a-demo notification already
+uses (reliable, no tap needed), containing the full itemized order, and
+includes a pre-filled `wa.me` link in that email's body addressed to
+Ownly's own WhatsApp number -- one tap from the phone that email is read
+on opens WhatsApp with the whole order ready to forward to the print
+vendor. That is a real, truthful improvement over retyping an order by
+hand, but it is "one tap to forward," not "silently appears in
+WhatsApp" -- getting the latter needs the WhatsApp Business API account.
+
+**Cannot be tested live yet, and this is not a code problem:**
+`/api/print-orders/checkout` and the webhook both return/no-op behind
+`flags.billing`, which is `false` because no Stripe test keys are
+configured in Vercel (`docs/NEEDS_FROM_ME.md` item 6) -- consistent with
+the founder's own stated plan to do Stripe after company registration.
+Until then, *neither* the old single-order Pay Now button *nor* this
+new bulk flow can actually complete a checkout in production; both 501.
+This was true before this change too (the single-order "Pay Now" button
+was equally non-functional) -- the bug being fixed here is that the
+WhatsApp bypass was the only thing that *did* work, which is backwards
+from what should be reachable before Stripe exists.

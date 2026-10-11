@@ -4,6 +4,7 @@ import { getStripeClient, getStripeWebhookSecret } from '@/lib/billing/stripe';
 import { createSupabaseServiceRoleClient } from '@/lib/supabase/service-role';
 import { extractCheckoutMetadata, subscriptionFromStripe } from '@/lib/domain/billing';
 import { flags } from '@/lib/flags';
+import { notifyOwnerOfPaidPrintOrderBatch } from '@/lib/notifications/email';
 
 export const runtime = 'nodejs';
 
@@ -81,25 +82,83 @@ async function handleEvent(
       const session = event.data.object as Stripe.Checkout.Session;
 
       // A print order's Checkout session is mode: 'payment' (see
-      // /api/print-orders/checkout) and carries print_order_id metadata
-      // instead of tenant_id/plan_id -- handle it separately before
+      // /api/print-orders/checkout) and carries batch_id metadata instead
+      // of tenant_id/plan_id -- handle it separately before
       // extractCheckoutMetadata, which THROWS when plan_id is missing
       // (that throw is correct for a subscription session with bad
       // metadata; it would be wrong to let it fire for a session that was
-      // never a subscription purchase in the first place).
+      // never a subscription purchase in the first place). One checkout
+      // session can cover several stories (a bulk print order) -- every
+      // print_orders row sharing that batch_id gets marked paid together,
+      // then the owner is notified once with the whole order, not once
+      // per story. See docs/DECISIONS.md "Bulk print ordering, paid
+      // online, replaces the WhatsApp no-payment bypass".
       if (session.mode === 'payment') {
-        const printOrderId = session.metadata?.print_order_id;
-        if (!printOrderId) return;
+        const batchId = session.metadata?.batch_id;
+        if (!batchId) return;
 
         const paymentIntentId =
           typeof session.payment_intent === 'string' ? session.payment_intent : session.payment_intent?.id;
 
-        const { error } = await serviceClient
+        const { data: updatedOrders, error } = await serviceClient
           .from('print_orders')
           .update({ status: 'paid', stripe_payment_intent_id: paymentIntentId ?? null })
-          .eq('id', printOrderId)
-          .eq('status', 'pending');
+          .eq('batch_id', batchId)
+          .eq('status', 'pending')
+          .select(
+            'id, story_id, currency, amount_minor, shipping_name, shipping_phone, shipping_address_line1, shipping_address_line2, shipping_city, shipping_country, tenant_id, tenants(name), stories!print_orders_story_id_fkey(theme_key, locale, children!stories_child_id_fkey(first_name, arabic_first_name))',
+          );
         if (error) throw error;
+
+        // Idempotency: a retried webhook delivery for an already-paid
+        // batch updates zero rows the second time (the .eq('status',
+        // 'pending') above), so updatedOrders is empty and this is a
+        // no-op rather than a duplicate notification.
+        if (updatedOrders && updatedOrders.length > 0) {
+          const first = updatedOrders[0]!;
+          const tenant = first.tenants as unknown as { name: string } | null;
+
+          const { data: templateRows } = await serviceClient
+            .from('story_theme_templates')
+            .select('theme_key, locale, title')
+            .in(
+              'theme_key',
+              updatedOrders.map((o) => (o.stories as unknown as { theme_key: string }).theme_key),
+            );
+          const titleByThemeLocale = new Map(
+            (templateRows ?? []).map((row) => [`${row.theme_key}:${row.locale}`, row.title]),
+          );
+
+          const items = updatedOrders.map((order) => {
+            const story = order.stories as unknown as {
+              theme_key: string;
+              locale: string;
+              children: { first_name: string; arabic_first_name: string | null } | null;
+            };
+            const childName = (story.locale === 'ar' && story.children?.arabic_first_name) || story.children?.first_name || '';
+            const storyTitle =
+              titleByThemeLocale.get(`${story.theme_key}:${story.locale}`) ?? story.theme_key.replace(/_/g, ' ');
+            return { childName, storyTitle, locale: story.locale };
+          });
+
+          await notifyOwnerOfPaidPrintOrderBatch({
+            batchId,
+            tenantName: tenant?.name ?? 'Unknown organisation',
+            currency: first.currency,
+            totalAmountMinor: updatedOrders.reduce((sum, o) => sum + o.amount_minor, 0),
+            shippingName: first.shipping_name,
+            shippingPhone: first.shipping_phone,
+            shippingAddress: [
+              first.shipping_address_line1,
+              first.shipping_address_line2,
+              first.shipping_city,
+              first.shipping_country,
+            ]
+              .filter(Boolean)
+              .join(', '),
+            items,
+          });
+        }
         break;
       }
 

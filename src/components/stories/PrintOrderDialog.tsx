@@ -6,15 +6,21 @@ import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { useToast } from '@/components/ui/Toast';
 import type { PrintOrderCurrency } from '@/lib/domain/print-orders';
-import { createWhatsAppPrintOrderAction } from '@/lib/actions/print-orders';
 
 /**
- * Orders a physical printed copy of an already-approved story. The
- * mandatory bilingual consent/sales-terms checkbox is the single gate on
- * "Pay Now" -- unchecked, the button stays disabled, no server round
- * -trip needed to enforce that (the actual enforcement is still
- * server-side: /api/print-orders/checkout rejects consentAccepted !==
- * true regardless of what the client sends).
+ * Orders a physical printed copy of one already-approved story, paid for
+ * online via Stripe Checkout -- the same `/api/print-orders/checkout`
+ * endpoint the bulk order dialog on the stories list uses, just with a
+ * one-story `storyIds` array. There is deliberately no "order via
+ * WhatsApp" alternative here any more: that path let a customer place an
+ * order without paying online at all, which is exactly what it was
+ * replaced for -- see docs/DECISIONS.md "Bulk print ordering, paid
+ * online, replaces the WhatsApp no-payment bypass". The mandatory
+ * bilingual consent/sales-terms checkbox is the single gate on "Pay Now"
+ * -- unchecked, the button stays disabled, no server round-trip needed to
+ * enforce that (the actual enforcement is still server-side:
+ * /api/print-orders/checkout rejects consentAccepted !== true regardless
+ * of what the client sends).
  */
 export function PrintOrderDialog({ storyId }: { storyId: string }) {
   const t = useTranslations('printOrder');
@@ -24,7 +30,6 @@ export function PrintOrderDialog({ storyId }: { storyId: string }) {
   const [currency, setCurrency] = useState<PrintOrderCurrency>(locale === 'ar' ? 'aed' : 'usd');
   const [consentChecked, setConsentChecked] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [whatsappSubmitting, setWhatsappSubmitting] = useState(false);
   const [fields, setFields] = useState({
     shippingName: '',
     shippingPhone: '',
@@ -52,7 +57,7 @@ export function PrintOrderDialog({ storyId }: { storyId: string }) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          storyId,
+          storyIds: [storyId],
           currency,
           consentAccepted: consentChecked,
           locale,
@@ -73,27 +78,7 @@ export function PrintOrderDialog({ storyId }: { storyId: string }) {
     }
   }
 
-  async function handleWhatsAppOrder() {
-    setWhatsappSubmitting(true);
-    try {
-      const result = await createWhatsAppPrintOrderAction(storyId, currency, consentChecked, {
-        ...fields,
-        shippingCountry: fields.shippingCountry.trim().toUpperCase(),
-      });
-      if (result.error || !result.whatsappUrl) {
-        showToast({ title: t('errorTitle'), description: result.error ?? t('errorGeneric'), tone: 'error' });
-        setWhatsappSubmitting(false);
-        return;
-      }
-      window.location.href = result.whatsappUrl;
-    } catch {
-      showToast({ title: t('errorTitle'), description: t('errorGeneric'), tone: 'error' });
-      setWhatsappSubmitting(false);
-    }
-  }
-
-  const payDisabled = submitting || whatsappSubmitting || !consentChecked || !requiredFieldsFilled;
-  const whatsappDisabled = submitting || whatsappSubmitting || !consentChecked || !requiredFieldsFilled;
+  const payDisabled = submitting || !consentChecked || !requiredFieldsFilled;
 
   return (
     <>
@@ -179,17 +164,6 @@ export function PrintOrderDialog({ storyId }: { storyId: string }) {
           <Button variant="primary" onClick={handlePay} disabled={payDisabled} isLoading={submitting}>
             {t('payNow', { price: t(`price.${currency}`) })}
           </Button>
-
-          <div className="flex items-center gap-3 text-xs text-ink-400">
-            <span className="h-px flex-1 bg-[rgb(var(--color-border))]" />
-            {t('or')}
-            <span className="h-px flex-1 bg-[rgb(var(--color-border))]" />
-          </div>
-
-          <Button variant="secondary" onClick={handleWhatsAppOrder} disabled={whatsappDisabled} isLoading={whatsappSubmitting}>
-            {t('orderViaWhatsApp')}
-          </Button>
-          <p className="text-xs text-ink-500">{t('whatsAppHint')}</p>
         </div>
       </Modal>
     </>

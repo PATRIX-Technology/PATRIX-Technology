@@ -10,6 +10,23 @@ import { ClickableRow } from '@/components/ui/ClickableRow';
 import { BulkPrintOrderDialog, type BulkPrintOrderItem } from '@/components/stories/BulkPrintOrderDialog';
 import type { StoryStatus, TenantType } from '@/types/database';
 
+// Rotates through the app's existing accent palette so each child's
+// folder name reads as a distinct, deliberate color rather than plain
+// body text -- same tints CreateStoryForm.tsx already uses for category
+// icons, reused here for visual consistency across the app.
+const FOLDER_NAME_TINTS = ['text-lagoon-300', 'text-saffron-300', 'text-coral-300'];
+
+const PRINT_ICON = (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden>
+    <path
+      d="M6 9V3h12v6M6 18H4a1 1 0 0 1-1-1v-6a1 1 0 0 1 1-1h16a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1h-2M6 14h12v7H6z"
+      stroke="currentColor"
+      strokeWidth="1.7"
+      strokeLinejoin="round"
+    />
+  </svg>
+);
+
 const STATUS_TONE: Record<StoryStatus, 'neutral' | 'warning' | 'success' | 'danger' | 'info'> = {
   DRAFT: 'neutral',
   QUEUED: 'neutral',
@@ -109,7 +126,12 @@ export function StoriesListWithBulkOrder({
           </>
         ) : (
           approvedById.size > 0 && (
-            <Button variant="secondary" size="sm" onClick={() => setSelectMode(true)}>
+            <Button
+              variant="primary"
+              size="sm"
+              leadingIcon={PRINT_ICON}
+              onClick={() => setSelectMode(true)}
+            >
               {t('bulkOrder.select')}
             </Button>
           )
@@ -117,18 +139,23 @@ export function StoriesListWithBulkOrder({
       </div>
 
       <div className="space-y-4">
-        {folders.map((folder) => (
+        {folders.map((folder, folderIndex) => (
           // <summary> must be a direct child of <details> -- see the fuller
           // note that used to live inline here before this was extracted
           // into its own component.
           <Card key={folder.childId} className="overflow-hidden p-0">
             <details className="group" open>
               <summary className="focus-ring flex cursor-pointer list-none items-center justify-between gap-3 p-4 hover:bg-ink-100">
-                <span className="flex items-center gap-2 font-display text-lg text-ink-900">
+                <span className="flex items-center gap-2 font-display text-lg">
                   <span aria-hidden className="text-ink-400 transition-transform group-open:rotate-90">
                     ▸
                   </span>
-                  <span dir={folder.childNameIsArabic ? 'rtl' : undefined}>{folder.childName}</span>
+                  <span
+                    dir={folder.childNameIsArabic ? 'rtl' : undefined}
+                    className={FOLDER_NAME_TINTS[folderIndex % FOLDER_NAME_TINTS.length]}
+                  >
+                    {folder.childName}
+                  </span>
                 </span>
                 <span className="text-xs text-ink-500">{t('storyCount', { count: folder.stories.length })}</span>
               </summary>

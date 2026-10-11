@@ -316,10 +316,13 @@
     "inviteLinkCopy": "نسخ الرابط",
     "inviteLinkCopied": "تم النسخ!",
     "inviteWhatsappText": "تمت دعوتك للانضمام إلى فريقنا على أونلي — أنشئ تسجيل دخولك من هنا:",
-    "invitePendingLabel": "الدعوة قيد الانتظار",
+    "statusActive": "نشط",
+    "statusPending": "الدعوة قيد الانتظار",
+    "statusExpired": "انتهت صلاحية الدعوة",
     "table": {
       "name": "الاسم",
-      "role": "الدور"
+      "role": "الدور",
+      "status": "الحالة"
     }
   },
   "staffAccept": {
@@ -400,6 +403,7 @@
     "payNow": "ادفع الآن — {price}",
     "bulkDialogTitle": "طلب {count, plural, one {نسخة مطبوعة واحدة} other {# نسخة مطبوعة}}",
     "bulkTotal": "{count, plural, one {نسخة واحدة} other {# نسخة}} — الإجمالي {total}",
+    "bulkFreeDelivery": "توصيل مجاني",
     "bulkPayNow": "ادفع الآن — {total}",
     "errorTitle": "تعذّر بدء الدفع",
     "errorGeneric": "حدث خطأ ما. يرجى المحاولة مرة أخرى."

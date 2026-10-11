@@ -5,8 +5,8 @@ import { getCurrentTenantContext } from '@/lib/domain/session';
 import { getStripeClient } from '@/lib/billing/stripe';
 import { flags } from '@/lib/flags';
 import {
-  PRINT_ORDER_PRICE_MINOR,
   MAX_BULK_PRINT_ORDER_STORIES,
+  getPrintOrderUnitPriceMinor,
   isPrintOrderCurrency,
   validateShippingAddress,
 } from '@/lib/domain/print-orders';
@@ -111,7 +111,11 @@ export async function POST(request: Request) {
       .map((row) => [`${row.theme_key}:${row.locale}`, row.title]),
   );
 
-  const amountMinor = PRINT_ORDER_PRICE_MINOR[currency];
+  // Tiered by the size of THIS checkout -- see docs/en/pricing.md "Printed
+  // copies" for the ladder. A nursery ordering 30 books in one bulk
+  // checkout pays the 10-49 class-set price on every copy, same as if a
+  // human had applied it by hand the old way.
+  const amountMinor = getPrintOrderUnitPriceMinor(storyIds.length, currency);
   const batchId = randomUUID();
   const consentAcceptedAt = new Date().toISOString();
 

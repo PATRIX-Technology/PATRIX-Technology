@@ -1,11 +1,7 @@
 /**
  * Pricing and validation for a physical printed copy of an already
  * -generated digital storybook (see supabase/migrations/0037_print_orders.sql).
- * This is the STANDALONE single-copy price only — a nursery ordering in
- * bulk (10+) goes through the WhatsApp flow (Phase F) instead, where a
- * human applies the bulk-tier price from docs/en/pricing.md "Printed
- * copies" by hand; there is no automated bulk-checkout path yet. Prices
- * are fixed, not computed from story length/page count — see
+ * Prices are fixed, not computed from story length/page count — see
  * docs/DECISIONS.md "Print orders: fixed price until a vendor is
  * contracted" for why, and revisit once Logistics_Agreement.md
  * (contracts/) is actually signed with a vendor.
@@ -19,11 +15,67 @@ export type PrintOrderCurrency = 'aed' | 'usd';
  * print-vendor quote (8-page run, not yet a signed contract — see
  * docs/NEEDS_FROM_ME.md): AED 45 x 1.8 = AED 81 — see docs/en/pricing.md
  * "Printed copies" for the full bulk-tier ladder and the margin math this
- * is based on. */
+ * is based on. This is the standalone (1-9 copies) price; 10+ copies use
+ * PRINT_ORDER_BULK_TIERS below via getPrintOrderUnitPriceMinor. */
 export const PRINT_ORDER_PRICE_MINOR: Record<PrintOrderCurrency, number> = {
   usd: 2200, // $22.00
   aed: 8100, // AED 81.00
 };
+
+export interface PrintOrderBulkTier {
+  minQty: number;
+  /** Infinity for the open-ended top tier. */
+  maxQty: number;
+  priceMinor: Record<PrintOrderCurrency, number>;
+  freeDelivery?: boolean;
+  label: { en: string; ar: string };
+}
+
+/**
+ * The bulk-tier ladder from docs/en/pricing.md "Printed copies" — kept in
+ * sync with that doc by hand; update both together. USD figures aren't
+ * separately documented there, so they're derived at the same AED->USD
+ * ratio as the standalone price (22/81 ≈ 0.2716), rounded to the nearest
+ * dollar -- the AED 69 tier's $19 matches the doc's own "earlier AED
+ * 69/$19 price" reference exactly, which is a reasonable sanity check on
+ * that ratio. See "Bulk print ordering, paid online" and "Automated
+ * bulk-tier print-order pricing" in docs/DECISIONS.md.
+ */
+export const PRINT_ORDER_BULK_TIERS: PrintOrderBulkTier[] = [
+  {
+    minQty: 10,
+    maxQty: 49,
+    priceMinor: { aed: 6900, usd: 1900 },
+    label: { en: 'Class-set pricing (10–49 copies)', ar: 'سعر الفصل الدراسي (١٠–٤٩ نسخة)' },
+  },
+  {
+    minQty: 50,
+    maxQty: 99,
+    priceMinor: { aed: 6300, usd: 1700 },
+    label: { en: 'Multi-class pricing (50–99 copies)', ar: 'سعر عدة فصول (٥٠–٩٩ نسخة)' },
+  },
+  {
+    minQty: 100,
+    maxQty: Infinity,
+    priceMinor: { aed: 5800, usd: 1600 },
+    freeDelivery: true,
+    label: { en: 'Term-end bulk pricing + free delivery (100+ copies)', ar: 'سعر الجملة لنهاية الفصل + توصيل مجاني (١٠٠+ نسخة)' },
+  },
+];
+
+/** The matching bulk tier for a given quantity, or null for 1-9 copies
+ * (the standalone PRINT_ORDER_PRICE_MINOR price applies there). */
+export function getPrintOrderBulkTier(quantity: number): PrintOrderBulkTier | null {
+  return PRINT_ORDER_BULK_TIERS.find((tier) => quantity >= tier.minQty && quantity <= tier.maxQty) ?? null;
+}
+
+/** The actual per-copy price for this quantity and currency -- the single
+ * source of truth both the checkout route and the bulk order dialog use,
+ * so the price shown to the customer and the price Stripe charges can
+ * never drift apart. */
+export function getPrintOrderUnitPriceMinor(quantity: number, currency: PrintOrderCurrency): number {
+  return getPrintOrderBulkTier(quantity)?.priceMinor[currency] ?? PRINT_ORDER_PRICE_MINOR[currency];
+}
 
 export interface ShippingAddressInput {
   shippingName: string;

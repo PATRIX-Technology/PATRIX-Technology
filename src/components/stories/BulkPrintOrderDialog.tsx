@@ -5,7 +5,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { useToast } from '@/components/ui/Toast';
-import { PRINT_ORDER_PRICE_MINOR, type PrintOrderCurrency } from '@/lib/domain/print-orders';
+import { getPrintOrderBulkTier, getPrintOrderUnitPriceMinor, type PrintOrderCurrency } from '@/lib/domain/print-orders';
 import type { TenantType } from '@/types/database';
 
 export interface BulkPrintOrderItem {
@@ -64,8 +64,9 @@ export function BulkPrintOrderDialog({
     setFields((prev) => ({ ...prev, [key]: value }));
   }
 
-  const unitPrice = PRINT_ORDER_PRICE_MINOR[currency] / 100;
+  const unitPrice = getPrintOrderUnitPriceMinor(items.length, currency) / 100;
   const total = unitPrice * items.length;
+  const bulkTier = getPrintOrderBulkTier(items.length);
 
   async function handlePay() {
     setSubmitting(true);
@@ -133,6 +134,12 @@ export function BulkPrintOrderDialog({
         <p className="text-sm text-ink-600">
           {t('bulkTotal', { count: items.length, total: `${total.toFixed(2)} ${currency.toUpperCase()}` })}
         </p>
+        {bulkTier && (
+          <p className="rounded-lg bg-lagoon-900/30 px-3 py-2 text-xs text-lagoon-300">
+            {locale === 'ar' ? bulkTier.label.ar : bulkTier.label.en}
+            {bulkTier.freeDelivery && ` — ${t('bulkFreeDelivery')}`}
+          </p>
+        )}
 
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <input

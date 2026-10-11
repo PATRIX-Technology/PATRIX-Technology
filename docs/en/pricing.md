@@ -243,14 +243,15 @@ shipment's per-unit delivery cost collapses at 100+ copies) but would
 not be at smaller quantities — don't extend free delivery below the
 100-book tier without re-costing delivery first.
 
-**Not yet built**: automated bulk/tiered pricing in the Stripe checkout
-flow (`PrintOrderDialog.tsx`/`PRINT_ORDER_PRICE_MINOR` only know the
-single-item AED 81/$22 price today). A nursery ordering 10+ books
-currently goes through the WhatsApp flow (Phase F), where the bulk
-price is applied manually by whoever handles the order — exactly the
-kind of judgement call that flow was built for, not a gap to treat as
-broken. Automating bulk-tier checkout is real future work if volume
-orders become common enough to justify it.
+**Now automated**: the Stripe checkout flow applies this ladder itself
+based on how many copies are in the checkout (`getPrintOrderUnitPriceMinor`
+in `src/lib/domain/print-orders.ts`) — a nursery selecting 30 approved
+stories on the stories list and checking out together is charged the
+10-49 class-set price on every copy automatically, no manual price
+lookup needed. The old WhatsApp flow this replaced (where a human
+applied the tier by hand) is gone — see docs/DECISIONS.md "Bulk print
+ordering, paid online, replaces the WhatsApp no-payment bypass" and
+"Automated bulk-tier print-order pricing".
 
 ## Sizing the Gemini spend cap
 

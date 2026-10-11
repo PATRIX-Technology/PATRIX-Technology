@@ -16,13 +16,18 @@ export default async function StaffPage({ params }: { params: { locale: string }
     .select('user_id, role, profiles(full_name)')
     .eq('tenant_id', context.tenantId);
 
+  // Both open invites (status still 'pending') and ones that ran out the
+  // clock (status 'expired') are shown here, each with its own status
+  // color -- an 'accepted' invite is never listed: that person already
+  // has their own tenant_members row above, which is the single source
+  // of truth for "has an active login" once they've joined.
   const { data: pendingInvites } =
     context.role === 'nursery_owner'
       ? await supabase
           .from('staff_invites')
-          .select('id, email, role')
+          .select('id, email, role, status')
           .eq('tenant_id', context.tenantId)
-          .eq('status', 'pending')
+          .in('status', ['pending', 'expired'])
           .order('created_at', { ascending: false })
       : { data: null };
 
@@ -61,6 +66,7 @@ export default async function StaffPage({ params }: { params: { locale: string }
             <tr className="border-b border-[rgb(var(--color-border))] text-left text-ink-500">
               <th className="p-4">{t('table.name')}</th>
               <th className="p-4">{t('table.role')}</th>
+              <th className="p-4">{t('table.status')}</th>
             </tr>
           </thead>
           <tbody>
@@ -70,15 +76,21 @@ export default async function StaffPage({ params }: { params: { locale: string }
                 <td className="p-4">
                   <Badge tone="info">{member.role.replace('nursery_', '')}</Badge>
                 </td>
+                <td className="p-4">
+                  <Badge tone="success">{t('statusActive')}</Badge>
+                </td>
               </tr>
             ))}
             {(pendingInvites ?? []).map((invite) => (
               <tr key={invite.id} className="border-b border-[rgb(var(--color-border))] last:border-0">
-                <td className="p-4 text-ink-500">
-                  {invite.email} <span className="text-xs">— {t('invitePendingLabel')}</span>
+                <td className="p-4 text-ink-500">{invite.email}</td>
+                <td className="p-4">
+                  <Badge tone="info">{invite.role.replace('nursery_', '')}</Badge>
                 </td>
                 <td className="p-4">
-                  <Badge tone="warning">{invite.role.replace('nursery_', '')}</Badge>
+                  <Badge tone={invite.status === 'expired' ? 'danger' : 'warning'}>
+                    {invite.status === 'expired' ? t('statusExpired') : t('statusPending')}
+                  </Badge>
                 </td>
               </tr>
             ))}

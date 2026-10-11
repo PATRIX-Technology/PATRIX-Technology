@@ -5440,3 +5440,26 @@ prop and select the matching pair; both call sites
 `consent_accepted_at` still just records when the box was checked; which
 sentence was shown is a function of tenant type at render time, same as
 every other tenant-type-conditional UI in this app.
+
+## Automated bulk-tier print-order pricing
+
+**Decision: the Stripe checkout flow now applies the bulk-tier ladder
+from `docs/en/pricing.md` "Printed copies" itself**, based on how many
+stories are in that checkout — `getPrintOrderUnitPriceMinor` in
+`src/lib/domain/print-orders.ts`. Previously that doc explicitly said
+this was "not yet built" and the bulk price was applied by hand by
+whoever handled a WhatsApp order; now that the WhatsApp flow is gone
+(see "Bulk print ordering, paid online" above), a manual price lookup
+was no longer optional, it was a gap. `PRINT_ORDER_BULK_TIERS` holds the
+4 documented tiers (1 standalone, 10-49, 50-99, 100+ with free
+delivery); `BulkPrintOrderDialog.tsx` shows the applicable tier's label
+and the discounted per-copy price live as the selection changes, so the
+discount is visible before checkout, not just applied silently.
+
+USD figures for the 3 bulk tiers aren't separately documented (the
+pricing doc only gives AED) — derived at the same AED→USD ratio as the
+standalone price (22/81 ≈ 0.2716) and rounded to the nearest dollar.
+Sanity-checked against the doc's own aside that the old AED 69 price
+was "$19" — recomputing AED 69 at that ratio gives $18.74, which rounds
+to exactly $19, so the ratio holds. Revisit if an accountant sets a
+different AED/USD peg than the implicit ~3.68 this assumes.

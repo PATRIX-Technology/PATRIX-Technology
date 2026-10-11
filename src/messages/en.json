@@ -316,10 +316,13 @@
     "inviteLinkCopy": "Copy link",
     "inviteLinkCopied": "Copied!",
     "inviteWhatsappText": "You've been invited to join our team on Ownly — set up your login here:",
-    "invitePendingLabel": "Invite pending",
+    "statusActive": "Active",
+    "statusPending": "Invite pending",
+    "statusExpired": "Invite expired",
     "table": {
       "name": "Name",
-      "role": "Role"
+      "role": "Role",
+      "status": "Status"
     }
   },
   "staffAccept": {
@@ -400,6 +403,7 @@
     "payNow": "Pay now — {price}",
     "bulkDialogTitle": "Order {count, plural, one {# printed copy} other {# printed copies}}",
     "bulkTotal": "{count, plural, one {# copy} other {# copies}} — total {total}",
+    "bulkFreeDelivery": "free delivery",
     "bulkPayNow": "Pay now — {total}",
     "errorTitle": "Couldn't start checkout",
     "errorGeneric": "Something went wrong. Please try again."

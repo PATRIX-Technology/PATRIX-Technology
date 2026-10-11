@@ -112,8 +112,8 @@
       },
       {
         "order": 5,
-        "text": "A week later, {child_name} visited the nursery dentist corner, where a friendly dentist checked everyone's teeth. \"Wow, someone's been chasing sugar bugs away!\" the dentist smiled, counting {pronoun:possessive} sparkling teeth.",
-        "image_prompt": "A friendly cartoon dentist checking a child's teeth at a cheerful nursery dentist-corner station, {child_name}'s avatar smiling in the chair, cartoon fox mascot watching nearby, storybook illustration style."
+        "text": "A week later, {child_name} smiled wide for {mascot}, showing off a whole row of sparkling teeth. \"Not a single sugar bug left!\" {mascot} cheered, giving {pronoun:possessive} a high-five.",
+        "image_prompt": "{child_name}'s avatar smiling wide to show off sparkling clean teeth, cartoon fox mascot giving an excited high-five, cheerful nursery classroom, storybook illustration style."
       },
       {
         "order": 6,
@@ -153,8 +153,8 @@
       },
       {
         "order": 5,
-        "text": "بعد أسبوع، {v:visited} {child_name} ركن طبيب الأسنان في الحضانة. ابتسم الطبيب وهو يعد أسنان{ps} اللامعة وقال: «يبدو أن أحدا يطارد حشرات السكر بنجاح!»",
-        "image_prompt": "طبيب أسنان كرتوني ودود يفحص أسنان طفل في ركن طبيب أسنان مبهج بالحضانة، شخصية {child_name} تبتسم على الكرسي، الثعلب الكرتوني يراقب قريبا، أسلوب رسوم كتاب قصص."
+        "text": "بعد أسبوع، {v:smiled} {child_name} ابتسامة عريضة لـ{mascot}، لتظهر صف أسنان لامع بالكامل. هتفت {mascot}: «لم تبق ولا حشرة سكر واحدة!» وصفقت كفها بكف{ps} بفرح.",
+        "image_prompt": "شخصية {child_name} تبتسم ابتسامة عريضة لتُظهر أسنانا لامعة ونظيفة، الثعلب الكرتوني يصفق بحماس، فصل حضانة مبهج، أسلوب رسوم كتاب قصص."
       },
       {
         "order": 6,

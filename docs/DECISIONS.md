@@ -5971,3 +5971,41 @@ confirmed current in the full-sweep audit earlier this session and
 were deliberately not rebuilt a second time; flagged to the founder
 directly rather than left implicit, since "check if stale, rebuild all
 of them" could otherwise read as "rebuild everything regardless."
+
+## Quota tables clarified as digital-only; printing framed as optional, bulk-discounted
+
+Founder flagged a real ambiguity in every pricing table across the
+materials: "25 stories" in the Starter tier (and the Family/Growth/
+Network equivalents) could read like the plan includes 25 printed
+copies, when the quota has only ever been digital-story generations —
+printing was always a separate, Stripe-paid add-on. Rather than treat
+this as a one-line fix, went through every place a quota number and a
+printed-copy mention appear together and made both halves of the
+distinction explicit: the quota is labeled "digital stories" (not just
+"stories"), and the printed-copy mention is reframed as the nursery/
+family's own choice, decided per order, with the existing bulk-tier
+discount (down to AED 58/copy at 100+) doing the "it gets cheaper the
+more you actually order" explanation the founder asked for — rather
+than inventing a new discount tied to subscription tier, which was
+never the ask (confirmed via a clarifying question earlier in this
+thread: the quantity-tier ladder that already exists in
+`print-orders.ts` is what "discounted at 100+" refers to).
+
+Updated: `docs/en/pricing.md` / `docs/ar/pricing.md` (B2B and B2C
+quota tables plus the "Printed copies" section intro, both languages);
+the new PRICING slide in all 4 customer-facing decks (stat-card labels
++ the printed-copy bullet, EN+AR); the Internal Strategy deck's B2C/B2B
+pricing-ladder slides and its "How Ownly Makes Money" summary slide;
+the Sales Rep Reference deck's Family/Nursery pricing slides; and the
+two Google Docs that quote pricing to a live audience — "Pricing,
+Subscriptions & Launch Strategy" and "What to Present to B2B
+Customers" (both EN+AR). Caught and fixed one genuine pre-existing bug
+along the way while touching this exact table: the Internal Strategy
+and Sales Rep decks' B2B pricing table had a column header literally
+reading "Included (25 kids)" for every tier, including Growth (100)
+and Network (500) — a stale label, now "Included (Digital Stories)."
+Every pptx edit re-rendered and visually inspected (not just schema-
+validated) before delivery; every Google Doc edit re-read in full
+afterward to confirm `occurrencesChanged` matched expectations in both
+languages, per the usual verification discipline for this kind of
+batch `replaceAllText` edit.

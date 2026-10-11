@@ -2,14 +2,18 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { renderTemplate, type StoryThemeTemplate } from './templates';
 import type { AppLocale, AvatarConfig, Pronoun } from '@/types/database';
 
-/** How many times a human can manually click "regenerate this page" for
- * any one page — each click is a real, paid Gemini image call. Shared
- * between the enforcing Server Action (regeneratePageAction) and the
- * story detail page, which uses it to grey out the button once a page
- * hits the limit rather than only finding out after clicking. See
- * docs/DECISIONS.md "Cap manual page regeneration per page and block it
- * after approval". */
-export const MAX_MANUAL_REGENERATIONS_PER_PAGE = 3;
+/** How many times a human can manually click "regenerate this page" —
+ * total, across every page of one story, for every subscription tier —
+ * each click is a real, paid Gemini image call. Deliberately a cost
+ * control, not a UX nicety: a per-PAGE cap (the previous value, 3) could
+ * burn up to 18 extra Gemini calls on one 6-page story. Shared between
+ * the enforcing Server Action (regeneratePageAction), the real
+ * enforcement boundary in the regenerate_story_page SECURITY DEFINER RPC
+ * (migration 0040), and the story detail page, which uses it to grey out
+ * every page's button once the story's shared allowance is used rather
+ * than only finding out after clicking. See docs/DECISIONS.md
+ * "Regeneration limit: once per story, not per page". */
+export const MAX_MANUAL_REGENERATIONS_PER_STORY = 1;
 
 export class QuotaExceededError extends Error {
   constructor() {

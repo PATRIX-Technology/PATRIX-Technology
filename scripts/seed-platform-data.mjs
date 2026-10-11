@@ -144,6 +144,40 @@ const plans = [
     seats_included: 1,
     audience: 'family',
   },
+  // AED twins of the two family tiers above -- same `_aed` suffix
+  // pattern as the nursery USD twins use (base key = primary currency,
+  // suffixed key = secondary), just inverted: USD is primary for family
+  // (a global/individual product), AED is the secondary twin here,
+  // where nursery has it the other way around. Converted at the same
+  // ~3.6725 AED/USD peg, rounded to the nearest AED 5 -- a provisional
+  // number, not researched UAE consumer pricing; same caveat as the
+  // nursery USD twins. BillingSection.tsx already renders a currency
+  // toggle automatically once more than one currency exists for an
+  // audience -- no UI change needed for these to appear.
+  {
+    key: 'family_aed',
+    name: 'Family',
+    price_monthly_cents: 5000,
+    price_annual_cents: 49500,
+    currency: 'AED',
+    vat_inclusive: true,
+    stories_per_month: 1,
+    suggestion_requests_per_month: 3,
+    seats_included: 1,
+    audience: 'family',
+  },
+  {
+    key: 'family_plus_aed',
+    name: 'Family Plus',
+    price_monthly_cents: 10500,
+    price_annual_cents: 104500,
+    currency: 'AED',
+    vat_inclusive: true,
+    stories_per_month: 3,
+    suggestion_requests_per_month: 5,
+    seats_included: 1,
+    audience: 'family',
+  },
 ];
 
 async function main() {

@@ -169,8 +169,16 @@ export function BillingSection({
             id="coupon"
             value={couponCode}
             onChange={(e) => setCouponCode(e.target.value)}
-            className="focus-ring rounded-lg border border-[rgb(var(--color-border))] px-3 py-2 text-sm"
+            disabled={billingInterval === 'annual'}
+            className="focus-ring rounded-lg border border-[rgb(var(--color-border))] px-3 py-2 text-sm disabled:bg-ink-50 disabled:text-ink-300"
           />
+          {/* A fixed-months coupon (e.g. "50% off for 3 months") only
+              means what it says against monthly billing -- see
+              docs/DECISIONS.md "Founding-partner coupon blocked on
+              annual billing" for why the checkout route itself also
+              rejects this combination; this just surfaces it before a
+              failed submit. */}
+          {billingInterval === 'annual' && <p className="mt-1 text-xs text-ink-400">{t('couponAnnualHint')}</p>}
         </div>
       </div>
 

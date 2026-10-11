@@ -209,6 +209,7 @@
       "currentPlan": "Current plan",
       "subscribe": "Subscribe",
       "couponLabel": "Coupon code (optional)",
+      "couponAnnualHint": "Coupon codes are for monthly billing only — switch to monthly to use one.",
       "currencyLabel": "Currency"
     }
   },
@@ -452,7 +453,7 @@
     "confirmReject": "Confirm reject",
     "noStoriesYet": "No stories yet.",
     "regeneratePage": "Regenerate this page",
-    "regenerationLimitReached": "Regeneration limit reached for this page.",
+    "regenerationLimitReached": "This story has already used its one allowed regeneration.",
     "regenerateStartedTitle": "Regenerating this page",
     "regenerateStartedBody": "We'll swap in the new illustration as soon as it's ready - this page updates on its own.",
     "regenerateFailedTitle": "Couldn't start regeneration",

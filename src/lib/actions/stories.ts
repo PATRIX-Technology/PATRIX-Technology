@@ -9,7 +9,7 @@ import {
   createStoryForTenant,
   ConsentRequiredError,
   QuotaExceededError,
-  MAX_MANUAL_REGENERATIONS_PER_PAGE,
+  MAX_MANUAL_REGENERATIONS_PER_STORY,
 } from '@/lib/domain/stories';
 import { renderTemplate, StoryThemeTemplateSchema, type StoryThemeTemplate } from '@/lib/domain/templates';
 import { parseAvatarConfig } from '@/lib/domain/avatar';
@@ -150,12 +150,11 @@ export async function regeneratePageAction(locale: string, storyId: string, page
   // reproducing an old, already-corrected mistake forever. Best-effort:
   // if any lookup here fails, fall through and regenerate the image
   // with the existing text rather than blocking the whole action.
-  const { data: page } = await supabase
+  const { data: pages } = await supabase
     .from('story_pages')
-    .select('page_number, text, regenerate_count')
-    .eq('id', pageId)
-    .eq('story_id', storyId)
-    .maybeSingle();
+    .select('id, page_number, text, regenerate_count')
+    .eq('story_id', storyId);
+  const page = pages?.find((p) => p.id === pageId);
   const { data: story } = await supabase
     .from('stories')
     .select('theme_key, locale, pronoun_snapshot, tenant_id, child_id, status')
@@ -171,9 +170,14 @@ export async function regeneratePageAction(locale: string, storyId: string, page
     return { error: 'This story has already been approved and can no longer be regenerated.' };
   }
 
-  if (page.regenerate_count >= MAX_MANUAL_REGENERATIONS_PER_PAGE) {
+  // Story-wide cap, not per-page -- see docs/DECISIONS.md "Regeneration
+  // limit: once per story, not per page". Sum every page's
+  // regenerate_count for this story; the RPC below re-enforces the same
+  // check as the real security boundary regardless of what happens here.
+  const storyRegenerationsUsed = (pages ?? []).reduce((sum, p) => sum + p.regenerate_count, 0);
+  if (storyRegenerationsUsed >= MAX_MANUAL_REGENERATIONS_PER_STORY) {
     return {
-      error: `This page has already been regenerated ${MAX_MANUAL_REGENERATIONS_PER_PAGE} times, the limit per page. Contact support if it still needs fixing.`,
+      error: 'This story has already used its one allowed regeneration. Contact support if it still needs fixing.',
     };
   }
 
@@ -214,12 +218,13 @@ export async function regeneratePageAction(locale: string, storyId: string, page
 
   // The actual writes (queueing the image job, bumping regenerate_count,
   // re-flipping the story to GENERATING) all happen inside the
-  // regenerate_story_page SECURITY DEFINER RPC (migration 0030), not as
-  // direct table writes from here — a security audit found the previous
-  // direct-write version let any tenant member bypass the checks above
-  // (already-approved, per-page cap) via a raw client call. The checks
-  // above stay as early, friendlier error messages; the RPC re-enforces
-  // both regardless, since it's the only thing actually allowed to write.
+  // regenerate_story_page SECURITY DEFINER RPC (migration 0030, updated
+  // by 0040 for the story-wide cap), not as direct table writes from
+  // here — a security audit found the previous direct-write version let
+  // any tenant member bypass the checks above (already-approved,
+  // regeneration cap) via a raw client call. The checks above stay as
+  // early, friendlier error messages; the RPC re-enforces both
+  // regardless, since it's the only thing actually allowed to write.
   const { error: rpcError } = await supabase.rpc('regenerate_story_page', {
     target_story_id: storyId,
     target_page_id: pageId,

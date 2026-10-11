@@ -29,6 +29,15 @@ same proportion as the page-count increase (4 → 6 images is a 1.5×
 multiplier), preserving the same retry/safety-margin headroom it was
 built with. All planning below uses $1.50/story.
 
+Manual "regenerate this page" clicks (each one a real, separate Gemini
+call on top of the $1.50 planning figure) are now capped at **1 per
+story total, across every page, for every subscription tier** — tightened
+from the previous 3-per-page cap (which allowed up to 18 extra calls on
+one 6-page story in the worst case). See `docs/DECISIONS.md`
+"Regeneration limit: once per story, not per page" — a deliberate cost
+control, enforced at the database layer (the `regenerate_story_page`
+RPC), not just the UI.
+
 **Why there's a gap at all, concretely** (found and fixed the same day,
 back when the story was still 4 pages): one testing session spent $23 in
 real Google billing but only produced 3 finished stories — roughly
@@ -151,14 +160,15 @@ even with the added labour.
   to be confused with the cash-commission "Nursery Partner Program"
   below — this one pays in stories, to whoever did the inviting
   (nursery or family alike), not cash to a nursery specifically.
-- **Family** (built — `plans.key = 'family'`, `audience = 'family'`):
-  $14/month for 1 story/month — cheaper per-story than a one-off
-  purchase would be, for recurring use. 3 story-template
-  suggestions/month. Raised from $9, same 1.5× reasoning as the
-  nursery tiers above — family's per-story AI cost rose the same way.
-- **Family Plus** (built — `plans.key = 'family_plus'`): $29/month
-  (raised from $19) for 3 stories/month. 5 story-template
-  suggestions/month.
+- **Family** (built — `plans.key = 'family'`, AED twin `family_aed`,
+  `audience = 'family'`): $14 / AED 50 per month for 1 story/month —
+  cheaper per-story than a one-off purchase would be, for recurring
+  use. 3 story-template suggestions/month. Raised from $9, same 1.5×
+  reasoning as the nursery tiers above — family's per-story AI cost
+  rose the same way.
+- **Family Plus** (built — `plans.key = 'family_plus'`, AED twin
+  `family_plus_aed`): $29 / AED 105 per month (raised from $19) for 3
+  stories/month. 5 story-template suggestions/month.
 
 **Why this is monthly, not a one-off pack**: every plan here — family
 and nursery alike — is a story *allowance that resets each period*,
@@ -184,23 +194,26 @@ match its own type, and the checkout route rejects a cross-type
 purchase server-side (`planIsAvailableForTenant` in
 `src/lib/domain/billing.ts`) even if the UI were bypassed.
 
-Gift packs and family plans are priced in USD; nursery plans now have
-both an AED row and a USD row per tier (`starter`/`starter_usd`,
-`growth`/`growth_usd`, `network`/`network_usd`) so a nursery outside
-the UAE can subscribe in USD — the dashboard billing tab shows a
-currency toggle whenever more than one currency exists for that
-tenant's audience, defaulting to whatever currency an existing
-subscriber is already on, else AED. The USD nursery prices below are a
-straightforward AED→USD conversion at the UAE's pegged rate, rounded
-to a clean number — a provisional placeholder, not researched
-international pricing, worth revisiting once there's real
-market/competitor data for nurseries outside the UAE:
+Every plan on both sides now has both an AED row and a USD row
+(nursery: `starter`/`starter_usd`, `growth`/`growth_usd`,
+`network`/`network_usd`; family: `family`/`family_aed`,
+`family_plus`/`family_plus_aed`) — the dashboard billing tab shows a
+currency toggle automatically whenever more than one currency exists
+for that tenant's audience (`BillingSection.tsx`), defaulting to
+whatever currency an existing subscriber is already on, else AED for
+nursery / USD for family (each side's historical primary currency).
+Every secondary-currency row below is a straightforward conversion at
+the UAE's pegged rate (~3.6725 AED/USD), rounded to a clean number — a
+provisional placeholder, not researched international/local consumer
+pricing, worth revisiting once there's real market/competitor data:
 
 | Tier | AED/mo | USD/mo | AED/yr | USD/yr |
 |---|---|---|---|---|
 | Starter | 749 | 199 | 7,185 | 1,949 |
 | Growth | 1,949 | 525 | 18,735 | 5,025 |
 | Network | 5,249 | 1,425 | 50,235 | 13,665 |
+| Family | 50 | 14 | 495 | 135 |
+| Family Plus | 105 | 29 | 1,045 | 285 |
 
 Still worth resolving once a merchant-of-record setup is chosen: which
 entity is actually the seller of record for a USD sale to a nursery
@@ -208,6 +221,54 @@ outside the UAE (affects VAT applicability — see the VAT-inclusive
 note above, currently left `true` on the USD rows too, matching how
 the existing USD family plans were already set, pending an accountant's
 read on this rather than a guess made in code).
+
+### Annual pricing — margin check
+
+Every tier's annual price applies roughly the same ~18-20% discount off
+12× the monthly price (not a strict "2 months free" — see the table
+note above) — this compresses margin below the monthly figure (the
+discount comes straight off the top of an already cost-covering price),
+so it needs its own check rather than assuming "the monthly price is
+fine, so annual is fine too." At $1.50/story COGS, full usage every
+month of the year:
+
+| Tier | Annual price | Annual COGS (12× stories/mo) | Annual margin | Monthly margin |
+|---|---|---|---|---|
+| Starter | AED 7,185 | AED 1,656 | **~77%** | ~82% |
+| Growth | AED 18,735 | AED 6,612 | **~65%** | ~72% |
+| Network | AED 50,235 | AED 33,036 | **~34%** | ~48% |
+| Family | AED 495 | AED 66 | **~87%** | ~89% |
+| Family Plus | AED 1,045 | AED 198 | **~81%** | ~85% |
+
+All five are solidly profitable — none are a loss. **Network's annual
+margin (~34%) is the one worth a founder decision**: it's a real,
+expected compression (the annual discount applies to a tier whose
+monthly margin is already the thinnest of the three), not a bug, but
+it's a noticeably bigger gap from its monthly figure than the other
+tiers show. If Network nurseries are expected to be the ones most
+likely to commit annually (a 500-story/mo operation is the segment most
+likely to want to lock in a year), consider a shallower annual discount
+on Network specifically rather than the same ~20% every tier gets.
+
+### Founding-partner coupon is monthly-only, by design
+
+The Founding Partner "50% off for 3 months" offer is implemented as a
+Stripe coupon with `duration: 'repeating', duration_in_months: 3` —
+that only means "3 months" against **monthly** billing (3 invoices).
+Applied to an **annual** subscription (one invoice per 12 months),
+Stripe still counts the 3-month window in calendar time, not billing
+cycles: the coupon would discount the entire first annual invoice by
+the full 50% (the first and only invoice to land inside that 3-month
+window) rather than "3 months' worth" — a founder-sized revenue gap if
+it had ever been allowed to happen, not a rounding quirk. Fixed by
+blocking the combination outright: `/api/billing/checkout` now rejects
+a coupon code when `billingInterval === 'annual'`, and the billing UI
+disables the coupon field with an explanatory hint the moment Annual is
+selected, so this is caught before a submit, not after a Stripe
+invoice. See `docs/DECISIONS.md` "Founding-partner coupon blocked on
+annual billing". No coupon has actually been created in Stripe yet
+(`coupons` table is empty, Stripe isn't connected) — this was a design
+gap to close before it could ever matter, not an active bug.
 
 ## Printed copies (add-on, nursery and family alike)
 

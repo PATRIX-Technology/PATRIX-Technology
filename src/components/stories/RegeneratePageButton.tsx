@@ -18,10 +18,11 @@ export function RegeneratePageButton({
   locale: string;
   storyId: string;
   pageId: string;
-  /** How many manual regenerations this page has left before hitting
-   * MAX_MANUAL_REGENERATIONS_PER_PAGE (src/lib/domain/stories.ts) — shown
-   * so the limit isn't a surprise, and used to disable the button up
-   * front rather than only after a failed submit. The server action
+  /** How many manual regenerations this STORY has left (shared across
+   * every page, not per-page) before hitting
+   * MAX_MANUAL_REGENERATIONS_PER_STORY (src/lib/domain/stories.ts) —
+   * shown so the limit isn't a surprise, and used to disable the button
+   * up front rather than only after a failed submit. The server action
    * enforces the real limit either way. */
   remaining: number;
 }) {

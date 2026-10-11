@@ -5491,6 +5491,91 @@ narrower, more reliable text-link share for the bulk case specifically
 (desktop browsers commonly lack file-sharing via `navigator.share`,
 which `wa.me` doesn't need).
 
+## Annual pricing margin audit; Family AED pricing; two real gaps found and closed
+
+Per the founder's request to verify annual pricing, pilot-phase costs,
+and the 50% founding-partner offer are all still sound after everything
+changed this session (8-page repricing, bulk print tiers, the native-
+review fix). Full numbers and tables are in `docs/en/pricing.md`
+(mirrored in `docs/ar/pricing.md`) — summary here:
+
+**Annual margins: all profitable, none are a loss.** Computed fresh
+against the live `plans` table at $1.50/story COGS: Starter ~77%,
+Growth ~65%, Network ~34%, Family ~87%, Family Plus ~81% (vs. ~82/72/
+48/89/85% monthly). The annual discount (~18-20% off 12× monthly)
+compresses every tier's margin below its monthly figure by
+construction — expected, not a bug. **Network's annual margin (~34%)
+is flagged as a founder judgment call**, not a fix: it's the tier whose
+monthly margin was already thinnest, so the same ~20% discount cuts
+deepest there in relative terms. Worth considering a shallower annual
+discount on Network specifically if annual commitments cluster there.
+
+**Family/Family Plus now have AED pricing, not just USD.** Added
+`family_aed` (AED 50/mo, AED 495/yr) and `family_plus_aed` (AED 105/mo,
+AED 1,045/yr) to `scripts/seed-platform-data.mjs` and the live `plans`
+table, same `_aed`/`_usd` twin-suffix convention the nursery tiers
+already use (just inverted: USD is family's historical primary
+currency, AED nursery's). Converted at the same ~3.6725 AED/USD peg,
+rounded to the nearest AED 5. No UI code changed at all —
+`BillingSection.tsx` already derives its currency toggle generically
+from `Array.from(new Set(plans.map(p => p.currency)))`, a detail
+visible in its own code comment ("a family tenant's plans are still
+USD-only... unchanged from before") that turned out to already
+anticipate this exact addition.
+
+**Real gap found while checking "the 50% etc": the founding-partner
+coupon was never guarded against annual billing.** The offer ("50% off
+for 3 months") is a Stripe `duration: 'repeating', duration_in_months:
+3` coupon — correct against monthly billing (3 invoices), but Stripe
+counts "3 months" in calendar time regardless of billing interval. A
+founding partner who selected *annual* billing (one invoice per 12
+months) while this coupon was active would have had their entire first
+annual payment discounted 50% — the coupon's 3-month window closes
+long before the next invoice at month 12, so it fires once, at full
+strength, on the one invoice that happens to land inside it. That's a
+real revenue gap (not a rounding quirk) if it had ever been allowed to
+run. Fixed: `/api/billing/checkout` now rejects any coupon code when
+`billingInterval === 'annual'` (409, before Stripe is ever contacted);
+`BillingSection.tsx` disables the coupon input with an explanatory hint
+the moment Annual is selected, so this is caught in the UI, not just
+the API. No coupon has actually been created in Stripe yet (`coupons`
+table is empty — confirmed live, Stripe isn't connected), so this was
+closed as a design gap before it could ever cost anything, not an
+active incident.
+
+## Regeneration limit: once per story, not per page
+
+**Decision, per explicit founder instruction: manual page regeneration
+is now capped at 1 total per story, shared across every page, for
+every subscription tier** — replacing the previous `MAX_MANUAL_
+REGENERATIONS_PER_PAGE = 3` (per page, meaning up to 18 extra Gemini
+calls were possible on one 6-page story in the worst case). A
+deliberate cost control tied to the same margin math this session kept
+revisiting, not a UX change.
+
+Enforced in two places that must agree, same split as every other
+write-path in this schema:
+- `regenerate_story_page` (migration 0040, replacing the function body
+  from migration 0030) — the real security boundary, SECURITY DEFINER,
+  now sums `regenerate_count` across every `story_pages` row for the
+  story and blocks at 1, instead of checking one page's own count
+  against 3.
+- `regeneratePageAction` (`src/lib/actions/stories.ts`) — the
+  friendlier early error, updated to match: fetches every page's
+  `regenerate_count` and sums them, rather than reading one page's
+  count against the old per-page constant.
+
+`MAX_MANUAL_REGENERATIONS_PER_PAGE` renamed to `MAX_MANUAL_
+REGENERATIONS_PER_STORY = 1` in `src/lib/domain/stories.ts`. The story
+detail page (`stories/[storyId]/page.tsx`) now computes one shared
+"remaining" value for the whole story and passes the same number to
+every page's `RegeneratePageButton`, instead of each page tracking its
+own remaining count — once any page uses the story's one regeneration,
+every other page's button greys out too. `regenerate_count` itself
+stays a per-page column (no schema change needed, it's just summed
+differently) so the per-page audit trail (which page was actually
+regenerated) is unaffected.
+
 ## Fixed: native_review_status gate wrongly applied to English templates (3 places)
 
 **Caught live**: a real nursery test account with an already-approved

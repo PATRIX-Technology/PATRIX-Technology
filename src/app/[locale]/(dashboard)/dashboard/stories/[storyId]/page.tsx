@@ -3,7 +3,7 @@ import { getTranslations } from 'next-intl/server';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { getCurrentTenantContext } from '@/lib/domain/session';
 import { getSignedAssetUrls } from '@/lib/domain/storage';
-import { MAX_MANUAL_REGENERATIONS_PER_PAGE } from '@/lib/domain/stories';
+import { MAX_MANUAL_REGENERATIONS_PER_STORY } from '@/lib/domain/stories';
 import { Card, CardTitle } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { ApprovalActions } from '@/components/stories/ApprovalActions';
@@ -60,6 +60,13 @@ export default async function StoryDetailPage({
     .select('*')
     .eq('story_id', story.id)
     .order('page_number');
+
+  // The regeneration allowance is shared across the whole story now, not
+  // per page -- see docs/DECISIONS.md "Regeneration limit: once per
+  // story, not per page". Every page's button shows the same remaining
+  // count, computed from every page's regenerate_count summed together.
+  const storyRegenerationsUsed = (pages ?? []).reduce((sum, p) => sum + p.regenerate_count, 0);
+  const storyRegenerationsRemaining = Math.max(0, MAX_MANUAL_REGENERATIONS_PER_STORY - storyRegenerationsUsed);
 
   // The story's own title/synopsis are never stored on the row itself —
   // only the per-page text is baked in at creation time (see
@@ -166,7 +173,7 @@ export default async function StoryDetailPage({
                     locale={params.locale}
                     storyId={story.id}
                     pageId={page.id}
-                    remaining={Math.max(0, MAX_MANUAL_REGENERATIONS_PER_PAGE - page.regenerate_count)}
+                    remaining={storyRegenerationsRemaining}
                   />
                 </div>
               )}

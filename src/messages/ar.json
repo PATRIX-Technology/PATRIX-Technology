@@ -209,6 +209,7 @@
       "currentPlan": "الباقة الحالية",
       "subscribe": "اشترك",
       "couponLabel": "رمز الخصم (اختياري)",
+      "couponAnnualHint": "رموز الخصم متاحة فقط مع الفوترة الشهرية — بدّل إلى الفوترة الشهرية لاستخدامه.",
       "currencyLabel": "العملة"
     }
   },
@@ -452,7 +453,7 @@
     "confirmReject": "تأكيد الرفض",
     "noStoriesYet": "لا توجد قصص حتى الآن.",
     "regeneratePage": "إعادة إنشاء هذه الصفحة",
-    "regenerationLimitReached": "تم الوصول إلى الحد الأقصى لإعادة إنشاء هذه الصفحة.",
+    "regenerationLimitReached": "استخدمت هذه القصة بالفعل إعادة الإنشاء المسموح بها.",
     "regenerateStartedTitle": "جار إعادة إنشاء هذه الصفحة",
     "regenerateStartedBody": "سنستبدلها بالرسمة الجديدة فور جاهزيتها — تحدث هذه الصفحة تلقائيا.",
     "regenerateFailedTitle": "تعذر بدء إعادة الإنشاء",

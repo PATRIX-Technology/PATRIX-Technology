@@ -55,6 +55,29 @@ export async function POST(request: Request) {
 
   let stripeCouponId: string | undefined;
   if (couponCode) {
+    // Every coupon this platform has (e.g. the Founding Partner "50% off
+    // for 3 months") is a Stripe `duration: 'repeating', duration_in_months`
+    // discount -- that only means what it says against monthly billing,
+    // where "3 months" is 3 invoices. Applied to an annual subscription
+    // (one invoice per 12 months), Stripe still counts in months, not
+    // billing cycles: the coupon's 3-month window closes long before the
+    // next annual invoice ever arrives, so it silently discounts the
+    // ENTIRE first annual payment by the full percentage instead of "3
+    // months' worth" -- a founding partner on annual billing would get
+    // the whole first year at 50% off, not 3 months, which is a real
+    // revenue gap, not a rounding quirk. Block the combination outright
+    // rather than let it happen once and find out from a Stripe invoice
+    // — see docs/DECISIONS.md "Founding-partner coupon blocked on annual
+    // billing".
+    if (billingInterval === 'annual') {
+      return NextResponse.json(
+        {
+          error:
+            'This coupon is designed for monthly billing (a fixed number of discounted months). Switch to monthly billing to use it, or ask about an annual-specific offer instead.',
+        },
+        { status: 409 },
+      );
+    }
     const { data: coupon } = await supabase.from('coupons').select('*').eq('code', couponCode).maybeSingle();
     if (!coupon) {
       return NextResponse.json({ error: 'Coupon code not found.' }, { status: 404 });

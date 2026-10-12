@@ -1,24 +1,26 @@
 'use client';
 
 import { useEffect } from 'react';
+import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 
 /**
  * Without this file, Next.js shows its own generic fallback for any
  * error thrown while rendering a page under this locale segment --
- * "Application error: a server-side/client-side exception has
- * occurred", with a bare digest and nothing else, in production. That
- * blocked diagnosing every crash reported during this build: there was
- * no way to see the actual error message or stack short of the
- * founder's own Vercel dashboard access. This shows the real
- * error.message and, for a genuine client-side exception (thrown after
- * the page already reached the browser, never serialized from the
- * server), the full stack too -- copyable directly from a screenshot,
- * no devtools needed. A server-side exception still only exposes
- * `digest` here by Next.js's own design (the original error and its
- * stack never leave the server for those) -- those still need the
- * founder's Vercel dashboard logs; this only covers the client-side
- * half of that gap.
+ * "Application error: a client-side exception has occurred", with no
+ * branding and no way for a customer to recover gracefully.
+ *
+ * This used to show the real error.message/digest/stack directly on
+ * screen -- useful while this was still an internal build with no real
+ * customers, so a screenshot was enough to report a bug (see git
+ * history). Now that real families/nurseries can hit this page, a raw
+ * stack trace is the wrong thing to show them: it reads as broken and
+ * untrustworthy, and means nothing to someone who isn't debugging it.
+ * See docs/DECISIONS.md "Client-side crashes notify the founder instead
+ * of showing the user a raw error" -- the customer now sees a plain,
+ * reassuring message, while the full technical details are POSTed to
+ * /api/report-client-error and emailed to the founder automatically, so
+ * nothing is lost, it just no longer needs a customer to screenshot it.
  */
 export default function LocaleError({
   error,
@@ -27,26 +29,34 @@ export default function LocaleError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  const pathname = usePathname();
+
   useEffect(() => {
     console.error(error);
+
+    fetch('/api/report-client-error', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        message: error.message,
+        digest: error.digest,
+        stack: error.stack,
+        url: typeof window !== 'undefined' ? window.location.href : pathname,
+      }),
+    }).catch(() => {
+      // Best-effort -- see module comment above.
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [error]);
 
   return (
-    <div className="mx-auto flex min-h-screen max-w-2xl flex-col items-start justify-center gap-4 px-4 py-12">
+    <div className="mx-auto flex min-h-screen max-w-md flex-col items-start justify-center gap-4 px-4 py-12">
       <h1 className="font-display text-2xl text-ink-900">Something went wrong</h1>
       <p className="text-sm text-ink-600">
-        This screen only appears in a bug — nothing you did caused it. Please screenshot the box
-        below and share it so it can be fixed.
+        This wasn&apos;t caused by anything you did. We&apos;ve been notified automatically and are
+        looking into it -- please try again in a moment.
       </p>
-      <div className="w-full rounded-xl2 border border-coral-300 bg-coral-50 p-4">
-        <p className="font-mono text-sm font-semibold text-coral-800">{error.message || 'Unknown error'}</p>
-        {error.digest && <p className="mt-1 font-mono text-xs text-coral-700">Digest: {error.digest}</p>}
-        {error.stack && (
-          <pre className="mt-3 max-h-64 overflow-auto whitespace-pre-wrap break-words font-mono text-xs text-coral-700">
-            {error.stack}
-          </pre>
-        )}
-      </div>
+      {error.digest && <p className="font-mono text-xs text-ink-400">Reference: {error.digest}</p>}
       <div className="flex gap-3">
         <button
           type="button"

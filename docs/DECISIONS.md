@@ -6522,3 +6522,46 @@ unconditionally (Phase B's design, independent of this flag) — no
 changes needed there. The already-built LTR binding (book always opens
 from the left, regardless of content language) was likewise already in
 place from Phase B and needed no changes for this phase.
+
+## Client-side crashes notify the founder instead of showing the user a raw error
+
+A founder-reported crash on a real bilingual story's detail page (status
+and all 6 pages were confirmed healthy in the live database — not the
+actual bug) was in fact the generic, unbranded Next.js fallback
+("Application error: a client-side exception has occurred"), not the
+app's own `[locale]/error.tsx` boundary — because that boundary only
+catches errors thrown *inside* the locale segment's own subtree; an
+error in the root layout (`src/app/layout.tsx`) or anything above the
+locale boundary falls through it entirely and Next.js shows its bare
+fallback instead, with no branding and no way to recover. Added
+`src/app/global-error.tsx` to close that gap — the only thing that can
+catch an error at that level, which is why Next.js requires it to
+render its own complete `<html>/<body>` (it replaces the entire root
+layout, providers included, when it fires) — deliberately built with
+plain inline styles only, no Tailwind/next-intl/font setup assumed, so
+it can't itself fail to render.
+
+Separately, and regardless of which boundary catches it: `[locale]/
+error.tsx` used to show the real `error.message`/`digest`/`stack`
+directly on screen — a deliberate choice while this was still an
+internal build with no real customers (a screenshot was enough to
+report a bug with no Vercel dashboard access needed). Now that real
+families/nurseries can hit this page, a raw stack trace is the wrong
+thing to show them — it reads as broken and untrustworthy, and means
+nothing to someone who isn't debugging it. Both boundaries now show a
+plain, reassuring "Something went wrong... we've been notified" message
+with just a Try Again/Go Home action (and an optional opaque digest as
+a reference code) — no message, no digest detail beyond that, no stack.
+
+The debugging value isn't lost, just moved: both boundaries POST the
+full `{message, digest, stack, url}` to a new `/api/report-client-error`
+route (deliberately open to signed-out callers too — a crash on the
+sign-in page itself still needs reporting), which emails it to the
+founder via the existing best-effort notification pipeline
+(`notifyOwnerOfClientError` in `src/lib/notifications/email.ts`, reusing
+`sendNotificationEmail`/`RESEND_API_KEY`). Globally rate-limited (20 per
+10 minutes, not per-user — there's no reliable identity for a signed-out
+crash) so a crash loop can't flood the founder's inbox; the route always
+returns 200 regardless of what happens internally, since it's called
+from inside an error boundary and a reporting failure must never throw
+again and compound the user's original error.

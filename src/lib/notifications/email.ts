@@ -157,3 +157,31 @@ export async function notifyCustomerOfOrderStatusChange(params: {
   const subjectVerb = params.status === 'printing' ? 'is printing' : params.status === 'shipped' ? 'has shipped' : 'was cancelled';
   await sendEmail(params.to, `Your Ownly print order ${subjectVerb}`, body);
 }
+
+/**
+ * Notifies the founder of a client-side crash a real user just hit --
+ * see docs/DECISIONS.md "Client-side crashes notify the founder instead
+ * of showing the user a raw error". [locale]/error.tsx and
+ * global-error.tsx both POST here (via /api/report-client-error) the
+ * moment their boundary catches something, so the founder finds out
+ * automatically instead of needing a screenshot from whoever hit it.
+ */
+export async function notifyOwnerOfClientError(params: {
+  message: string;
+  digest?: string;
+  stack?: string;
+  url: string;
+  locale?: string;
+}): Promise<void> {
+  const body = [
+    `URL: ${params.url}`,
+    params.locale ? `Locale: ${params.locale}` : null,
+    `Message: ${params.message}`,
+    params.digest ? `Digest: ${params.digest}` : null,
+    params.stack ? `\nStack:\n${params.stack.slice(0, 4000)}` : null,
+  ]
+    .filter(Boolean)
+    .join('\n');
+
+  await sendNotificationEmail(`Client-side error on Ownly: ${params.message.slice(0, 80)}`, body);
+}

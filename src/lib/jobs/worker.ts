@@ -28,26 +28,37 @@ export interface WorkerRunResult {
  * many jobs it claims or how many distinct stories they belong to. This
  * function is also invoked synchronously from a client-triggered Server
  * Action (kickStoryWorkerAction, called by AutoRefresh on every story
- * page load/poll) sharing Vercel's Hobby maxDuration=60 ceiling. Real
- * Gemini calls have no per-request timeout of their own, and a wave's
- * wall-clock time is only as fast as its slowest concurrent call, so a
- * big-enough backlog (or the API just running slow) can push the whole
- * invocation past 60s -- at which point Vercel kills the function
+ * page load/poll) sharing Vercel's Hobby maxDuration=60 ceiling. A
+ * wave's wall-clock time is only as fast as its slowest concurrent call,
+ * so a big-enough backlog (or the API just running slow) can push the
+ * whole invocation past 60s -- at which point Vercel kills the function
  * mid-response, and the browser that happened to trigger the kick sees
  * an uncaught AggregateError from the truncated stream and crashes,
  * even though the work it was killed doing may belong to a completely
  * different story than the one that user has open. Confirmed live via a
- * real end-to-end QA pass. Checking the deadline between waves instead
- * caps this call's own duration well under the ceiling: jobs claimed for
- * a wave that gets skipped stay RUNNING and self-heal via
- * reclaim_stale_story_jobs on the next invocation, same as an
- * already-killed request does today -- this just makes that the normal
- * path instead of a crash.
+ * real end-to-end QA pass -- see docs/DECISIONS.md "Gemini request
+ * timeout caps worker wave duration" for the full chain, including the
+ * job-level evidence (several of one story's second-wave jobs sat
+ * RUNNING for ~6 minutes, reclaimed with "worker was likely killed
+ * mid-request", from exactly this). Checking the deadline between waves
+ * caps the GATE before a wave starts; GeminiImageProvider's own
+ * GEMINI_REQUEST_TIMEOUT_MS now caps each wave's actual duration once it
+ * does start (previously unbounded — a real-vendor Gemini call had no
+ * per-request timeout of its own, so one slow call could keep a wave
+ * running well past this deadline check, which only runs BETWEEN waves,
+ * not during one). deadlineMs itself is also kept comfortably below the
+ * 60s ceiling (not half of it) precisely because that per-call cap
+ * doesn't eliminate every other source of latency (claiming, the safety
+ * check, the storage upload) stacking on top of it. Jobs claimed for a
+ * wave that gets skipped (deadline already passed) or that still fails
+ * mid-wave (the per-call timeout firing) stay RUNNING/retry and
+ * self-heal via reclaim_stale_story_jobs / the normal backoff-retry path
+ * on the next invocation — never left hanging indefinitely either way.
  */
 export async function runWorkerOnce(
   supabase: SupabaseClient,
   maxJobs = 25,
-  deadlineMs = 45_000,
+  deadlineMs = 30_000,
 ): Promise<WorkerRunResult> {
   const deadline = Date.now() + deadlineMs;
   const result: WorkerRunResult = { processed: 0, succeeded: 0, failed: 0, retried: 0 };

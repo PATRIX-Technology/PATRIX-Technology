@@ -13,6 +13,25 @@ import { buildIllustrationPrompt } from './prompts';
 const GEMINI_IMAGE_MODEL = 'gemini-3.1-flash-image';
 
 /**
+ * Hard cap on a single Gemini call's wall-clock time. Without this, a
+ * slow/congested call has no ceiling of its own (confirmed live: several
+ * of one real story's page jobs sat stuck in RUNNING for ~6 minutes after
+ * the worker invocation processing them was killed mid-request by
+ * Vercel's platform timeout, not by any error this codebase threw) --
+ * the killed function's truncated response is what crashed the browser
+ * of whichever user's AutoRefresh happened to trigger that kick, even
+ * though the slow job usually belongs to a different story than the one
+ * they have open. See runWorkerOnce's own docstring in
+ * src/lib/jobs/worker.ts and docs/DECISIONS.md "Gemini request timeout
+ * caps worker wave duration" for the full chain. A timeout here throws
+ * (caught by RealImageProvider.generate(), wrapped as a retryable
+ * ImageGenerationError, then requeued with backoff by worker.ts) instead
+ * of hanging -- exactly the same resilience path as any other Gemini
+ * failure, just with an upper bound that actually exists.
+ */
+const GEMINI_REQUEST_TIMEOUT_MS = 25_000;
+
+/**
  * The chosen real vendor: Google Gemini's native image generation model
  * ("nano banana"). Extends RealImageProvider so the spend-cap check,
  * spend recording, and safety-check pipeline in the base class — the
@@ -75,7 +94,10 @@ export class GeminiImageProvider extends RealImageProvider {
       // ~$0.034/image more — GEMINI_COST_PER_IMAGE_USD must be kept in
       // sync with this (currently 0.101, the 2K rate) or spend tracking
       // will silently undercharge.
-      config: { imageConfig: { imageSize: '2K' } },
+      config: {
+        imageConfig: { imageSize: '2K' },
+        httpOptions: { timeout: GEMINI_REQUEST_TIMEOUT_MS },
+      },
     });
 
     // response.data is a convenience getter that concatenates every

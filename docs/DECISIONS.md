@@ -6565,3 +6565,70 @@ crash) so a crash loop can't flood the founder's inbox; the route always
 returns 200 regardless of what happens internally, since it's called
 from inside an error boundary and a reporting failure must never throw
 again and compound the user's original error.
+
+## Gemini request timeout caps worker wave duration
+
+The founder asked for this crash to be prevented outright, not just
+shown more gracefully — so the real root cause, not just its symptom
+(the previous entry), needed fixing. Traced it by reading the exact
+story's `story_jobs` rows in the live database: page 1's job succeeded
+in 43 seconds, but all five of pages 2-6's jobs carried
+`last_error: "Reclaimed after being stuck in RUNNING (worker was
+likely killed mid-request)."`, with a ~6-minute gap between being
+claimed and being reclaimed — i.e. the worker invocation processing
+that story's second wave (pages 2-6, claimed and run together per
+`splitIntoWaves`) really did get killed mid-flight by Vercel's own
+platform timeout, not by any error this codebase threw itself. That
+killed function's truncated response is exactly what crashes the
+*browser* of whoever happened to trigger that particular kick via
+`AutoRefresh` — which, per `runWorkerOnce`'s own pre-existing docstring,
+can easily be a different user than whichever story's jobs were
+actually slow, since the client-triggered kick (`kickStoryWorkerAction`)
+claims from the GLOBAL job queue, not scoped to the story open in that
+browser tab.
+
+The gap: `runWorkerOnce`'s between-wave deadline check (`if
+(secondWave.length > 0 && Date.now() < deadline)`) is a GATE before a
+wave starts, not a cap DURING one — and nothing bounded how long a
+single real Gemini call could take once a wave was already under way
+("Real Gemini calls have no per-request timeout of their own", per the
+pre-existing comment this entry's fix finally addresses). A wave's
+wall-clock time is the slowest concurrent call in it; with no ceiling
+on that, a slow/congested call (more likely exactly when multiple
+bilingual stories are being generated at once, as the founder was
+testing) could push the whole invocation past Vercel's hard 60s
+ceiling regardless of how conservative the between-wave gate was.
+
+Fixed with two layers, not one — the per-call cap is the real fix, the
+gate tightening is defense-in-depth for everything else that isn't a
+Gemini call (claiming, the safety check, the storage upload):
+- `GeminiImageProvider.ts`: `GEMINI_REQUEST_TIMEOUT_MS = 25_000`, passed
+  as `httpOptions.timeout` on the `@google/genai` `generateContent`
+  call — the SDK supports this natively (confirmed in its own `.d.ts`,
+  `GenerateContentConfig.httpOptions.timeout`), so no manual
+  `Promise.race`/`AbortController` wrapper was needed. A timeout now
+  rejects (same as any other vendor failure) rather than hanging
+  indefinitely, which flows through the exact same resilience path
+  already built for every other Gemini error: caught by
+  `RealImageProvider.generate()`, wrapped as a *retryable*
+  `ImageGenerationError`, then requeued with exponential backoff by
+  `worker.ts` — no new failure handling needed, this was already the
+  right shape, it just had nothing enforcing an upper bound before.
+- `runWorkerOnce`'s default `deadlineMs`: `45_000` → `30_000`. With
+  each wave now individually capped at ~25s by the point above, two
+  sequential waves worst-case to roughly 50s of pure Gemini time, which
+  still needed a tighter gate in front of it (not 45s) to leave real
+  margin for everything stacked on top of that — the per-job claiming
+  loop, the image safety check, the Storage upload — against the
+  platform's 60s hard ceiling.
+
+Both call sites (`kickStoryWorkerAction`'s client-triggered kick,
+`/api/cron/worker`'s scheduled sweep) share `runWorkerOnce`'s default,
+so both get the tighter gate; only the client-triggered one could ever
+crash a real user's browser, but the cron path benefits from the same
+fix for its own reliability regardless. Jobs caught by either layer
+(gate skips the wave, or the per-call timeout fires mid-wave) stay
+`RUNNING`/retry and self-heal via `reclaim_stale_story_jobs` or the
+normal backoff-retry path on the very next invocation — the same
+existing recovery mechanism, just reached by design now instead of by
+an actual platform kill.

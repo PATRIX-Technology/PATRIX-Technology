@@ -6803,3 +6803,66 @@ exact same error with no visible change, which reads as "the button
 doesn't work." Both files now call `window.location.reload()` instead,
 which re-runs the full page load — Next.js data fetching included —
 and actually recovers from a transient failure instead of replaying it.
+
+## Nursery logo gets equal billing with the Ownly mark; both brand marks moved beside the text box, not above it
+
+Founder feedback on a real rendered sample: on the back page, the
+nursery's own logo was a small 40pt-tall badge tucked near the bottom,
+while the Ownly mark (rings + wordmark) sat large and centered near the
+top — a visual imbalance that read as "Ownly's book with a small
+nursery sticker," not the co-branded partnership this product actually
+is. Separately, on the cover and every interior page, both marks sat in
+the page's top corners, over the illustration itself, while the
+founder wanted the title/caption banner itself smaller and both marks
+moved to flank that banner instead of floating above it.
+
+**Back page** (`renderBackPage`): the nursery logo and the Ownly mark
+now draw at the same height (`logoPairHeight = 56`), side by side with
+a thin vertical divider, centered as one pair where the Ownly mark used
+to sit alone. The nursery logo is letterboxed to that height (never
+stretched) and drawn as its own raw image — no white backing plate
+behind it any more.
+
+**Cover + every interior page**: `drawCopyrightWatermark` and
+`drawNurseryLogoBadge` (two separate functions, each drawing its mark
+in a top corner with its own background plate — dark pill for Ownly,
+white plate for the nursery logo) are replaced by one
+`drawBrandBadges(page, textFont, nurseryLogo, centerY)`, called AFTER
+the caption banner and page number are drawn, at the same low,
+constant anchor as the page number (`pageNumberY` on interior pages;
+an equivalent fixed offset on the cover, which has no page number).
+Ownly's mark sits at the right margin, the nursery's logo at the left
+margin, both at that same height — i.e. beside the bottom box, not
+above the page. Neither has a backing plate: the Ownly mark's rings +
+"Ownly" text are drawn in the caption band's own ink color (no longer
+needing a dark pill for contrast, since they now sit on the banner's
+flat light background rather than over an arbitrary illustration), and
+the nursery logo is its own raw image. A fixed anchor point (rather
+than reading the specific banner's own geometry) means this never has
+to special-case the Arabic-only page variant, which draws no caption
+banner at all (its caption is baked into the illustration, see "Arabic
+captions baked into the illustration" above) — the badges still render
+at the same low position on every page regardless of which caption
+path ran.
+
+Caveat recorded for the founder, not fixed here (it isn't a code bug):
+with no backing plate, a nursery logo file that itself has a solid
+white/colored background baked in (rather than a transparent PNG) will
+show that background as a small rectangle once drawn directly. The
+existing upload flow doesn't enforce a transparent background — worth
+flagging to nurseries uploading their logo, or revisiting if it comes
+up in the pilot.
+
+Also shrunk the caption/title banners themselves, per the same
+feedback round: the cover's title banner from 200pt to 160pt tall, and
+the single-language (non-bilingual, non-Arabic-only) interior caption
+band's bottom padding tightened to match the bilingual band's earlier
+tightening pass (see "Shrink bilingual caption band" above) — it had
+been left at its original, larger padding since only the bilingual
+band was reported as too tall at the time.
+
+Verified by rendering a real sample PDF (`renderStoryPdf` called
+directly with generated sample illustrations and a test nursery logo,
+via `pdftoppm` to rasterize cover/interior/back pages) and visually
+inspecting the result, not just confirming it builds — same pattern as
+every other PDF layout change this session.

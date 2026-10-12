@@ -75,7 +75,6 @@ const WATERMARK_TEAL = rgb(0.184, 0.749, 0.651); // #2FBFA6
 const WATERMARK_CORAL = rgb(0.886, 0.439, 0.541); // #E2708A
 const WATERMARK_GOLD = rgb(0.89, 0.675, 0.239); // #E3AC3D
 const WATERMARK_RING_COLORS = [WATERMARK_TEAL, WATERMARK_CORAL, WATERMARK_GOLD];
-const WATERMARK_TEXT_COLOR = rgb(0.996, 0.996, 0.996);
 
 /**
  * Renders a full print-ready PDF: a cover page, one page per story page
@@ -174,9 +173,6 @@ export async function renderStoryPdf(input: RenderStoryPdfInput): Promise<Uint8A
       height: drawHeight,
     });
 
-    drawCopyrightWatermark(page, fonts.latinRegular);
-    if (nurseryLogo) drawNurseryLogoBadge(page, nurseryLogo);
-
     const pageNumberY = BLEED_PT + 10;
 
     if (bilingual) {
@@ -204,9 +200,9 @@ export async function renderStoryPdf(input: RenderStoryPdfInput): Promise<Uint8A
       const bilingualCaptionLineHeight = 18;
       const arabicCaptionSize = 13;
       const arabicLineHeight = 19;
-      const blockGap = 8;
-      const bottomMargin = 16;
-      const topPadding = 12;
+      const blockGap = 6;
+      const bottomMargin = 11;
+      const topPadding = 8;
 
       const enLines = wrapText(storyPage.text, fonts.latinDisplay, bilingualCaptionSize, captionMaxWidth);
       const arLineCount = captionAr
@@ -253,8 +249,8 @@ export async function renderStoryPdf(input: RenderStoryPdfInput): Promise<Uint8A
       // Caption band (bottom, flush to the page edge): height grows with
       // wrapped line count so the text never collides with the page number.
       const captionLines = wrapText(storyPage.text, fonts.latinDisplay, captionSize, captionMaxWidth);
-      const captionFirstLineY = pageNumberY + 24 + (captionLines.length - 1) * captionLineHeight;
-      const captionTopY = captionFirstLineY + captionSize + 22;
+      const captionFirstLineY = pageNumberY + 16 + (captionLines.length - 1) * captionLineHeight;
+      const captionTopY = captionFirstLineY + captionSize + 14;
       drawFlatBottomBanner(page, {
         x: 0,
         width: PAGE_WIDTH_PT,
@@ -286,6 +282,8 @@ export async function renderStoryPdf(input: RenderStoryPdfInput): Promise<Uint8A
       font: fonts.latinRegular,
       color: INK_COLOR,
     });
+
+    drawBrandBadges(page, fonts.latinRegular, nurseryLogo, pageNumberY);
   }
 
   await renderBackPage(addPage, fonts, nurseryLogo, input);
@@ -321,10 +319,7 @@ async function renderCoverPage(
     height: drawHeight,
   });
 
-  drawCopyrightWatermark(page, fonts.latinRegular);
-  if (nurseryLogo) drawNurseryLogoBadge(page, nurseryLogo);
-
-  const bannerHeight = 200;
+  const bannerHeight = 160;
   drawFlatBottomBanner(page, {
     x: 0,
     width: PAGE_WIDTH_PT,
@@ -336,7 +331,7 @@ async function renderCoverPage(
 
   const centerX = PAGE_WIDTH_PT / 2;
   const maxTextWidth = TRIM_WIDTH_PT - 60;
-  let y = bannerHeight - 36;
+  let y = bannerHeight - 32;
 
   const titleSize = 19;
   drawCenteredLatinText(page, input.titleEn, { x: centerX, y, size: titleSize, font: fonts.latinDisplay, color: INK_COLOR });
@@ -366,6 +361,8 @@ async function renderCoverPage(
       color: '#241c16',
     });
   }
+
+  drawBrandBadges(page, fonts.latinRegular, nurseryLogo, BLEED_PT + 10);
 }
 
 /**
@@ -390,24 +387,74 @@ async function renderBackPage(
 
   const centerX = PAGE_WIDTH_PT / 2;
   const maxTextWidth = TRIM_WIDTH_PT - 70;
-  const ringCenterY = PAGE_HEIGHT_PT / 2 + 110;
-  const ringScale = 48 / 36; // RING_SVG_PATHS' own paths reach radius 36 from their local centre
+  const pairCenterY = PAGE_HEIGHT_PT / 2 + 110;
 
+  // Ownly's own mark and the nursery's logo, drawn at the same height and
+  // side by side -- per the founder's explicit request, the nursery's
+  // logo is no longer a small afterthought badge near the bottom of the
+  // page; it gets equal visual weight to Ownly's own mark, as a genuine
+  // co-branding pairing (a thin divider line between them, no frame or
+  // backing plate around either -- the nursery logo is drawn as its own
+  // raw image, letterboxed to the same height, not boxed in white).
+  const logoPairHeight = 56;
+  const ownlyIconSize = logoPairHeight;
+  const ownlyTextSize = 22;
+  const ownlyIconTextGap = 10;
+  const ownlyText = 'Ownly';
+  const ownlyTextWidth = fonts.latinDisplay.widthOfTextAtSize(ownlyText, ownlyTextSize);
+  const ownlyBlockWidth = ownlyIconSize + ownlyIconTextGap + ownlyTextWidth;
+
+  let nurseryDrawWidth = 0;
+  let nurseryDrawHeight = 0;
+  if (nurseryLogo) {
+    const fitScale = Math.min(160 / nurseryLogo.width, logoPairHeight / nurseryLogo.height);
+    nurseryDrawWidth = nurseryLogo.width * fitScale;
+    nurseryDrawHeight = nurseryLogo.height * fitScale;
+  }
+
+  const dividerGap = nurseryLogo ? 32 : 0;
+  const pairTotalWidth = ownlyBlockWidth + dividerGap + nurseryDrawWidth;
+  const pairLeftX = centerX - pairTotalWidth / 2;
+
+  const ownlyIconCenterX = pairLeftX + ownlyIconSize / 2;
+  const ringScale = ownlyIconSize / 2 / 36; // RING_SVG_PATHS' own paths reach radius 36 from their local centre
   RING_SVG_PATHS.forEach((path, index) => {
     page.drawSvgPath(path, {
-      x: centerX,
-      y: ringCenterY,
+      x: ownlyIconCenterX,
+      y: pairCenterY,
       scale: ringScale,
       borderColor: WATERMARK_RING_COLORS[index],
       borderWidth: 3 * ringScale,
       borderLineCap: LineCapStyle.Round,
     });
   });
+  page.drawText(ownlyText, {
+    x: pairLeftX + ownlyIconSize + ownlyIconTextGap,
+    y: pairCenterY - ownlyTextSize * 0.34,
+    size: ownlyTextSize,
+    font: fonts.latinDisplay,
+    color: onDark,
+  });
 
-  let y = ringCenterY - 70;
-  drawCenteredLatinText(page, 'Ownly', { x: centerX, y, size: 22, font: fonts.latinDisplay, color: onDark });
-  y -= 46;
+  if (nurseryLogo) {
+    const dividerX = pairLeftX + ownlyBlockWidth + dividerGap / 2;
+    page.drawLine({
+      start: { x: dividerX, y: pairCenterY - logoPairHeight / 2 },
+      end: { x: dividerX, y: pairCenterY + logoPairHeight / 2 },
+      thickness: 1,
+      color: onDarkMuted,
+      opacity: 0.45,
+    });
 
+    page.drawImage(nurseryLogo, {
+      x: pairLeftX + ownlyBlockWidth + dividerGap,
+      y: pairCenterY - nurseryDrawHeight / 2,
+      width: nurseryDrawWidth,
+      height: nurseryDrawHeight,
+    });
+  }
+
+  let y = pairCenterY - logoPairHeight / 2 - 30;
   drawCenteredLatinText(page, 'The End', { x: centerX, y, size: 15, font: fonts.latinDisplay, color: onDark });
   y -= 24;
 
@@ -434,34 +481,6 @@ async function renderBackPage(
       color: '#c9cdd6',
     });
   }
-
-  if (nurseryLogo) {
-    const badgeHeight = 40;
-    const badgeMaxWidth = 120;
-    const padding = 6;
-    const innerHeight = badgeHeight - padding * 2;
-    const innerMaxWidth = badgeMaxWidth - padding * 2;
-    const fitScale = Math.min(innerMaxWidth / nurseryLogo.width, innerHeight / nurseryLogo.height);
-    const drawWidth = nurseryLogo.width * fitScale;
-    const drawHeight = nurseryLogo.height * fitScale;
-    const badgeWidth = drawWidth + padding * 2;
-    const badgeBottom = BLEED_PT + 46;
-
-    page.drawRectangle({
-      x: centerX - badgeWidth / 2,
-      y: badgeBottom,
-      width: badgeWidth,
-      height: badgeHeight,
-      color: rgb(1, 1, 1),
-      opacity: 0.92,
-    });
-    page.drawImage(nurseryLogo, {
-      x: centerX - drawWidth / 2,
-      y: badgeBottom + (badgeHeight - drawHeight) / 2,
-      width: drawWidth,
-      height: drawHeight,
-    });
-  }
 }
 
 /** Draws one line of Latin text centered on `x` at `y`, baseline up. */
@@ -476,34 +495,37 @@ function drawCenteredLatinText(
 }
 
 /**
- * A small "Ownly" corner tag drawn on every generated page, over the
- * illustration itself (not just the surrounding chrome) — every image a
- * family or nursery might screenshot, print, or forward carries the
- * mark. Kept inside the TrimBox with a safety margin so a print vendor
- * trimming to TrimBox never cuts it off (see docs/DECISIONS.md
- * "Copyright watermark on every generated PDF page").
+ * The Ownly mark and the nursery's own logo (if present), drawn flanking
+ * the bottom caption/title band at `centerY` — Ownly on the right, the
+ * nursery's logo on the left — instead of sitting in the page's top
+ * corners over the illustration. Per the founder's explicit request: the
+ * two marks sit beside the box the text is written in, not above it, and
+ * neither is boxed in a white/dark backing plate any more — the nursery
+ * logo is drawn as its own raw image (so it should be a transparent PNG
+ * for a clean result; letterboxed to fit, never stretched) and the Ownly
+ * mark as its bare vector rings + text, both directly over whatever's
+ * behind them (the caption banner's flat colour on every page that has
+ * one; the plain illustration itself on an Arabic-only page, which draws
+ * no caption banner — see the bilingual/non-bilingual branching above).
+ * `centerY` is always a fixed, low anchor (the same line as the page
+ * number, or the equivalent spot on the cover) so this never has to know
+ * which banner variant — if any — is behind it.
  */
-function drawCopyrightWatermark(page: import('pdf-lib').PDFPage, textFont: import('pdf-lib').PDFFont): void {
-  const margin = 10;
-  const badgeWidth = 56;
-  const badgeHeight = 20;
-  const badgeRight = PAGE_WIDTH_PT - BLEED_PT - margin;
-  const badgeTop = PAGE_HEIGHT_PT - BLEED_PT - margin;
-  const badgeLeft = badgeRight - badgeWidth;
-  const badgeBottom = badgeTop - badgeHeight;
+function drawBrandBadges(
+  page: PDFPage,
+  textFont: PDFFont,
+  nurseryLogo: PDFImage | null,
+  centerY: number,
+): void {
+  const margin = BLEED_PT + 14;
 
-  page.drawRectangle({
-    x: badgeLeft,
-    y: badgeBottom,
-    width: badgeWidth,
-    height: badgeHeight,
-    color: rgb(0.078, 0.082, 0.169), // #14152B
-    opacity: 0.82,
-  });
-
+  // Ownly mark, right side.
   const iconSize = 14;
-  const iconCenterX = badgeLeft + 3 + iconSize / 2;
-  const iconCenterY = badgeBottom + badgeHeight / 2;
+  const textSize = 7.5;
+  const text = 'Ownly';
+  const textWidth = textFont.widthOfTextAtSize(text, textSize);
+  const blockRight = PAGE_WIDTH_PT - margin;
+  const iconCenterX = blockRight - textWidth - 4 - iconSize / 2;
   // Rings' own coordinates reach out to radius 36 from their local
   // centre, so scale against that (not iconSize) to land at the
   // intended on-page size.
@@ -512,7 +534,7 @@ function drawCopyrightWatermark(page: import('pdf-lib').PDFPage, textFont: impor
   RING_SVG_PATHS.forEach((path, index) => {
     page.drawSvgPath(path, {
       x: iconCenterX,
-      y: iconCenterY,
+      y: centerY,
       scale: F,
       borderColor: WATERMARK_RING_COLORS[index],
       borderWidth: 8 * F,
@@ -520,56 +542,29 @@ function drawCopyrightWatermark(page: import('pdf-lib').PDFPage, textFont: impor
     });
   });
 
-  page.drawText('Ownly', {
-    x: iconCenterX + iconSize / 2 + 3,
-    y: badgeBottom + (badgeHeight - 7) / 2 + 1,
-    size: 7,
+  page.drawText(text, {
+    x: iconCenterX + iconSize / 2 + 4,
+    y: centerY - textSize / 2 + 1,
+    size: textSize,
     font: textFont,
-    color: WATERMARK_TEXT_COLOR,
-  });
-}
-
-/**
- * The nursery's own logo (optional, uploaded in Settings), drawn in the
- * top-LEFT corner so it never collides with the Ownly mark's top-right
- * badge — top corners are free on every page regardless of locale, since
- * the caption band (English only) sits flush to the bottom. On a white
- * backing plate so an arbitrary logo (any aspect ratio, any background)
- * stays legible over a busy illustration, letterboxed to fit rather than
- * stretched.
- */
-function drawNurseryLogoBadge(page: import('pdf-lib').PDFPage, logo: import('pdf-lib').PDFImage): void {
-  const margin = 10;
-  const badgeHeight = 28;
-  const badgeMaxWidth = 90;
-  const padding = 4;
-
-  const innerHeight = badgeHeight - padding * 2;
-  const innerMaxWidth = badgeMaxWidth - padding * 2;
-  const fitScale = Math.min(innerMaxWidth / logo.width, innerHeight / logo.height);
-  const drawWidth = logo.width * fitScale;
-  const drawHeight = logo.height * fitScale;
-  const badgeWidth = drawWidth + padding * 2;
-
-  const badgeLeft = BLEED_PT + margin;
-  const badgeTop = PAGE_HEIGHT_PT - BLEED_PT - margin;
-  const badgeBottom = badgeTop - badgeHeight;
-
-  page.drawRectangle({
-    x: badgeLeft,
-    y: badgeBottom,
-    width: badgeWidth,
-    height: badgeHeight,
-    color: rgb(1, 1, 1),
-    opacity: 0.88,
+    color: INK_COLOR,
   });
 
-  page.drawImage(logo, {
-    x: badgeLeft + (badgeWidth - drawWidth) / 2,
-    y: badgeBottom + (badgeHeight - drawHeight) / 2,
-    width: drawWidth,
-    height: drawHeight,
-  });
+  // Nursery logo, left side -- no backing plate, letterboxed to a fixed
+  // height so varying logo aspect ratios don't overpower the Ownly mark.
+  if (nurseryLogo) {
+    const maxHeight = 22;
+    const maxWidth = 74;
+    const fitScale = Math.min(maxWidth / nurseryLogo.width, maxHeight / nurseryLogo.height);
+    const drawWidth = nurseryLogo.width * fitScale;
+    const drawHeight = nurseryLogo.height * fitScale;
+    page.drawImage(nurseryLogo, {
+      x: margin,
+      y: centerY - drawHeight / 2,
+      width: drawWidth,
+      height: drawHeight,
+    });
+  }
 }
 
 function setPrintBoxes(page: import('pdf-lib').PDFPage): void {

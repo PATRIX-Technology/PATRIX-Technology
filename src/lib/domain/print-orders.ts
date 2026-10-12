@@ -69,6 +69,33 @@ export function getPrintOrderBulkTier(quantity: number): PrintOrderBulkTier | nu
   return PRINT_ORDER_BULK_TIERS.find((tier) => quantity >= tier.minQty && quantity <= tier.maxQty) ?? null;
 }
 
+/** Flat local-delivery fee charged on top of the per-copy price for any
+ * order under the 100+ free-delivery tier -- AED 30, a standard Dubai
+ * local-courier express rate for a parcel this size (a few bound
+ * storybooks, well under a typical 20kg local-parcel limit); see
+ * docs/DECISIONS.md "Flat AED 30 delivery fee, charged for the first
+ * time" for the Dubai-market figures behind that choice. USD uses the
+ * same AED->USD ratio as the rest of this file (22/81 ~= 0.2716),
+ * rounded to the nearest dollar. */
+export const PRINT_ORDER_DELIVERY_FEE_MINOR: Record<PrintOrderCurrency, number> = {
+  aed: 3000, // AED 30.00
+  usd: 800, // $8.00
+};
+
+/** The delivery fee for this order size and currency -- 0 once the order
+ * reaches a tier with freeDelivery (currently 100+ copies), otherwise the
+ * flat PRINT_ORDER_DELIVERY_FEE_MINOR rate. Deliberately a pure function
+ * of (quantity, currency), not a stored column: the checkout route, both
+ * order dialogs, and the paid-order webhook notification all call this
+ * directly so the fee shown to the customer, the fee Stripe actually
+ * charges, and the total reported to the owner can never drift apart --
+ * same reasoning as getPrintOrderUnitPriceMinor below. */
+export function getPrintOrderDeliveryFeeMinor(quantity: number, currency: PrintOrderCurrency): number {
+  const tier = getPrintOrderBulkTier(quantity);
+  if (tier?.freeDelivery) return 0;
+  return PRINT_ORDER_DELIVERY_FEE_MINOR[currency];
+}
+
 /** The actual per-copy price for this quantity and currency -- the single
  * source of truth both the checkout route and the bulk order dialog use,
  * so the price shown to the customer and the price Stripe charges can

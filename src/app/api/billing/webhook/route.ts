@@ -5,6 +5,7 @@ import { createSupabaseServiceRoleClient } from '@/lib/supabase/service-role';
 import { extractCheckoutMetadata, subscriptionFromStripe } from '@/lib/domain/billing';
 import { flags } from '@/lib/flags';
 import { notifyOwnerOfPaidPrintOrderBatch } from '@/lib/notifications/email';
+import { getPrintOrderDeliveryFeeMinor, type PrintOrderCurrency } from '@/lib/domain/print-orders';
 
 export const runtime = 'nodejs';
 
@@ -141,11 +142,21 @@ async function handleEvent(
             return { childName, storyTitle, locale: story.locale };
           });
 
+          // Pure function of order size/currency, same as at checkout time
+          // (see getPrintOrderDeliveryFeeMinor's own docs) -- recomputed
+          // here rather than read from a stored column so this total can
+          // never drift from what Stripe actually charged.
+          const deliveryFeeMinor = getPrintOrderDeliveryFeeMinor(
+            updatedOrders.length,
+            first.currency as PrintOrderCurrency,
+          );
+
           await notifyOwnerOfPaidPrintOrderBatch({
             batchId,
             tenantName: tenant?.name ?? 'Unknown organisation',
             currency: first.currency,
-            totalAmountMinor: updatedOrders.reduce((sum, o) => sum + o.amount_minor, 0),
+            totalAmountMinor: updatedOrders.reduce((sum, o) => sum + o.amount_minor, 0) + deliveryFeeMinor,
+            deliveryFeeMinor,
             shippingName: first.shipping_name,
             shippingPhone: first.shipping_phone,
             shippingAddress: [

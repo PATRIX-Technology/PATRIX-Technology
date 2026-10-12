@@ -6,6 +6,7 @@ import { getStripeClient } from '@/lib/billing/stripe';
 import { flags } from '@/lib/flags';
 import {
   MAX_BULK_PRINT_ORDER_STORIES,
+  getPrintOrderDeliveryFeeMinor,
   getPrintOrderUnitPriceMinor,
   isPrintOrderCurrency,
   validateShippingAddress,
@@ -164,6 +165,22 @@ export async function POST(request: Request) {
       quantity: 1,
     };
   });
+
+  // Flat local-delivery fee, waived at the 100+ free-delivery tier -- see
+  // getPrintOrderDeliveryFeeMinor's own docs for why this is a pure
+  // function of order size rather than a client-supplied amount (the
+  // client can't under- or over-state what Stripe actually charges).
+  const deliveryFeeMinor = getPrintOrderDeliveryFeeMinor(storyIds.length, currency);
+  if (deliveryFeeMinor > 0) {
+    lineItems.push({
+      price_data: {
+        currency,
+        unit_amount: deliveryFeeMinor,
+        product_data: { name: locale === 'ar' ? 'رسوم التوصيل (داخل الإمارات)' : 'Delivery fee (UAE)' },
+      },
+      quantity: 1,
+    });
+  }
 
   const session = await stripe.checkout.sessions.create({
     mode: 'payment',

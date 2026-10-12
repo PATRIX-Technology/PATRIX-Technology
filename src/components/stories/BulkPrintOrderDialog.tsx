@@ -8,6 +8,7 @@ import { useToast } from '@/components/ui/Toast';
 import {
   getNextPrintOrderTier,
   getPrintOrderBulkTier,
+  getPrintOrderDeliveryFeeMinor,
   getPrintOrderUnitPriceMinor,
   type PrintOrderCurrency,
 } from '@/lib/domain/print-orders';
@@ -70,9 +71,12 @@ export function BulkPrintOrderDialog({
   }
 
   const unitPrice = getPrintOrderUnitPriceMinor(items.length, currency) / 100;
-  const total = unitPrice * items.length;
+  const copiesTotal = unitPrice * items.length;
   const bulkTier = getPrintOrderBulkTier(items.length);
   const nextTier = getNextPrintOrderTier(items.length);
+  const deliveryFeeMinor = getPrintOrderDeliveryFeeMinor(items.length, currency);
+  const deliveryFee = deliveryFeeMinor / 100;
+  const total = copiesTotal + deliveryFee;
 
   async function handlePay() {
     setSubmitting(true);
@@ -139,10 +143,18 @@ export function BulkPrintOrderDialog({
 
         <div className="space-y-0.5">
           <p className="text-sm text-ink-600">
-            {t('bulkTotal', { count: items.length, total: `${total.toFixed(2)} ${currency.toUpperCase()}` })}
+            {t('bulkCopiesSubtotal', { count: items.length, total: `${copiesTotal.toFixed(2)} ${currency.toUpperCase()}` })}
           </p>
           <p className="text-xs text-ink-500">
             {t('bulkPerCopy', { price: `${unitPrice.toFixed(2)} ${currency.toUpperCase()}` })}
+          </p>
+          <p className="text-xs text-ink-500">
+            {deliveryFeeMinor > 0
+              ? t('deliveryFee', { price: `${deliveryFee.toFixed(2)} ${currency.toUpperCase()}` })
+              : t('bulkFreeDelivery')}
+          </p>
+          <p className="text-sm font-semibold text-ink-900">
+            {t('bulkGrandTotal', { total: `${total.toFixed(2)} ${currency.toUpperCase()}` })}
           </p>
         </div>
         {bulkTier && (

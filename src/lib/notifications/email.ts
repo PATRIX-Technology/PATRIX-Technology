@@ -66,13 +66,19 @@ export async function notifyOwnerOfPaidPrintOrderBatch(params: {
   batchId: string;
   tenantName: string;
   currency: string;
+  /** Copies subtotal + deliveryFeeMinor -- what Stripe actually charged. */
   totalAmountMinor: number;
+  /** 0 once the order reached the 100+ free-delivery tier. */
+  deliveryFeeMinor: number;
   shippingName: string;
   shippingPhone: string;
   shippingAddress: string;
   items: PaidPrintOrderBatchItem[];
 }): Promise<void> {
-  const total = `${(params.totalAmountMinor / 100).toFixed(2)} ${params.currency.toUpperCase()}`;
+  const currencyLabel = params.currency.toUpperCase();
+  const copiesSubtotal = `${((params.totalAmountMinor - params.deliveryFeeMinor) / 100).toFixed(2)} ${currencyLabel}`;
+  const delivery = params.deliveryFeeMinor > 0 ? `${(params.deliveryFeeMinor / 100).toFixed(2)} ${currencyLabel}` : 'Free';
+  const total = `${(params.totalAmountMinor / 100).toFixed(2)} ${currencyLabel}`;
   const itemLines = params.items.map(
     (item, i) => `  ${i + 1}. ${item.storyTitle} (for ${item.childName}, ${item.locale.toUpperCase()})`,
   );
@@ -83,6 +89,8 @@ export async function notifyOwnerOfPaidPrintOrderBatch(params: {
     `Organisation: ${params.tenantName}`,
     `Copies: ${params.items.length}`,
     ...itemLines,
+    `Copies subtotal: ${copiesSubtotal}`,
+    `Delivery (UAE): ${delivery}`,
     `Total paid: ${total}`,
     `Ship to: ${params.shippingName} — ${params.shippingPhone}`,
     `Address: ${params.shippingAddress}`,

@@ -5,7 +5,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { useToast } from '@/components/ui/Toast';
-import type { PrintOrderCurrency } from '@/lib/domain/print-orders';
+import { getPrintOrderDeliveryFeeMinor, getPrintOrderUnitPriceMinor, type PrintOrderCurrency } from '@/lib/domain/print-orders';
 import type { TenantType } from '@/types/database';
 
 /**
@@ -50,6 +50,14 @@ export function PrintOrderDialog({ storyId, tenantType }: { storyId: string; ten
   function update<K extends keyof typeof fields>(key: K, value: string) {
     setFields((prev) => ({ ...prev, [key]: value }));
   }
+
+  // A single-copy order is always under the 100+ free-delivery tier, so
+  // the flat delivery fee always applies here -- the bulk dialog is the
+  // only place an order can actually reach free delivery.
+  const unitPrice = getPrintOrderUnitPriceMinor(1, currency) / 100;
+  const deliveryFeeMinor = getPrintOrderDeliveryFeeMinor(1, currency);
+  const deliveryFee = deliveryFeeMinor / 100;
+  const total = unitPrice + deliveryFee;
 
   async function handlePay() {
     setSubmitting(true);
@@ -105,6 +113,16 @@ export function PrintOrderDialog({ storyId, tenantType }: { storyId: string; ten
                 {t(`price.${c}`)}
               </button>
             ))}
+          </div>
+
+          <div className="space-y-0.5">
+            <p className="text-xs text-ink-500">
+              {t('bulkPerCopy', { price: `${unitPrice.toFixed(2)} ${currency.toUpperCase()}` })}
+            </p>
+            <p className="text-xs text-ink-500">{t('deliveryFee', { price: `${deliveryFee.toFixed(2)} ${currency.toUpperCase()}` })}</p>
+            <p className="text-sm font-semibold text-ink-900">
+              {t('bulkGrandTotal', { total: `${total.toFixed(2)} ${currency.toUpperCase()}` })}
+            </p>
           </div>
 
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -163,7 +181,7 @@ export function PrintOrderDialog({ storyId, tenantType }: { storyId: string; ten
           </label>
 
           <Button variant="primary" onClick={handlePay} disabled={payDisabled} isLoading={submitting}>
-            {t('payNow', { price: t(`price.${currency}`) })}
+            {t('payNow', { price: `${total.toFixed(2)} ${currency.toUpperCase()}` })}
           </Button>
         </div>
       </Modal>

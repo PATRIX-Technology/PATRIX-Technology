@@ -6164,3 +6164,88 @@ session's pptx-editing agents don't carry Google upload credentials
 usable for a ~2MB binary roundtrip, all 6 finished files were handed
 to the founder directly via file delivery for manual re-upload over
 the original Drive filenames, preserving the existing links.
+
+## Flat AED 30 delivery fee, charged for the first time
+
+Every printed-copy price table across the project showed "free
+delivery at 100+ copies" without ever actually charging delivery
+below that tier — the "free" framing was true only because nothing
+below 100 copies was charged for shipping at all, not because of a
+genuine waiver. Founder asked for a real delivery fee (in the
+AED 30-50 range he named) to actually be charged below the 100+ tier,
+shown in both order dialogs' price breakdown, and reflected everywhere
+the print ladder is documented.
+
+Picked **AED 30 flat** (≈$8, same AED→USD ratio used elsewhere in
+`print-orders.ts`) as the figure, grounded in a quick check of real
+Dubai local-courier rates: Emirates Post's own published example
+quotes AED 30 for its express local-delivery tier (vs. AED 2 for
+3+-day standard, AED 150 for premium) on a cross-emirate route — a
+reasonable, defensible rate for a parcel this size (a few bound
+storybooks, well under a typical 20kg local-parcel limit) without
+over- or under-charging.
+
+Added `getPrintOrderDeliveryFeeMinor(quantity, currency)` to
+`src/lib/domain/print-orders.ts` — a pure function of order size and
+currency (0 once a tier has `freeDelivery`, otherwise the flat
+AED 30/$8 rate), same pattern as the existing
+`getPrintOrderUnitPriceMinor`, so the fee shown to the customer, the
+fee Stripe actually charges, and the total reported to the owner can
+never drift apart. Wired through: `/api/print-orders/checkout` adds
+it as its own Stripe Checkout line item (customer sees it broken out
+on the real Stripe receipt, not folded into the per-copy price);
+`BulkPrintOrderDialog.tsx` and `PrintOrderDialog.tsx` both show a
+copies-subtotal line, a delivery line (or "free delivery" once the
+order reaches 100+), and a grand total, with the Pay button showing
+the real total including delivery for the first time (previously the
+single-copy dialog showed no computed total at all, just a static
+per-currency price label); the paid-order webhook recomputes the fee
+the same way to fold it into the total reported to the owner, with a
+`Copies subtotal` / `Delivery` / `Total paid` breakdown in the
+notification. New unit test (`tests/unit/print-orders.test.ts`) covers
+the fee at every tier boundary. No schema change — the fee is derived,
+never stored, so there's nothing to keep in sync.
+
+Every printed-copy table in `docs/en/pricing.md`, `docs/ar/pricing.md`,
+the "Pricing, Subscriptions & Launch Strategy" Google Doc (EN+AR, 4
+tables), and the "What to Present to B2B Customers" Google Doc (EN+AR,
+2 tables, column order mirrored to match that doc's own existing
+reversed-RTL convention) now carries a Delivery fee column alongside
+Quantity/Price/Markup/Notes, built and verified via the same proven
+`actual_end`-chained table-replacement + full re-read methodology as
+every other Google Docs edit this session — including, in the B2B
+doc's case, proactively re-applying `HEADING_3` to the heading
+immediately following each replaced table in the *same* batch, since
+that exact table-before-heading position had already caused a
+style-loss regression once earlier in this project; no second
+round-trip was needed this time.
+
+Also added a dedicated **"Printed Copies — Quick Reference" slide**
+to the Sales Rep Reference deck (now slide 5 of 8, inserted between
+the Standard-Rate pricing slide and "Who We Serve Today", with every
+later slide's footer page number shifted by one) — a standalone table
+with the full ladder plus the delivery-fee column, for a rep to point
+to the instant a customer asks specifically about printing, rather
+than hunting through prose bullets on the subscription-pricing slides.
+Built via a hand-written OOXML table generator matching this slide's
+own exact cell/border/banding templates (5 rows × 5 columns vs. the
+duplicated source slide's 4×6 table), since restructuring an existing
+table's row/column count isn't a simple text substitution the way the
+Google Docs table work was — validated and visually re-rendered.
+
+Also updated the free-pilot "100% Free" framing across all 4
+customer-facing pitch decks' "YOUR PILOT" slide: the stat card's
+subtitle now reads "digital stories — no payment, no risk" (was
+unqualified "no payment, no risk", which could be read as including
+printing), and a new fifth checkmark bullet explains that pilot
+nurseries get printed copies at the best bulk rate — the same
+AED 58/copy a Network-subscription nursery pays, not the real
+bulk-quantity ladder's actual 100+-copy threshold — framed as an
+attractive pilot perk rather than a hard rule change to the live bulk
+ladder. This is a messaging/marketing commitment on the slide only; it
+is **not** wired into the checkout code, which still charges by the
+real quantity-based ladder regardless of pilot status. If the founder
+wants pilot nurseries to actually receive AED 58/copy pricing
+regardless of order size at checkout, that needs a follow-up: tracking
+which tenants are in their pilot window and branching
+`getPrintOrderUnitPriceMinor` on that status, not yet built.

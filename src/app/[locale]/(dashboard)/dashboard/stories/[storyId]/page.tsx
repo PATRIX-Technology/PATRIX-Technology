@@ -121,6 +121,9 @@ export default async function StoryDetailPage({
             {t(`status.${status}`)}
           </Badge>
           {stillGenerating && <p className="mt-2 text-sm text-ink-500">{t('generationNote')}</p>}
+          <p className="mt-2 text-xs text-ink-500">
+            {t('pageCountNote', { interior: (pages ?? []).length, total: (pages ?? []).length + 2 })}
+          </p>
         </div>
         {status === 'APPROVED' && (
           <div className="flex gap-2">
@@ -162,7 +165,14 @@ export default async function StoryDetailPage({
             </div>
             <div className="flex-1">
               <p className="mb-2 text-sm font-medium text-ink-500">{t('pageLabel', { number: page.page_number })}</p>
-              <p className="mb-3 text-ink-800">{page.text}</p>
+              <div className="mb-3">
+                <p className="text-ink-800">{page.text}</p>
+                {story.bilingual && page.text_ar && (
+                  <p dir="rtl" className="mt-1 text-ink-800">
+                    {page.text_ar}
+                  </p>
+                )}
+              </div>
               <Badge tone={page.image_status === 'GENERATED' ? 'success' : 'warning'}>
                 {page.image_status}
               </Badge>

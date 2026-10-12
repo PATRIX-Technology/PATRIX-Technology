@@ -188,21 +188,37 @@ export async function renderStoryPdf(input: RenderStoryPdfInput): Promise<Uint8A
       // the English block above it can be sized correctly first — see its
       // docstring in arabic-text-vector.ts for why the topY math below has
       // to mirror drawCenteredArabicText's own baseline formula exactly.
+      //
+      // Deliberately its own, smaller set of sizing constants, NOT the
+      // single-language captionSize/captionLineHeight above — a founder-
+      // reported real render at the original sizes (matching the single-
+      // language ones) produced a banner tall enough to crop the page's
+      // own mascot out of frame. These are tuned to cut the stacked
+      // band's total height by roughly a quarter versus that first pass,
+      // while staying legible at A5 print size — paired with
+      // buildIllustrationPrompt's bilingual branch reserving the bottom
+      // 30% of the illustration itself, so the mascot is never placed
+      // where this band will sit in the first place.
       const captionAr = storyPage.textAr ?? '';
-      const enLines = wrapText(storyPage.text, fonts.latinDisplay, captionSize, captionMaxWidth);
-      const arabicCaptionSize = 15;
-      const arabicLineHeight = arabicCaptionSize * 1.55;
+      const bilingualCaptionSize = 14;
+      const bilingualCaptionLineHeight = 18;
+      const arabicCaptionSize = 13;
+      const arabicLineHeight = 19;
+      const blockGap = 8;
+      const bottomMargin = 16;
+      const topPadding = 12;
+
+      const enLines = wrapText(storyPage.text, fonts.latinDisplay, bilingualCaptionSize, captionMaxWidth);
       const arLineCount = captionAr
         ? await measureArabicTextLines(captionAr, arabicCaptionSize, captionMaxWidth)
         : 0;
-      const blockGap = 14;
 
       const arabicTopY = captionAr
-        ? pageNumberY + 24 + arabicCaptionSize * 0.92 + (arLineCount - 1) * arabicLineHeight
-        : pageNumberY + 24;
-      const englishBottomBaselineY = captionAr ? arabicTopY + blockGap : pageNumberY + 24;
-      const englishFirstLineY = englishBottomBaselineY + (enLines.length - 1) * captionLineHeight;
-      const captionTopY = englishFirstLineY + captionSize + 22;
+        ? pageNumberY + bottomMargin + arabicCaptionSize * 0.92 + (arLineCount - 1) * arabicLineHeight
+        : pageNumberY + bottomMargin;
+      const englishBottomBaselineY = captionAr ? arabicTopY + blockGap : pageNumberY + bottomMargin;
+      const englishFirstLineY = englishBottomBaselineY + (enLines.length - 1) * bilingualCaptionLineHeight;
+      const captionTopY = englishFirstLineY + bilingualCaptionSize + topPadding;
 
       drawFlatBottomBanner(page, {
         x: 0,
@@ -214,12 +230,12 @@ export async function renderStoryPdf(input: RenderStoryPdfInput): Promise<Uint8A
       });
 
       enLines.forEach((line, index) => {
-        const y = englishFirstLineY - index * captionLineHeight;
-        const width = fonts.latinDisplay.widthOfTextAtSize(line, captionSize);
+        const y = englishFirstLineY - index * bilingualCaptionLineHeight;
+        const width = fonts.latinDisplay.widthOfTextAtSize(line, bilingualCaptionSize);
         page.drawText(line, {
           x: PAGE_WIDTH_PT / 2 - width / 2,
           y,
-          size: captionSize,
+          size: bilingualCaptionSize,
           font: fonts.latinDisplay,
           color: INK_COLOR,
         });

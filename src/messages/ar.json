@@ -503,6 +503,7 @@
     "reviewApproveTitle": "المراجعة والموافقة",
     "pageLabel": "صفحة {number}",
     "generationNote": "جاري إنشاء الرسوم التوضيحية — يتم تحديث هذه الصفحة تلقائيا، لا حاجة للتحديث يدويا.",
+    "pageCountNote": "{interior} صفحات مصوّرة معروضة أدناه — يضيف الكتاب المطبوع أو المُحمَّل غلافا وصفحة ختامية تلقائيا (المجموع {total} صفحات).",
     "generationBannerTitle": "جاري إنشاء رسوم القصة…",
     "generationBannerProgress": "{generated} من {total} رسوم جاهزة",
     "generationBannerDone": "اكتمل! جاري التحديث…",

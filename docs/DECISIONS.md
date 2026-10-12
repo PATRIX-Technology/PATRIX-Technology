@@ -6632,3 +6632,55 @@ fix for its own reliability regardless. Jobs caught by either layer
 normal backoff-retry path on the very next invocation — the same
 existing recovery mechanism, just reached by design now instead of by
 an actual platform kill.
+
+## Bilingual caption band tightened; illustration prompt drops default Gulf dress; review page shows both captions
+
+Founder feedback on a real bilingual render (not a placeholder test
+image) surfaced three separate issues at once:
+
+**Caption band too tall, cropping the mascot.** The first-pass bilingual
+sizing constants (captionSize 16/arabicCaptionSize 15, with generous
+padding/gaps carried over from the single-language styling) produced a
+band covering roughly a quarter of the page — tall enough that the
+scene's mascot ended up drawn right where the band would sit, and read
+as cropped/half-hidden in the finished PDF. Two coordinated fixes, since
+either alone just moves the problem:
+- `render.ts`'s bilingual branch now uses its own, smaller, independent
+  sizing constants (14pt/18pt English, 13pt/19pt Arabic, 8pt block gap,
+  16pt bottom margin, 12pt top padding — all down from the single-
+  language figures) cutting the band's total height by roughly a
+  quarter while staying legible at real A5 print size.
+- `buildIllustrationPrompt`'s bilingual branch (previously sharing the
+  English-only "leave the bottom 15% clear" instruction with locale
+  `'en'`) now gets its own instruction reserving the bottom 30% —
+  matching the still-taller-than-single-language actual band with real
+  margin to spare — and explicitly names what must stay out of that
+  zone: "no character faces, mascots, or key story objects down there,
+  even partially cropped."
+
+**Default illustration style implied Gulf national dress.** The shared
+`BRAND_STYLE_PROMPT` line "culturally appropriate for a UAE/Gulf
+audience" was read by Gemini as "put every character in a kandura/
+ghutra by default" — confirmed on a birthday-party scene with no reason
+to be nationality-specific at all. The product serves every nationality
+in the UAE, not just Emiratis, so the DEFAULT had to stop being
+Gulf-specific. Rewritten to ask for simple, modern, everyday clothing
+unless a theme's own scene description explicitly calls for something
+cultural — which still lets a genuinely cultural theme (Eid, Ramadan,
+National Day) look appropriate from its own scene text, without that
+bias leaking into every other theme by default.
+
+**Review screen only ever showed the English caption.** For a bilingual
+story, `story_pages.text` is always English by design (migration
+0042's own invariant) — but the owner/staff review page
+(`stories/[storyId]/page.tsx`) only ever rendered `page.text`, never
+`page.text_ar`, so a bilingual story's review screen looked identical
+to an English-only one even though the PDF itself was correctly
+bilingual. Now renders both captions stacked (English then the Arabic,
+`dir="rtl"`) whenever `story.bilingual` is true. Same page also gained
+a short note clarifying the 6-vs-8 page-count question this raised:
+the interior pages shown here are the full illustrated set; the cover
+and back page are templated additions only ever present in the
+rendered/downloaded PDF (see "6-page structure: cover + back page"),
+never stored as their own `story_pages` rows, so there was nothing
+wrong to fix there — only something to explain.

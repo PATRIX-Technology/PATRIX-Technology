@@ -16,10 +16,21 @@
  * into the illustration".
  */
 
+// Deliberately NOT "culturally appropriate for a UAE/Gulf audience" (the
+// original wording) -- a founder-reported real render showed Gemini
+// reading that as "dress every character in a kandura/ghutra by
+// default," on a theme (a birthday party) with no reason to be
+// nationality-specific at all. The product serves every nationality in
+// the UAE, not just Emiratis, so the default has to be neutral; a theme
+// that genuinely IS cultural (Eid, Ramadan, National Day) still gets
+// that from its own scene description, which this doesn't override.
 export const BRAND_STYLE_PROMPT =
   'Warm, premium children\'s storybook illustration, soft rounded shapes, gentle consistent ' +
   'lighting, cozy detailed background, an anime-influenced but wholesome children\'s-book art ' +
-  'style, culturally appropriate for a UAE/Gulf audience. Portrait orientation, centred composition.';
+  'style. Characters wear simple, everyday modern clothing -- never a specific region\'s ' +
+  'traditional or national dress (e.g. no kandura, ghutra, abaya, or similar) unless the scene ' +
+  'description below explicitly calls for it -- so every child feels represented regardless of ' +
+  'nationality or background. Portrait orientation, centred composition.';
 
 /** Founder directive: the nursery/organisation's or family's real name must
  * never appear inside a generated image, as a name, sign, or logo of any
@@ -98,6 +109,23 @@ export function buildIllustrationPrompt(input: IllustrationPromptInput): string 
         'do not paraphrase, translate, shorten, or add to it. Do not render any other text, letters, ' +
         'words, numbers, logos, or writing anywhere else in the image — no signs, labels, book covers, ' +
         'clothing text, or watermarks — only this one caption band.',
+    );
+  } else if (input.bilingual) {
+    // A bilingual page's overlay stacks English above Arabic in ONE
+    // banner, noticeably taller than a single-language caption band —
+    // see render.ts's bilingual caption-drawing branch. A founder-
+    // reported real render showed a mascot cropped/hidden right where
+    // this band sits, because the single-language 15% clearance below
+    // wasn't enough room for it. 30% matches render.ts's own actual
+    // (now-tightened) bilingual band height with real margin to spare.
+    parts.push(
+      'Absolutely no text, letters, words, numbers, logos, or writing anywhere in the image — no ' +
+        'signs, labels, book covers, clothing text, or watermarks. Both an English and an Arabic ' +
+        'caption are added separately afterwards, stacked together in one noticeably tall banner ' +
+        'across the bottom of the frame — leave the very bottom 30% of the frame clearly free of ' +
+        'important detail for that overlay: no character faces, mascots, or key story objects down ' +
+        'there, even partially cropped. Keep every character and the mascot fully visible, well ' +
+        'composed, and comfortably inside the upper 70% of the frame instead.',
     );
   } else {
     parts.push(

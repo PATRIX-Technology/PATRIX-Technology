@@ -503,6 +503,7 @@
     "reviewApproveTitle": "Review & approve",
     "pageLabel": "Page {number}",
     "generationNote": "Generating illustrations — this page updates automatically, no need to refresh.",
+    "pageCountNote": "{interior} illustrated pages shown below — the printed/downloaded book also adds an automatic cover and back page ({total} pages total).",
     "generationBannerTitle": "Creating your story illustrations…",
     "generationBannerProgress": "{generated} of {total} illustrations ready",
     "generationBannerDone": "All done! Updating…",

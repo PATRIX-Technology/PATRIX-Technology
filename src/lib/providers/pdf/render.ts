@@ -519,9 +519,16 @@ function drawBrandBadges(
 ): void {
   const margin = BLEED_PT + 14;
 
-  // Ownly mark, right side.
-  const iconSize = 14;
-  const textSize = 7.5;
+  // Ownly mark, right side. iconSize was 14 -- at that size the three
+  // concentric rings' true brand proportions (stroke width = 8 per 72
+  // diameter, see src/components/brand/Logo.tsx's canonical RINGS) leave
+  // under a point of gap between adjacent rings, which reads as a
+  // smudged blob rather than distinct rings once anti-aliased at normal
+  // viewing/print resolution -- reported live as "needs to be sharper".
+  // 20 keeps the mark corner-badge-small while giving each ring enough
+  // room to actually resolve.
+  const iconSize = 20;
+  const textSize = 8.5;
   const text = 'Ownly';
   const textWidth = textFont.widthOfTextAtSize(text, textSize);
   const blockRight = PAGE_WIDTH_PT - margin;

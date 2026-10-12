@@ -6986,3 +6986,21 @@ in-modal note box, not a new popup mechanism) now states the flat
 3-day promise directly, no interpolated range. Scope: the app's own
 UI only, per the founder's explicit ask — pitch decks/slides are
 intentionally not touched by this change.
+
+## Sharpened the bottom-right Ownly mark on cover/interior pages
+
+Founder feedback: the Ownly mark bottom-right on story pages looked
+unsharp. Root cause: at `iconSize = 14` (inherited unchanged from the
+original top-corner watermark when it was repositioned into
+`drawBrandBadges`, see "Nursery logo gets equal billing..." above),
+the three concentric rings use the canonical brand mark's true
+proportions (`src/components/brand/Logo.tsx`'s `strokeWidth={8}` on a
+72pt-diameter ring at full size) — correct proportionally, but at 14pt
+total diameter the gap between adjacent rings shrinks to well under a
+point, which anti-aliases into a smudged blob rather than three
+distinct rings at normal viewing/print resolution. Bumped to
+`iconSize = 20` (and `textSize` 7.5 → 8.5 to stay visually balanced
+with the larger icon) — still a small corner mark, but large enough
+for the rings to actually resolve. Verified by rendering a real sample
+PDF and inspecting the corner at both screen (150 DPI) and print
+(300 DPI) resolution via `pdftoppm`, not just by the math.

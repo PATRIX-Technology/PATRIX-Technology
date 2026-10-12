@@ -50,4 +50,15 @@ describe('buildIllustrationPrompt', () => {
     expect(enPrompt).toMatch(/nursery|organisation|family.*name/i);
     expect(arPrompt).toMatch(/nursery|organisation|family.*name/i);
   });
+
+  it('keeps the image text-free for a bilingual story even when locale is ar -- both captions get drawn afterwards via pdf-lib instead', () => {
+    const prompt = buildIllustrationPrompt({
+      ...baseInput,
+      locale: 'ar',
+      captionText: 'الثعلب في الحديقة',
+      bilingual: true,
+    });
+    expect(prompt).not.toMatch(/render this exact arabic caption/i);
+    expect(prompt).toMatch(/no signs, labels, book covers, clothing text, or watermarks/i);
+  });
 });

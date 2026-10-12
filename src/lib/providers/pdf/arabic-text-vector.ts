@@ -103,6 +103,26 @@ export interface ArabicTextOptions {
 }
 
 /**
+ * Line count `text` would wrap to at `fontSizePt`/`maxWidthPt`, without
+ * drawing anything — used by render.ts's bilingual interior-page caption
+ * band to size the banner (and compute drawCenteredArabicText's own
+ * `topY`) BEFORE the Arabic block is actually drawn. Reuses the exact
+ * same wrapLines() the real draw call uses, so the count this returns is
+ * guaranteed to match what drawCenteredArabicText actually wraps to for
+ * the same inputs.
+ */
+export async function measureArabicTextLines(
+  text: string,
+  fontSizePt: number,
+  maxWidthPt: number,
+  bold = false,
+): Promise<number> {
+  const { font, upem } = await getFont(bold);
+  const unitScale = fontSizePt / upem;
+  return wrapLines(font, unitScale, text, maxWidthPt).length;
+}
+
+/**
  * Draws `text` centered, word-wrapped to `maxWidthPt`, as real filled
  * vector glyph outlines shaped by HarfBuzz — not rasterized, not drawn
  * via pdf-lib/fontkit's own text-drawing (see render.ts's docstring for

@@ -45,6 +45,18 @@ export interface CreateStoryInput {
    * pass 'service_consume_story_quota' instead -- see its migration for
    * why the auth check can't apply there. */
   quotaRpc?: 'consume_story_quota' | 'service_consume_story_quota';
+  /** When set, generates a bilingual-in-one-book story: every interior
+   * page carries BOTH an English and an Arabic caption (see
+   * docs/DECISIONS.md "Bilingual-in-one-book generation"). `template`
+   * above stays the PRIMARY-locale template (drives `locale`, and which
+   * name shows first elsewhere); `bilingualTemplate` is the other
+   * locale's row for the same theme_key, used only to render the second
+   * language's captions. Both `childNameEn`/`childNameAr` are required
+   * together with this -- a bilingual book always needs both name
+   * spellings, regardless of which locale is primary. */
+  bilingualTemplate?: StoryThemeTemplate;
+  childNameEn?: string;
+  childNameAr?: string;
 }
 
 /**
@@ -129,14 +141,74 @@ export async function createStory(supabase: SupabaseClient, input: CreateStoryIn
  * moved into the RPC. See docs/DECISIONS.md "Full QA + security pass"
  * for the fuller writeup.
  */
-export async function createStoryForTenant(supabase: SupabaseClient, input: CreateStoryInput) {
-  // renderTemplate() itself throws TemplateNotReviewedError for an
-  // unreviewed Arabic template — preserved unchanged from createStory().
-  const pages = renderTemplate(input.template, {
-    childName: input.childName,
-    pronoun: input.pronoun,
-    organisation: input.organisationName,
+interface BilingualPageRow {
+  page_number: number;
+  text: string;
+  text_ar: string;
+  image_prompt: string;
+}
+
+/**
+ * Renders a theme's EN and AR template rows together into one page array
+ * per `order`: English caption + scene description as the base (always
+ * used for the actual Gemini call -- no caption gets baked into the
+ * image for a bilingual story, see docs/DECISIONS.md "Bilingual-in-one
+ * -book generation"), with the Arabic caption folded in alongside it.
+ * Each locale is independently token-substituted via its own template's
+ * own placeholder conventions (English {pronoun:...}, Arabic
+ * {v:...}/{ps} -- see src/lib/domain/templates.ts), so this just runs
+ * the existing renderTemplate() twice rather than needing new rendering
+ * logic.
+ */
+function renderBilingualPages(
+  enTemplate: StoryThemeTemplate,
+  arTemplate: StoryThemeTemplate,
+  ctx: { childNameEn: string; childNameAr: string; pronoun: Pronoun; organisation: string },
+): BilingualPageRow[] {
+  const enPages = renderTemplate(enTemplate, {
+    childName: ctx.childNameEn,
+    pronoun: ctx.pronoun,
+    organisation: ctx.organisation,
   });
+  const arPages = renderTemplate(arTemplate, {
+    childName: ctx.childNameAr,
+    pronoun: ctx.pronoun,
+    organisation: ctx.organisation,
+  });
+  const arTextByOrder = new Map(arPages.map((p) => [p.order, p.text]));
+
+  return enPages.map((p) => ({
+    page_number: p.order,
+    text: p.text,
+    text_ar: arTextByOrder.get(p.order) ?? '',
+    image_prompt: p.image_prompt,
+  }));
+}
+
+export async function createStoryForTenant(supabase: SupabaseClient, input: CreateStoryInput) {
+  const bilingual = Boolean(input.bilingualTemplate);
+
+  let rpcPages: { page_number: number; text: string; text_ar?: string; image_prompt: string }[];
+  if (bilingual && input.bilingualTemplate) {
+    const isTemplateEn = input.template.locale === 'en';
+    const enTemplate = isTemplateEn ? input.template : input.bilingualTemplate;
+    const arTemplate = isTemplateEn ? input.bilingualTemplate : input.template;
+    rpcPages = renderBilingualPages(enTemplate, arTemplate, {
+      childNameEn: input.childNameEn ?? input.childName,
+      childNameAr: input.childNameAr ?? input.childName,
+      pronoun: input.pronoun,
+      organisation: input.organisationName,
+    });
+  } else {
+    // renderTemplate() itself throws TemplateNotReviewedError for an
+    // unreviewed Arabic template — preserved unchanged from createStory().
+    const pages = renderTemplate(input.template, {
+      childName: input.childName,
+      pronoun: input.pronoun,
+      organisation: input.organisationName,
+    });
+    rpcPages = pages.map((page) => ({ page_number: page.order, text: page.text, image_prompt: page.image_prompt }));
+  }
 
   const { data: storyId, error } = await supabase.rpc('create_story', {
     target_tenant_id: input.tenantId,
@@ -145,11 +217,8 @@ export async function createStoryForTenant(supabase: SupabaseClient, input: Crea
     target_locale: input.locale,
     target_avatar_config: input.avatarConfig,
     target_pronoun: input.pronoun,
-    pages: pages.map((page) => ({
-      page_number: page.order,
-      text: page.text,
-      image_prompt: page.image_prompt,
-    })),
+    pages: rpcPages,
+    target_bilingual: bilingual,
   });
 
   if (error) {

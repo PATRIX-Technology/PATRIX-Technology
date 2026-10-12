@@ -80,6 +80,39 @@ export async function createStoryAction(
   }
   const childName = template.locale === 'ar' ? child.arabic_first_name : child.first_name;
 
+  // Bilingual-in-one-book: "Generate in both languages" checkbox on
+  // CreateStoryForm — see docs/DECISIONS.md "Bilingual-in-one-book
+  // generation". Needs the OTHER locale's template row for this same
+  // theme (so both languages' captions can be rendered), and — per the
+  // product requirement that a bilingual book needs accurate names in
+  // both languages — the child's Arabic name on file regardless of
+  // which locale happens to be primary here.
+  const bilingualRequested = formData.get('bilingual') === 'on';
+  let bilingualTemplate: StoryThemeTemplate | undefined;
+  if (bilingualRequested) {
+    if (!child.arabic_first_name) {
+      return {
+        error: `${child.first_name} needs an Arabic name on file before a bilingual story can be created — add it on the child's profile first.`,
+      };
+    }
+    const otherLocale = template.locale === 'ar' ? 'en' : 'ar';
+    const { data: siblingRow } = await supabase
+      .from('story_theme_templates')
+      .select('*')
+      .eq('theme_key', template.theme_key)
+      .eq('locale', otherLocale)
+      .eq('is_active', true)
+      .maybeSingle();
+    if (!siblingRow) {
+      return { error: `This theme has no ${otherLocale === 'ar' ? 'Arabic' : 'English'} version available yet for a bilingual book.` };
+    }
+    // StoryThemeTemplateSchema.parse / renderTemplate's own
+    // assertTemplateUsable throws if the Arabic row isn't reviewed yet —
+    // same native-review gate every Arabic template is already subject
+    // to, not bypassed here just because it's the "other" locale.
+    bilingualTemplate = StoryThemeTemplateSchema.parse(siblingRow);
+  }
+
   let story: { id: string };
   try {
     story = await createStoryForTenant(supabase, {
@@ -93,6 +126,9 @@ export async function createStoryAction(
       template,
       locale: template.locale,
       createdBy: context.userId,
+      ...(bilingualTemplate
+        ? { bilingualTemplate, childNameEn: child.first_name, childNameAr: child.arabic_first_name }
+        : {}),
     });
   } catch (error) {
     if (error instanceof ConsentRequiredError || error instanceof QuotaExceededError) {
@@ -431,6 +467,34 @@ export async function generateStoriesBulkAction(
     }
     const childName = template.locale === 'ar' ? child.arabic_first_name : child.first_name;
 
+    // Honors the per-child bilingual preference set via the CSV import
+    // flag or the child's own profile (children.bilingual_stories) —
+    // see docs/DECISIONS.md "Bilingual-in-one-book generation". A bulk
+    // roster run has no per-story form to check a box on, so this is the
+    // only place that preference can take effect for bulk generation.
+    let bilingualTemplate: StoryThemeTemplate | undefined;
+    if (child.bilingual_stories) {
+      if (!child.arabic_first_name) {
+        results.push({
+          childId,
+          childName,
+          error: `${child.first_name} needs an Arabic name on file before a bilingual story can be created.`,
+        });
+        continue;
+      }
+      const otherLocale = template.locale === 'ar' ? 'en' : 'ar';
+      const siblingTemplate = templatesByLocale.get(otherLocale);
+      if (!siblingTemplate) {
+        results.push({
+          childId,
+          childName,
+          error: `This theme has no ${otherLocale === 'ar' ? 'Arabic' : 'English'} version available yet for a bilingual book.`,
+        });
+        continue;
+      }
+      bilingualTemplate = siblingTemplate;
+    }
+
     try {
       const story = await createStoryForTenant(supabase, {
         tenantId: context.tenantId,
@@ -443,6 +507,9 @@ export async function generateStoriesBulkAction(
         template,
         locale: template.locale,
         createdBy: context.userId,
+        ...(bilingualTemplate
+          ? { bilingualTemplate, childNameEn: child.first_name, childNameAr: child.arabic_first_name }
+          : {}),
       });
       results.push({ childId, childName, storyId: story.id });
     } catch (error) {

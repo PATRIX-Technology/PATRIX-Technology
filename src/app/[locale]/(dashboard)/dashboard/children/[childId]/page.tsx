@@ -83,7 +83,14 @@ export default async function ChildDetailPage({
     }
     templatesByTheme.set(row.theme_key, entry);
   }
-  const templates = Array.from(templatesByTheme.values()).filter((tpl) => tpl.id && tpl.reviewed);
+  // bilingualAvailable: both locale rows exist for this theme (and, since
+  // `reviewed` already gates on the Arabic row specifically, the Arabic
+  // one is reviewed) -- see docs/DECISIONS.md "Bilingual-in-one-book
+  // generation". Computed here rather than re-derived in the form so the
+  // form doesn't need its own copy of this gating logic.
+  const templates = Array.from(templatesByTheme.values())
+    .filter((tpl) => tpl.id && tpl.reviewed)
+    .map((tpl) => ({ ...tpl, bilingualAvailable: Boolean(tpl.titleEn && tpl.titleAr) }));
 
   const { data: stories } = await supabase
     .from('stories')
@@ -214,6 +221,8 @@ export default async function ChildDetailPage({
             childId={child.id}
             consentStatus={child.consent_status}
             templates={templates ?? []}
+            childHasArabicName={Boolean(child.arabic_first_name)}
+            defaultBilingual={Boolean(child.bilingual_stories)}
           />
         </div>
         <div className="mt-4">

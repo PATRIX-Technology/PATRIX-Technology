@@ -93,6 +93,7 @@ export async function renderApprovedStoryPdf(
         return {
           pageNumber: p.page_number,
           text: p.text,
+          ...(p.text_ar ? { textAr: p.text_ar } : {}),
           imageBytes: new Uint8Array(await data.arrayBuffer()),
           imageContentType: data.type || 'image/png',
         };
@@ -132,6 +133,7 @@ export async function renderApprovedStoryPdf(
     childNameAr,
     organisationName: context.tenantName,
     locale: story.locale,
+    bilingual: Boolean(story.bilingual),
     pages: renderPages,
     logoBytes,
     logoContentType,
@@ -140,11 +142,17 @@ export async function renderApprovedStoryPdf(
   // Preflight's expected page count now includes the templated cover +
   // back pages added in render.ts (docs/DECISIONS.md "6-page structure:
   // cover + back page") — they're real pages in the output PDF even
-  // though they aren't rows in story_pages.
+  // though they aren't rows in story_pages. A bilingual story's
+  // story_pages.text is always English regardless of the story's
+  // primary locale (see migration 0042's comment on that column), so
+  // preflight's font-coverage check needs 'en' here too, or it would
+  // wrongly skip checking that text against the embedded Latin font (the
+  // skip is only correct for a true Arabic-only story, whose caption is
+  // baked into the image instead of drawn as PDF text).
   const preflight = await runPreflight({
     pdfBytes,
     expectedPageCount: (pages ?? []).length + 2,
-    locale: story.locale,
+    locale: story.bilingual ? 'en' : story.locale,
     pageTexts: (pages ?? []).map((p) => p.text),
     missingAssetPageNumbers,
   });

@@ -6411,3 +6411,114 @@ production schedule; revisit once a vendor is confirmed.
   orders, and now order-status changes) goes from a silent no-op to
   actually sending, as of the next deployment that picks up the new
   env var.
+
+## Bilingual-in-one-book generation (task #163, the last of the six pre-pilot items)
+
+A story can now be generated with BOTH an English and an Arabic
+caption on every interior page of the same book, in addition to the
+cover/back pages already doing this (Phase B, built earlier). Decided
+against widening `locale`'s role: `locale` stays the story's *primary*
+language (drives which template's scene descriptions/image prompts
+are used, and which name shows first elsewhere in the UI); a new
+`stories.bilingual boolean default false` (migration 0042) layers on
+top of it, so the large amount of existing code that branches on
+`locale === 'ar'` for RTL/layout decisions didn't need touching.
+
+**Schema** (migration 0042, applied live via Supabase MCP):
+`stories.bilingual`, `story_pages.text_ar`. For a bilingual story,
+`story_pages.text` is *always* the English caption and `.text_ar` is
+*always* the Arabic one, regardless of which locale is primary — this
+one invariant is what let every downstream consumer (PDF render,
+preflight) stay simple instead of branching on primary-locale-at-every-
+layer. `create_story`'s RPC signature grew an 8th parameter
+(`target_bilingual boolean default false`); Postgres resolves this as
+a new overload alongside the pre-existing 7-arg one rather than
+replacing it (confirmed via `pg_get_function_identity_arguments`) —
+left coexisting rather than fighting the sandbox's safety gate on
+`DROP FUNCTION` (both `execute_sql` and `apply_migration` calls to
+drop the old overload came back `{"status":"cancelled"}` with no
+further detail), since the old overload's body never references
+`bilingual`/`text_ar` and every real call site now passes all 8
+arguments, making it naturally dead code.
+
+**Generation pipeline** (no new Gemini call, no COGS change per the
+founder's explicit direction): `createStoryForTenant` renders BOTH the
+primary-locale and the other-locale's `story_theme_templates` row for
+the same `theme_key` (`renderBilingualPages` in
+`src/lib/domain/stories.ts`), substituting the child's English and
+Arabic names into each independently via the existing
+`renderTemplate()` — no new template-rendering logic needed, just
+called twice. The Arabic template row still goes through the same
+`native_review_status` gate every Arabic template already does
+(`renderTemplate` throws `TemplateNotReviewedError`), whether Arabic
+happens to be the primary or the "other" locale here.
+
+A bilingual request needs the child's name in **both** languages, per
+the founder's explicit requirement ("names of children in both English
+& Arabic to have accurate better stories") — hard-blocked with a clear
+error if `children.arabic_first_name` isn't on file, exactly like the
+pre-existing Arabic-story block, just triggered by the bilingual
+checkbox instead of by `locale === 'ar'`.
+
+**Image generation stays one call per page, with no caption baked in
+at all** — a deliberate departure from how a plain Arabic-only story
+works (caption baked into the Gemini image itself, see "Arabic
+captions baked into the illustration" above). For bilingual, *both*
+captions get drawn afterwards via pdf-lib instead: `GenerateImageRequest.bilingual`
+(threaded through `worker.ts` → `GeminiImageProvider` →
+`buildIllustrationPrompt`) forces the "no text anywhere, leave top/
+bottom clear for an overlay" prompt branch even when `locale === 'ar'`,
+same branch English-only stories already use.
+
+**PDF rendering** — the real design work of this phase: the interior-
+page caption band now stacks English (real PDF text, the
+already-proven embedded-Fraunces-font path) above Arabic (real vector
+glyph outlines via the already-proven HarfBuzz path,
+`drawCenteredArabicText` in `arabic-text-vector.ts` — not a new
+rendering technique, just reused for interior pages, which previously
+only used it for cover/back). The hard part was sizing the banner
+*before* drawing either block, since `drawFlatBottomBanner` has to be
+drawn first (it's the background layer): a new exported
+`measureArabicTextLines()` in `arabic-text-vector.ts` reuses the exact
+same `wrapLines()` the real draw call uses, so the pre-computed line
+count is guaranteed to match what actually gets drawn. The stacking
+math (in `render.ts`'s interior-page loop) works bottom-up: the
+Arabic block's last line baseline is pinned 24pt above the page
+number (same margin the single-language path already used), the
+English block sits above it with a 14pt gap, and the banner height is
+derived from both blocks' combined height — verified by rendering a
+real sample bilingual PDF through the actual pipeline (mock image
+bytes, real fonts/HarfBuzz/pdf-lib) and inspecting the rasterised
+pages via `pdftoppm`, including a deliberately long caption on one
+page to stress-test the 3-line-wrap case — no overlap, no collision
+with the page number, at every line count tried.
+
+Preflight's font-coverage check (`runPreflight`) previously skipped
+Latin-glyph-coverage checking entirely whenever `locale === 'ar'` (on
+the assumption that an Arabic-locale story's `text` is Arabic, baked
+into the image, not drawn as PDF text at all) — wrong for a bilingual
+story whose primary locale might be `ar` but whose `story_pages.text`
+is still always English per the invariant above. Fixed by having
+`renderApprovedStoryPdf` pass `locale: story.bilingual ? 'en' : story.locale`
+into preflight, rather than `story.locale` unconditionally.
+
+**UI**: a "Generate in both languages" checkbox on `CreateStoryForm`,
+shown once a theme is selected, disabled with an explanatory reason
+when either gate fails (no Arabic name on file, or this theme has no
+reviewed Arabic template row yet — `bilingualAvailable` computed
+server-side in `children/[childId]/page.tsx` from the same
+`titleEn`/`titleAr`/`reviewed` data already fetched for the picker, no
+duplicate gating logic in the form). Pre-checked from the child's own
+`children.bilingual_stories` preference (the CSV-import/profile flag
+built earlier this phase, task #160) — still just a default, overridable
+per story. `generateStoriesBulkAction` (roster-wide bulk generation,
+Phase E) also honors that same per-child flag automatically, since a
+bulk run has no per-story form to check a box on — this is the
+flag's actual intended consumer for a nursery importing a whole class
+CSV with some bilingual-flagged children.
+
+Deliberately NOT changed: cover/back pages already rendered bilingually
+unconditionally (Phase B's design, independent of this flag) — no
+changes needed there. The already-built LTR binding (book always opens
+from the left, regardless of content language) was likewise already in
+place from Phase B and needed no changes for this phase.

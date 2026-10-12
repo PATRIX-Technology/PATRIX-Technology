@@ -33,6 +33,14 @@ export interface GenerateImageRequest {
    */
   captionText: string;
   locale: 'en' | 'ar';
+  /** Set for a bilingual-in-one-book story (stories.bilingual — see
+   * docs/DECISIONS.md "Bilingual-in-one-book generation"). Overrides the
+   * Arabic-caption-baking behaviour described above: a bilingual story's
+   * illustration stays text-free regardless of `locale`, since BOTH the
+   * English and Arabic captions get drawn afterwards by our own code
+   * (English via the embedded Latin font, Arabic via the HarfBuzz vector
+   * glyph path — see src/lib/providers/pdf/arabic-text-vector.ts). */
+  bilingual?: boolean;
   /**
    * The child's uploaded reference photo, if photo personalisation is
    * enabled/consented for this story (src/lib/domain/consent.ts

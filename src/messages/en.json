@@ -473,6 +473,12 @@
       "templateCount": "{count, plural, one {# template} other {# templates}}",
       "viewTemplates": "Tap to view templates"
     },
+    "bilingual": {
+      "toggleLabel": "Generate in both languages",
+      "toggleHint": "The book opens from the left (like an English book), with every page showing both the English and Arabic text over one illustration — cover and ending included.",
+      "needsArabicName": "Add this child's Arabic name on their profile first to generate a bilingual book.",
+      "notAvailableForTheme": "This theme doesn't have an Arabic version yet, so it can't be generated bilingually."
+    },
     "categories": {
       "family": "Family",
       "nurseries": "Nurseries",

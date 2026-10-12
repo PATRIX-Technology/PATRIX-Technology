@@ -17,6 +17,11 @@ interface TemplateOption {
   titleEn: string;
   titleAr: string;
   category: string;
+  /** Whether this theme has both EN and AR template rows (the AR one
+   * already review-gated — see the computation in children/[childId]/
+   * page.tsx) so a bilingual-in-one-book story can be generated for it.
+   * See docs/DECISIONS.md "Bilingual-in-one-book generation". */
+  bilingualAvailable: boolean;
 }
 
 // Display order for known categories; anything else (a future category
@@ -283,11 +288,22 @@ export function CreateStoryForm({
   childId,
   consentStatus,
   templates,
+  childHasArabicName,
+  defaultBilingual,
 }: {
   locale: string;
   childId: string;
   consentStatus: ConsentStatus;
   templates: TemplateOption[];
+  /** Gates the bilingual checkbox -- see createStoryAction's own hard
+   * block on the same condition in src/lib/actions/stories.ts. */
+  childHasArabicName: boolean;
+  /** Pre-checks the bilingual checkbox from the child's own CSV-import/
+   * profile preference (children.bilingual_stories) rather than always
+   * defaulting to off -- see docs/DECISIONS.md "Bilingual-in-one-book
+   * generation". Still just a default: the family/nursery can override
+   * it per story. */
+  defaultBilingual: boolean;
 }) {
   const t = useTranslations('stories');
   const showToast = useToast();
@@ -298,6 +314,7 @@ export function CreateStoryForm({
     {},
   );
   const submitCount = useRef(0);
+  const [bilingual, setBilingual] = useState(defaultBilingual);
   // Which category's popup is currently open (null = none) and which
   // template is currently selected across all categories -- controlled
   // state so the category card can show a "selected" summary and the
@@ -491,8 +508,67 @@ export function CreateStoryForm({
         );
       })}
 
+      {selectedTemplate && (
+        <BilingualToggle
+          checked={bilingual}
+          onChange={setBilingual}
+          disabled={!childHasArabicName || !selectedTemplate.bilingualAvailable}
+          disabledReason={
+            !childHasArabicName
+              ? t('bilingual.needsArabicName')
+              : !selectedTemplate.bilingualAvailable
+                ? t('bilingual.notAvailableForTheme')
+                : null
+          }
+          label={t('bilingual.toggleLabel')}
+          hint={t('bilingual.toggleHint')}
+        />
+      )}
+
       <GenerateButton label={t('generate')} />
     </form>
+  );
+}
+
+/**
+ * "Generate in both languages" checkbox — see docs/DECISIONS.md
+ * "Bilingual-in-one-book generation". A disabled checkbox still has to
+ * explain itself (missing Arabic name on file, or this theme has no
+ * Arabic row yet) rather than just sitting there unexplained.
+ */
+function BilingualToggle({
+  checked,
+  onChange,
+  disabled,
+  disabledReason,
+  label,
+  hint,
+}: {
+  checked: boolean;
+  onChange: (value: boolean) => void;
+  disabled: boolean;
+  disabledReason: string | null;
+  label: string;
+  hint: string;
+}) {
+  const effectiveChecked = checked && !disabled;
+  return (
+    <div className="rounded-xl2 border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface-raised))] p-4">
+      <label className="flex items-start gap-3 text-sm">
+        <input
+          type="checkbox"
+          name="bilingual"
+          checked={effectiveChecked}
+          disabled={disabled}
+          onChange={(e) => onChange(e.target.checked)}
+          className="mt-0.5 h-4 w-4 shrink-0 accent-saffron-500 disabled:opacity-50"
+        />
+        <span>
+          <span className={`font-medium ${disabled ? 'text-ink-500' : 'text-ink-800'}`}>{label}</span>
+          <span className="mt-1 block text-ink-500">{disabled && disabledReason ? disabledReason : hint}</span>
+        </span>
+      </label>
+    </div>
   );
 }
 

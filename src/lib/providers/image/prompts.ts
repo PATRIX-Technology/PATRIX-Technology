@@ -50,6 +50,11 @@ export interface IllustrationPromptInput {
   hasReferenceImage: boolean;
   captionText: string;
   locale: 'en' | 'ar';
+  /** See GenerateImageRequest.bilingual — forces the text-free image
+   * branch below even when locale is 'ar', since a bilingual story draws
+   * both captions afterwards via pdf-lib instead of baking either into
+   * the illustration. */
+  bilingual?: boolean;
 }
 
 const GENDER_DESCRIPTOR: Record<'she' | 'he', string> = {
@@ -82,7 +87,7 @@ export function buildIllustrationPrompt(input: IllustrationPromptInput): string 
     );
   }
 
-  if (input.locale === 'ar') {
+  if (input.locale === 'ar' && !input.bilingual) {
     parts.push(
       'Render this exact Arabic caption directly in the image yourself, as a soft pastel rounded ' +
         'banner across the bottom of the frame (covering roughly the bottom 15-20%): right-to-left, ' +

@@ -3,13 +3,18 @@ import fontkit from '@pdf-lib/fontkit';
 import { PDFDocument, PDFName, PDFNumber, PDFArray, rgb, LineCapStyle, type PDFPage, type PDFImage, type PDFFont } from 'pdf-lib';
 import { embedFonts, type EmbeddedFonts } from './fonts';
 import { drawFlatBottomBanner } from './banners';
-import { drawCenteredArabicText } from './arabic-text-vector';
+import { drawCenteredArabicText, measureArabicTextLines } from './arabic-text-vector';
 import { BLEED_PT, PAGE_HEIGHT_PT, PAGE_WIDTH_PT, TRIM_WIDTH_PT } from './geometry';
 import type { AppLocale } from '@/types/database';
 
 export interface RenderPageInput {
   pageNumber: number;
   text: string;
+  /** The Arabic caption for this page, only present for a bilingual
+   * story (story_pages.text_ar — see docs/DECISIONS.md "Bilingual-in-
+   * one-book generation"). `text` above stays the English caption for
+   * every bilingual page, regardless of the story's primary `locale`. */
+  textAr?: string;
   imageBytes: Uint8Array;
   imageContentType: string;
 }
@@ -29,6 +34,12 @@ export interface RenderStoryPdfInput {
   childNameAr: string;
   organisationName: string;
   locale: AppLocale;
+  /** See docs/DECISIONS.md "Bilingual-in-one-book generation". When set,
+   * every interior page's caption band draws BOTH `pages[].text`
+   * (English, real PDF text) and `pages[].textAr` (Arabic, HarfBuzz
+   * vector glyphs) stacked together — no caption gets baked into the
+   * illustration for a bilingual story, unlike a plain Arabic-locale one. */
+  bilingual?: boolean;
   pages: RenderPageInput[];
   /** The nursery's own logo (optional, uploaded in Settings) — drawn as a
    * small badge in the opposite top corner from the Ownly watermark. Never
@@ -103,6 +114,7 @@ export async function renderStoryPdf(input: RenderStoryPdfInput): Promise<Uint8A
 
   const fonts = await embedFonts(pdfDoc);
   const isRtl = input.locale === 'ar';
+  const bilingual = Boolean(input.bilingual);
 
   const addPage = () => {
     const page = pdfDoc.addPage([PAGE_WIDTH_PT, PAGE_HEIGHT_PT]);
@@ -167,7 +179,61 @@ export async function renderStoryPdf(input: RenderStoryPdfInput): Promise<Uint8A
 
     const pageNumberY = BLEED_PT + 10;
 
-    if (!isRtl) {
+    if (bilingual) {
+      // Both captions, stacked in one banner: English (real PDF text, same
+      // font/path as the non-bilingual branch below) on top, Arabic
+      // (HarfBuzz vector glyphs, same path as the cover/back pages) below
+      // it, closest to the page number. measureArabicTextLines() lets the
+      // Arabic block's height be known BEFORE drawing, so the banner and
+      // the English block above it can be sized correctly first — see its
+      // docstring in arabic-text-vector.ts for why the topY math below has
+      // to mirror drawCenteredArabicText's own baseline formula exactly.
+      const captionAr = storyPage.textAr ?? '';
+      const enLines = wrapText(storyPage.text, fonts.latinDisplay, captionSize, captionMaxWidth);
+      const arabicCaptionSize = 15;
+      const arabicLineHeight = arabicCaptionSize * 1.55;
+      const arLineCount = captionAr
+        ? await measureArabicTextLines(captionAr, arabicCaptionSize, captionMaxWidth)
+        : 0;
+      const blockGap = 14;
+
+      const arabicTopY = captionAr
+        ? pageNumberY + 24 + arabicCaptionSize * 0.92 + (arLineCount - 1) * arabicLineHeight
+        : pageNumberY + 24;
+      const englishBottomBaselineY = captionAr ? arabicTopY + blockGap : pageNumberY + 24;
+      const englishFirstLineY = englishBottomBaselineY + (enLines.length - 1) * captionLineHeight;
+      const captionTopY = englishFirstLineY + captionSize + 22;
+
+      drawFlatBottomBanner(page, {
+        x: 0,
+        width: PAGE_WIDTH_PT,
+        topY: captionTopY,
+        bumpRadius: captionBumpRadius,
+        color: CAPTION_BANNER_COLOR,
+        opacity: 0.94,
+      });
+
+      enLines.forEach((line, index) => {
+        const y = englishFirstLineY - index * captionLineHeight;
+        const width = fonts.latinDisplay.widthOfTextAtSize(line, captionSize);
+        page.drawText(line, {
+          x: PAGE_WIDTH_PT / 2 - width / 2,
+          y,
+          size: captionSize,
+          font: fonts.latinDisplay,
+          color: INK_COLOR,
+        });
+      });
+
+      if (captionAr) {
+        await drawCenteredArabicText(page, captionAr, {
+          centerX: PAGE_WIDTH_PT / 2,
+          topY: arabicTopY,
+          fontSizePt: arabicCaptionSize,
+          maxWidthPt: captionMaxWidth,
+        });
+      }
+    } else if (!isRtl) {
       // Caption band (bottom, flush to the page edge): height grows with
       // wrapped line count so the text never collides with the page number.
       const captionLines = wrapText(storyPage.text, fonts.latinDisplay, captionSize, captionMaxWidth);

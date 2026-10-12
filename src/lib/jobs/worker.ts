@@ -106,12 +106,68 @@ export async function runWorkerOnce(
     else result.retried++;
   };
 
-  (await Promise.all(firstWave.map((job) => processJob(supabase, job)))).forEach(record);
+  await runWaveWithDeadline(supabase, firstWave, deadline, record);
   if (secondWave.length > 0 && Date.now() < deadline) {
-    (await Promise.all(secondWave.map((job) => processJob(supabase, job)))).forEach(record);
+    await runWaveWithDeadline(supabase, secondWave, deadline, record);
   }
 
   return result;
+}
+
+/**
+ * Runs one wave's jobs in parallel, same as a bare `Promise.all` — EXCEPT
+ * this function itself is guaranteed to return by `deadline`, no matter
+ * how slow any individual job turns out to be. Per-call timeouts
+ * (GEMINI_REQUEST_TIMEOUT_MS, MODERATION_REQUEST_TIMEOUT_MS) bound each
+ * *external* call this wave makes, which is necessary but was proven
+ * live NOT sufficient on its own, twice: they bound each call this
+ * codebase controls, but not every source of latency stacked on top of
+ * them (claiming, other DB round-trips, Storage uploads), and a single
+ * mistuned or newly-added slow call anywhere in the chain would
+ * reintroduce the exact same crash. This is the actual backstop: it
+ * makes runWorkerOnce's own wall-clock time provably bounded by
+ * `deadline` regardless of what runs inside a job, which is what
+ * decouples "is every external call fast enough" from "does the
+ * customer's browser crash" — the real goal, not just a tighter version
+ * of the same bet.
+ *
+ * `Promise.race` does not cancel the losing side: a wave that hits its
+ * deadline leaves its still-in-flight job(s) running in the background
+ * exactly as before — but critically, THIS function has already
+ * returned a normal result to its own caller (kickStoryWorkerAction / the
+ * cron route) by then, so whichever browser's AutoRefresh triggered this
+ * invocation gets a clean, parseable response, never a stream Vercel's
+ * platform truncates by killing the function mid-response (that
+ * truncation, not any error this codebase throws, is what crashed the
+ * browser both times this was reported — see docs/DECISIONS.md "Gemini
+ * request timeout caps worker wave duration"). Whatever that abandoned
+ * job was doing stays RUNNING and self-heals via
+ * reclaim_stale_story_jobs on the very next invocation, same recovery
+ * path as any other orphaned job.
+ */
+async function runWaveWithDeadline(
+  supabase: SupabaseClient,
+  wave: StoryJob[],
+  deadline: number,
+  record: (outcome: 'succeeded' | 'failed' | 'retried') => void,
+): Promise<void> {
+  if (wave.length === 0) return;
+
+  const remainingMs = Math.max(0, deadline - Date.now());
+  const allSettled = Promise.all(wave.map((job) => processJob(supabase, job))).then(
+    (outcomes) => ({ timedOut: false as const, outcomes }),
+  );
+  const timeout = new Promise<{ timedOut: true }>((resolve) =>
+    setTimeout(() => resolve({ timedOut: true }), remainingMs),
+  );
+
+  const result = await Promise.race([allSettled, timeout]);
+  if (!result.timedOut) {
+    result.outcomes.forEach(record);
+  }
+  // else: this wave's jobs stay RUNNING in the database and are picked
+  // up by reclaim_stale_story_jobs on the next invocation — deliberately
+  // not awaited further here, see this function's own docstring above.
 }
 
 /**

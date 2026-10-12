@@ -180,4 +180,98 @@ describe('runWorkerOnce', () => {
     expect(firstGenerated).toBeGreaterThanOrEqual(0);
     expect(secondLookup).toBeGreaterThan(firstGenerated);
   });
+
+  it('returns within its own deadline even when a job in the wave never settles -- the actual fix for "worker killed mid-request" crashing a customer tab', async () => {
+    // Two jobs for two DIFFERENT stories both land in the first wave (see
+    // splitIntoWaves) and run concurrently. job-slow's own Storage upload
+    // never resolves -- standing in for ANY unbounded external call
+    // anywhere in the pipeline (a slow/uncapped vendor call, a network
+    // hiccup, a bug in a timeout that was supposed to fire and didn't).
+    // Before runWaveWithDeadline existed, runWorkerOnce would hang
+    // exactly as long as that call did; in production that meant Vercel
+    // itself killing the function well past its own ceiling, truncating
+    // the response the triggering browser was waiting on and crashing
+    // it. This test's real assertion is that the call below resolves at
+    // all within a bounded time -- if runWaveWithDeadline regressed back
+    // to a bare Promise.all, this test would hang until Vitest's own
+    // test timeout killed it.
+    const jobs = [
+      { id: 'job-slow', story_id: 'story-slow', page_id: 'page-slow', job_type: 'GENERATE_PAGE_IMAGE', status: 'RUNNING', attempts: 0, max_attempts: 4 },
+      { id: 'job-fast', story_id: 'story-fast', page_id: 'page-fast', job_type: 'GENERATE_PAGE_IMAGE', status: 'RUNNING', attempts: 0, max_attempts: 4 },
+    ];
+    let jobIndex = 0;
+    const client = {
+      rpc: vi.fn(async (fn: string) => {
+        if (fn === 'claim_next_story_job') {
+          const job = jobs[jobIndex] ?? null;
+          jobIndex += 1;
+          return { data: job, error: null };
+        }
+        if (fn === 'reclaim_stale_story_jobs') return { data: 0, error: null };
+        throw new Error(`Unexpected rpc ${fn}`);
+      }),
+      from: vi.fn((table: string) => ({
+        select: vi.fn((columns: string) => {
+          if (table === 'story_pages' && columns === 'id, page_number') {
+            return { in: vi.fn(async (_col: string, ids: string[]) => ({ data: ids.map((id) => ({ id, page_number: 1 })), error: null })) };
+          }
+          if (table === 'children') {
+            return { eq: vi.fn(() => ({ maybeSingle: async () => ({ data: null, error: null }) })) };
+          }
+          if (table === 'story_pages' && columns === 'image_asset_path') {
+            return {
+              eq: vi.fn(() => ({
+                eq: vi.fn(() => ({
+                  not: vi.fn(() => ({
+                    order: vi.fn(() => ({
+                      limit: vi.fn(() => ({
+                        maybeSingle: async () => ({ data: null, error: null }),
+                      })),
+                    })),
+                  })),
+                })),
+              })),
+            };
+          }
+          if (table === 'story_pages' && columns === 'id') {
+            return { eq: vi.fn(() => ({ neq: vi.fn(() => ({ count: 0 })) })) };
+          }
+          return {
+            eq: vi.fn(() => ({
+              single: async () => ({
+                data: { image_prompt: 'a fox', text: 'A fox in a garden.', stories: { tenant_id: 'tenant-1', locale: 'en' } },
+                error: null,
+              }),
+            })),
+          };
+        }),
+        update: vi.fn(() => ({ eq: vi.fn(async () => ({ data: null, error: null })) })),
+      })),
+      storage: {
+        from: vi.fn(() => ({
+          upload: vi.fn((assetPath: string) => {
+            if (assetPath.includes('page-slow')) return new Promise(() => {}); // never resolves
+            return Promise.resolve({ error: null });
+          }),
+          download: vi.fn(async () => ({ data: null, error: null })),
+        })),
+      },
+    };
+
+    const start = Date.now();
+    const result = await runWorkerOnce(client as never, 25, 150);
+    const elapsedMs = Date.now() - start;
+
+    // Bounded by the deadline (with slack for the surrounding claim
+    // loop/RPC calls in this fake client, all effectively instant) --
+    // never anywhere close to how long the never-resolving upload would
+    // otherwise have blocked this call.
+    expect(elapsedMs).toBeLessThan(2000);
+    // The timed-out wave's outcomes aren't counted in this invocation's
+    // own return value (job-fast's own promise is still racing inside
+    // the same Promise.all as job-slow's, so neither resolves before the
+    // deadline fires) -- the real guarantee this test exists for is the
+    // elapsedMs bound above, not these counts.
+    expect(result.succeeded).toBe(0);
+  });
 });

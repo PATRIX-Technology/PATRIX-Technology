@@ -21,10 +21,18 @@ import Link from 'next/link';
  * reassuring message, while the full technical details are POSTed to
  * /api/report-client-error and emailed to the founder automatically, so
  * nothing is lost, it just no longer needs a customer to screenshot it.
+ *
+ * "Try again" does a hard `window.location.reload()` rather than calling
+ * the `reset` prop Next.js gives this component: `reset()` only re-renders
+ * the same client tree without re-fetching anything, so if the page's own
+ * data/state was what triggered the crash, clicking it reproduces the
+ * exact same error immediately -- which is what a customer reported. A
+ * full reload re-runs the whole page load from scratch, which actually
+ * recovers from a transient failure (a slow/failed request, a stale
+ * client state) instead of just replaying it.
  */
 export default function LocaleError({
   error,
-  reset,
 }: {
   error: Error & { digest?: string };
   reset: () => void;
@@ -60,7 +68,7 @@ export default function LocaleError({
       <div className="flex gap-3">
         <button
           type="button"
-          onClick={reset}
+          onClick={() => window.location.reload()}
           className="focus-ring rounded-lg bg-lagoon-600 px-4 py-2 text-sm font-medium text-white hover:bg-lagoon-700"
         >
           Try again

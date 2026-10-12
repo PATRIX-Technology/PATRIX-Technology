@@ -16,10 +16,14 @@ import { useEffect } from 'react';
  * this can't itself fail to render. Reports to the same place as
  * [locale]/error.tsx -- see docs/DECISIONS.md "Client-side crashes
  * notify the founder instead of showing the user a raw error".
+ *
+ * "Try again" does a hard `window.location.reload()` rather than the
+ * `reset` prop Next.js provides -- see the matching note in
+ * [locale]/error.tsx. `reset()` alone re-renders the same broken tree and
+ * reproduces the same crash; a reload actually re-runs the page load.
  */
 export default function GlobalError({
   error,
-  reset,
 }: {
   error: Error & { digest?: string };
   reset: () => void;
@@ -59,7 +63,7 @@ export default function GlobalError({
           <div style={{ display: 'flex', gap: 12 }}>
             <button
               type="button"
-              onClick={reset}
+              onClick={() => window.location.reload()}
               style={{
                 background: '#2FBFA6',
                 color: '#06241F',

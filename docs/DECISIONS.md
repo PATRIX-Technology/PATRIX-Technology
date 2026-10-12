@@ -6730,3 +6730,76 @@ Checked the specific story's job-queue state after the fact: every job
 had already self-healed via the existing retry/reclaim path by the
 time this was investigated, so no manual data fix was needed — only
 the underlying bug.
+
+## Worker wave execution is bounded by its own deadline, not by how fast any single external call happens to be
+
+Two rounds of per-call Gemini timeouts (image generation, then the
+separate moderation call) each fixed a real bug, and each time the
+exact same customer-facing crash ("Application error: a client-side
+exception has occurred") recurred on the next story anyway. That's the
+wrong level to fix this at: capping call N only ever protects against
+the specific slow call already found. It gives no guarantee about call
+N+1 — a retry-with-backoff path, a future provider swap, a network
+hiccup inside the Supabase Storage upload, anything. At the volume the
+founder is now running (50+ concurrent story generations), the
+odds of *some* call in *some* request exceeding Vercel's 60s function
+ceiling approach certainty even with every individual call capped
+sensibly, because the ceiling is on the whole request, not on any one
+call inside it.
+
+The fix moves the guarantee up a level, into `runWorkerOnce` itself
+(`src/lib/jobs/worker.ts`). Each wave of jobs (first wave = every
+story's page 1, second wave = every story's remaining pages — see the
+two-wave docstring already there) is now run through
+`runWaveWithDeadline()`, which races the wave's `Promise.all(...)`
+against a `setTimeout` set to the time remaining until
+`runWorkerOnce`'s own deadline. Whichever settles first wins:
+
+- Every job in the wave finishes before the deadline → results are
+  recorded exactly as before, no behavior change on the happy path.
+- The deadline fires first → `runWorkerOnce` returns immediately
+  without waiting for the stragglers. Their DB rows stay in `RUNNING`
+  state; they aren't lost or corrupted, because `claim_next_story_job`
+  already marks a job `RUNNING` *before* any work starts, and
+  `reclaim_stale_story_jobs` (migration 0020) already exists
+  specifically to find jobs stuck in `RUNNING` past a staleness
+  threshold and requeue them. That self-healing path was already
+  running in production before this change (it's what quietly fixed
+  the last two incidents within a few minutes) — this change doesn't
+  touch it, it just means `runWorkerOnce`'s own wall-clock time can no
+  longer exceed its deadline regardless of what any call inside it
+  does, so the *caller* (the Next.js route that runs the worker inline
+  on a story-generation request, bounded by Vercel's 60s ceiling) can
+  never be the one that gets killed mid-response and crashes the
+  browser that triggered it.
+
+This is a structural guarantee about `runWorkerOnce`'s own return time,
+deliberately decoupled from "is every external call fast enough" —
+that question doesn't need a correct answer anymore for the crash
+specifically not to happen. It does NOT mean a slow job finishes
+instantly; a job that missed its wave's deadline still has to wait for
+the next worker invocation (the 4-second client poll while a story is
+actively generating, or the 5-minute cron safety net) to be reclaimed
+and retried. That's an existing, already-accepted latency cost, not a
+new one — the fix is about the crash, not about making every job fast.
+
+Tested in `tests/unit/worker.test.ts` with a fake Supabase client whose
+Storage `upload()` never resolves for one job while a sibling job in
+the same wave completes normally — `runWorkerOnce` called with a short
+deadline returns well within it (`elapsedMs < 2000` against a
+`deadlineMs` of 150), proving the race actually bounds the call instead
+of just adding another timeout number to tune.
+
+### "Try again" on the crash pages now hard-reloads instead of calling `reset()`
+
+Reported separately: the "Try again" button on `[locale]/error.tsx`
+and `global-error.tsx` didn't visibly do anything. Both called
+`reset()`, the function Next.js's error boundary provides — which only
+re-renders the same client component tree in place; it does not
+re-fetch data or reload the page. If whatever caused the crash was
+still true immediately after (e.g. the same request about to be
+retried would hit the same stale state), clicking it reproduced the
+exact same error with no visible change, which reads as "the button
+doesn't work." Both files now call `window.location.reload()` instead,
+which re-runs the full page load — Next.js data fetching included —
+and actually recovers from a transient failure instead of replaying it.

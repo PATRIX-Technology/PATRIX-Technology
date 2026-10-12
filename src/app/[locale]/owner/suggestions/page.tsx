@@ -38,6 +38,10 @@ export default async function OwnerSuggestionsPage({ params }: { params: { local
     .select('id, topic, description, status, created_at, tenants(name), profiles(full_name)')
     .order('created_at', { ascending: false })
     .limit(200);
+  const { count: paidOrderCount } = await supabase
+    .from('print_orders')
+    .select('id', { count: 'exact', head: true })
+    .eq('status', 'paid');
 
   const sorted = [...(suggestions ?? [])].sort((a, b) => {
     const statusDiff =
@@ -55,7 +59,7 @@ export default async function OwnerSuggestionsPage({ params }: { params: { local
         <Badge tone="success">Two-factor verified this session</Badge>
       </div>
 
-      <OwnerTabs locale={params.locale} newSuggestionCount={newCount} />
+      <OwnerTabs locale={params.locale} newSuggestionCount={newCount} newOrderCount={paidOrderCount ?? 0} />
 
       <Card>
         <div className="flex items-center justify-between">

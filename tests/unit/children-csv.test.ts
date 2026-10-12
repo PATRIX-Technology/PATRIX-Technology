@@ -87,6 +87,22 @@ describe('parseChildrenCsv', () => {
     expect(headerError).toMatch(/empty/i);
   });
 
+  it('defaults bilingual to false when the optional column is absent', () => {
+    const { results } = parseChildrenCsv(
+      'first_name,pronoun,class_name,preferred_language\nMaya,she,Sunflower,en',
+    );
+    expect(results[0]!.data).toMatchObject({ bilingualStories: false });
+  });
+
+  it('reads the optional bilingual column with loose yes/true/both spellings', () => {
+    const { results } = parseChildrenCsv(
+      'first_name,pronoun,class_name,preferred_language,bilingual\nMaya,she,Sunflower,en,yes\nZayd,he,Starfish,en,Both\nRami,he,Starfish,en,no',
+    );
+    expect(results[0]!.data).toMatchObject({ bilingualStories: true });
+    expect(results[1]!.data).toMatchObject({ bilingualStories: true });
+    expect(results[2]!.data).toMatchObject({ bilingualStories: false });
+  });
+
   it('reads optional last_name/arabic_first_name/arabic_last_name columns when present', () => {
     const { results, headerError } = parseChildrenCsv(
       'first_name,last_name,arabic_first_name,arabic_last_name,pronoun,class_name,preferred_language\nHala,Al Mansoori,هالة,المنصوري,she,Sunflower,ar',

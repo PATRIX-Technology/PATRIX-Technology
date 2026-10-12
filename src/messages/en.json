@@ -143,6 +143,7 @@
       "stories": "Stories",
       "templates": "Story themes",
       "consent": "Consent",
+      "orders": "Orders",
       "staff": "Staff",
       "settings": "Settings",
       "usage": "Usage & plan",
@@ -211,6 +212,21 @@
       "couponLabel": "Coupon code (optional)",
       "couponAnnualHint": "Coupon codes are for monthly billing only — switch to monthly to use one.",
       "currencyLabel": "Currency"
+    },
+    "orders": {
+      "pageTitle": "Orders",
+      "title": "{count, plural, one {# order} other {# orders}}",
+      "copiesCount": "{count, plural, one {# copy} other {# copies}}",
+      "leadTimeNote": "est. ready + delivered within {ready}+{delivery} business days",
+      "emptyTitle": "No orders yet",
+      "emptyBody": "Order a printed copy from any approved story to see it tracked here.",
+      "status": {
+        "pending": "Pending payment",
+        "paid": "Paid",
+        "printing": "Printing",
+        "shipped": "Shipped",
+        "cancelled": "Cancelled"
+      }
     }
   },
   "children": {
@@ -236,6 +252,7 @@
       "step1Warning": "Important: keep the column names in row 1 exactly as they are — don't rename, remove, or reorder them.",
       "downloadButton": "Download template",
       "columnDetails": "CSV column reference",
+      "bilingualColumnHelp": "yes / true / both -> this child's stories will default to both English and Arabic in one book. Leave blank for single-language stories (can also be changed later, per child).",
       "step2Title": "2. Upload your completed file",
       "step2Body": "Choose the CSV file you filled in above."
     },
@@ -263,6 +280,8 @@
       },
       "class": "Class or group",
       "language": "Preferred language",
+      "bilingualStories": "Generate stories in both languages",
+      "bilingualStoriesHint": "When checked, this child's stories default to one book with both English and Arabic — a cover, interior pages and back page all bilingual.",
       "save": "Save child",
       "cancel": "Cancel"
     },
@@ -413,8 +432,30 @@
     "bulkNextTierNudge": "Add {count, plural, one {# more copy} other {# more copies}} to unlock {price}/copy",
     "bulkNextTierNudgeFreeDelivery": "Add {count, plural, one {# more copy} other {# more copies}} to unlock {price}/copy + free delivery",
     "bulkPayNow": "Pay now — {total}",
+    "leadTime": "Estimated: ready in {readyMin}–{readyMax} business days, delivered {deliveryMin}–{deliveryMax} days after — plan to order at least {totalMax} business days before you need it.",
     "errorTitle": "Couldn't start checkout",
     "errorGeneric": "Something went wrong. Please try again."
+  },
+  "ownerOrders": {
+    "title": "{count, plural, one {# order} other {# orders}}",
+    "subtitle": "Every paid, printing, shipped or cancelled print order across all tenants, newest paid orders first. Advance a status here to notify the customer automatically.",
+    "paidAwaitingAction": "{count, plural, one {# paid, awaiting action} other {# paid, awaiting action}}",
+    "copiesCount": "{count, plural, one {# copy} other {# copies}}",
+    "shipTo": "Ship to: {name} — {address}",
+    "leadTimeNote": "est. ready + delivered within {ready}+{delivery} business days",
+    "empty": "No orders yet.",
+    "status": {
+      "pending": "Pending payment",
+      "paid": "Paid",
+      "printing": "Printing",
+      "shipped": "Shipped",
+      "cancelled": "Cancelled"
+    },
+    "markAs": {
+      "printing": "Mark as printing",
+      "shipped": "Mark as shipped",
+      "cancelled": "Cancel order"
+    }
   },
   "stories": {
     "title": "Stories",

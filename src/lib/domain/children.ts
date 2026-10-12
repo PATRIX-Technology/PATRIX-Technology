@@ -75,6 +75,11 @@ export const ChildFormSchema = z.object({
   pronoun: z.enum(['she', 'he']),
   className: z.string().trim().max(80).optional().or(z.literal('')),
   preferredLanguage: z.enum(['en', 'ar']),
+  /** Whether this child's stories should default to being generated in
+   * both English and Arabic at once — see docs/DECISIONS.md "Bilingual
+   * -in-one-book generation". A stored preference, overridable per story
+   * once that feature's own toggle exists. */
+  bilingualStories: z.boolean().default(false),
   avatarConfig: AvatarConfigSchema.default(DEFAULT_AVATAR_CONFIG),
 });
 export type ChildFormInput = z.infer<typeof ChildFormSchema>;
@@ -82,15 +87,19 @@ export type ChildFormInput = z.infer<typeof ChildFormSchema>;
 /**
  * CSV import schema for bulk class-list uploads. Required columns:
  * first_name,pronoun,class_name,preferred_language — optional
- * last_name/arabic_first_name/arabic_last_name columns are also read
- * when present (see docs/DECISIONS.md "Bilingual name fields for
- * children"), but their absence isn't an error.
+ * last_name/arabic_first_name/arabic_last_name/bilingual columns are also
+ * read when present (see docs/DECISIONS.md "Bilingual name fields for
+ * children" and "Bilingual-in-one-book generation"), but their absence
+ * isn't an error.
  * preferred_language is case-insensitive and defaults to "en" so a
  * nursery admin's spreadsheet doesn't need to be pixel-perfect there.
  * pronoun is also case-insensitive and accepts a few loose spellings
  * (her/female/f, him/male/m), but has no default -- see
  * docs/DECISIONS.md "Pronoun is binary only (no 'they')": a missing or
  * unrecognized value is now a row error rather than a silent guess.
+ * bilingual is also case-insensitive and defaults to "no"/false when
+ * blank or unrecognized -- this is a convenience default, never an error,
+ * since most nurseries only want some children's stories bilingual.
  */
 const CSV_HEADER = ['first_name', 'pronoun', 'class_name', 'preferred_language'];
 
@@ -116,6 +125,13 @@ function normalizeLanguage(value: string): 'en' | 'ar' {
   const v = value.trim().toLowerCase();
   if (v === 'ar' || v === 'arabic' || v === 'العربية') return 'ar';
   return 'en';
+}
+
+/** Loose, no-error parsing -- an unrecognized or blank cell is just "no",
+ * same convenience-default reasoning as normalizeLanguage. */
+function normalizeBilingual(value: string): boolean {
+  const v = value.trim().toLowerCase();
+  return v === 'yes' || v === 'true' || v === '1' || v === 'both' || v === 'bilingual';
 }
 
 /** Minimal, dependency-free CSV parser: handles quoted fields and commas. */
@@ -208,6 +224,7 @@ export function parseChildrenCsv(content: string): { results: CsvRowResult[]; he
     const pronounRaw = cells[colIndex('pronoun')] ?? '';
     const className = (cells[colIndex('class_name')] ?? '').trim();
     const languageRaw = cells[colIndex('preferred_language')] ?? 'en';
+    const bilingualRaw = cells[colIndex('bilingual')] ?? '';
     const pronoun = normalizePronoun(pronounRaw);
 
     if (pronoun === null) {
@@ -226,6 +243,7 @@ export function parseChildrenCsv(content: string): { results: CsvRowResult[]; he
       pronoun,
       className: className || undefined,
       preferredLanguage: normalizeLanguage(languageRaw),
+      bilingualStories: normalizeBilingual(bilingualRaw),
       avatarConfig: DEFAULT_AVATAR_CONFIG,
     });
 

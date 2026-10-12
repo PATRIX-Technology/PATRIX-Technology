@@ -6,16 +6,17 @@ import { whatsappLink } from '@/lib/config/contact';
 const NOTIFICATION_RECIPIENT = 'yousefhawwari@gmail.com';
 
 /**
- * Sends a plain-text notification email via Resend's HTTP API directly
- * (no SDK — a single fetch call, so this needed no new npm dependency).
- * Same "best-effort, never blocks the caller" shape as
- * sendTelegramMessage: silently a no-op if RESEND_API_KEY isn't set
- * yet, and swallows any send failure — a notification is a nice-to-have
- * on top of an already-saved database row (demo_requests), never a
- * reason to fail the form submission that triggered it. See
- * docs/NEEDS_FROM_ME.md for what a free Resend account needs.
+ * Sends a plain-text email via Resend's HTTP API directly (no SDK — a
+ * single fetch call, so this needed no new npm dependency). Same
+ * "best-effort, never blocks the caller" shape as sendTelegramMessage:
+ * silently a no-op if RESEND_API_KEY isn't set yet, and swallows any
+ * send failure — a notification is a nice-to-have on top of an
+ * already-saved database row, never a reason to fail the action that
+ * triggered it. See docs/NEEDS_FROM_ME.md for what a free Resend
+ * account needs. The single-recipient `to` string also accepts a
+ * comma-separated list, matching Resend's own API.
  */
-export async function sendNotificationEmail(subject: string, body: string): Promise<void> {
+export async function sendEmail(to: string, subject: string, body: string): Promise<void> {
   const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey) return;
 
@@ -30,7 +31,7 @@ export async function sendNotificationEmail(subject: string, body: string): Prom
         // Resend's own shared sending domain -- works with zero setup
         // on a free account, no custom domain verification needed.
         from: 'Ownly <onboarding@resend.dev>',
-        to: NOTIFICATION_RECIPIENT,
+        to,
         subject,
         text: body,
       }),
@@ -38,6 +39,14 @@ export async function sendNotificationEmail(subject: string, body: string): Prom
   } catch {
     // Best-effort — see module comment above.
   }
+}
+
+/** Always goes to the founder's own inbox — see module comment above
+ * NOTIFICATION_RECIPIENT. Every pre-existing call site (book-a-demo,
+ * paid print orders) keeps using this; new code that needs to email
+ * someone else (e.g. a customer) calls sendEmail directly. */
+export async function sendNotificationEmail(subject: string, body: string): Promise<void> {
+  await sendEmail(NOTIFICATION_RECIPIENT, subject, body);
 }
 
 export interface PaidPrintOrderBatchItem {
@@ -104,4 +113,47 @@ export async function notifyOwnerOfPaidPrintOrderBatch(params: {
       .filter(Boolean)
       .join('\n'),
   );
+}
+
+/** Mirrors print_order_status (migration 0037) minus 'pending'/'cancelled'
+ * -- a customer is only ever notified once their order is real (paid),
+ * and a cancellation gets its own distinct message below. */
+export type NotifiablePrintOrderStatus = 'paid' | 'printing' | 'shipped';
+
+const CUSTOMER_STATUS_LINE: Record<'printing' | 'shipped' | 'cancelled', string> = {
+  printing: 'Your order is now being printed.',
+  shipped: 'Your order has shipped and is on its way.',
+  cancelled: 'Your order has been cancelled. If you were charged, you will be refunded -- contact us if you have any questions.',
+};
+
+/**
+ * Notifies the customer (the staff member or family who placed the
+ * order) by email when the owner moves their order to a new status in
+ * the owner dashboard's Orders tab -- see docs/DECISIONS.md "Order
+ * tracking: owner Orders tab + status notifications". Best-effort, same
+ * no-op-without-key shape as every other function in this module: an
+ * order's real status is always the database row, this is just a
+ * courtesy heads-up.
+ */
+export async function notifyCustomerOfOrderStatusChange(params: {
+  to: string;
+  tenantName: string;
+  batchId: string;
+  status: 'printing' | 'shipped' | 'cancelled';
+  items: PaidPrintOrderBatchItem[];
+}): Promise<void> {
+  const itemLines = params.items.map(
+    (item, i) => `  ${i + 1}. ${item.storyTitle} (for ${item.childName}, ${item.locale.toUpperCase()})`,
+  );
+  const body = [
+    CUSTOMER_STATUS_LINE[params.status],
+    '',
+    `Order: ${params.batchId}`,
+    `Organisation: ${params.tenantName}`,
+    `Copies: ${params.items.length}`,
+    ...itemLines,
+  ].join('\n');
+
+  const subjectVerb = params.status === 'printing' ? 'is printing' : params.status === 'shipped' ? 'has shipped' : 'was cancelled';
+  await sendEmail(params.to, `Your Ownly print order ${subjectVerb}`, body);
 }

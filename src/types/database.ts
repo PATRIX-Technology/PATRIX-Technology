@@ -123,6 +123,10 @@ export interface Child {
   pronoun: Pronoun;
   class_name: string | null;
   preferred_language: AppLocale;
+  /** Whether this child's stories should default to being generated in
+   * both English and Arabic at once — see docs/DECISIONS.md "Bilingual
+   * -in-one-book generation". */
+  bilingual_stories: boolean;
   avatar_config: AvatarConfig;
   consent_status: ConsentStatus;
   photo_asset_path: string | null;

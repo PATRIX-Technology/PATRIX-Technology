@@ -84,7 +84,7 @@ export function CsvImportDialog({ locale }: { locale: string }) {
                       <code>pronoun</code>
                     </td>
                     <td className="pr-2 py-0.5">Yes</td>
-                    <td className="py-0.5">she / he / they</td>
+                    <td className="py-0.5">she / he (also accepts her/female/f or him/male/m)</td>
                   </tr>
                   <tr>
                     <td className="pr-2 py-0.5">
@@ -100,14 +100,23 @@ export function CsvImportDialog({ locale }: { locale: string }) {
                     <td className="pr-2 py-0.5">Yes</td>
                     <td className="py-0.5">en / ar</td>
                   </tr>
+                  <tr>
+                    <td className="pr-2 py-0.5">
+                      <code>bilingual</code>
+                    </td>
+                    <td className="pr-2 py-0.5">No</td>
+                    <td className="py-0.5">{t('csvImport.bilingualColumnHelp')}</td>
+                  </tr>
                 </tbody>
               </table>
               <p className="mt-2">
                 The <code>first_name</code>, <code>pronoun</code>, <code>class_name</code> and{' '}
                 <code>preferred_language</code> columns must all be present in the header row, but
-                individual cells can be left blank — a blank <code>pronoun</code> defaults to
-                &quot;they&quot; and a blank <code>preferred_language</code> defaults to
-                &quot;en&quot;.
+                individual cells can be left blank for an optional field. A blank or unrecognized{' '}
+                <code>pronoun</code> cell is a row error (it must be &quot;she&quot; or
+                &quot;he&quot;), a blank <code>preferred_language</code> defaults to
+                &quot;en&quot;, and a blank or unrecognized <code>bilingual</code> defaults to
+                &quot;no&quot;.
               </p>
               <p className="mt-2">
                 Avatar and photo consent aren&apos;t set by the import — every child gets a

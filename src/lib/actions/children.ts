@@ -36,6 +36,7 @@ export async function addChildAction(locale: string, formData: FormData): Promis
     pronoun: formData.get('pronoun'),
     className: formData.get('className') || undefined,
     preferredLanguage: formData.get('preferredLanguage'),
+    bilingualStories: formData.get('bilingualStories') === 'on',
     avatarConfig,
   });
   if (!parsed.success) {
@@ -51,6 +52,7 @@ export async function addChildAction(locale: string, formData: FormData): Promis
     pronoun: parsed.data.pronoun,
     class_name: parsed.data.className || null,
     preferred_language: parsed.data.preferredLanguage,
+    bilingual_stories: parsed.data.bilingualStories,
     avatar_config: parsed.data.avatarConfig,
     created_by: context.userId,
   });
@@ -92,6 +94,7 @@ export async function updateChildAction(
     pronoun: formData.get('pronoun'),
     className: formData.get('className') || undefined,
     preferredLanguage: formData.get('preferredLanguage'),
+    bilingualStories: formData.get('bilingualStories') === 'on',
     avatarConfig,
   });
   if (!parsed.success) {
@@ -108,6 +111,7 @@ export async function updateChildAction(
       pronoun: parsed.data.pronoun,
       class_name: parsed.data.className || null,
       preferred_language: parsed.data.preferredLanguage,
+      bilingual_stories: parsed.data.bilingualStories,
       avatar_config: parsed.data.avatarConfig,
     })
     .eq('id', childId)
@@ -157,6 +161,7 @@ export async function importChildrenCsvAction(locale: string, formData: FormData
         pronoun: r.data!.pronoun,
         class_name: r.data!.className || null,
         preferred_language: r.data!.preferredLanguage,
+        bilingual_stories: r.data!.bilingualStories,
         avatar_config: DEFAULT_AVATAR_CONFIG,
         created_by: context.userId,
       })),

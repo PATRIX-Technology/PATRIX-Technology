@@ -16,6 +16,7 @@ interface Labels {
   children: string;
   stories: string;
   templates: string;
+  orders: string;
   staff: string;
   settings: string;
   usage: string;
@@ -65,6 +66,7 @@ export function DashboardNav({
     { href: base, label: labels.overview },
     { href: `${base}/children`, label: labels.children },
     { href: `${base}/stories`, label: labels.stories },
+    { href: `${base}/orders`, label: labels.orders },
     // A family account is a single guardian by default — staff invites
     // don't apply the way they do for a nursery. See docs/DECISIONS.md
     // "Phase 4: families are tenants".

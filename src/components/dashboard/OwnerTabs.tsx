@@ -13,13 +13,26 @@ import { usePathname } from 'next/navigation';
  * tracking new story idea suggestions"), with a live badge on the
  * latter showing how many are still unreviewed ("new").
  */
-export function OwnerTabs({ locale, newSuggestionCount }: { locale: string; newSuggestionCount: number }) {
+export function OwnerTabs({
+  locale,
+  newSuggestionCount,
+  newOrderCount = 0,
+}: {
+  locale: string;
+  newSuggestionCount: number;
+  /** Paid orders not yet marked "printing" -- needs the founder's action,
+   * same "new" framing as newSuggestionCount. Optional so pages that
+   * haven't been updated to compute it yet (none currently) don't need a
+   * prop change to keep compiling. */
+  newOrderCount?: number;
+}) {
   const pathname = usePathname();
   const base = `/${locale}/owner`;
 
   const tabs = [
     { href: base, label: 'Overview' },
     { href: `${base}/subscriptions`, label: 'Subscriptions' },
+    { href: `${base}/orders`, label: 'Orders', badge: newOrderCount },
     { href: `${base}/suggestions`, label: 'Story Ideas', badge: newSuggestionCount },
   ];
 

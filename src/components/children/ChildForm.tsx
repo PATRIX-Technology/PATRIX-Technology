@@ -20,6 +20,7 @@ export interface ChildFormDefaults {
   pronoun?: Pronoun;
   className?: string | null;
   preferredLanguage?: AppLocale;
+  bilingualStories?: boolean;
   avatarConfig?: AvatarConfig;
 }
 
@@ -119,6 +120,19 @@ export function ChildForm({
           <option value="ar">العربية</option>
         </select>
       </div>
+      <label className="flex items-start gap-2 text-sm text-ink-700">
+        <input
+          type="checkbox"
+          name="bilingualStories"
+          defaultChecked={defaultValues?.bilingualStories ?? false}
+          className="focus-ring mt-0.5 h-4 w-4 rounded border-[rgb(var(--color-border))]"
+        />
+        <span>
+          <span className="font-medium text-ink-800">{tForm('bilingualStories')}</span>
+          <br />
+          <span className="text-xs text-ink-500">{tForm('bilingualStoriesHint')}</span>
+        </span>
+      </label>
       <AvatarPicker value={avatar} onChange={setAvatar} />
       {state?.error && (
         <p role="alert" className="text-sm text-coral-600">

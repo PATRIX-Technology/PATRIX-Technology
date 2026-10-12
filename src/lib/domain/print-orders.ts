@@ -104,6 +104,49 @@ export function getPrintOrderUnitPriceMinor(quantity: number, currency: PrintOrd
   return getPrintOrderBulkTier(quantity)?.priceMinor[currency] ?? PRINT_ORDER_PRICE_MINOR[currency];
 }
 
+export interface PrintOrderLeadTime {
+  /** Business days to get the order ready (printing + binding), as a
+   * [min, max] range. */
+  readyDays: [number, number];
+  /** Business days for local UAE delivery once ready, as a [min, max]
+   * range -- 0 for a standalone/small order picked up same-day by the
+   * local courier the print run finishes. */
+  deliveryDays: [number, number];
+}
+
+/**
+ * Estimated get-ready + delivery time, by order size -- standard UAE
+ * bulk-corporate-printing lead times (a softcover photo book run of this
+ * size, at a local Dubai/Sharjah print shop), shown to nurseries at order
+ * time so they know when to place a bulk order ahead of an event (e.g.
+ * graduation day). These are reasonable industry-standard placeholder
+ * estimates, not a contractual SLA -- no print vendor is under signed
+ * contract yet (see docs/NEEDS_FROM_ME.md), so revisit these ranges once
+ * one is, in case their real production schedule differs. Kept in the
+ * same quantity-tier shape as the pricing ladder above so the two always
+ * line up in the UI.
+ */
+export function getPrintOrderLeadTime(quantity: number): PrintOrderLeadTime {
+  if (quantity >= 100) return { readyDays: [7, 10], deliveryDays: [1, 2] };
+  if (quantity >= 50) return { readyDays: [4, 6], deliveryDays: [1, 2] };
+  if (quantity >= 10) return { readyDays: [3, 4], deliveryDays: [1, 2] };
+  return { readyDays: [2, 3], deliveryDays: [1, 2] };
+}
+
+/** Which status an order already at `from` may move to -- enforced in
+ * updatePrintOrderBatchStatusAction so the owner can't skip a step or
+ * revive a cancelled/shipped order by a stray client request. 'paid' is
+ * the state every order arrives in automatically (set by the Stripe
+ * webhook, not that action); from there it only ever moves forward. */
+const PRINT_ORDER_STATUS_TRANSITIONS: Record<string, string[]> = {
+  paid: ['printing', 'cancelled'],
+  printing: ['shipped', 'cancelled'],
+};
+
+export function canAdvancePrintOrderStatus(from: string, to: string): boolean {
+  return PRINT_ORDER_STATUS_TRANSITIONS[from]?.includes(to) ?? false;
+}
+
 export interface NextPrintOrderTier {
   /** How many more copies to add to the current order to reach this tier. */
   copiesNeeded: number;

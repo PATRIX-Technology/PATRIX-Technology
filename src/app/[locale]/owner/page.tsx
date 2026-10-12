@@ -29,7 +29,7 @@ export default async function OwnerDashboardPage({ params }: { params: { locale:
     redirect(`/${params.locale}/owner/mfa-challenge`);
   }
 
-  const [{ data: tenants }, { data: templates }, { data: globalCap }, { count: newSuggestionCount }] =
+  const [{ data: tenants }, { data: templates }, { data: globalCap }, { count: newSuggestionCount }, { count: paidOrderCount }] =
     await Promise.all([
       supabase.from('tenants').select('id, name, status, created_at').order('created_at', { ascending: false }),
       supabase
@@ -41,6 +41,7 @@ export default async function OwnerDashboardPage({ params }: { params: { locale:
         .from('story_template_suggestions')
         .select('id', { count: 'exact', head: true })
         .eq('status', 'new'),
+      supabase.from('print_orders').select('id', { count: 'exact', head: true }).eq('status', 'paid'),
     ]);
 
   const draftArabicTemplates = (templates ?? []).filter(
@@ -54,7 +55,7 @@ export default async function OwnerDashboardPage({ params }: { params: { locale:
         <Badge tone="success">Two-factor verified this session</Badge>
       </div>
 
-      <OwnerTabs locale={params.locale} newSuggestionCount={newSuggestionCount ?? 0} />
+      <OwnerTabs locale={params.locale} newSuggestionCount={newSuggestionCount ?? 0} newOrderCount={paidOrderCount ?? 0} />
 
       <Card>
         <CardTitle>Tenants ({(tenants ?? []).length})</CardTitle>

@@ -47,6 +47,7 @@ export default async function DashboardLayout({
           children: t('children'),
           stories: t('stories'),
           templates: t('templates'),
+          orders: t('orders'),
           staff: t('staff'),
           settings: t('settings'),
           usage: t('usage'),

@@ -6336,3 +6336,78 @@ script retries confirmed a 403 from the egress proxy, consistent with
 tool's own channel is unaffected. Verified live via a follow-up
 `select` confirming all 15 themes/30 rows now carry the new titles,
 correct `page_count = 6`, and the expected `native_review_status`.
+
+## Pre-pilot phase: bilingual-flag CSV column, delivery timing, order tracking
+
+Three of six founder-requested pre-pilot items landed together (the
+remaining three — the bilingual-in-one-book feature, the CSV
+same-ask's bilingual-template content, and the final pre-pilot QA +
+real test order — are tracked separately, see tasks #163-#164):
+
+**CSV bilingual flag** (`children.bilingual_stories`, migration 0041):
+a new per-child boolean preference, nullable-safe default `false`,
+set via the manual add/edit child form (new checkbox in `ChildForm.tsx`)
+or the CSV bulk-import template's new optional `bilingual` column
+(yes/true/both → true, anything else/blank → false, explained in the
+CSV import dialog's column reference). Not yet consumed by story
+generation — that wiring is the bilingual-in-one-book feature itself
+(task #163) — this is the data model and UI half, built first since
+it's independent of that larger feature and needed regardless of when
+it ships.
+
+**Delivery timing estimates** (`getPrintOrderLeadTime` in
+`src/lib/domain/print-orders.ts`): a get-ready + delivery day-range per
+bulk-pricing tier (standalone through 100+), shown on both the single
+and bulk print-order dialogs right under the price breakdown. Same
+"reasonable placeholder, not a contractual SLA" caveat as the fixed
+print price itself — no vendor is under signed contract yet, so these
+ranges are standard UAE bulk-corporate-printing lead times, not a real
+production schedule; revisit once a vendor is confirmed.
+
+**Order tracking: owner Orders tab + status notifications.** The
+`print_order_status` enum (migration 0037) already modeled
+`paid -> printing -> shipped`, but nothing ever moved an order past
+`paid` or told the customer when it did. Added:
+- `updatePrintOrderBatchStatusAction` (new
+  `src/lib/actions/print-orders.ts`), gated on `is_platform_owner` like
+  every other owner-only action, then uses the service-role client to
+  write the status change — `print_orders` deliberately has no
+  authenticated-role UPDATE policy at all (see migration 0037's own
+  comment), so this is a new legitimate call site added to
+  `createSupabaseServiceRoleClient`'s allow-list doc comment, not a
+  workaround. Valid transitions (`canAdvancePrintOrderStatus`, in
+  `print-orders.ts` so both the server action and the client control
+  can import the same pure function) are `paid -> printing|cancelled`
+  and `printing -> shipped|cancelled` — `pending -> paid` stays
+  exclusively the Stripe webhook's job, and `shipped`/`cancelled` are
+  terminal.
+- New **Orders** tab in the owner dashboard
+  (`/owner/orders`, `OwnerTabs.tsx`), listing every non-pending order
+  batch across all tenants with a status control
+  (`PrintOrderStatusControl.tsx`), badged with the count of paid
+  orders still awaiting action — same "new" framing the Story Ideas
+  tab already used.
+- New **Orders** page in the tenant dashboard
+  (`/dashboard/orders`, read-only — no service-role client needed since
+  RLS's existing `print_orders_tenant_select` policy already scopes
+  this to the tenant's own rows) so a nursery/family can check their
+  own order status without emailing to ask.
+- `src/lib/notifications/email.ts` gained a generic `sendEmail(to, ...)`
+  (the pre-existing `sendNotificationEmail` always went to the
+  founder's own inbox; it's now a thin wrapper over the generic
+  version) and `notifyCustomerOfOrderStatusChange`, which fetches the
+  customer's email via `serviceClient.auth.admin.getUserById` (the
+  order's `requested_by`) and emails them on `printing`/`shipped`/
+  `cancelled` — best-effort, same no-op-without-`RESEND_API_KEY` shape
+  as every other notification. The founder already gets emailed at
+  `paid` time (pre-existing `notifyOwnerOfPaidPrintOrderBatch`); this
+  adds the customer-facing half, completing "notify me and the
+  customer" for order tracking.
+- `RESEND_API_KEY` is now actually configured (founder supplied a real
+  key), set both in this sandbox's `.env.local` for local testing and
+  in the live Vercel project's environment variables (production,
+  preview, development) via the Vercel MCP tool — so every
+  Resend-backed notification in the app (book-a-demo, paid print
+  orders, and now order-status changes) goes from a silent no-op to
+  actually sending, as of the next deployment that picks up the new
+  env var.

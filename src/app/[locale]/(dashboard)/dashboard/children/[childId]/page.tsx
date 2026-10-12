@@ -163,6 +163,7 @@ export default async function ChildDetailPage({
             pronoun: child.pronoun,
             className: child.class_name,
             preferredLanguage: child.preferred_language,
+            bilingualStories: child.bilingual_stories,
             avatarConfig: parseAvatarConfig(child.avatar_config),
           }}
         />

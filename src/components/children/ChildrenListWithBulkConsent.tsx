@@ -15,6 +15,17 @@ import { AvatarPreview } from '@/components/children/AvatarPreview';
 import { parseAvatarConfig } from '@/lib/domain/avatar';
 import { useToast } from '@/components/ui/Toast';
 import { whatsappShareLink } from '@/lib/config/contact';
+import {
+  CATEGORY_ACCENTS,
+  CATEGORY_ICONS,
+  CATEGORY_LABELS,
+  DEFAULT_ACCENT,
+  DEFAULT_CATEGORY_ICON,
+  FALLBACK_ICON,
+  ICON_TINTS,
+  THEME_ICONS,
+  sortCategories,
+} from '@/components/stories/theme-picker-ui';
 import type { Child, ConsentStatus } from '@/types/database';
 
 const WHATSAPP_ICON = (
@@ -68,6 +79,11 @@ export function ChildrenListWithBulkConsent({
   const [qrByChild, setQrByChild] = useState<Record<string, string>>({});
 
   const [themePickerOpen, setThemePickerOpen] = useState(false);
+  // Which category's popup is open inside the theme picker (null = none)
+  // -- same category-cards-then-popup pattern as the single-story picker
+  // (CreateStoryForm.tsx), reusing its shared icon/label/accent constants.
+  // See docs/DECISIONS.md "Category cards + popup template picker".
+  const [openThemeCategory, setOpenThemeCategory] = useState<string | null>(null);
   const [selectedThemeKey, setSelectedThemeKey] = useState('');
   const [isStoryPending, startStoryTransition] = useTransition();
   const [storyResults, setStoryResults] = useState<BulkStoryResultRow[] | null>(null);
@@ -126,6 +142,7 @@ export function ChildrenListWithBulkConsent({
       }
       setStoryResults(result.results ?? []);
       setThemePickerOpen(false);
+      setOpenThemeCategory(null);
       exitSelectMode();
     });
   }
@@ -144,6 +161,9 @@ export function ChildrenListWithBulkConsent({
 
   const storySucceeded = storyResults?.filter((r) => r.storyId) ?? [];
   const storyFailed = storyResults?.filter((r) => !r.storyId) ?? [];
+
+  const themeCategories = sortCategories(Array.from(new Set(themeOptions.map((theme) => theme.category))));
+  const selectedThemeOption = themeOptions.find((theme) => theme.themeKey === selectedThemeKey) ?? null;
 
   return (
     <div>
@@ -389,37 +409,63 @@ export function ChildrenListWithBulkConsent({
         </div>
       </Modal>
 
+      {/* Category cards -- clicking one opens that category's own popup
+          (below) listing its themes, same pattern as the single-story
+          picker (CreateStoryForm.tsx). See docs/DECISIONS.md "Category
+          cards + popup template picker". */}
       <Modal open={themePickerOpen} onClose={() => setThemePickerOpen(false)} title={t('bulkStories.pickTheme')}>
         <div className="flex flex-col gap-4">
           <p className="text-sm text-ink-600">{t('bulkStories.pickThemeHint', { count: selected.size })}</p>
-          <div className="grid max-h-80 gap-2 overflow-y-auto">
-            {themeOptions.map((theme) => (
-              <label
-                key={theme.themeKey}
-                className={`focus-ring flex cursor-pointer items-center justify-between gap-3 rounded-lg border p-3 transition-colors ${
-                  selectedThemeKey === theme.themeKey
-                    ? 'border-lagoon-600 bg-lagoon-900/10'
-                    : 'border-[rgb(var(--color-border))] hover:bg-ink-50'
-                }`}
-              >
-                <span className="min-w-0">
-                  <span className="block truncate font-medium text-ink-900">{theme.titleEn ?? theme.titleAr}</span>
-                  {theme.titleAr && theme.titleEn && (
-                    <span dir="rtl" className="block truncate text-sm text-ink-500">
-                      {theme.titleAr}
+          <div className="grid max-h-[60vh] gap-3 overflow-y-auto sm:grid-cols-2">
+            {themeCategories.map((category) => {
+              const categoryThemes = themeOptions.filter((theme) => theme.category === category);
+              const labels = CATEGORY_LABELS[category];
+              const accent = CATEGORY_ACCENTS[category] ?? DEFAULT_ACCENT;
+              const primaryLabel = labels ? (locale === 'ar' ? labels.ar : labels.en) : category;
+              const secondaryLabel = labels ? (locale === 'ar' ? labels.en : labels.ar) : null;
+              const selectedInCategory =
+                selectedThemeOption && selectedThemeOption.category === category ? selectedThemeOption : null;
+              const selectedTitle = selectedInCategory
+                ? (locale === 'ar' ? selectedInCategory.titleAr : selectedInCategory.titleEn) ??
+                  selectedInCategory.titleEn ??
+                  selectedInCategory.titleAr
+                : null;
+              return (
+                <button
+                  key={category}
+                  type="button"
+                  onClick={() => setOpenThemeCategory(category)}
+                  className={`focus-ring group relative flex flex-col gap-3 rounded-xl2 border p-4 text-start transition-all hover:-translate-y-0.5 hover:shadow-card ${
+                    selectedInCategory
+                      ? 'border-saffron-500 shadow-card ring-2 ring-saffron-500/35'
+                      : `border-[rgb(var(--color-border))] ${accent.cardBorder}`
+                  }`}
+                >
+                  <span className="flex items-center justify-between">
+                    <span className={`flex h-11 w-11 items-center justify-center rounded-xl ${accent.header}`}>
+                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                        {CATEGORY_ICONS[category] ?? DEFAULT_CATEGORY_ICON}
+                      </svg>
                     </span>
+                    <span className="text-xs font-medium text-ink-500">
+                      {t('bulkStories.templateCount', { count: categoryThemes.length })}
+                    </span>
+                  </span>
+                  <span className="flex items-baseline gap-2">
+                    <span className="font-display text-base text-ink-900">{primaryLabel}</span>
+                    {secondaryLabel && <span className="text-sm text-ink-500">{secondaryLabel}</span>}
+                  </span>
+                  {selectedTitle ? (
+                    <span className="flex items-center gap-1.5 text-sm text-saffron-400">
+                      <span aria-hidden>✓</span>
+                      <span className="truncate">{selectedTitle}</span>
+                    </span>
+                  ) : (
+                    <span className="text-sm text-ink-500">{t('bulkStories.viewTemplates')}</span>
                   )}
-                </span>
-                <input
-                  type="radio"
-                  name="bulk-theme"
-                  value={theme.themeKey}
-                  checked={selectedThemeKey === theme.themeKey}
-                  onChange={() => setSelectedThemeKey(theme.themeKey)}
-                  className="h-4 w-4 shrink-0"
-                />
-              </label>
-            ))}
+                </button>
+              );
+            })}
           </div>
           <div className="flex justify-end gap-2">
             <Button variant="secondary" size="sm" onClick={() => setThemePickerOpen(false)}>
@@ -437,6 +483,66 @@ export function ChildrenListWithBulkConsent({
           </div>
         </div>
       </Modal>
+
+      {themeCategories.map((category) => {
+        const categoryThemes = themeOptions.filter((theme) => theme.category === category);
+        const labels = CATEGORY_LABELS[category];
+        const primaryLabel = labels ? (locale === 'ar' ? labels.ar : labels.en) : category;
+        const secondaryLabel = labels ? (locale === 'ar' ? labels.en : labels.ar) : null;
+        const accent = CATEGORY_ACCENTS[category] ?? DEFAULT_ACCENT;
+        return (
+          <Modal
+            key={category}
+            open={openThemeCategory === category}
+            onClose={() => setOpenThemeCategory(null)}
+            title={`${primaryLabel}${secondaryLabel ? ` · ${secondaryLabel}` : ''}`}
+          >
+            <div className="grid max-h-[70vh] gap-3 overflow-y-auto sm:grid-cols-2">
+              {categoryThemes.map((theme) => {
+                const globalIndex = themeOptions.indexOf(theme);
+                const primaryTitle = locale === 'ar' ? theme.titleAr ?? theme.titleEn : theme.titleEn ?? theme.titleAr;
+                const secondaryTitle = locale === 'ar' ? theme.titleEn : theme.titleAr;
+                return (
+                  <label
+                    key={theme.themeKey}
+                    className={`group relative flex cursor-pointer flex-col gap-3 rounded-xl2 border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface-raised))] p-4 transition-all hover:-translate-y-0.5 hover:shadow-card has-[:checked]:border-saffron-500 has-[:checked]:shadow-card has-[:checked]:ring-2 has-[:checked]:ring-saffron-500/35 ${accent.cardBorder}`}
+                  >
+                    <input
+                      type="radio"
+                      name="bulk-theme"
+                      value={theme.themeKey}
+                      checked={selectedThemeKey === theme.themeKey}
+                      onChange={() => {
+                        setSelectedThemeKey(theme.themeKey);
+                        setOpenThemeCategory(null);
+                      }}
+                      className="peer sr-only"
+                    />
+                    <span
+                      className={`flex h-11 w-11 items-center justify-center rounded-xl ${ICON_TINTS[globalIndex % ICON_TINTS.length]}`}
+                    >
+                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                        {THEME_ICONS[theme.themeKey] ?? FALLBACK_ICON}
+                      </svg>
+                    </span>
+                    <div>
+                      <p className="font-medium text-ink-800">{primaryTitle}</p>
+                      {secondaryTitle && (
+                        <p className="text-sm text-ink-500" dir={locale === 'ar' ? 'ltr' : 'rtl'}>
+                          {secondaryTitle}
+                        </p>
+                      )}
+                    </div>
+                    <span className="absolute end-3 top-3 text-xs font-semibold text-saffron-400 opacity-0 peer-checked:opacity-100">
+                      ✓
+                    </span>
+                  </label>
+                );
+              })}
+            </div>
+          </Modal>
+        );
+      })}
 
       <Modal open={storyResults !== null} onClose={() => setStoryResults(null)} title={t('bulkStories.resultsTitle')}>
         <div className="flex flex-col gap-4">

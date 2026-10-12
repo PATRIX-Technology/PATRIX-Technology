@@ -10,11 +10,18 @@ import { ClickableRow } from '@/components/ui/ClickableRow';
 import { BulkPrintOrderDialog, type BulkPrintOrderItem } from '@/components/stories/BulkPrintOrderDialog';
 import type { StoryStatus, TenantType } from '@/types/database';
 
-// Rotates through the app's existing accent palette so each child's
-// folder name reads as a distinct, deliberate color rather than plain
-// body text -- same tints CreateStoryForm.tsx already uses for category
-// icons, reused here for visual consistency across the app.
-const FOLDER_NAME_TINTS = ['text-lagoon-300', 'text-saffron-300', 'text-coral-300'];
+// Rotates through the app's existing accent palette so each child's name
+// reads as a distinct, colorful pill rather than plain body text -- same
+// bg+text tint pairs theme-picker-ui.tsx's ICON_TINTS already uses,
+// reused here for visual consistency across the app. Per founder
+// feedback: plain colored text wasn't enough on its own -- the name
+// needed actual color *around* it, matching the weight of the "Select
+// for printing" pill button beside it, not just a tinted word.
+const FOLDER_NAME_TINTS = [
+  'bg-lagoon-900/50 text-lagoon-300',
+  'bg-saffron-900/40 text-saffron-300',
+  'bg-coral-900/40 text-coral-300',
+];
 
 const PRINT_ICON = (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden>
@@ -152,13 +159,13 @@ export function StoriesListWithBulkOrder({
           <Card key={folder.childId} className="overflow-hidden p-0">
             <details className="group" open>
               <summary className="focus-ring flex cursor-pointer list-none items-center justify-between gap-3 p-4 hover:bg-ink-100">
-                <span className="flex items-center gap-2 font-display text-lg">
+                <span className="flex items-center gap-2">
                   <span aria-hidden className="text-ink-400 transition-transform group-open:rotate-90">
                     ▸
                   </span>
                   <span
                     dir={folder.childNameIsArabic ? 'rtl' : undefined}
-                    className={FOLDER_NAME_TINTS[folderIndex % FOLDER_NAME_TINTS.length]}
+                    className={`rounded-full px-3 py-1 font-display text-lg ${FOLDER_NAME_TINTS[folderIndex % FOLDER_NAME_TINTS.length]}`}
                   >
                     {folder.childName}
                   </span>

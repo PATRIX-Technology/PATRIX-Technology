@@ -30,14 +30,15 @@ const templates = raw.map((row, index) => ({
 const PRONOUNS: Pronoun[] = ['she', 'he'];
 const LEFTOVER_TOKEN = /\{[a-z_:]+\}/i;
 
-// All 13 Arabic templates cleared a full review pass (grammar, gender
-// agreement, cultural fit, mascot-name consistency — see
+// The original 13 Arabic templates cleared a full review pass (grammar,
+// gender agreement, cultural fit, mascot-name consistency — see
 // docs/DECISIONS.md "Arabic native review pass") and are marked
-// `reviewed`. Nothing is pending for Arabic right now; keep this set
-// in sync (add a theme_key back here) the next time new Arabic pages
-// are authored and need review before `assertTemplateUsable` allows
-// them through — see `src/lib/domain/templates.ts`.
-const PENDING_NATIVE_REVIEW_THEMES = new Set<string>([]);
+// `reviewed`. The 2 new educational templates added for "Being Kind to
+// Others" / "Keep Smiling" (see docs/DECISIONS.md "Category cards + popup
+// template picker") have NOT been through that pass yet, so their Arabic
+// rows stay `draft` and are listed here until a native reviewer signs off
+// — see `assertTemplateUsable` in `src/lib/domain/templates.ts`.
+const PENDING_NATIVE_REVIEW_THEMES = new Set<string>(['being_kind', 'keep_smiling']);
 
 describe('seed template fixtures (supabase/seed/templates.json)', () => {
   it('has exactly one English + one Arabic row per theme', () => {

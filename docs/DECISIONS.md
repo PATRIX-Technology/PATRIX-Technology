@@ -6249,3 +6249,90 @@ wants pilot nurseries to actually receive AED 58/copy pricing
 regardless of order size at checkout, that needs a follow-up: tracking
 which tenants are in their pilot window and branching
 `getPrintOrderUnitPriceMinor` on that status, not yet built.
+
+## Bilingual titles in the stories list
+
+Every story in the tenant-wide stories list (`dashboard/stories`) now
+shows its template's title in **both** English and Arabic at once,
+regardless of which single locale that particular story was generated
+in — not just the story's own locale, which is all it showed before.
+`page.tsx` now fetches both locale rows per theme_key (not just the
+locale pairs actually present among the tenant's stories) and passes
+`titleEn`/`titleAr` through to `StoriesListWithBulkOrder`, which
+renders the active-UI-locale title as primary and the other as a
+smaller secondary line, dir-flipped so Arabic reads correctly inside
+an LTR page shell (same pattern `CreateStoryForm.tsx` already used for
+template cards). `BulkPrintOrderDialog`'s own per-item title stays
+single-locale (the active UI locale) since that's a different,
+narrower dialog, not the browsing list this requirement was about.
+
+## Category cards + popup template picker
+
+Replaced the collapsible `<details>` category sections in
+`CreateStoryForm.tsx` with clickable category card boxes (one per
+category, icon + bilingual label + template count) that open a popup
+built on the existing `Modal` primitive, listing that category's
+templates with the same bilingual illustrated-card design the old
+inline grid used. All five category `Modal`s stay mounted at all
+times (only `open` toggles each one's `showModal()`/`close()`) so
+every template's radio input remains part of the surrounding `<form>`
+regardless of which popup is currently shown — unmounting on close
+would have dropped the selection the instant the popup shut. Picking
+a template closes its popup and highlights the owning category card
+with a check mark and the selected title, so the chosen theme stays
+visible without the popup open. New i18n keys: `stories.picker.
+templateCount` / `viewTemplates` (en/ar). Verified mobile responsive
+(the grid collapses to 1 column under `sm:`, same proven pattern as
+the picker's previous grid) and RTL via a temporary unauthenticated
+preview route rendered through a production build (`next build` +
+`next start`) — `next dev`'s Fast Refresh runtime needs `eval`, which
+this app's CSP (`script-src 'self' 'unsafe-inline'`, no
+`unsafe-eval`) blocks, so client components never hydrate under
+`next dev` in this environment; production builds don't need `eval`
+and hydrate normally. The preview route was deleted before committing.
+
+## Story template titles renamed + 2 new Educational themes
+
+All 13 existing templates' titles (EN+AR, 26 rows) were renamed from
+whimsical/indirect names (e.g. "The Rainbow Plate" for healthy eating,
+"Bubble Heroes" for hand-washing, "The Wishing Candle" for birthday)
+to literal, immediately-recognizable ones (e.g. "Eating Healthy
+Foods", "Washing My Hands", "My Birthday Celebration") — only the
+`title` field changed per row; `synopsis`/`pages`/`mascot_name` are
+untouched, so no gender-agreement or content risk from this pass.
+"Birthday" was already covered by the existing `birthday_wishes`
+theme (just renamed, not duplicated).
+
+Added 2 new Educational templates, matching the founder's own
+examples ("be kind", "keep smiling") rather than guessing at a larger
+open-ended set: `being_kind` ("Being Kind to Others" /
+"اللطف مع الآخرين") and `keep_smiling` ("Keep Smiling" /
+"ابتسم دائما"), each with 6 interior pages in both locales following
+the existing placeholder-token conventions (`{pronoun:...}` for
+English, `{v:verb_key}`/`{ps}` for Arabic). 3 new `ArabicVerbKey`
+entries were added to `pronouns.ts` for content these two templates
+needed that no existing key covered: `felt_sad`, `to_smile`,
+`succeeded` — the vocabulary is a fixed, hand-maintained set (not
+generative), so any new Arabic template content requires adding the
+verb forms it needs here, same as every prior phase that added
+templates. Both new templates' Arabic rows are seeded `draft`
+(English rows' `native_review_status` is inert, per the existing
+gate) and `being_kind`/`keep_smiling` were added to
+`PENDING_NATIVE_REVIEW_THEMES` in `tests/unit/seed-templates.test.ts`
+— same as every other template before its native-review pass; they
+won't be usable by real Arabic-locale children until a native reviewer
+marks the Arabic rows `reviewed`, exactly like the original 13 went
+through before this session's Arabic review pass.
+
+All title renames and the 2 new templates were written to
+`supabase/seed/templates.json` (the actual seed source-of-truth) and
+applied to the live Supabase database by replicating
+`scripts/seed-platform-data.mjs`'s upsert logic
+(`on conflict (theme_key, locale) do update`) via direct SQL through
+the Supabase MCP tool, since this sandboxed environment's network
+policy blocks direct outbound fetches to the Supabase REST API (seed
+script retries confirmed a 403 from the egress proxy, consistent with
+"destination host not allowed" — not a retryable failure) — the MCP
+tool's own channel is unaffected. Verified live via a follow-up
+`select` confirming all 15 themes/30 rows now carry the new titles,
+correct `page_count = 6`, and the expected `native_review_status`.

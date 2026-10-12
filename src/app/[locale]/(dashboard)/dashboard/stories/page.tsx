@@ -30,23 +30,22 @@ export default async function StoriesPage({ params }: { params: { locale: string
     .eq('tenant_id', context.tenantId)
     .order('created_at', { ascending: false });
 
-  // Each story's row shows its template's real title (already properly
-  // cased/localized — e.g. "Colours of Gratitude" / "ألوان الشكر"), not
-  // the raw snake_case theme_key, which is always English regardless of
-  // the story's own locale. Fetched once for every (theme_key, locale)
-  // pair actually in use, rather than per row.
-  const themeKeyLocalePairs = [...new Set((stories ?? []).map((s) => `${s.theme_key}:${s.locale}`))];
+  // Each story's row shows its template's real title in BOTH languages at
+  // once (e.g. "Colours of Gratitude" + "ألوان الشكر"), regardless of
+  // which single locale that particular story was generated in — not the
+  // raw snake_case theme_key, which is always English. Fetched once for
+  // every theme_key actually in use (both locale rows), rather than per
+  // row. See docs/DECISIONS.md "Bilingual titles in the stories list".
   const { data: templateRows } = await supabase
     .from('story_theme_templates')
     .select('theme_key, locale, title')
-    .in(
-      'theme_key',
-      [...new Set((stories ?? []).map((s) => s.theme_key))],
-    );
-  const titleByThemeKeyLocale = new Map(
-    (templateRows ?? [])
-      .filter((row) => themeKeyLocalePairs.includes(`${row.theme_key}:${row.locale}`))
-      .map((row) => [`${row.theme_key}:${row.locale}`, row.title]),
+    .in('theme_key', [...new Set((stories ?? []).map((s) => s.theme_key))])
+    .in('locale', ['en', 'ar']);
+  const titleEnByThemeKey = new Map(
+    (templateRows ?? []).filter((row) => row.locale === 'en').map((row) => [row.theme_key, row.title]),
+  );
+  const titleArByThemeKey = new Map(
+    (templateRows ?? []).filter((row) => row.locale === 'ar').map((row) => [row.theme_key, row.title]),
   );
 
   // One folder per child, so a nursery with several stories per kid isn't
@@ -60,12 +59,14 @@ export default async function StoriesPage({ params }: { params: { locale: string
     // is on file, rather than showing nothing.
     const childNameIsArabic = params.locale === 'ar' && Boolean(child?.arabic_first_name);
     const childName = (childNameIsArabic ? child?.arabic_first_name : child?.first_name) || t('noChildName');
+    const fallbackTitle = story.theme_key.replace(/_/g, ' ');
     const storyRow = {
       id: story.id,
       theme_key: story.theme_key,
       status: story.status,
       locale: story.locale,
-      title: titleByThemeKeyLocale.get(`${story.theme_key}:${story.locale}`) ?? story.theme_key.replace(/_/g, ' '),
+      titleEn: titleEnByThemeKey.get(story.theme_key) ?? fallbackTitle,
+      titleAr: titleArByThemeKey.get(story.theme_key) ?? fallbackTitle,
     };
     const existing = childFolders.get(story.child_id);
     if (existing) existing.stories.push(storyRow);

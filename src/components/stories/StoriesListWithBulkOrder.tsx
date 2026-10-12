@@ -43,7 +43,8 @@ export interface StoryRow {
   theme_key: string;
   status: StoryStatus;
   locale: string;
-  title: string;
+  titleEn: string;
+  titleAr: string;
 }
 
 export interface ChildFolder {
@@ -104,7 +105,12 @@ export function StoriesListWithBulkOrder({
   const bulkItems: BulkPrintOrderItem[] = Array.from(selected)
     .map((id) => approvedById.get(id))
     .filter((row): row is NonNullable<typeof row> => Boolean(row))
-    .map((row) => ({ storyId: row.id, childName: row.childName, title: row.title, locale: row.locale }));
+    .map((row) => ({
+      storyId: row.id,
+      childName: row.childName,
+      title: locale === 'ar' ? row.titleAr : row.titleEn,
+      locale: row.locale,
+    }));
 
   return (
     <div>
@@ -172,6 +178,21 @@ export function StoriesListWithBulkOrder({
                   {folder.stories.map((story) => {
                     const selectable = story.status === 'APPROVED';
                     const isChecked = selected.has(story.id);
+                    // Both language titles, always -- see
+                    // docs/DECISIONS.md "Bilingual titles in the stories
+                    // list". Primary follows the page's active UI locale;
+                    // secondary is the other language, dir-flipped so
+                    // Arabic reads correctly even inside an LTR page shell.
+                    const primaryTitle = locale === 'ar' ? story.titleAr : story.titleEn;
+                    const secondaryTitle = locale === 'ar' ? story.titleEn : story.titleAr;
+                    const titleBlock = (
+                      <span className="flex flex-col">
+                        <span>{primaryTitle}</span>
+                        <span className="text-xs text-ink-500" dir={locale === 'ar' ? 'ltr' : 'rtl'}>
+                          {secondaryTitle}
+                        </span>
+                      </span>
+                    );
                     const rowContent = (
                       <>
                         {selectMode && (
@@ -183,19 +204,19 @@ export function StoriesListWithBulkOrder({
                               onChange={() => toggle(story.id)}
                               onClick={(e) => e.stopPropagation()}
                               className="h-4 w-4 disabled:opacity-30"
-                              aria-label={t('bulkOrder.selectStory', { title: story.title })}
+                              aria-label={t('bulkOrder.selectStory', { title: primaryTitle })}
                             />
                           </td>
                         )}
                         <td className="p-4">
                           {selectMode ? (
-                            <span className="font-medium text-ink-900">{story.title}</span>
+                            <span className="font-medium text-ink-900">{titleBlock}</span>
                           ) : (
                             <Link
                               href={`/${locale}/dashboard/stories/${story.id}`}
                               className="focus-ring font-medium text-ink-900 hover:text-lagoon-700"
                             >
-                              {story.title}
+                              {titleBlock}
                             </Link>
                           )}
                         </td>

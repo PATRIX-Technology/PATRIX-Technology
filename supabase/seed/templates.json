@@ -3,7 +3,7 @@
     "theme_key": "healthy_eating",
     "locale": "en",
     "category": "educational",
-    "title": "The Rainbow Plate",
+    "title": "Eating Healthy Foods",
     "synopsis": "{child_name} learns that eating a rainbow of fruits and vegetables makes {pronoun:object} strong and full of energy.",
     "mascot_name": "Marya the Fox",
     "native_review_status": "draft",
@@ -44,7 +44,7 @@
     "theme_key": "healthy_eating",
     "locale": "ar",
     "category": "educational",
-    "title": "صحن قوس المطر",
+    "title": "تناول الطعام الصحي",
     "synopsis": "{v:learns_present} {child_name} أن أكل الأطعمة بألوان قوس المطر يعطي{ps} القوة والطاقة.",
     "mascot_name": "ماريا الثعلبة",
     "native_review_status": "reviewed",
@@ -85,7 +85,7 @@
     "theme_key": "brushing_teeth",
     "locale": "en",
     "category": "educational",
-    "title": "Sparkle Smile Adventure",
+    "title": "Brushing My Teeth",
     "synopsis": "{child_name} discovers a nightly brushing routine with {mascot} that keeps {pronoun:possessive} smile sparkling.",
     "mascot_name": "Marya the Fox",
     "native_review_status": "draft",
@@ -126,7 +126,7 @@
     "theme_key": "brushing_teeth",
     "locale": "ar",
     "category": "educational",
-    "title": "رحلة الابتسامة الحلوة",
+    "title": "تنظيف أسناني بالفرشاة",
     "synopsis": "{v:discovers_present} {child_name} مع {mascot} متعة تنظيف الأسنان كل ليلة لتبقى ابتسامت{ps} لامعة.",
     "mascot_name": "ماريا الثعلبة",
     "native_review_status": "reviewed",
@@ -167,7 +167,7 @@
     "theme_key": "first_day_school",
     "locale": "en",
     "category": "nurseries",
-    "title": "The Big Brave Day",
+    "title": "My First Day at Nursery",
     "synopsis": "{child_name} feels nervous about the first day at {organisation}, until {mascot} helps {pronoun:object} find courage.",
     "mascot_name": "Marya the Fox",
     "native_review_status": "draft",
@@ -208,7 +208,7 @@
     "theme_key": "first_day_school",
     "locale": "ar",
     "category": "nurseries",
-    "title": "يوم الشجاعة الكبير",
+    "title": "يومي الأول في الحضانة",
     "synopsis": "{v:feels_present} {child_name} بالقلق في أول يوم ل{ps} في {organisation}، إلى أن تساعد{ps} {mascot} على إيجاد شجاعت{ps}.",
     "mascot_name": "ماريا الثعلبة",
     "native_review_status": "reviewed",
@@ -249,7 +249,7 @@
     "theme_key": "new_sibling",
     "locale": "en",
     "category": "family",
-    "title": "Our New Little Star",
+    "title": "My New Baby Brother or Sister",
     "synopsis": "{child_name} learns how to be a caring big sibling when a new baby joins the family.",
     "mascot_name": "Marya the Fox",
     "native_review_status": "draft",
@@ -290,7 +290,7 @@
     "theme_key": "new_sibling",
     "locale": "ar",
     "category": "family",
-    "title": "نجمتنا الصغيرة الجديدة",
+    "title": "أخي أو أختي الجديد",
     "synopsis": "{v:learns_present} {child_name} كيف {v:older_sibling_copula} {v:older_sibling_noun} عندما ينضم طفل جديد إلى العائلة.",
     "mascot_name": "ماريا الثعلبة",
     "native_review_status": "reviewed",
@@ -331,7 +331,7 @@
     "theme_key": "honesty",
     "locale": "en",
     "category": "educational",
-    "title": "The Truth Tree",
+    "title": "Telling the Truth",
     "synopsis": "{child_name} learns that telling the truth, even when it's hard, makes {pronoun:object} feel light and proud.",
     "mascot_name": "Marya the Fox",
     "native_review_status": "draft",
@@ -372,7 +372,7 @@
     "theme_key": "honesty",
     "locale": "ar",
     "category": "educational",
-    "title": "شجرة الصدق",
+    "title": "قول الحقيقة",
     "synopsis": "{v:learns_present} {child_name} أن قول الحقيقة، حتى لو كان صعبا، يجعل{ps} {v:feels_present} بالراحة والفخر.",
     "mascot_name": "ماريا الثعلبة",
     "native_review_status": "reviewed",
@@ -413,7 +413,7 @@
     "theme_key": "hand_washing",
     "locale": "en",
     "category": "educational",
-    "title": "Bubble Heroes",
+    "title": "Washing My Hands",
     "synopsis": "{child_name} and {mascot} become Bubble Heroes, washing away germs before snack time.",
     "mascot_name": "Marya the Fox",
     "native_review_status": "draft",
@@ -454,7 +454,7 @@
     "theme_key": "hand_washing",
     "locale": "ar",
     "category": "educational",
-    "title": "أبطال الفقاعات",
+    "title": "غسل يدي",
     "synopsis": "يصبح {child_name} و{mascot} بطلي الفقاعات، ويطردان الجراثيم قبل وقت الوجبة الخفيفة.",
     "mascot_name": "ماريا الثعلبة",
     "native_review_status": "reviewed",
@@ -495,7 +495,7 @@
     "theme_key": "saving_money",
     "locale": "en",
     "category": "educational",
-    "title": "The Piggy Bank Promise",
+    "title": "Learning to Save Money",
     "synopsis": "{child_name} learns that saving a little bit at a time can grow into something wonderful.",
     "mascot_name": "Marya the Fox",
     "native_review_status": "draft",
@@ -536,7 +536,7 @@
     "theme_key": "saving_money",
     "locale": "ar",
     "category": "educational",
-    "title": "وعد الحصالة",
+    "title": "تعلم توفير المال",
     "synopsis": "{v:learns_present} {child_name} أن توفير القليل شيئا فشيئا يكبر ليصبح شيئا رائعا.",
     "mascot_name": "ماريا الثعلبة",
     "native_review_status": "reviewed",
@@ -577,7 +577,7 @@
     "theme_key": "national_day_gratitude",
     "locale": "en",
     "category": "nurseries",
-    "title": "UAE National Day",
+    "title": "Celebrating UAE National Day",
     "synopsis": "{child_name} discovers what makes {pronoun:object} proud and thankful about home on UAE National Day.",
     "mascot_name": "Grandma Amal",
     "native_review_status": "draft",
@@ -618,7 +618,7 @@
     "theme_key": "national_day_gratitude",
     "locale": "ar",
     "category": "nurseries",
-    "title": "اليوم الوطني لدولة الإمارات",
+    "title": "الاحتفال باليوم الوطني للإمارات",
     "synopsis": "{v:discovers_present} {child_name} أسباب فخر{ps} وحب{ps} لوطن{ps} في اليوم الوطني لدولة الإمارات.",
     "mascot_name": "الجدة أمل",
     "native_review_status": "reviewed",
@@ -659,7 +659,7 @@
     "theme_key": "donut_maker",
     "locale": "en",
     "category": "entertainment",
-    "title": "Lara the Donut Maker",
+    "title": "Baking Donuts Together",
     "synopsis": "{child_name} spends a delightful afternoon baking and decorating donuts with Lara, learning that a little patience and a lot of creativity make anything sweeter.",
     "mascot_name": "Lara",
     "native_review_status": "draft",
@@ -700,7 +700,7 @@
     "theme_key": "donut_maker",
     "locale": "ar",
     "category": "entertainment",
-    "title": "لارا صانعة الدونات",
+    "title": "صنع الدونات معا",
     "synopsis": "{v:tried} {child_name} صنع الدونات وتزيينها مع {mascot}، و{v:learned} أن القليل من الصبر والكثير من الإبداع يجعلان كل شيء ألذ.",
     "mascot_name": "لارا",
     "native_review_status": "reviewed",
@@ -741,7 +741,7 @@
     "theme_key": "ramadan_reflection",
     "locale": "en",
     "category": "nurseries",
-    "title": "The Kindness Moon",
+    "title": "Kindness During Ramadan",
     "synopsis": "{child_name} watches the Ramadan moon rise and discovers that kindness and giving are what make {pronoun:possessive} favourite part of the month.",
     "mascot_name": "Grandma Amal",
     "native_review_status": "draft",
@@ -782,7 +782,7 @@
     "theme_key": "ramadan_reflection",
     "locale": "ar",
     "category": "nurseries",
-    "title": "قمر اللطف",
+    "title": "اللطف في رمضان",
     "synopsis": "{v:discovers_present} {child_name} أن اللطف والعطاء هما أجمل ما في رمضان، {v:while_looking} إلى الهلال الجديد.",
     "mascot_name": "الجدة أمل",
     "native_review_status": "reviewed",
@@ -823,7 +823,7 @@
     "theme_key": "eid_celebration",
     "locale": "en",
     "category": "nurseries",
-    "title": "Eid Lantern Day",
+    "title": "Celebrating Eid",
     "synopsis": "{child_name} wakes up to the joy of Eid morning — new clothes, family hugs, and a sweet surprise {pronoun:subject} can't wait to share.",
     "mascot_name": "Grandma Amal",
     "native_review_status": "draft",
@@ -864,7 +864,7 @@
     "theme_key": "eid_celebration",
     "locale": "ar",
     "category": "nurseries",
-    "title": "يوم فانوس العيد",
+    "title": "الاحتفال بالعيد",
     "synopsis": "{v:woke_up} {child_name} في صباح عيد مليء بالفرح: ملابس جديدة، عناق دافئ، ومفاجأة حلوة {v:wanted} مشاركتها مع صديق{ps}.",
     "mascot_name": "الجدة أمل",
     "native_review_status": "reviewed",
@@ -905,7 +905,7 @@
     "theme_key": "birthday_wishes",
     "locale": "en",
     "category": "gifts",
-    "title": "The Wishing Candle",
+    "title": "My Birthday Celebration",
     "synopsis": "On {pronoun:possessive} birthday, {child_name} blows out the candles, makes a wish, and spends the whole day surrounded by friends and love.",
     "mascot_name": "Marya the Fox",
     "native_review_status": "draft",
@@ -946,7 +946,7 @@
     "theme_key": "birthday_wishes",
     "locale": "ar",
     "category": "gifts",
-    "title": "شمعة الأمنية",
+    "title": "الاحتفال بعيد ميلادي",
     "synopsis": "{v:blew_out_candles} {child_name} شموع عيد ميلاد{ps} و{v:made_a_wish}، في يوم مليء بالأصدقاء والحب.",
     "mascot_name": "ماريا الثعلبة",
     "native_review_status": "reviewed",
@@ -987,7 +987,7 @@
     "theme_key": "graduation_day",
     "locale": "en",
     "category": "gifts",
-    "title": "My Big Graduation Day",
+    "title": "My Graduation Day",
     "synopsis": "On graduation day, {child_name} proudly crosses the little stage, holds up a certificate, and promises never to forget {pronoun:possessive} nursery friends.",
     "mascot_name": "Marya the Fox",
     "native_review_status": "draft",
@@ -1028,7 +1028,7 @@
     "theme_key": "graduation_day",
     "locale": "ar",
     "category": "gifts",
-    "title": "يوم تخرجي الكبير",
+    "title": "يوم تخرجي",
     "synopsis": "{v:walked_proudly} {child_name} عبر المسرح الصغير و{v:received_certificate}، و{v:promised} بعدم نسيان أصدقاء الحضانة أبدا.",
     "mascot_name": "ماريا الثعلبة",
     "native_review_status": "reviewed",
@@ -1062,6 +1062,170 @@
         "order": 6,
         "text": "في أول يوم في المدرسة الكبيرة، {v:placed} {child_name} شهادة تخرج{ps} من الحضانة في حقيبة ظهر جديدة، {v:felt_brave_again} من جديد، تماما كما كانت {mascot} تثق ب{ps} دائما.",
         "image_prompt": "شخصية {child_name} تقف عند مدخل مدرسة كبيرة جديدة وتحمل حقيبة ظهر، شهادة التخرج تظهر من الحقيبة، الثعلب الكرتوني يلوح بفخر من بعيد، ضوء صباحي مشرق، أسلوب رسوم كتاب قصص."
+      }
+    ]
+  },
+  {
+    "theme_key": "being_kind",
+    "locale": "en",
+    "category": "educational",
+    "title": "Being Kind to Others",
+    "synopsis": "{child_name} learns that small acts of kindness can make a big difference to the people around {pronoun:object}.",
+    "mascot_name": "Marya the Fox",
+    "native_review_status": "draft",
+    "pages": [
+      {
+        "order": 1,
+        "text": "{child_name} noticed a friend sitting alone at nursery, looking sad and quiet.",
+        "image_prompt": "{child_name}'s avatar noticing a friend sitting alone and looking sad on a playground bench, storybook illustration style."
+      },
+      {
+        "order": 2,
+        "text": "\"A kind word can turn someone's whole day around,\" said {mascot}. \"Being kind doesn't cost a thing, but it means everything.\"",
+        "image_prompt": "Cartoon fox mascot speaking warmly beside two children, gentle encouraging expression, storybook illustration style."
+      },
+      {
+        "order": 3,
+        "text": "{child_name} walked over and sat beside {pronoun:possessive} friend. \"Want to play together?\" {pronoun:subject_cap} asked with a warm smile.",
+        "image_prompt": "{child_name}'s avatar sitting down next to a quiet friend, offering a toy with a warm smile, playground setting, storybook illustration style."
+      },
+      {
+        "order": 4,
+        "text": "Soon, the two friends were laughing and playing together, and {child_name} felt warm and happy inside.",
+        "image_prompt": "Two children playing together happily with big smiles, {child_name}'s avatar in the middle, sunny playground, storybook illustration style."
+      },
+      {
+        "order": 5,
+        "text": "The next day, {child_name} saw a friend drop some crayons, and quickly helped pick them up.",
+        "image_prompt": "{child_name}'s avatar helping a friend pick up scattered crayons off the floor, classroom setting, storybook illustration style."
+      },
+      {
+        "order": 6,
+        "text": "{child_name} realized that being kind was becoming {pronoun:possessive} favourite thing to do — because a little kindness always comes back as a big smile.",
+        "image_prompt": "{child_name}'s avatar surrounded by several smiling friends giving a group high-five, warm classroom scene, storybook illustration style."
+      }
+    ]
+  },
+  {
+    "theme_key": "being_kind",
+    "locale": "ar",
+    "category": "educational",
+    "title": "اللطف مع الآخرين",
+    "synopsis": "{v:learns_present} {child_name} أن اللطف الصغير يمكن أن يصنع فرقا كبيرا في حياة من حول{ps}.",
+    "mascot_name": "ماريا الثعلبة",
+    "native_review_status": "draft",
+    "pages": [
+      {
+        "order": 1,
+        "text": "{v:noticed} {child_name} صديقا يجلس وحيدا في الحضانة، يبدو حزينا وهادئا.",
+        "image_prompt": "شخصية {child_name} تلاحظ صديقا يجلس وحيدا وحزينا على مقعد في الملعب، أسلوب رسوم كتاب قصص."
+      },
+      {
+        "order": 2,
+        "text": "قالت {mascot}: «الكلمة الطيبة يمكن أن تغير يوم شخص بالكامل. اللطف لا يكلف شيئا، لكنه يعني كل شيء.»",
+        "image_prompt": "الثعلب الكرتوني يتحدث بود بجانب طفلين، تعبير مشجع لطيف، أسلوب رسوم كتاب قصص."
+      },
+      {
+        "order": 3,
+        "text": "{v:sat_down} {child_name} بجانب صديق{ps} و{v:asked} بابتسامة دافئة: «هل تريد أن نلعب معا؟»",
+        "image_prompt": "شخصية {child_name} تجلس بجانب صديق هادئ وتقدم له لعبة بابتسامة دافئة، ملعب الحضانة، أسلوب رسوم كتاب قصص."
+      },
+      {
+        "order": 4,
+        "text": "بعد قليل، كان الصديقان يضحكان ويلعبان معا، و{v:felt_happy} {child_name}.",
+        "image_prompt": "طفلان يلعبان معا بسعادة وابتسامات كبيرة، شخصية {child_name} في المنتصف، ملعب مشمس، أسلوب رسوم كتاب قصص."
+      },
+      {
+        "order": 5,
+        "text": "في اليوم التالي، {v:saw} {child_name} صديقا آخر تسقط منه ألوانه، و{v:helped} على الفور في جمعها.",
+        "image_prompt": "شخصية {child_name} تساعد صديقا في جمع الألوان المتناثرة على الأرض، غرفة صفية، أسلوب رسوم كتاب قصص."
+      },
+      {
+        "order": 6,
+        "text": "{v:realized} {child_name} أن اللطف أصبح أحب الأشياء إلي{ps} — لأن اللطف القليل يعود دائما ابتسامة كبيرة.",
+        "image_prompt": "شخصية {child_name} محاطة بعدة أصدقاء مبتسمين يتشاركون التصفيق الجماعي، مشهد صفي دافئ، أسلوب رسوم كتاب قصص."
+      }
+    ]
+  },
+  {
+    "theme_key": "keep_smiling",
+    "locale": "en",
+    "category": "educational",
+    "title": "Keep Smiling",
+    "synopsis": "{child_name} learns that even on a tricky day, choosing to smile and stay positive can turn things around.",
+    "mascot_name": "Marya the Fox",
+    "native_review_status": "draft",
+    "pages": [
+      {
+        "order": 1,
+        "text": "{child_name} accidentally dropped {pronoun:possessive} favourite toy and felt sad when a little piece broke off.",
+        "image_prompt": "{child_name}'s avatar looking sadly at a dropped toy with a small broken piece on the floor, cosy room setting, storybook illustration style."
+      },
+      {
+        "order": 2,
+        "text": "\"A smile is like sunshine,\" said {mascot}. \"It can light up even a cloudy day — you get to choose how you feel next.\"",
+        "image_prompt": "Cartoon fox mascot pointing up at a sun breaking through clouds, cheerful expression, storybook illustration style."
+      },
+      {
+        "order": 3,
+        "text": "{child_name} took a deep breath. {pronoun:subject_cap} still felt a little sad, but {pronoun:subject} decided to smile anyway.",
+        "image_prompt": "{child_name}'s avatar taking a deep breath with eyes closed, a small hopeful smile forming, soft lighting, storybook illustration style."
+      },
+      {
+        "order": 4,
+        "text": "The smile helped {child_name} feel better. {pronoun:subject_cap} tried fixing the toy again, and this time it worked.",
+        "image_prompt": "{child_name}'s avatar smiling while carefully fixing a toy, cartoon fox mascot cheering beside {pronoun:object}, storybook illustration style."
+      },
+      {
+        "order": 5,
+        "text": "Later, {child_name} noticed a friend looking worried, so {pronoun:subject} smiled warmly at {pronoun:object}.",
+        "image_prompt": "{child_name}'s avatar smiling warmly at a worried-looking friend, classroom setting, storybook illustration style."
+      },
+      {
+        "order": 6,
+        "text": "By the end of the day, {child_name} remembered that choosing to smile, even during a hard moment, could make everything feel a little brighter.",
+        "image_prompt": "{child_name}'s avatar smiling brightly under a sunset sky, cartoon fox mascot beside {pronoun:object}, warm happy ending scene, storybook illustration style."
+      }
+    ]
+  },
+  {
+    "theme_key": "keep_smiling",
+    "locale": "ar",
+    "category": "educational",
+    "title": "ابتسم دائما",
+    "synopsis": "{v:learns_present} {child_name} أنه حتى في يوم صعب، اختيار الابتسامة والتفكير الإيجابي يمكن أن يغير كل شيء.",
+    "mascot_name": "ماريا الثعلبة",
+    "native_review_status": "draft",
+    "pages": [
+      {
+        "order": 1,
+        "text": "{v:accidentally_dropped} {child_name} لعبت{ps} المفضلة فانكسرت منها قطعة صغيرة، و{v:felt_sad}.",
+        "image_prompt": "شخصية {child_name} تنظر بحزن إلى لعبة سقطت وانكسر منها جزء صغير، غرفة مريحة، أسلوب رسوم كتاب قصص."
+      },
+      {
+        "order": 2,
+        "text": "قالت {mascot}: «الابتسامة تشبه أشعة الشمس، تستطيع أن تنير حتى اليوم الغائم — وأنت من يختار كيف تشعر بعد ذلك.»",
+        "image_prompt": "الثعلب الكرتوني يشير إلى شمس تخرج من بين الغيوم، تعبير متفائل، أسلوب رسوم كتاب قصص."
+      },
+      {
+        "order": 3,
+        "text": "{v:took_deep_breath} {child_name} نفسا عميقا. {v:feels_present} بقليل من الحزن، لكن{ps} {v:decided} {v:to_smile} رغم ذلك.",
+        "image_prompt": "شخصية {child_name} تأخذ نفسا عميقا بعينين مغمضتين، ابتسامة أمل صغيرة تبدأ بالظهور، إضاءة هادئة، أسلوب رسوم كتاب قصص."
+      },
+      {
+        "order": 4,
+        "text": "{v:smiled} {child_name} و{v:felt_light}، ثم {v:tried} إصلاح اللعبة مرة أخرى و{v:succeeded} هذه المرة.",
+        "image_prompt": "شخصية {child_name} تبتسم بينما تصلح لعبتها بعناية، الثعلب الكرتوني المرح يشجعها بجانبها، أسلوب رسوم كتاب قصص."
+      },
+      {
+        "order": 5,
+        "text": "بعد ذلك، {v:noticed} {child_name} صديقا يبدو قلقا، و{v:smiled} له بحرارة.",
+        "image_prompt": "شخصية {child_name} تبتسم بحرارة لصديق يبدو قلقا، غرفة صفية، أسلوب رسوم كتاب قصص."
+      },
+      {
+        "order": 6,
+        "text": "بنهاية اليوم، {v:remembered} {child_name} أن اختيار الابتسامة، حتى في اللحظات الصعبة، يجعل كل شيء أكثر إشراقا.",
+        "image_prompt": "شخصية {child_name} تبتسم بإشراق تحت سماء الغروب، الثعلب الكرتوني بجانبها، مشهد ختامي سعيد ودافئ، أسلوب رسوم كتاب قصص."
       }
     ]
   }

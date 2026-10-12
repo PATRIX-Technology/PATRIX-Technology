@@ -6,8 +6,9 @@ import { useTranslations } from 'next-intl';
 import { createStoryAction, type CreateStoryResult } from '@/lib/actions/stories';
 import { useSafeFormReducer } from '@/lib/actions/use-safe-form-reducer';
 import { Button } from '@/components/ui/Button';
+import { Modal } from '@/components/ui/Modal';
 import { useToast } from '@/components/ui/Toast';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { ConsentStatus } from '@/types/database';
 
 interface TemplateOption {
@@ -48,6 +49,64 @@ const CATEGORY_ACCENTS: Record<string, { header: string; cardBorder: string }> =
   entertainment: { header: 'bg-coral-900/30 text-coral-300', cardBorder: 'hover:border-coral-700' },
 };
 const DEFAULT_ACCENT = { header: 'bg-ink-800 text-ink-300', cardBorder: 'hover:border-ink-600' };
+
+// One icon per category, shown on the category's own clickable card box —
+// distinct from THEME_ICONS below (one per individual template, shown
+// inside that category's popup). See docs/DECISIONS.md "Category cards +
+// popup template picker".
+const CATEGORY_ICONS: Record<string, JSX.Element> = {
+  family: (
+    <path
+      d="M12 20s-7-4.2-9.3-8.4C.9 8.4 3 5 6.5 5c2 0 3.3 1 5.5 3.3C14.2 6 15.5 5 17.5 5 21 5 23.1 8.4 21.3 11.6 19 15.8 12 20 12 20Z"
+      stroke="currentColor"
+      strokeWidth="1.7"
+      fill="none"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  ),
+  nurseries: (
+    <path
+      d="M12 4 2 9l10 5 10-5-10-5Zm-6 7.2V16c0 1.8 2.5 3 6 3s6-1.2 6-3v-4.8"
+      stroke="currentColor"
+      strokeWidth="1.7"
+      fill="none"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  ),
+  gifts: (
+    <path
+      d="M4 9h16v11H4V9Zm-1 0h18v4H3V9Zm9-5c-2 0-3 1.3-3 2.5S10 9 12 9s3-1.3 3-2.5S14 4 12 4Zm0 0c2 0 3 1.3 3 2.5S14 9 12 9m0-9c-2 0-3 1.3-3 2.5S10 9 12 9"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      fill="none"
+      strokeLinejoin="round"
+    />
+  ),
+  educational: (
+    <path
+      d="M4 5.5c2.5-1.3 5.5-1.3 8 0 2.5-1.3 5.5-1.3 8 0v13c-2.5-1.3-5.5-1.3-8 0-2.5-1.3-5.5-1.3-8 0v-13Zm8 0v13"
+      stroke="currentColor"
+      strokeWidth="1.7"
+      fill="none"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  ),
+  entertainment: (
+    <path
+      d="m12 2 2.6 5.9 6.4.6-4.8 4.3 1.4 6.3L12 16l-5.6 3.1 1.4-6.3-4.8-4.3 6.4-.6L12 2Z"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      fill="none"
+      strokeLinejoin="round"
+    />
+  ),
+};
+const DEFAULT_CATEGORY_ICON = (
+  <path d="M4 6h16M4 12h16M4 18h10" stroke="currentColor" strokeWidth="1.7" fill="none" strokeLinecap="round" />
+);
 
 const THEME_ICONS: Record<string, JSX.Element> = {
   healthy_eating: (
@@ -184,6 +243,27 @@ const THEME_ICONS: Record<string, JSX.Element> = {
       strokeLinejoin="round"
     />
   ),
+  being_kind: (
+    <>
+      <path
+        d="M12 20s-7-4.2-9.3-8.4C.9 8.4 3 5 6.5 5c2 0 3.3 1 5.5 3.3C14.2 6 15.5 5 17.5 5 21 5 23.1 8.4 21.3 11.6 19 15.8 12 20 12 20Z"
+        stroke="currentColor"
+        strokeWidth="1.7"
+        fill="none"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path d="M8.5 11.5 10 13l4.5-4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </>
+  ),
+  keep_smiling: (
+    <>
+      <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.7" fill="none" />
+      <path d="M8 13.5c1 1.3 2.4 2 4 2s3-.7 4-2" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+      <circle cx="9" cy="9.5" r="1" fill="currentColor" />
+      <circle cx="15" cy="9.5" r="1" fill="currentColor" />
+    </>
+  ),
 };
 
 const FALLBACK_ICON = (
@@ -218,6 +298,13 @@ export function CreateStoryForm({
     {},
   );
   const submitCount = useRef(0);
+  // Which category's popup is currently open (null = none) and which
+  // template is currently selected across all categories -- controlled
+  // state so the category card can show a "selected" summary and the
+  // radio choice survives the popup closing. See docs/DECISIONS.md
+  // "Category cards + popup template picker".
+  const [openCategory, setOpenCategory] = useState<string | null>(null);
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
 
   useEffect(() => {
     if (submitCount.current === 0) return;
@@ -274,6 +361,8 @@ export function CreateStoryForm({
     );
   }
 
+  const selectedTemplate = usableTemplates.find((tpl) => tpl.id === selectedTemplateId) ?? null;
+
   return (
     <form
       action={formAction}
@@ -282,41 +371,81 @@ export function CreateStoryForm({
       }}
       className="flex flex-col gap-6"
     >
+      {/* Category card boxes -- clicking one opens that category's popup
+          (below) rather than expanding inline, so the picker reads as a
+          deliberate, modern grid rather than a stack of accordions. See
+          docs/DECISIONS.md "Category cards + popup template picker". */}
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        {categories.map((category) => {
+          const categoryTemplates = usableTemplates.filter((tpl) => tpl.category === category);
+          const labels = CATEGORY_LABELS[category];
+          const accent = CATEGORY_ACCENTS[category] ?? DEFAULT_ACCENT;
+          const primaryLabel = labels ? (locale === 'ar' ? labels.ar : labels.en) : category;
+          const secondaryLabel = labels ? (locale === 'ar' ? labels.en : labels.ar) : null;
+          const selectedInCategory =
+            selectedTemplate && selectedTemplate.category === category ? selectedTemplate : null;
+          const selectedTitle = selectedInCategory
+            ? locale === 'ar'
+              ? selectedInCategory.titleAr
+              : selectedInCategory.titleEn
+            : null;
+          return (
+            <button
+              key={category}
+              type="button"
+              onClick={() => setOpenCategory(category)}
+              className={`focus-ring group relative flex flex-col gap-3 rounded-xl2 border p-4 text-start transition-all hover:-translate-y-0.5 hover:shadow-card ${
+                selectedInCategory
+                  ? 'border-saffron-500 shadow-card ring-2 ring-saffron-500/35'
+                  : `border-[rgb(var(--color-border))] ${accent.cardBorder}`
+              }`}
+            >
+              <span className="flex items-center justify-between">
+                <span className={`flex h-11 w-11 items-center justify-center rounded-xl ${accent.header}`}>
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                    {CATEGORY_ICONS[category] ?? DEFAULT_CATEGORY_ICON}
+                  </svg>
+                </span>
+                <span className="text-xs font-medium text-ink-500">
+                  {t('picker.templateCount', { count: categoryTemplates.length })}
+                </span>
+              </span>
+              <span className="flex items-baseline gap-2">
+                <span className="font-display text-base text-ink-900">{primaryLabel}</span>
+                {secondaryLabel && <span className="text-sm text-ink-500">{secondaryLabel}</span>}
+              </span>
+              {selectedTitle ? (
+                <span className="flex items-center gap-1.5 text-sm text-saffron-400">
+                  <span aria-hidden>✓</span>
+                  <span className="truncate">{selectedTitle}</span>
+                </span>
+              ) : (
+                <span className="text-sm text-ink-500">{t('picker.viewTemplates')}</span>
+              )}
+            </button>
+          );
+        })}
+      </div>
+
       {categories.map((category) => {
         const categoryTemplates = usableTemplates.filter((tpl) => tpl.category === category);
         const labels = CATEGORY_LABELS[category];
-        const accent = CATEGORY_ACCENTS[category] ?? DEFAULT_ACCENT;
         const primaryLabel = labels ? (locale === 'ar' ? labels.ar : labels.en) : category;
         const secondaryLabel = labels ? (locale === 'ar' ? labels.en : labels.ar) : null;
+        const accent = CATEGORY_ACCENTS[category] ?? DEFAULT_ACCENT;
         return (
-          // A collapsible dropdown per category -- closed by default, so
-          // the picker opens compact rather than as one long always
-          // -expanded scroll, while still reading as a deliberate, colored
-          // section once opened (not the bare-triangle plain <details>
-          // this replaced the first time around).
-          <details key={category} className="group overflow-hidden rounded-xl2 border border-[rgb(var(--color-border))]">
-            <summary
-              className={`focus-ring flex cursor-pointer list-none items-center justify-between gap-2 px-4 py-3 transition-colors hover:brightness-110 ${accent.header}`}
-            >
-              <span className="flex items-baseline gap-2 text-sm font-semibold">
-                <span>{primaryLabel}</span>
-                {secondaryLabel && <span className="font-normal opacity-80">{secondaryLabel}</span>}
-              </span>
-              <span className="flex items-center gap-2">
-                <span className="text-xs font-normal opacity-70">{categoryTemplates.length}</span>
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  aria-hidden
-                  className="transition-transform duration-200 group-open:rotate-180"
-                >
-                  <path d="m6 9 6 6 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </span>
-            </summary>
-            <div className="grid gap-3 p-4 pt-3 sm:grid-cols-2 lg:grid-cols-3">
+          // Always mounted (not conditionally rendered) so every radio
+          // input across every category stays part of this <form> at all
+          // times -- only `open` toggles the dialog's own visibility, via
+          // Modal's showModal()/close(). Unmounting on close would lose
+          // the selection the moment the popup shuts.
+          <Modal
+            key={category}
+            open={openCategory === category}
+            onClose={() => setOpenCategory(null)}
+            title={`${primaryLabel}${secondaryLabel ? ` · ${secondaryLabel}` : ''}`}
+          >
+            <div className="grid max-h-[70vh] gap-3 overflow-y-auto sm:grid-cols-2">
               {categoryTemplates.map((template) => {
                 const globalIndex = usableTemplates.indexOf(template);
                 const primaryTitle = locale === 'ar' ? template.titleAr : template.titleEn;
@@ -326,7 +455,18 @@ export function CreateStoryForm({
                     key={template.id}
                     className={`group relative flex cursor-pointer flex-col gap-3 rounded-xl2 border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface-raised))] p-4 transition-all hover:-translate-y-0.5 hover:shadow-card has-[:checked]:border-saffron-500 has-[:checked]:shadow-card has-[:checked]:ring-2 has-[:checked]:ring-saffron-500/35 ${accent.cardBorder}`}
                   >
-                    <input type="radio" name="templateId" value={template.id} required className="peer sr-only" />
+                    <input
+                      type="radio"
+                      name="templateId"
+                      value={template.id}
+                      required
+                      checked={selectedTemplateId === template.id}
+                      onChange={() => {
+                        setSelectedTemplateId(template.id);
+                        setOpenCategory(null);
+                      }}
+                      className="peer sr-only"
+                    />
                     <span
                       className={`flex h-11 w-11 items-center justify-center rounded-xl ${ICON_TINTS[globalIndex % ICON_TINTS.length]}`}
                     >
@@ -347,9 +487,10 @@ export function CreateStoryForm({
                 );
               })}
             </div>
-          </details>
+          </Modal>
         );
       })}
+
       <GenerateButton label={t('generate')} />
     </form>
   );

@@ -428,6 +428,10 @@
     "chooseChild": "Choose a child",
     "generate": "Generate story",
     "createFailedTitle": "Couldn't create the story",
+    "picker": {
+      "templateCount": "{count, plural, one {# template} other {# templates}}",
+      "viewTemplates": "Tap to view templates"
+    },
     "categories": {
       "family": "Family",
       "nurseries": "Nurseries",

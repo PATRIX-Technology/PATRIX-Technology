@@ -130,6 +130,11 @@ export const ARABIC_VERB_KEYS = [
   'found_card',
   'collects_artwork',
   'felt_brave_again',
+  // Added for the "Being Kind to Others" / "Keep Smiling" educational
+  // templates — see docs/DECISIONS.md.
+  'felt_sad',
+  'to_smile',
+  'succeeded',
 ] as const;
 
 export type ArabicVerbKey = (typeof ARABIC_VERB_KEYS)[number];
@@ -273,6 +278,12 @@ export const ARABIC_CONJUGATIONS: Record<ArabicVerbKey, Record<Pronoun, string>>
     she: 'شعرت بالشجاعة مجددا',
     he: 'شعر بالشجاعة مجددا',
   },
+  // Added for the "Being Kind to Others" / "Keep Smiling" educational
+  // templates — see docs/DECISIONS.md "Category cards + popup template
+  // picker" (same decision entry covers the new-templates work).
+  felt_sad: { she: 'شعرت بالحزن', he: 'شعر بالحزن' },
+  to_smile: { she: 'أن تبتسم', he: 'أن يبتسم' },
+  succeeded: { she: 'نجحت', he: 'نجح' },
 };
 
 /**

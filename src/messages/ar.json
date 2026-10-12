@@ -428,6 +428,10 @@
     "chooseChild": "اختر طفلا",
     "generate": "إنشاء القصة",
     "createFailedTitle": "تعذر إنشاء القصة",
+    "picker": {
+      "templateCount": "{count, plural, zero {لا قوالب} one {قالب واحد} two {قالبان} few {# قوالب} many {# قالبا} other {# قالب}}",
+      "viewTemplates": "اضغط لعرض القوالب"
+    },
     "categories": {
       "family": "العائلة",
       "nurseries": "الحضانات",

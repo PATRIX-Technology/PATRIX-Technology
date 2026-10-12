@@ -6084,8 +6084,83 @@ corrupting batch also returned no errors — so every such edit now
 gets a full re-read verification before being reported as done,
 independent of what the write call itself reports.
 
-Still pending as of this entry: the same two-table restructuring for
-the "What to Present to B2B Customers" Google Doc and for the 4
-customer-facing pitch decks plus the Internal Strategy and Sales Rep
-Reference decks (their existing single pricing slide/table per
-audience needs to become two, per the same pattern).
+The same restructuring was then applied, with the same table-by-table
+re-read verification, to the "What to Present to B2B Customers"
+Google Doc (EN+AR) — its single combined pricing table became a
+Founding Partner table, a Standard table, and a new Printed Copies
+table per language, inserted via the same proven `actual_end`-chained
+formula. One cosmetic regression recurred here, already known from the
+corruption recovery: inserting a table immediately before a heading
+paragraph pulled that heading's own style into the table's trailing
+paragraph, silently de-headingizing "3. The Free Pilot" / "٣. البرنامج
+التجريبي..." — caught on the mandatory re-read, fixed with a 2-request
+`updateParagraphStyle` follow-up, and reconfirmed clean.
+
+## Pricing split extended to all 6 pptx decks — and a second confirmed case of a documented pptx fix never reaching Drive
+
+Completed the same Founding Partner / Standard split for every
+remaining pricing surface: the 4 customer-facing pitch decks (EN/AR
+template, EN/AR "Sunshine Kids" sample) and the Internal Strategy and
+Sales Rep Reference decks. Delegated the mechanical pptx-editing work
+to two background agents (customer decks; internal decks) running in
+parallel, each briefed with the exact figures, the pptx skill's
+required workflow (structural edits before content edits via
+`add_slide.py`, direct XML editing, `validate.py --original`, then a
+real rendered-image visual QA via `soffice`+`pdftoppm` — never just a
+schema check), and an explicit instruction to verify claims themselves
+rather than trust my notes. Both agents were interrupted once by an
+account-level rate limit mid-run and resumed cleanly from their own
+transcripts once it cleared.
+
+Before building anything, the customer-decks agent was asked to verify
+a discrepancy I'd flagged: an earlier DECISIONS.md entry ("New
+\"PRICING\" slide added to all 4 customer-facing pitch decks") describes
+a slide that, on inspection, did not actually exist in any of the 4
+live Drive files — their `modifiedTime` matched `createdTime` to the
+millisecond, meaning the edited version from that earlier entry never
+actually landed on Drive. The agent independently confirmed this (by
+mapping each deck's real slide order through `<p:sldIdLst>` and
+`presentation.xml.rels`, since slide XML filenames don't match display
+order, then grepping every slide for pricing content) before building
+anything — this is now the **second** confirmed case in this project
+of a pptx edit being completed and reported correct locally while the
+Drive re-upload silently failed (the first was the Internal Strategy
+deck, logged earlier as "Internal strategy pptx fixed locally; Drive
+re-upload hit a real tool limit"). Both agents also independently
+re-confirmed, empirically rather than from documentation alone, that
+`mcp__Google_Drive__update_file` cannot replace a file's binary
+content — it only touches `title`/`parentId` metadata; one agent
+proved this by calling it and checking the file's `modifiedTime`
+changed while its `fileSize` stayed byte-identical to the untouched
+original.
+
+Built: in the 4 customer decks, two new slides ("Founding Partner
+Launch Pricing" and "Standard Pricing") inserted between "Watch It In
+Action" and "YOUR PILOT," using stat cards (redesigned taller, with
+plan name + quota lines, since the layout they were duplicated from —
+"YOUR PILOT" — only had room for a single big number) rather than
+tables, to match the deck's existing visual language; footer page
+numbers on every displaced slide renumbered. In the Internal Strategy
+and Sales Rep Reference decks, the existing combined B2B pricing table
+split into the same two slides; the existing B2C/family table got a
+story-suggestions column and the full printed-copy ladder added in
+place, since neither deck's family pricing ever had a
+Founding-Partner-style discount phase to split out (confirmed by
+inspecting the pre-edit content first, not assumed) — the Internal
+Strategy deck's tables also kept their existing COGS/margin columns
+since the pre-edit table already had them; the Sales Rep deck's did
+not, and none were added, to stay consistent with that deck's existing
+customer-facing-safe framing. Both decks got the full-text, not just
+AED, Arabic translations reusing the established `docs/ar/pricing.md`
+numeral/currency convention, with card order and text alignment
+mirrored for RTL (verified against each deck's own pre-existing RTL
+slide, not guessed). All 6 files passed `validate.py --original` and
+were visually re-rendered and inspected via `soffice`+`pdftoppm`
+(the customer-decks agent found and fixed one real text-wrap/overlap
+defect on first-draft slide titles before re-validating).
+
+Delivery: since `update_file` cannot write pptx content and this
+session's pptx-editing agents don't carry Google upload credentials
+usable for a ~2MB binary roundtrip, all 6 finished files were handed
+to the founder directly via file delivery for manual re-upload over
+the original Drive filenames, preserving the existing links.

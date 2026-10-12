@@ -81,7 +81,8 @@ breach of Ownly's own systems.
 
 - A confirmed, counsel-reviewed notification deadline specific to UAE
   PDPL (using the 72-hour GDPR norm as a placeholder above).
-- A designated data protection contact point (blocked on Meydan Free
-  Zone incorporation — see the Legal page's `entityNote`).
+- A designated data protection contact point (blocked on Sharjah Media
+  City (SHAMS) Free Zone incorporation — see the Legal page's
+  `entityNote`).
 - A tested incident-response drill — this procedure has not been
   rehearsed against a simulated breach.

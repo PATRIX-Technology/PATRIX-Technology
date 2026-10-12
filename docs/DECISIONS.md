@@ -7031,3 +7031,48 @@ guess the way this one caller did.
 Verified by rendering a real sample PDF reproducing the exact reported
 2-line caption (not a 1-line stand-in, which wouldn't have exposed the
 bug at all) and inspecting the corner via `pdftoppm` before and after.
+
+## Jurisdiction switched from Meydan Free Zone (Dubai) to Sharjah Media City / SHAMS (Sharjah)
+
+Founder decision, 12 Oct 2026: register in a Sharjah free zone instead
+of Meydan, on cost grounds. Recommended Sharjah Media City (SHAMS)
+specifically — built for media/digital/creative businesses, which fits
+Ownly (an AI content platform) better than Sharjah's more
+industrial/trading-focused free zones (SPC, Hamriyah). No specific
+SHAMS license fee is quoted anywhere this was updated — that number
+needs confirming directly with SHAMS, same caveat the Meydan figure
+always carried.
+
+UAE Corporate Tax (9% above AED 375,000 net profit) and VAT (5%,
+registration thresholds at AED 375,000 mandatory / AED 187,500
+voluntary) are federal, not emirate-specific, so none of that changes
+by switching free zones — only the free-zone-specific pieces
+(license cost, which authority to register/renew with) do.
+
+Updated everywhere "Meydan" was a real reference, not a historical
+record:
+- Drive: "Meydan Free Zone Legal, Tax & Governance Roadmap (EN+AR)" →
+  renamed and content swapped to Sharjah Media City (SHAMS), including
+  the jurisdiction line and Drive folder-structure notes; the one
+  Dubai-specific cost figure (AED 12,500) replaced with "TBC — confirm
+  directly with SHAMS" rather than guessing a SHAMS number.
+- Drive: "Meydan Registration Checklist (EN+AR)" → same treatment,
+  renamed and content swapped.
+- Drive: the new "Subscriptions & Budget — Next Steps" and "UAE Legal
+  & Tax — Claude Prompts + Steps" docs (created this session) updated
+  to reference SHAMS instead of Meydan.
+- This repo: `docs/en/breach-notification-procedure.md` and
+  `docs/en/record-of-processing-activities.md` (PDPL compliance
+  placeholders pending real incorporation) updated to name SHAMS/
+  Sharjah instead of Meydan/Dubai.
+- This repo, LIVE customer-facing text: `src/messages/{en,ar}.json`'s
+  `legal.entityNote` (shown on the app's own `/legal` page — real
+  prospective customers can read this) and the breach-notification
+  contact-point note, both updated from "Meydan Free Zone, Dubai" to
+  "Sharjah Media City (SHAMS) Free Zone, Sharjah".
+
+`docs/DECISIONS.md`'s own prior mention of "Meydan Registration
+Checklist" (in an earlier dated entry) is left as-is — it's a
+historical record of what existed at that time, not a live reference,
+and this project's convention is to never retroactively rewrite past
+decision-log entries.

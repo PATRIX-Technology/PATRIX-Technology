@@ -8,8 +8,9 @@ It is **not** a legal compliance statement — see `docs/NEEDS_FROM_ME.md`.
 
 ## 1. Controller
 
-Ownly, operated by [legal entity name to confirm — Meydan Free Zone
-FZE/FZ-LLC, trade license pending incorporation], Dubai, UAE.
+Ownly, operated by [legal entity name to confirm — Sharjah Media City
+(SHAMS) Free Zone FZE/FZ-LLC, trade license pending incorporation],
+Sharjah, UAE.
 
 ## 2. Processing activities
 

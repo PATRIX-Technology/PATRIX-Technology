@@ -148,12 +148,12 @@ subscription tier the nursery is on.
 
 ### Printed copies — B2B (optional add-on, same ladder at every tier and every pricing phase)
 
-| Quantity | Price / book | Markup on cost | Notes |
-|---|---|---|---|
-| 1 (standalone) | **AED 81** (≈$22) | 80% | Default checkout price — replaces the earlier AED 69/$19 price |
-| 10-49 | **AED 69** | 53% | Nursery class-set pricing |
-| 50-99 | **AED 63** | 40% | Nursery multi-class pricing |
-| 100+ | **AED 58** + **free delivery** | 29% | A full graduation/term-end print run for a nursery |
+| Quantity | Price / book | Delivery fee (UAE) | Markup on cost | Notes |
+|---|---|---|---|---|
+| 1 (standalone) | **AED 81** (≈$22) | AED 30 flat | 80% | Default checkout price — replaces the earlier AED 69/$19 price |
+| 10-49 | **AED 69** | AED 30 flat | 53% | Nursery class-set pricing |
+| 50-99 | **AED 63** | AED 30 flat | 40% | Nursery multi-class pricing |
+| 100+ | **AED 58** | **Free** | 29% | A full graduation/term-end print run for a nursery |
 
 Full cost basis, margin math, and fulfillment status in "Printed
 copies" below — this is the same ladder, repeated here so it's visible
@@ -227,12 +227,12 @@ only one pricing table, not two.
 
 ### Printed copies — family (optional add-on, same ladder as B2B)
 
-| Quantity | Price / book | Markup on cost | Notes |
-|---|---|---|---|
-| 1 (standalone) | **AED 81** (≈$22) | 80% | Default checkout price |
-| 10-49 | **AED 69** | 53% | A family ordering for a class gift or school event |
-| 50-99 | **AED 63** | 40% | Larger group order |
-| 100+ | **AED 58** + **free delivery** | 29% | Rare for a single family, but the same ladder applies |
+| Quantity | Price / book | Delivery fee (UAE) | Markup on cost | Notes |
+|---|---|---|---|---|
+| 1 (standalone) | **AED 81** (≈$22) | AED 30 flat | 80% | Default checkout price |
+| 10-49 | **AED 69** | AED 30 flat | 53% | A family ordering for a class gift or school event |
+| 50-99 | **AED 63** | AED 30 flat | 40% | Larger group order |
+| 100+ | **AED 58** | **Free** | 29% | Rare for a single family, but the same ladder applies |
 
 Full cost basis, margin math, and fulfillment status in "Printed
 copies" below.
@@ -350,8 +350,8 @@ nurseries & schools" above) is digital only; whether to print any of
 it, and how many copies, is a choice the nursery makes each time it
 places a print order, not something the plan commits them to. The
 price per copy drops automatically the more copies go into that one
-order, down to AED 58/copy with free delivery at 100+ copies — see the
-bulk table below.
+order, down to AED 58/copy, and delivery itself is also free once an
+order reaches 100+ copies — see the bulk table below.
 
 A physical printed copy of an already-approved digital story, ordered
 and paid via Stripe checkout (`print_orders` table, covered in
@@ -372,31 +372,39 @@ decision): AED 45 × 1.8 = **AED 81**. Bulk tiers below keep the same
 relative discount curve the old AED 59/54/49 tiers had off the old
 AED 69 standalone price, just rescaled onto the new AED 81 base.
 
-| Quantity | Price / book | Markup on cost | Notes |
-|---|---|---|---|
-| 1 (standalone) | **AED 81** (≈$22) | 80% | Default checkout price — replaces the earlier AED 69/$19 price |
-| 10-49 | **AED 69** | 53% | Nursery class-set pricing |
-| 50-99 | **AED 63** | 40% | Nursery multi-class pricing |
-| 100+ | **AED 58** + **free delivery** | 29% | A full graduation/term-end print run for a nursery |
+| Quantity | Price / book | Delivery fee (UAE) | Markup on cost | Notes |
+|---|---|---|---|---|
+| 1 (standalone) | **AED 81** (≈$22) | AED 30 flat | 80% | Default checkout price — replaces the earlier AED 69/$19 price |
+| 10-49 | **AED 69** | AED 30 flat | 53% | Nursery class-set pricing |
+| 50-99 | **AED 63** | AED 30 flat | 40% | Nursery multi-class pricing |
+| 100+ | **AED 58** | **Free** | 29% | A full graduation/term-end print run for a nursery |
 
 Margin check at the standard AED 81 price: 81 − 45 (print) − ~2 (card
-fees) ≈ **AED 34/book (~42% gross margin)** — healthy, and better than
-the old AED 69 price's ~32%. At the AED 58 bulk-100+ tier it's ~AED
-13/book before delivery cost (up from ~AED 4/book at the old AED 49
-tier), which is why free delivery is viable there (a single bulk
-shipment's per-unit delivery cost collapses at 100+ copies) but would
-not be at smaller quantities — don't extend free delivery below the
-100-book tier without re-costing delivery first.
+fees) ≈ **AED 34/book (~42% gross margin)**, before the separate AED 30
+delivery charge below — healthy, and better than the old AED 69 price's
+~32%. At the AED 58 bulk-100+ tier it's ~AED 13/book (up from ~AED
+4/book at the old AED 49 tier), which is why free delivery is viable
+there (a single bulk shipment's per-unit delivery cost collapses at
+100+ copies) but would not be below that — so every order under 100
+copies is charged a flat **AED 30 delivery fee** instead (built, not
+just documented — see `getPrintOrderDeliveryFeeMinor` in
+`src/lib/domain/print-orders.ts`), a standard Dubai local-courier
+express rate for a parcel this size (a few bound storybooks, well under
+a typical 20kg local-parcel limit) rather than an unrecovered cost or
+an unrealistic extension of the 100+ free-delivery tier to every order.
 
 **Now automated**: the Stripe checkout flow applies this ladder itself
 based on how many copies are in the checkout (`getPrintOrderUnitPriceMinor`
 in `src/lib/domain/print-orders.ts`) — a nursery selecting 30 approved
 stories on the stories list and checking out together is charged the
 10-49 class-set price on every copy automatically, no manual price
-lookup needed. The old WhatsApp flow this replaced (where a human
-applied the tier by hand) is gone — see docs/DECISIONS.md "Bulk print
-ordering, paid online, replaces the WhatsApp no-payment bypass" and
-"Automated bulk-tier print-order pricing".
+lookup needed. The delivery fee is automated the same way
+(`getPrintOrderDeliveryFeeMinor`): AED 30 as its own line item in the
+Stripe Checkout session for any order under 100 copies, 0 at 100+. The
+old WhatsApp flow this replaced (where a human applied the tier by
+hand) is gone — see docs/DECISIONS.md "Bulk print ordering, paid
+online, replaces the WhatsApp no-payment bypass" and "Automated
+bulk-tier print-order pricing".
 
 ## Sizing the Gemini spend cap
 

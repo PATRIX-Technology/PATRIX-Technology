@@ -71,9 +71,13 @@ export class RealImageProvider implements ImageProvider {
 
     const safety = await this.safetyChecker.check(bytes, contentType);
     if (!safety.safe) {
+      // A transient failure (the moderation call itself timed out or hit
+      // a network error, never actually reviewed the image) is retryable
+      // — a genuine completed review that flagged the image is not, see
+      // ImageSafetyResult.transient's docstring.
       throw new ImageGenerationError(
         `Image failed the safety check (${this.safetyChecker.name}): ${safety.reason ?? 'unspecified reason'}`,
-        false,
+        Boolean(safety.transient),
       );
     }
 

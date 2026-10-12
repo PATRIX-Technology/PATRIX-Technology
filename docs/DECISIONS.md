@@ -6684,3 +6684,49 @@ and back page are templated additions only ever present in the
 rendered/downloaded PDF (see "6-page structure: cover + back page"),
 never stored as their own `story_pages` rows, so there was nothing
 wrong to fix there — only something to explain.
+
+## The Gemini timeout fix was incomplete — the image safety check was the other uncapped call
+
+The founder hit the exact same crash again, on a single (non-bulk)
+story, after the previous entry's fix had already deployed — confirmed
+live by checking the production deployment list against the pushed
+commit, so this wasn't a stale-deploy issue. The same live job-queue
+evidence as before (jobs "Reclaimed after being stuck in RUNNING") on
+this new story too, meaning the previous fix genuinely wasn't enough on
+its own.
+
+The gap: `RealImageProvider.generate()` calls the image-generation
+vendor call (now capped) and THEN `this.safetyChecker.check()` — and
+`VendorModerationSafetyChecker.check()` (`src/lib/providers/image/
+safety.ts`) makes its OWN separate `generateContent()` call to Gemini
+(a lighter model, `gemini-3.1-flash-lite`, for moderation rather than
+illustration) with no timeout of its own. Same hot path, same worker
+job, same wave — capping only the first of two Gemini calls in that
+path left the second free to hang just as long as the first one used
+to. Fixed the same way: `MODERATION_REQUEST_TIMEOUT_MS = 15_000`
+passed as `httpOptions.timeout`, shorter than the image-generation
+cap since this call's payload/response is much lighter.
+
+One more layer needed fixing alongside it, not after it: a naive
+timeout on the safety check alone would have swapped "the page hangs
+and crashes a browser" for "the page permanently fails" — because
+`RealImageProvider.generate()` already throws a **non-retryable**
+`ImageGenerationError` on any `safe: false` result, by design (an
+actual moderation rejection shouldn't silently retry into eventually
+bypassing review). A timeout returning `{safe: false}` would have hit
+that exact same non-retryable path, turning an ordinary transient
+slowdown into a permanently FAILED story. `ImageSafetyResult` gained a
+`transient` flag — true only when the checker never completed a real
+review (network error, or the new timeout firing), false for an actual
+model-returned rejection — and `RealImageProvider.generate()` now
+passes `Boolean(safety.transient)` as the `retryable` argument instead
+of a hardcoded `false`, so a timed-out moderation call retries with
+backoff exactly like any other transient failure, while a genuine
+safety rejection still blocks immediately as before.
+
+Verified every `generateContent()` call site in the codebase (grepped,
+not assumed) — confirmed only these two exist, both now capped.
+Checked the specific story's job-queue state after the fact: every job
+had already self-healed via the existing retry/reclaim path by the
+time this was investigated, so no manual data fix was needed — only
+the underlying bug.

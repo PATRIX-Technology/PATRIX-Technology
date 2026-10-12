@@ -87,6 +87,29 @@ describe('RealImageProvider', () => {
     );
   });
 
+  it('treats a transient safety-check failure (e.g. a moderation call timeout) as retryable, not a permanent rejection', async () => {
+    const supabase = makeSupabase({ canSpend: true });
+    const timedOut: ImageSafetyChecker = {
+      name: 'test',
+      check: async (): Promise<ImageSafetyResult> => ({
+        safe: false,
+        reason: 'Moderation request failed: timeout',
+        transient: true,
+      }),
+    };
+    const provider = new FakeVendorProvider(supabase, timedOut);
+
+    let caught: unknown;
+    try {
+      await provider.generate(baseRequest);
+    } catch (error) {
+      caught = error;
+    }
+
+    expect(caught).toBeInstanceOf(ImageGenerationError);
+    expect((caught as ImageGenerationError).retryable).toBe(true);
+  });
+
   it('fails closed: with no safety provider configured, every image is blocked by default', async () => {
     const supabase = makeSupabase({ canSpend: true });
     const provider = new FakeVendorProvider(supabase, new UnconfiguredSafetyChecker());

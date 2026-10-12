@@ -3,6 +3,19 @@ import { GoogleGenAI } from '@google/genai';
 export interface ImageSafetyResult {
   safe: boolean;
   reason?: string;
+  /** True when `safe: false` came from an infrastructure failure (a
+   * network error, or MODERATION_REQUEST_TIMEOUT_MS firing) rather than
+   * the model actually completing a review and flagging the image —
+   * worth retrying (the next attempt gets a fresh timeout window and may
+   * well succeed) rather than treated as a genuine, permanent moderation
+   * rejection. See docs/DECISIONS.md "Gemini request timeout caps
+   * worker wave duration" for why an uncapped moderation call could
+   * itself crash a customer's tab the exact same way an uncapped
+   * image-generation call did -- capping the call alone isn't enough if
+   * every timeout is then treated as non-retryable, since that would
+   * turn an ordinary transient slowdown into a permanently failed story
+   * instead of a job-queue retry. */
+  transient?: boolean;
 }
 
 /**
@@ -39,6 +52,18 @@ export class UnconfiguredSafetyChecker implements ImageSafetyChecker {
 }
 
 const MODERATION_MODEL = 'gemini-3.1-flash-lite';
+
+/** Same reasoning as GeminiImageProvider's GEMINI_REQUEST_TIMEOUT_MS —
+ * this call sat on the exact same per-image hot path (RealImageProvider
+ * .generate() calls callVendorApi() THEN safetyChecker.check(), same
+ * worker job, same wave) with no cap of its own, so capping only the
+ * image-generation call wasn't enough: a slow moderation call could
+ * still push a wave past Vercel's platform timeout and crash whichever
+ * browser's AutoRefresh triggered that kick — confirmed live, a second
+ * time, on a story that only had this checker left uncapped. Shorter
+ * than the image-gen cap since this model is lighter (short text+image
+ * in, a few words of JSON out, not a full illustration). */
+const MODERATION_REQUEST_TIMEOUT_MS = 15_000;
 
 const MODERATION_PROMPT =
   "You are a strict content-safety reviewer for a children's storybook app used by nurseries " +
@@ -80,11 +105,14 @@ export class VendorModerationSafetyChecker implements ImageSafetyChecker {
             ],
           },
         ],
-        config: { responseMimeType: 'application/json' },
+        config: {
+          responseMimeType: 'application/json',
+          httpOptions: { timeout: MODERATION_REQUEST_TIMEOUT_MS },
+        },
       });
       responseText = response.text;
     } catch (cause) {
-      return { safe: false, reason: `Moderation request failed: ${(cause as Error).message}` };
+      return { safe: false, reason: `Moderation request failed: ${(cause as Error).message}`, transient: true };
     }
 
     if (!responseText) {

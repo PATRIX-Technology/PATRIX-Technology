@@ -7,7 +7,6 @@ import { Button } from '@/components/ui/Button';
 import { useToast } from '@/components/ui/Toast';
 import {
   getPrintOrderDeliveryFeeMinor,
-  getPrintOrderLeadTime,
   getPrintOrderUnitPriceMinor,
   type PrintOrderCurrency,
 } from '@/lib/domain/print-orders';
@@ -63,7 +62,6 @@ export function PrintOrderDialog({ storyId, tenantType }: { storyId: string; ten
   const deliveryFeeMinor = getPrintOrderDeliveryFeeMinor(1, currency);
   const deliveryFee = deliveryFeeMinor / 100;
   const total = unitPrice + deliveryFee;
-  const leadTime = getPrintOrderLeadTime(1);
 
   async function handlePay() {
     setSubmitting(true);
@@ -130,15 +128,7 @@ export function PrintOrderDialog({ storyId, tenantType }: { storyId: string; ten
               {t('bulkGrandTotal', { total: `${total.toFixed(2)} ${currency.toUpperCase()}` })}
             </p>
           </div>
-          <p className="rounded-lg bg-ink-100 px-3 py-2 text-xs text-ink-600">
-            {t('leadTime', {
-              readyMin: leadTime.readyDays[0],
-              readyMax: leadTime.readyDays[1],
-              deliveryMin: leadTime.deliveryDays[0],
-              deliveryMax: leadTime.deliveryDays[1],
-              totalMax: leadTime.readyDays[1] + leadTime.deliveryDays[1],
-            })}
-          </p>
+          <p className="rounded-lg bg-ink-100 px-3 py-2 text-xs text-ink-600">{t('leadTime')}</p>
 
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <input

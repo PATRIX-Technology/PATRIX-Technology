@@ -5,7 +5,7 @@ import { Card, CardTitle } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { OwnerTabs } from '@/components/dashboard/OwnerTabs';
 import { PrintOrderStatusControl } from '@/components/dashboard/PrintOrderStatusControl';
-import { getPrintOrderLeadTime } from '@/lib/domain/print-orders';
+import { getPrintOrderExpectedDeliveryDate } from '@/lib/domain/print-orders';
 import { getTranslations } from 'next-intl/server';
 
 const STATUS_TONE: Record<string, 'neutral' | 'warning' | 'success' | 'danger' | 'info'> = {
@@ -127,7 +127,7 @@ export default async function OwnerOrdersPage({ params }: { params: { locale: st
         <p className="mt-2 text-sm text-ink-500">{t('subtitle')}</p>
         <ul className="mt-4 divide-y divide-[rgb(var(--color-border))]">
           {sorted.map((batch) => {
-            const leadTime = getPrintOrderLeadTime(batch.items.length);
+            const expectedDelivery = getPrintOrderExpectedDeliveryDate(batch.createdAt);
             return (
               <li key={batch.batchId} className="flex flex-col gap-2 py-4 sm:flex-row sm:items-start sm:justify-between">
                 <div className="min-w-0 space-y-1">
@@ -147,7 +147,7 @@ export default async function OwnerOrdersPage({ params }: { params: { locale: st
                   </p>
                   <p className="text-xs text-ink-400">
                     {new Date(batch.createdAt).toLocaleDateString()} ·{' '}
-                    {t('leadTimeNote', { ready: leadTime.readyDays[1], delivery: leadTime.deliveryDays[1] })}
+                    {t('leadTimeNote', { date: expectedDelivery.toLocaleDateString() })}
                   </p>
                 </div>
                 <PrintOrderStatusControl locale={params.locale} batchId={batch.batchId} status={batch.status} />

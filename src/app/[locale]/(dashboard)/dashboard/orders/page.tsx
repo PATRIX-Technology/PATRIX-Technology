@@ -1,7 +1,7 @@
 import { getTranslations } from 'next-intl/server';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { getCurrentTenantContext } from '@/lib/domain/session';
-import { getPrintOrderLeadTime } from '@/lib/domain/print-orders';
+import { getPrintOrderExpectedDeliveryDate } from '@/lib/domain/print-orders';
 import { Card, CardTitle } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -93,7 +93,7 @@ export default async function OrdersPage({ params }: { params: { locale: string 
           <CardTitle>{t('title', { count: sorted.length })}</CardTitle>
           <ul className="mt-4 divide-y divide-[rgb(var(--color-border))]">
             {sorted.map((batch) => {
-              const leadTime = getPrintOrderLeadTime(batch.items.length);
+              const expectedDelivery = getPrintOrderExpectedDeliveryDate(batch.createdAt);
               return (
                 <li key={batch.batchId} className="flex flex-col gap-1 py-4">
                   <div className="flex items-center gap-2">
@@ -109,7 +109,7 @@ export default async function OrdersPage({ params }: { params: { locale: string 
                   <p className="text-xs text-ink-500">
                     {new Date(batch.createdAt).toLocaleDateString()}
                     {batch.status === 'paid' &&
-                      ` · ${t('leadTimeNote', { ready: leadTime.readyDays[1], delivery: leadTime.deliveryDays[1] })}`}
+                      ` · ${t('leadTimeNote', { date: expectedDelivery.toLocaleDateString() })}`}
                   </p>
                 </li>
               );

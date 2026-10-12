@@ -6919,3 +6919,70 @@ be traced to an exact line without a non-minified repro, which wasn't
 available here), but a real, structural redundancy that was found,
 independently worth removing, and the most plausible explanation given
 where both errors actually originated.
+
+## Name search on Children and Stories lists; selective story ZIP download
+
+Founder feedback: a nursery with a large roster has no way to jump
+straight to one child in either the Children tab or the Stories tab,
+and the Stories tab's existing "Select" mode (built for the paid bulk
+print-order flow) couldn't be used to just download a hand-picked set
+of stories — only "download everything" (the tenant-wide ZIP button)
+or "order prints" existed.
+
+- `ChildrenListWithBulkConsent.tsx` and `StoriesListWithBulkOrder.tsx`
+  both get a `<input type="search">` filtering their list by name
+  (first/last, both languages, on the Children list; the folder's
+  already-resolved display name on the Stories list) — a pure view
+  filter, computed client-side from props already fetched, no new
+  query. Selection state is keyed by id, never by what's currently
+  filtered, so narrowing the search never silently drops an existing
+  selection.
+- Stories list: the existing per-row checkbox selection (previously
+  feeding only `BulkPrintOrderDialog`) now also drives a
+  "Download N as ZIP" button next to it, via the existing
+  `DownloadButton` component (already handles Capacitor
+  native/Android/iOS and every ordinary mobile/desktop browser — see
+  its own docstring) pointed at `/api/stories/export-zip?ids=...`.
+  Each folder's `<summary>` also gets a "Select all" / "Deselect all"
+  toggle for its own APPROVED stories once in select mode — the actual
+  "search for a child, then check them, then download" workflow this
+  was built for, without hand-checking every row.
+- `/api/stories/export-zip` (`GET`) now accepts an optional
+  `?ids=<comma-separated story ids>`, filtering the whole-tenant export
+  down to just those stories. Security stays server-side regardless of
+  what the client sends: the stories query is still scoped to
+  `tenant_id` and `status = APPROVED` before the `ids` filter is
+  applied, so a story id from another tenant, or one not yet approved,
+  is silently dropped rather than exported. Omitting `?ids=` keeps the
+  original whole-tenant behaviour unchanged (still used by the
+  "Download all stories" button on the Stories page itself).
+- `bulkOrder.select`'s label changed from "Select for printing" to
+  plain "Select" (both locales) now that the same select mode also
+  drives downloading, not only the print-order flow.
+
+## Confirmed printer lead time (3 working days) replaces the placeholder estimate
+
+The founder got a real turnaround quote from the actual print vendor:
+3 working days, covering printing and local UAE delivery combined.
+`getPrintOrderLeadTime`'s quantity-tiered day *ranges* (an admitted
+placeholder — no vendor was under contract when it was written, see
+"Delivery timing estimates on print orders" above) are replaced by
+`PRINT_ORDER_CONFIRMED_LEAD_DAYS = 3`, a single flat figure: the
+founder has only confirmed this one number so far, not a per-quantity
+breakdown, so a single clear promise is both simpler and more honest
+than inventing a scale-with-quantity curve nobody has actually
+confirmed. Revisit per-quantity if the vendor gives a different figure
+for very large (50+/100+) runs once more real orders go through.
+
+Added `addWorkingDays()` (UAE's work week has been Monday–Friday, Sat/
+Sun weekend, since the nationwide switch on 1 Jan 2022 — plain Western
+business-day counting applies) and `getPrintOrderExpectedDeliveryDate()`
+on top of the flat figure, so both order-tracking views (the tenant's
+own `dashboard/orders` and the owner's `owner/orders`) show an actual
+expected-delivery *date* next to each order instead of a vague day
+count — "tracking" that means something concrete. The pre-purchase
+note inside `PrintOrderDialog`/`BulkPrintOrderDialog` (a plain
+in-modal note box, not a new popup mechanism) now states the flat
+3-day promise directly, no interpolated range. Scope: the app's own
+UI only, per the founder's explicit ask — pitch decks/slides are
+intentionally not touched by this change.

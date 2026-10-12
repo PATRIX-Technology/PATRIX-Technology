@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { createSupabaseServiceRoleClient } from '@/lib/supabase/service-role';
 import { getCurrentTenantContext } from '@/lib/domain/session';
@@ -13,15 +13,30 @@ export const runtime = 'nodejs';
 export const maxDuration = 60;
 
 /**
- * Whole-tenant export: every APPROVED story, one ZIP, folder per class
- * (see buildExportPlan for the exact naming rules).
+ * Export every APPROVED story as one ZIP, folder per class (see
+ * buildExportPlan for the exact naming rules) -- the whole tenant by
+ * default, or just the specific stories named in `?ids=` (comma-
+ * separated story ids), which is how the stories list's "Select" mode
+ * downloads a hand-picked subset (any mix of children) instead of
+ * everything. `ids` is never trusted on its own: the stories query below
+ * still scopes to `tenant_id` and `status = APPROVED` regardless of what
+ * was requested, so a story id from another tenant or a non-approved one
+ * is silently dropped rather than leaking across tenants.
  */
-export async function GET(): Promise<NextResponse | Response> {
+export async function GET(request: NextRequest): Promise<NextResponse | Response> {
   const supabase = await createSupabaseServerClient();
   const context = await getCurrentTenantContext(supabase);
   if (!context) {
     return NextResponse.json({ error: 'Not signed in.' }, { status: 401 });
   }
+
+  const idsParam = request.nextUrl.searchParams.get('ids');
+  const requestedIds = idsParam
+    ? idsParam
+        .split(',')
+        .map((id) => id.trim())
+        .filter(Boolean)
+    : null;
 
   const { data: children } = await supabase
     .from('children')
@@ -32,11 +47,13 @@ export async function GET(): Promise<NextResponse | Response> {
     return NextResponse.json({ error: 'No children found.' }, { status: 404 });
   }
 
-  const { data: stories } = await supabase
+  let storiesQuery = supabase
     .from('stories')
     .select('id, child_id, theme_key')
     .eq('tenant_id', context.tenantId)
     .eq('status', 'APPROVED');
+  if (requestedIds) storiesQuery = storiesQuery.in('id', requestedIds);
+  const { data: stories } = await storiesQuery;
 
   if (!stories || stories.length === 0) {
     return NextResponse.json({ error: 'No approved stories found yet.' }, { status: 404 });

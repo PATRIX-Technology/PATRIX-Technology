@@ -104,33 +104,43 @@ export function getPrintOrderUnitPriceMinor(quantity: number, currency: PrintOrd
   return getPrintOrderBulkTier(quantity)?.priceMinor[currency] ?? PRINT_ORDER_PRICE_MINOR[currency];
 }
 
-export interface PrintOrderLeadTime {
-  /** Business days to get the order ready (printing + binding), as a
-   * [min, max] range. */
-  readyDays: [number, number];
-  /** Business days for local UAE delivery once ready, as a [min, max]
-   * range -- 0 for a standalone/small order picked up same-day by the
-   * local courier the print run finishes. */
-  deliveryDays: [number, number];
+/**
+ * The actual printer vendor's confirmed turnaround (printing + local UAE
+ * delivery combined), in working days — replaces the earlier placeholder
+ * quantity-tiered estimate (no vendor was under contract yet when that
+ * was written; see docs/DECISIONS.md "Delivery timing estimates on print
+ * orders"). This is the real figure the founder was quoted, not a guess,
+ * so it's a single flat number rather than a range: the founder has only
+ * confirmed this one figure so far, not a per-quantity breakdown, and a
+ * single clear promise ("within 3 working days") is both simpler to show
+ * and more honest than inventing a scale-with-quantity curve nobody has
+ * actually confirmed. Revisit if the vendor gives a different number for
+ * very large (50+/100+) runs once more real orders have gone through.
+ */
+export const PRINT_ORDER_CONFIRMED_LEAD_DAYS = 3;
+
+/** UAE's official work week has been Monday–Friday (Saturday/Sunday
+ * weekend) since the nationwide switch on 1 January 2022 — standard
+ * Western business-day counting applies, no UAE-specific weekend to
+ * special-case. */
+export function addWorkingDays(from: Date, days: number): Date {
+  const result = new Date(from);
+  let remaining = days;
+  while (remaining > 0) {
+    result.setDate(result.getDate() + 1);
+    const day = result.getDay(); // 0 = Sunday, 6 = Saturday
+    if (day !== 0 && day !== 6) remaining -= 1;
+  }
+  return result;
 }
 
-/**
- * Estimated get-ready + delivery time, by order size -- standard UAE
- * bulk-corporate-printing lead times (a softcover photo book run of this
- * size, at a local Dubai/Sharjah print shop), shown to nurseries at order
- * time so they know when to place a bulk order ahead of an event (e.g.
- * graduation day). These are reasonable industry-standard placeholder
- * estimates, not a contractual SLA -- no print vendor is under signed
- * contract yet (see docs/NEEDS_FROM_ME.md), so revisit these ranges once
- * one is, in case their real production schedule differs. Kept in the
- * same quantity-tier shape as the pricing ladder above so the two always
- * line up in the UI.
- */
-export function getPrintOrderLeadTime(quantity: number): PrintOrderLeadTime {
-  if (quantity >= 100) return { readyDays: [7, 10], deliveryDays: [1, 2] };
-  if (quantity >= 50) return { readyDays: [4, 6], deliveryDays: [1, 2] };
-  if (quantity >= 10) return { readyDays: [3, 4], deliveryDays: [1, 2] };
-  return { readyDays: [2, 3], deliveryDays: [1, 2] };
+/** The real expected-delivery date for an order placed/paid at
+ * `createdAt`, using the vendor-confirmed turnaround above — shown in
+ * both the owner's and the tenant's own order-tracking views so
+ * "tracking" means an actual date, not just a day count. */
+export function getPrintOrderExpectedDeliveryDate(createdAt: string | Date): Date {
+  const from = typeof createdAt === 'string' ? new Date(createdAt) : createdAt;
+  return addWorkingDays(from, PRINT_ORDER_CONFIRMED_LEAD_DAYS);
 }
 
 /** Which status an order already at `from` may move to -- enforced in

@@ -7,6 +7,7 @@ import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { ClickableRow } from '@/components/ui/ClickableRow';
+import { DownloadButton } from '@/components/stories/DownloadButton';
 import { BulkPrintOrderDialog, type BulkPrintOrderItem } from '@/components/stories/BulkPrintOrderDialog';
 import type { StoryStatus, TenantType } from '@/types/database';
 
@@ -82,6 +83,7 @@ export function StoriesListWithBulkOrder({
   tenantType: TenantType;
 }) {
   const t = useTranslations('stories');
+  const [search, setSearch] = useState('');
   const [selectMode, setSelectMode] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bulkOrderOpen, setBulkOrderOpen] = useState(false);
@@ -104,6 +106,22 @@ export function StoriesListWithBulkOrder({
     });
   }
 
+  // Lets a nursery search for one child, then select every one of that
+  // child's APPROVED stories in a single click, rather than hand-checking
+  // each row -- the actual "search -> select that child -> download"
+  // workflow this was built for.
+  function toggleFolder(folder: ChildFolder, select: boolean) {
+    const folderStoryIds = folder.stories.filter((s) => s.status === 'APPROVED').map((s) => s.id);
+    setSelected((prev) => {
+      const next = new Set(prev);
+      for (const id of folderStoryIds) {
+        if (select) next.add(id);
+        else next.delete(id);
+      }
+      return next;
+    });
+  }
+
   function exitSelectMode() {
     setSelectMode(false);
     setSelected(new Set());
@@ -119,40 +137,97 @@ export function StoriesListWithBulkOrder({
       locale: row.locale,
     }));
 
+  // View filter only (same rule as the children list's search) -- matches
+  // the single display name each folder already carries (the child's
+  // name in whichever language the page is currently showing), so
+  // "search for that child, then check them" actually narrows the list
+  // down to the one folder being looked for.
+  const searchNormalized = search.trim().toLocaleLowerCase();
+  const filteredFolders = searchNormalized
+    ? folders.filter((folder) => folder.childName.toLocaleLowerCase().includes(searchNormalized))
+    : folders;
+
+  const downloadZipHref =
+    selected.size > 0 ? `/api/stories/export-zip?ids=${Array.from(selected).join(',')}` : null;
+
   return (
     <div>
-      <div className="mb-3 flex items-center justify-end gap-2">
-        {selectMode ? (
-          <>
-            <span className="me-auto text-sm text-ink-600">{t('bulkOrder.selectedCount', { count: selected.size })}</span>
-            <Button variant="secondary" size="sm" onClick={exitSelectMode}>
-              {t('bulkOrder.cancel')}
-            </Button>
-            <Button
-              variant="primary"
-              size="sm"
-              onClick={() => setBulkOrderOpen(true)}
-              disabled={selected.size === 0}
-            >
-              {t('bulkOrder.orderFor', { count: selected.size })}
-            </Button>
-          </>
-        ) : (
-          approvedById.size > 0 && (
-            <Button
-              variant="primary"
-              size="sm"
-              leadingIcon={PRINT_ICON}
-              onClick={() => setSelectMode(true)}
-            >
-              {t('bulkOrder.select')}
-            </Button>
-          )
-        )}
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+        <div className="relative min-w-0 max-w-xs flex-1">
+          <svg
+            aria-hidden
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            className="pointer-events-none absolute start-3 top-1/2 -translate-y-1/2 text-ink-400"
+          >
+            <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="2" />
+            <path d="M21 21l-4.3-4.3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+          </svg>
+          <input
+            type="search"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder={t('searchPlaceholder')}
+            aria-label={t('searchPlaceholder')}
+            className="focus-ring w-full rounded-lg border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] py-2 ps-9 pe-3 text-sm text-ink-900"
+          />
+        </div>
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          {selectMode ? (
+            <>
+              <span className="text-sm text-ink-600">{t('bulkOrder.selectedCount', { count: selected.size })}</span>
+              <Button variant="secondary" size="sm" onClick={exitSelectMode}>
+                {t('bulkOrder.cancel')}
+              </Button>
+              {downloadZipHref && (
+                <DownloadButton
+                  href={downloadZipHref}
+                  fallbackFileName="stories.zip"
+                  failedTitle={t('bulkZipFailedTitle')}
+                  failedBody={t('bulkZipFailedBody')}
+                  variant="secondary"
+                  size="sm"
+                >
+                  {t('bulkOrder.downloadSelected', { count: selected.size })}
+                </DownloadButton>
+              )}
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={() => setBulkOrderOpen(true)}
+                disabled={selected.size === 0}
+              >
+                {t('bulkOrder.orderFor', { count: selected.size })}
+              </Button>
+            </>
+          ) : (
+            approvedById.size > 0 && (
+              <Button
+                variant="primary"
+                size="sm"
+                leadingIcon={PRINT_ICON}
+                onClick={() => setSelectMode(true)}
+              >
+                {t('bulkOrder.select')}
+              </Button>
+            )
+          )}
+        </div>
       </div>
 
+      {searchNormalized && filteredFolders.length === 0 && (
+        <p className="py-6 text-center text-sm text-ink-500">{t('searchNoMatches')}</p>
+      )}
+
       <div className="space-y-4">
-        {folders.map((folder, folderIndex) => (
+        {filteredFolders.map((folder) => {
+          const folderIndex = folders.indexOf(folder);
+          const folderApprovedIds = folder.stories.filter((s) => s.status === 'APPROVED').map((s) => s.id);
+          const folderAllSelected =
+            folderApprovedIds.length > 0 && folderApprovedIds.every((id) => selected.has(id));
+          return (
           // <summary> must be a direct child of <details> -- see the fuller
           // note that used to live inline here before this was extracted
           // into its own component.
@@ -170,7 +245,21 @@ export function StoriesListWithBulkOrder({
                     {folder.childName}
                   </span>
                 </span>
-                <span className="text-xs text-ink-500">{t('storyCount', { count: folder.stories.length })}</span>
+                <span className="flex items-center gap-3">
+                  {selectMode && folderApprovedIds.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        toggleFolder(folder, !folderAllSelected);
+                      }}
+                      className="focus-ring rounded px-1 text-xs font-medium text-lagoon-400 hover:text-lagoon-300"
+                    >
+                      {t(folderAllSelected ? 'bulkOrder.deselectAll' : 'bulkOrder.selectAll')}
+                    </button>
+                  )}
+                  <span className="text-xs text-ink-500">{t('storyCount', { count: folder.stories.length })}</span>
+                </span>
               </summary>
               <table className="w-full border-t border-[rgb(var(--color-border))] text-sm">
                 <thead>
@@ -261,7 +350,8 @@ export function StoriesListWithBulkOrder({
               </table>
             </details>
           </Card>
-        ))}
+          );
+        })}
       </div>
 
       <BulkPrintOrderDialog

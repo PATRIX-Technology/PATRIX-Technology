@@ -1,10 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import {
+  PRINT_ORDER_CONFIRMED_LEAD_DAYS,
   PRINT_ORDER_DELIVERY_FEE_MINOR,
+  addWorkingDays,
   canAdvancePrintOrderStatus,
   getPrintOrderBulkTier,
   getPrintOrderDeliveryFeeMinor,
-  getPrintOrderLeadTime,
+  getPrintOrderExpectedDeliveryDate,
   getPrintOrderUnitPriceMinor,
 } from '@/lib/domain/print-orders';
 
@@ -35,24 +37,25 @@ describe('print order delivery fee', () => {
 });
 
 describe('print order lead time', () => {
-  it('gets longer (or stays the same) as the order gets bigger, tier by tier', () => {
-    const totalDays = (qty: number) => {
-      const t = getPrintOrderLeadTime(qty);
-      return t.readyDays[1] + t.deliveryDays[1];
-    };
-    expect(totalDays(1)).toBeLessThanOrEqual(totalDays(10));
-    expect(totalDays(10)).toBeLessThanOrEqual(totalDays(50));
-    expect(totalDays(50)).toBeLessThanOrEqual(totalDays(100));
+  it('addWorkingDays skips weekends entirely when counting forward', () => {
+    // Friday -> +3 working days must skip Sat/Sun, landing on Wednesday,
+    // not Monday (which a naive +3 calendar days would give).
+    const friday = new Date(2026, 9, 16); // Fri 16 Oct 2026
+    const result = addWorkingDays(friday, 3);
+    expect(result.getDay()).toBe(3); // Wednesday
+    expect(result.getDate()).toBe(21);
   });
 
-  it('every range is a valid [min, max] with min >= 1', () => {
-    for (const qty of [1, 9, 10, 49, 50, 99, 100, 500]) {
-      const t = getPrintOrderLeadTime(qty);
-      expect(t.readyDays[0]).toBeGreaterThanOrEqual(1);
-      expect(t.readyDays[0]).toBeLessThanOrEqual(t.readyDays[1]);
-      expect(t.deliveryDays[0]).toBeGreaterThanOrEqual(1);
-      expect(t.deliveryDays[0]).toBeLessThanOrEqual(t.deliveryDays[1]);
-    }
+  it('addWorkingDays from a Monday with no weekend in the way just adds calendar days', () => {
+    const monday = new Date(2026, 9, 12); // Mon 12 Oct 2026
+    const result = addWorkingDays(monday, PRINT_ORDER_CONFIRMED_LEAD_DAYS);
+    expect(result.getDay()).toBe(4); // Thursday
+    expect(result.getDate()).toBe(15);
+  });
+
+  it('getPrintOrderExpectedDeliveryDate uses the confirmed vendor lead time from the order date', () => {
+    const expected = getPrintOrderExpectedDeliveryDate('2026-10-12T10:00:00.000Z');
+    expect(expected.getTime()).toBeGreaterThan(new Date('2026-10-12T10:00:00.000Z').getTime());
   });
 });
 

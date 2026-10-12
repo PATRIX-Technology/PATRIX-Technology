@@ -9,7 +9,6 @@ import {
   getNextPrintOrderTier,
   getPrintOrderBulkTier,
   getPrintOrderDeliveryFeeMinor,
-  getPrintOrderLeadTime,
   getPrintOrderUnitPriceMinor,
   type PrintOrderCurrency,
 } from '@/lib/domain/print-orders';
@@ -78,7 +77,6 @@ export function BulkPrintOrderDialog({
   const deliveryFeeMinor = getPrintOrderDeliveryFeeMinor(items.length, currency);
   const deliveryFee = deliveryFeeMinor / 100;
   const total = copiesTotal + deliveryFee;
-  const leadTime = getPrintOrderLeadTime(items.length);
 
   async function handlePay() {
     setSubmitting(true);
@@ -173,17 +171,7 @@ export function BulkPrintOrderDialog({
             })}
           </p>
         )}
-        {items.length > 0 && (
-          <p className="rounded-lg bg-ink-100 px-3 py-2 text-xs text-ink-600">
-            {t('leadTime', {
-              readyMin: leadTime.readyDays[0],
-              readyMax: leadTime.readyDays[1],
-              deliveryMin: leadTime.deliveryDays[0],
-              deliveryMax: leadTime.deliveryDays[1],
-              totalMax: leadTime.readyDays[1] + leadTime.deliveryDays[1],
-            })}
-          </p>
-        )}
+        {items.length > 0 && <p className="rounded-lg bg-ink-100 px-3 py-2 text-xs text-ink-600">{t('leadTime')}</p>}
 
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <input

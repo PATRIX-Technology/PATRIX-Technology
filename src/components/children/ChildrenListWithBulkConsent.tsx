@@ -72,6 +72,7 @@ export function ChildrenListWithBulkConsent({
 }) {
   const t = useTranslations('children');
   const showToast = useToast();
+  const [search, setSearch] = useState('');
   const [selectMode, setSelectMode] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [isPending, startTransition] = useTransition();
@@ -165,14 +166,50 @@ export function ChildrenListWithBulkConsent({
   const themeCategories = sortCategories(Array.from(new Set(themeOptions.map((theme) => theme.category))));
   const selectedThemeOption = themeOptions.find((theme) => theme.themeKey === selectedThemeKey) ?? null;
 
+  // Matches first/last name in both languages -- a nursery with a large
+  // roster otherwise has no way to jump straight to one child. Purely a
+  // view filter: selection (by child id, see `selected` above) and the
+  // select-mode pre-check below are unaffected by what's currently
+  // filtered, so narrowing the search never silently drops an existing
+  // selection out from under the user.
+  const searchNormalized = search.trim().toLocaleLowerCase();
+  const filteredChildren = searchNormalized
+    ? childrenList.filter((child) =>
+        [child.first_name, child.last_name, child.arabic_first_name, child.arabic_last_name]
+          .filter(Boolean)
+          .some((part) => part!.toLocaleLowerCase().includes(searchNormalized)),
+      )
+    : childrenList;
+
   return (
     <div>
-      <div className="mb-3 flex items-center justify-between gap-3">
-        {selectMode ? (
-          <p className="text-sm text-ink-600">{t('bulkConsent.selectedCount', { count: selected.size })}</p>
-        ) : (
-          <span />
-        )}
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex min-w-0 flex-1 items-center gap-3">
+          {selectMode && (
+            <p className="shrink-0 text-sm text-ink-600">{t('bulkConsent.selectedCount', { count: selected.size })}</p>
+          )}
+          <div className="relative min-w-0 max-w-xs flex-1">
+            <svg
+              aria-hidden
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              className="pointer-events-none absolute start-3 top-1/2 -translate-y-1/2 text-ink-400"
+            >
+              <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="2" />
+              <path d="M21 21l-4.3-4.3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+            </svg>
+            <input
+              type="search"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder={t('searchPlaceholder')}
+              aria-label={t('searchPlaceholder')}
+              className="focus-ring w-full rounded-lg border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] py-2 ps-9 pe-3 text-sm text-ink-900"
+            />
+          </div>
+        </div>
         <div className="flex items-center gap-2">
           {selectMode ? (
             <>
@@ -201,9 +238,13 @@ export function ChildrenListWithBulkConsent({
         </div>
       </div>
 
+      {searchNormalized && filteredChildren.length === 0 && (
+        <p className="py-6 text-center text-sm text-ink-500">{t('searchNoMatches')}</p>
+      )}
+
       {/* Card list — phone viewport */}
       <div className="grid gap-3 md:hidden">
-        {childrenList.map((child) => {
+        {filteredChildren.map((child) => {
           const enName = [child.first_name, child.last_name].filter(Boolean).join(' ');
           const arName = [child.arabic_first_name, child.arabic_last_name].filter(Boolean).join(' ');
           const showArabicFirst = locale === 'ar' && Boolean(arName);
@@ -277,7 +318,7 @@ export function ChildrenListWithBulkConsent({
             </tr>
           </thead>
           <tbody>
-            {childrenList.map((child) => {
+            {filteredChildren.map((child) => {
               const isChecked = selected.has(child.id);
               const rowProps = selectMode
                 ? {

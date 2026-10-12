@@ -6866,3 +6866,56 @@ directly with generated sample illustrations and a test nursery logo,
 via `pdftoppm` to rasterize cover/interior/back pages) and visually
 inspecting the result, not just confirming it builds — same pattern as
 every other PDF layout change this session.
+
+## Remove duplicate client-side polling loop on the story detail page
+
+Two new live crash reports arrived on the same story detail page,
+each from Next.js's own shared/framework bundle chunks rather than
+from any of this app's own component code: "Minified React error #482"
+(React's own decoder: an async Client Component was rendered — only
+Server Components can be async) and "Cannot read properties of null
+(reading 'get')" (uncaught, inside a shared vendor chunk). Exhaustive
+grep across every `'use client'` file in the codebase found no async
+component definition anywhere, and the second error's stack pointed at
+`chunks/2117-*.js` — one of the two framework-level "First Load JS
+shared by all" chunks this project's own build output lists, not an
+app route chunk — so neither looks like a bug in a specific component's
+own render logic.
+
+What the story detail page's own architecture does have is two
+*independent* polling loops both mounted at once whenever this page is
+open while something is generating: this page's own `AutoRefresh`
+(added early on, a 4-second timer scoped to this one story) and
+`GenerationProgressBanner` (added later, mounted once at the dashboard
+layout level — see `(dashboard)/layout.tsx` — polling every 4 seconds
+for ANY of the tenant's in-progress stories). Both independently call
+`kickStoryWorkerAction()` and `router.refresh()` on their own
+unsynchronized timers. `router.refresh()` re-renders the current route
+by re-fetching and re-applying a fresh RSC payload; two of these firing
+concurrently on the same page, repeatedly, for as long as a story is
+generating, is exactly the kind of router-level race condition (not
+application logic) that produces exactly this class of symptom — React
+misreporting "an unknown Component is an async Client Component" even
+though no code this app authored is async or client-only in the way
+that error literally describes, and a null deref inside the
+framework's own chunk rather than application code.
+Confirmed this wasn't a hypothetical overlap: `GenerationProgressBanner`
+already covers everything `AutoRefresh` did, including the one case
+that looked like it might not (a single-page "Regenerate" request on an
+already-reviewed story) — `regenerate_story_page` (migration 0030/0040)
+flips the story's own `status` back to `GENERATING`, which is exactly
+what `GenerationProgressBanner`'s own progress query watches for.
+
+Fix: removed `AutoRefresh` entirely (`src/components/stories/
+AutoRefresh.tsx` deleted, its one call site in the story detail page
+removed) rather than trying to coordinate two timers that do the
+identical job. `GenerationProgressBanner` alone now drives both the
+worker-kick and the page refresh for this page, same as it already does
+for every other dashboard page. This halves the kick+refresh request
+rate while a story is generating and removes the concurrent-refresh
+race as a possible cause of both reported crashes — not provably
+confirmed as the exact root cause (a minified production error can't
+be traced to an exact line without a non-minified repro, which wasn't
+available here), but a real, structural redundancy that was found,
+independently worth removing, and the most plausible explanation given
+where both errors actually originated.

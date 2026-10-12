@@ -9,7 +9,6 @@ import { Badge } from '@/components/ui/Badge';
 import { ApprovalActions } from '@/components/stories/ApprovalActions';
 import { RegeneratePageButton } from '@/components/stories/RegeneratePageButton';
 import { DownloadButton } from '@/components/stories/DownloadButton';
-import { AutoRefresh } from '@/components/stories/AutoRefresh';
 import { PrintOrderDialog } from '@/components/stories/PrintOrderDialog';
 import type { StoryStatus } from '@/types/database';
 
@@ -43,18 +42,31 @@ export default async function StoryDetailPage({
 
   // This page used to call runWorkerOnce (real Gemini image generation)
   // synchronously during its own render, on every load AND on every
-  // 4-second AutoRefresh poll while anything was still generating -- up
-  // to 10 real Gemini calls per tick. That repeatedly re-exposed this
-  // page to Vercel's 60-second function ceiling (see docs/DECISIONS.md
+  // 4-second poll while anything was still generating -- up to 10 real
+  // Gemini calls per tick. That repeatedly re-exposed this page to
+  // Vercel's 60-second function ceiling (see docs/DECISIONS.md
   // "maxDuration must not exceed the Hobby ceiling"): a real, multi-page
   // story generating in Arabic hit it and crashed the whole page with no
   // usable error. Fixed by no longer doing any generation work here at
-  // all -- this page is now a plain read of current DB state. AutoRefresh
-  // below drives generation forward itself, from client-side JS, via
-  // kickStoryWorkerAction -- a separate request whose own worst case is a
-  // bounded wall-clock deadline inside runWorkerOnce, not this page's
-  // render. /api/cron/worker (every 5 minutes) remains the fallback for
-  // when nobody has this page open.
+  // all -- this page is now a plain read of current DB state.
+  // GenerationProgressBanner (mounted once at the dashboard layout level,
+  // see (dashboard)/layout.tsx) drives generation forward itself, from
+  // client-side JS, via kickStoryWorkerAction, and calls router.refresh()
+  // whenever anything is in progress for this tenant -- which re-renders
+  // whichever dashboard page is currently open, this one included. This
+  // page used to also mount its own AutoRefresh with an identical 4-second
+  // kick+refresh loop, independent of and unsynchronized with the banner's
+  // -- two separate timers both hammering kickStoryWorkerAction and
+  // router.refresh() concurrently on this exact page for as long as a
+  // story was generating. That redundancy was removed after live crash
+  // reports on this page (Minified React error #482 and "Cannot read
+  // properties of null (reading 'get')", both from Next.js's own
+  // shared/framework chunks, not application code) pointed at a router-
+  // level race rather than anything specific to this page's own
+  // rendering -- see docs/DECISIONS.md "Remove duplicate client-side
+  // polling loop on the story detail page". /api/cron/worker (every 5
+  // minutes) remains the fallback for when nobody has any dashboard page
+  // open at all.
   const { data: pages } = await supabase
     .from('story_pages')
     .select('*')
@@ -111,7 +123,6 @@ export default async function StoryDetailPage({
 
   return (
     <div className="space-y-6">
-      <AutoRefresh active={stillGenerating} />
       <div className="flex items-center justify-between">
         <div>
           <h1 className="font-display text-2xl text-ink-900">

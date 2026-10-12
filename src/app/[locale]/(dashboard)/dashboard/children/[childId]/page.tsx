@@ -19,9 +19,10 @@ import { Badge } from '@/components/ui/Badge';
 // docs/DECISIONS.md "maxDuration must not exceed the Hobby ceiling" for
 // why this was briefly set to 300 (a Pro-only value) and had to be
 // reverted: it risks the deployment itself failing on Hobby, not just a
-// runtime timeout. This page itself does no generation work (createStoryAction
-// only inserts rows; AutoRefresh on the story page drives generation once
-// there), so this ceiling is mostly headroom rather than a real constraint here.
+// runtime timeout. This page itself does no generation work
+// (createStoryAction only inserts rows; GenerationProgressBanner, mounted
+// at the dashboard layout level, drives generation forward from there),
+// so this ceiling is mostly headroom rather than a real constraint here.
 export const maxDuration = 60;
 
 export default async function ChildDetailPage({

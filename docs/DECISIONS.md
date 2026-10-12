@@ -7004,3 +7004,30 @@ with the larger icon) — still a small corner mark, but large enough
 for the rings to actually resolve. Verified by rendering a real sample
 PDF and inspecting the corner at both screen (150 DPI) and print
 (300 DPI) resolution via `pdftoppm`, not just by the math.
+
+## Fix Arabic line-height mismatch crowding the page number
+
+Founder reported the page number looking like it overlapped the
+caption text on a real rendered page (a 2-line Arabic caption). Root
+cause: the bilingual interior-page branch pre-computes where the
+Arabic text block will end (`arabicTopY`, so the banner and English
+block above can be sized before the Arabic text is actually drawn)
+using its own local `arabicLineHeight` constant — which had drifted
+from `drawCenteredArabicText`'s real internal line height
+(`fontSizePt * 1.55`). The local constant was `19`; the function's own
+formula gives `13 * 1.55 = 20.15` for this caption size — a 1.15pt
+shortfall *per extra wrapped line*. A 1-line Arabic caption never
+exposed it (the drift term is multiplied by `arLineCount - 1`, zero
+for one line); this exact 2-line caption did. Fixed by deriving the
+constant directly (`arabicCaptionSize * 1.55`) instead of hand-copying
+a number that can silently drift again, and bumped `bottomMargin`
+13→18pt (from an already-increased 11→13pt in the same pass) for
+comfortable clearance even in the single-line case, since the
+corrected math alone still read as tight once rendered. Cover/back
+pages were never affected — they call `drawCenteredArabicText` and use
+its *returned* bottom-of-block y directly, rather than pre-computing a
+guess the way this one caller did.
+
+Verified by rendering a real sample PDF reproducing the exact reported
+2-line caption (not a 1-line stand-in, which wouldn't have exposed the
+bug at all) and inspecting the corner via `pdftoppm` before and after.

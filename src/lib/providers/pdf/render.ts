@@ -199,9 +199,20 @@ export async function renderStoryPdf(input: RenderStoryPdfInput): Promise<Uint8A
       const bilingualCaptionSize = 14;
       const bilingualCaptionLineHeight = 18;
       const arabicCaptionSize = 13;
-      const arabicLineHeight = 19;
+      // Must equal drawCenteredArabicText's own internal line height
+      // (fontSizePt * 1.55) exactly -- this constant exists only to
+      // pre-compute arabicTopY below (how tall the Arabic block will be,
+      // before it's actually drawn), and any drift between the two
+      // silently eats into bottomMargin on every caption that wraps to
+      // 2+ lines: this was previously a flat 19 against the function's
+      // real 20.15 (13 * 1.55), a 1.15pt shortfall per extra line that
+      // crowded the page number below it -- reported live as the number
+      // looking like it overlapped the caption text on a 2-line Arabic
+      // caption. See docs/DECISIONS.md "Fix Arabic line-height mismatch
+      // crowding the page number".
+      const arabicLineHeight = arabicCaptionSize * 1.55;
       const blockGap = 6;
-      const bottomMargin = 11;
+      const bottomMargin = 18;
       const topPadding = 8;
 
       const enLines = wrapText(storyPage.text, fonts.latinDisplay, bilingualCaptionSize, captionMaxWidth);

@@ -7146,3 +7146,58 @@ read off one static Stripe coupon object:
   500/mo) that keeps the Founding Partner discount from pricing below
   AI cost stays a manual step for whoever processes a Network signup —
   automating that was out of scope here.
+
+## Network tier's quota fixed at 250 stories/month permanently
+
+The item directly above ("Not changed") described Network's 250/mo
+quota as a temporary launch-phase-only cut, reverting to 500/mo once
+standard pricing started in month 4, applied by hand per signup.
+Founder decision: make 250/mo the tier's permanent quota instead, at
+unchanged AED prices on both the Founding Partner and standard rate
+(AED 2,624.50/mo and AED 5,249/mo respectively).
+
+**Why now, not just "the founder wants it":** this came up directly
+while load-testing a 100+-story bulk-generation scenario for launch
+readiness. A single Network customer running near their full 500/mo
+quota pushes real AI spend close to, or past, Google AI Studio's own
+mandatory Tier 1 cap (~$250/month, platform-wide, not per tenant) —
+confirmed from real production data: $0.101/image × 6 images/story ×
+500 stories/mo ≈ $303/month on the realistic floor, and ≈$750/month on
+the conservative $1.50/story planning figure this doc otherwise uses
+throughout. Either way, one fully-utilized Network account alone was a
+real risk to the whole platform's AI availability, not a hypothetical.
+Halving the quota to 250/mo roughly halves that exposure (≈$152/month
+realistic, ≈$375/month conservative) without needing a Tier 2 Google
+upgrade yet.
+
+**Implementation**: `plans.stories_per_month` updated from 500 to 250
+for both `network` (AED) and `network_usd` rows, live in Supabase —
+not a new migration, since `plans` is operational data the founder
+edits directly (same precedent as the template content updates).
+Because `sync_quota_to_plan`-style checkout logic already reads
+`stories_per_month` straight from the `plans` table (confirmed via
+`src/lib/actions/owner-subscriptions.ts`), this is the only change
+needed in the data model — no code changes, and the manual
+`quotas.stories_included_this_period` override + month-4 reset
+described in the "Not changed" note above is now obsolete and removed
+from `docs/en/pricing.md` / `docs/ar/pricing.md`.
+
+**Margin effect, a genuine improvement, not just a safety fix**:
+Network's standard-rate margin rises from ~48% (at 500 stories/mo) to
+~74% (at 250), and its annual margin from ~34% to ~67% — the tier no
+longer stands out as the thin one among the five, which resolves the
+"Network's annual margin is the one worth a founder decision" note
+this doc used to carry. Founding Partner-rate margins are unchanged
+(~48%/~34%), since that discounted tier was already computed against a
+250-story quota before this change.
+
+Updated: `docs/en/pricing.md`, `docs/ar/pricing.md` (Network's included
+quota, both margin tables, the AI-spend-cap reference points, and the
+operating-playbook note); the live `plans` table rows; and the
+"Ownly - Go-Live Technical Readiness Checklist" Drive doc's open item
+about Network exceeding the Google AI Studio cap, which this resolves.
+Still open: the Sales Rep Reference deck, the four customer-facing
+pitch decks (and their sample/template variants), and the Pricing &
+Launch Strategy Drive doc all still show Network's standard-rate quota
+as 500/mo and need the same 500→250 edit before they're shown to a
+real nursery.

@@ -95,7 +95,7 @@ standard rate a nursery eventually settles into.
 |---|---|---|---|---|---|
 | **Starter** | AED 374.50/mo | AED 3,592.50/yr | 25 | 10 | 3 |
 | **Growth** | AED 974.50/mo | AED 9,367.50/yr | 100 | 20 | 10 |
-| **Network** | AED 2,624.50/mo | AED 25,117.50/yr | 250 (halved — see below) | 30 | 50 |
+| **Network** | AED 2,624.50/mo | AED 25,117.50/yr | 250 | 30 | 50 |
 
 **How long the discount lasts depends on billing interval — this is
 the real mechanic, not just a marketing line:**
@@ -127,16 +127,23 @@ the real mechanic, not just a marketing line:**
 
 **Confirmed no tier sells at a loss at this rate, monthly or annual.**
 Starter nets ~63% margin monthly / ~54% annually even at 50% off,
-Growth ~43.5% / ~29.4%. Network is the one tier where a flat 50% cut at
-the *full* 500-story quota *would* price below cost on either billing
-interval — fixed by halving Network's quota to 250 stories/mo for the
-whole discounted period (not just a 3-month window), which holds its
-margin at ~48% monthly / ~34% annually (price and cost scale by the
-same factor). Full 500/mo resumes automatically once standard pricing
-starts. This quota halving is a manual step today (set
-`quotas.stories_included_this_period` to 250 for that tenant when
-processing a Founding Partner Network signup), not something
-`sync_quota_to_plan` does automatically yet.
+Growth ~43.5% / ~29.4%, Network ~48% / ~34% (price and cost scale by
+the same factor). **Network's included quota is 250 stories/mo
+permanently — not a temporary launch-phase halving that reverts to
+500.** This was originally built as a 3-month founding-partner-only
+cut with a manual reset in month 4; raised to a permanent change for
+two reasons: it keeps Network's margin at a healthy ~48%/~34% (a flat
+50% cut at the old full 500-story quota would price below cost), and
+it meaningfully reduces how much headroom a single Network customer
+needs against Google's own ~$250/month Tier 1 cap (see "AI Studio
+spend cap" below) — halving the quota roughly halves the risk, even
+though on the conservative planning basis one Network customer alone
+can still approach that cap; real production spend per image has run
+well under the conservative figure, which is the realistic case. Because
+this is now the plan's actual `stories_per_month` value
+(`plans` table), it applies automatically at checkout like every other
+tier — no manual `quotas.stories_included_this_period` override or
+month-4 reset needed any more.
 
 Founding Partner nurseries that also commit to an annual plan get **5
 free printed copies** (AED 81 standalone value each, AED 225 total
@@ -149,7 +156,7 @@ seen a physical book yet.
 |---|---|---|---|---|---|---|---|
 | **Starter** | AED 749 | AED 7,185 | 25 | 10 | 3 | AED 138 | ~82% |
 | **Growth** | AED 1,949 | AED 18,735 | 100 | 20 | 10 | AED 551 | ~72% |
-| **Network** | AED 5,249 | AED 50,235 | 500 | 30 | 50 | AED 2,753 | ~48% |
+| **Network** | AED 5,249 | AED 50,235 | 250 | 30 | 50 | AED 1,378 | ~74% |
 
 Best for: Starter — a single nursery branch piloting the product;
 Growth — a multi-branch nursery or a school; Network — a nursery
@@ -337,19 +344,14 @@ month of the year:
 |---|---|---|---|---|
 | Starter | AED 7,185 | AED 1,656 | **~77%** | ~82% |
 | Growth | AED 18,735 | AED 6,612 | **~65%** | ~72% |
-| Network | AED 50,235 | AED 33,036 | **~34%** | ~48% |
+| Network | AED 50,235 | AED 16,530 | **~67%** | ~74% |
 | Family | AED 495 | AED 66 | **~87%** | ~89% |
 | Family Plus | AED 1,045 | AED 198 | **~81%** | ~85% |
 
-All five are solidly profitable — none are a loss. **Network's annual
-margin (~34%) is the one worth a founder decision**: it's a real,
-expected compression (the annual discount applies to a tier whose
-monthly margin is already the thinnest of the three), not a bug, but
-it's a noticeably bigger gap from its monthly figure than the other
-tiers show. If Network nurseries are expected to be the ones most
-likely to commit annually (a 500-story/mo operation is the segment most
-likely to want to lock in a year), consider a shallower annual discount
-on Network specifically rather than the same ~20% every tier gets.
+All five are solidly profitable — none are a loss, and none needs a
+founder decision on the annual discount any more: with Network's quota
+fixed at 250 stories/mo (see above), its annual margin (~67%) sits
+in line with the other tiers rather than standing out as the thin one.
 
 ### Founding-partner coupon duration depends on billing interval
 
@@ -450,7 +452,15 @@ number and Google's current tier ceiling. Re-check this every time a
 new nursery contract closes — it changes with every signed deal, not
 just once at launch. Reference points: 1 Growth nursery (100
 stories/mo) needs ≈$195; 3 Growth nurseries need ≈$585; 1 Network
-customer (500 stories/mo) needs ≈$975.
+customer (250 stories/mo, since Network's quota was fixed at 250 — see
+"Founding Partner launch pricing" above) needs ≈$488 on this
+conservative $1.50/story basis — still above the $250 Tier 1 ceiling on
+its own, though the realistic figure is much lower: real production
+spend has run at $0.101/image (6 images/story = $0.606/story), which
+puts a single Network customer at ≈$152/month, comfortably under the
+cap. Budget the conservative figure; don't assume the realistic one
+without watching actual `ai_spend_ledger` totals once a Network
+customer is live.
 
 Two different numbers matter here, and they're not the same thing —
 don't confuse a spending *plan* with a safety *ceiling*:
@@ -507,13 +517,12 @@ as payees). This is the plan, not yet the implementation.
   annually; don't invoice net-30 for small accounts. Network-tier
   nursery groups, hospitals, and banks often need a formal PO/invoice
   process — be ready to send manual Stripe invoices for those.
-- **If a founding partner signs on Network**: set
-  `quotas.stories_included_this_period` to 250 for their tenant (not
-  the default 500) for the first 3 months, alongside the Stripe
-  coupon for the 50% discount — both manual steps anyway at this
-  volume. Reset it to 500 once full price starts in month 4. See "Cost
-  basis" → "Launch offers" above for why: at Network's own ~48%
-  margin, halving only the price (not the quota) prices below cost.
+- **If a founding partner signs on Network**: nothing manual needed any
+  more — 250 stories/mo is the plan's actual quota now, so it applies
+  automatically at checkout the same way every other tier does. Only
+  the Stripe coupon for the 50% discount needs applying. See "Cost
+  basis" → "Founding Partner launch pricing" above for why the quota
+  itself was fixed at 250 permanently.
 - **Onboarding**: personally walk the first ~10 nurseries through setup
   rather than a self-serve email link — this is an unfamiliar product
   category, and the first week determines retention.

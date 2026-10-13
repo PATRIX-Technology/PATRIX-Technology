@@ -7193,11 +7193,33 @@ this doc used to carry. Founding Partner-rate margins are unchanged
 
 Updated: `docs/en/pricing.md`, `docs/ar/pricing.md` (Network's included
 quota, both margin tables, the AI-spend-cap reference points, and the
-operating-playbook note); the live `plans` table rows; and the
+operating-playbook note); the live `plans` table rows; the
 "Ownly - Go-Live Technical Readiness Checklist" Drive doc's open item
-about Network exceeding the Google AI Studio cap, which this resolves.
-Still open: the Sales Rep Reference deck, the four customer-facing
-pitch decks (and their sample/template variants), and the Pricing &
-Launch Strategy Drive doc all still show Network's standard-rate quota
-as 500/mo and need the same 500→250 edit before they're shown to a
-real nursery.
+about Network exceeding the Google AI Studio cap, which this resolves;
+and the "Ownly - Pricing, Subscriptions & Launch Strategy (EN+AR)"
+Drive doc (both pricing tables, both languages).
+
+All five pitch decks now carry the same fix, confirmed by direct
+text-run inspection against the stale "500"/"halved for 3 months"
+pattern: the two current EN customer-facing decks (Template and
+Sunshine Kids sample, "Latest" folder) already had the correct
+content, no edit needed; the Sales Rep Reference deck, the AR Template
+deck, and the AR Sunshine Kids sample deck were edited and the fix
+verified both in the slide XML and visually. Two now-superseded
+duplicates (the older EN Template and EN Sunshine Kids copies,
+replaced by their "-1" versions) were archived to Drive's "Old Slides"
+folder unfixed rather than patched, since a correct replacement
+already exists under the same clean filename.
+
+Known gap at the time of writing: uploading a fixed .pptx back to
+Drive via the automated tool (`create_file` with inline base64)
+silently truncates and corrupts files above roughly 50KB in this
+session — the tool reports success with no error, but the resulting
+file is an unopenable, truncated zip. This was caught before any
+customer ever saw a broken deck (both corrupted uploads were reverted
+to their prior, stale-but-valid versions within the same session), but
+it means the Sales Rep Reference, Internal Strategy, AR Template, and
+AR Sunshine Kids sample decks' fixed content was handed to the founder
+as local files to upload manually, rather than pushed live
+automatically. Confirm with the founder that all four have been
+re-uploaded before treating this item as fully closed.

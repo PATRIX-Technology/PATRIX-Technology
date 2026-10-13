@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { couponRejectionMessage, validateCoupon, type CouponRecord } from '@/lib/domain/coupons';
+import {
+  computeFoundingPartnerCouponParams,
+  couponRejectionMessage,
+  validateCoupon,
+  type CouponRecord,
+} from '@/lib/domain/coupons';
 
 const baseCoupon: CouponRecord = {
   code: 'WELCOME10',
@@ -52,6 +57,64 @@ describe('validateCoupon', () => {
       times_redeemed: 5,
     };
     expect(validateCoupon(bothProblems, now).reason).toBe('expired');
+  });
+});
+
+describe('computeFoundingPartnerCouponParams', () => {
+  const cutoff = new Date('2027-01-01T00:00:00Z');
+
+  it('discounts the whole first invoice, once, for annual billing', () => {
+    const now = new Date('2026-10-13T00:00:00Z');
+    expect(computeFoundingPartnerCouponParams('annual', 50, now, cutoff)).toEqual({
+      percent_off: 50,
+      duration: 'once',
+    });
+  });
+
+  it('annual duration stays "once" regardless of signup date within the campaign', () => {
+    const now = new Date('2026-12-30T00:00:00Z');
+    expect(computeFoundingPartnerCouponParams('annual', 50, now, cutoff)).toEqual({
+      percent_off: 50,
+      duration: 'once',
+    });
+  });
+
+  it('repeats monthly for the whole calendar months remaining until cutoff', () => {
+    // Oct 2026 -> Jan 2027 cutoff: Oct, Nov, Dec are discounted (3 months).
+    const now = new Date('2026-10-13T00:00:00Z');
+    expect(computeFoundingPartnerCouponParams('monthly', 50, now, cutoff)).toEqual({
+      percent_off: 50,
+      duration: 'repeating',
+      duration_in_months: 3,
+    });
+  });
+
+  it('signing up later in the campaign gets fewer discounted months, same cutoff', () => {
+    // Dec 2026 -> Jan 2027 cutoff: only Dec is discounted (1 month).
+    const now = new Date('2026-12-15T00:00:00Z');
+    expect(computeFoundingPartnerCouponParams('monthly', 50, now, cutoff)).toEqual({
+      percent_off: 50,
+      duration: 'repeating',
+      duration_in_months: 1,
+    });
+  });
+
+  it('floors at 1 month rather than sending Stripe a zero/negative duration', () => {
+    // Right at the cutoff month itself.
+    const now = new Date('2027-01-01T00:00:00Z');
+    expect(computeFoundingPartnerCouponParams('monthly', 50, now, cutoff)).toEqual({
+      percent_off: 50,
+      duration: 'repeating',
+      duration_in_months: 1,
+    });
+  });
+
+  it('day-of-month never changes the result, only calendar month does', () => {
+    const earlyInMonth = new Date('2026-10-01T00:00:00Z');
+    const lateInMonth = new Date('2026-10-30T00:00:00Z');
+    expect(computeFoundingPartnerCouponParams('monthly', 50, earlyInMonth, cutoff)).toEqual(
+      computeFoundingPartnerCouponParams('monthly', 50, lateInMonth, cutoff),
+    );
   });
 });
 

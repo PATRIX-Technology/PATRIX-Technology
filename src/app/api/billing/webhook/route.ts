@@ -213,6 +213,33 @@ async function handleEvent(
         target_plan_id: planId,
       });
       if (referralError) throw referralError;
+
+      // Coupon redemption count — this was never actually incremented
+      // anywhere in the codebase despite coupons.times_redeemed /
+      // max_redemptions existing specifically to cap an offer like
+      // "first 10 nurseries only" (validateCoupon reads times_redeemed,
+      // but nothing wrote to it). Harmless while no coupon had been
+      // created in Stripe yet; a real gap now that Founding Partner
+      // checkout actually runs through here. This whole event only
+      // processes once per Stripe event id (see the idempotency insert
+      // above this handler), so a plain increment is safe — no risk of
+      // double-counting a retried delivery. See docs/DECISIONS.md
+      // "Coupon redemption count was never incremented".
+      const couponCode = session.metadata?.coupon_code;
+      if (couponCode) {
+        const { data: coupon } = await serviceClient
+          .from('coupons')
+          .select('times_redeemed')
+          .eq('code', couponCode)
+          .maybeSingle();
+        if (coupon) {
+          const { error: couponError } = await serviceClient
+            .from('coupons')
+            .update({ times_redeemed: coupon.times_redeemed + 1 })
+            .eq('code', couponCode);
+          if (couponError) throw couponError;
+        }
+      }
       break;
     }
 

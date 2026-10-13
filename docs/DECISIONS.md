@@ -7076,3 +7076,73 @@ Checklist" (in an earlier dated entry) is left as-is — it's a
 historical record of what existed at that time, not a live reference,
 and this project's convention is to never retroactively rewrite past
 decision-log entries.
+
+## Founding Partner discount duration by billing interval
+
+Founder clarification: the Founding Partner 50%-off offer should behave
+differently by billing interval, not use one fixed duration for both —
+annual signups keep the discounted rate for their full signed-up term
+(e.g. a nursery that goes annual in October 2026 pays the discounted
+rate through October 2027, then standard pricing on renewal), while
+monthly signups revert to standard pricing at a fixed calendar cutoff
+(January 2027) regardless of which month they actually signed up in.
+
+The previous implementation couldn't express this at all: a single
+Stripe coupon with `duration: 'repeating', duration_in_months: 3`
+applied only to monthly billing (annual was blocked outright at
+checkout — see the now-superseded "Founding-partner coupon blocked on
+annual billing" reasoning a few entries up) and had no concept of a
+calendar cutoff, only a fixed invoice count from signup.
+
+Rebuilt as two real behaviors, computed fresh per checkout rather than
+read off one static Stripe coupon object:
+
+- `computeFoundingPartnerCouponParams` (`src/lib/domain/coupons.ts`,
+  unit-tested) takes billing interval, percent off, "now", and the
+  campaign's own cutoff date, and returns the right Stripe coupon
+  shape: **annual** → `duration: 'once'` (discounts the single annual
+  invoice in full; the renewal a year later is undiscounted
+  automatically, no extra logic needed). **monthly** → `duration:
+  'repeating'` for however many whole calendar months remain between
+  signup and the cutoff (3 months for an October signup against a
+  January cutoff, 1 month for a December signup against the same
+  cutoff) — everyone reverts at the same calendar date rather than
+  after a fixed invoice count.
+- The checkout route (`/api/billing/checkout`) no longer rejects a
+  coupon on annual billing. For a coupon row with `percent_off` set but
+  no pre-created `stripe_coupon_id` (the Founding Partner shape — a
+  single static Stripe coupon object can't express a duration that
+  depends on signup date), it creates a fresh, one-off Stripe coupon
+  via `stripe.coupons.create()` using the computed params, scoped to
+  that one checkout session. `coupon.expires_at` does double duty: the
+  same date that already gates whether the coupon can be redeemed at
+  all (via the existing `validateCoupon`) is reused as the campaign
+  cutoff fed into the duration calculation, rather than adding a second
+  config value that could drift from the first.
+- The `coupons.max_redemptions` / `times_redeemed` cap (meant to
+  enforce "first 10 nurseries only") was wired into `validateCoupon`
+  from the start but **nothing in the codebase ever actually
+  incremented `times_redeemed`** — a real gap, harmless only because no
+  coupon had been created in Stripe yet and nothing had ever redeemed
+  one. Fixed in the webhook's `checkout.session.completed` handler: the
+  checkout route now passes the coupon code through
+  `session.metadata.coupon_code` (a dynamically-created Stripe coupon
+  has no stable id to look anything up by otherwise), and the webhook
+  increments the matching `coupons` row's `times_redeemed` once the
+  subscription is confirmed. Safe against Stripe's at-least-once retry
+  delivery because this whole handler only runs once per unique Stripe
+  event id (the idempotency insert earlier in the same route).
+- The billing UI's coupon field is no longer disabled on annual billing
+  (and the now-unexercised `couponAnnualHint` copy was removed from
+  both locale files).
+- A real `coupons` row was created for this campaign (code
+  `FOUNDING10`, 50% off, `max_redemptions: 10`, `expires_at: 2027-01-01
+  00:00:00Z`, no `stripe_coupon_id` so it takes the new dynamic path).
+  Confirmed inert for now, not a live financial action: every plan's
+  `stripe_price_id_monthly`/`stripe_price_id_annual` is still null
+  (Stripe isn't connected to this project yet), so the checkout route
+  fails before ever reaching the coupon logic regardless.
+- Not changed: the Network tier's quota reduction (250/mo instead of
+  500/mo) that keeps the Founding Partner discount from pricing below
+  AI cost stays a manual step for whoever processes a Network signup —
+  automating that was out of scope here.

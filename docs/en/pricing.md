@@ -82,35 +82,61 @@ restore pre-8-page margins" for the full numbers and the live
 
 Every nursery runs through two pricing phases: a 100%-free pilot class
 (no price — see "Launch offers" below), then the discounted
-**Founding Partner launch rate** for the first 3 months after
-converting to paid (limited to the first 10 nurseries who sign), then
-the **standard rate** for the rest of that 12-month term and every
-term after. Shown below as two separate tables so a rep never
-conflates pilot-phase pricing with the standard rate a nursery settles
-into.
+**Founding Partner launch rate** for the first 10 nurseries who sign
+before the campaign cutoff of **1 January 2027**, then the **standard
+rate**. How long the discount itself lasts depends on billing
+interval, not a fixed number of months — see below. Shown as two
+separate tables so a rep never conflates launch-phase pricing with the
+standard rate a nursery eventually settles into.
 
-### Founding Partner launch pricing (months 1–3, first 10 nurseries only)
+### Founding Partner launch pricing (first 10 nurseries, signed up before 1 January 2027)
 
-| Plan | Founding Partner price | Digital stories / month | Story suggestions / month | Seats included |
-|---|---|---|---|---|
-| **Starter** | AED 374.50/mo | 25 | 10 | 3 |
-| **Growth** | AED 974.50/mo | 100 | 20 | 10 |
-| **Network** | AED 2,624.50/mo | 250 (halved for these 3 months only — see below) | 30 | 50 |
+| Plan | Founding Partner price (mo) | Founding Partner price (yr) | Digital stories / month | Story suggestions / month | Seats included |
+|---|---|---|---|---|---|
+| **Starter** | AED 374.50/mo | AED 3,592.50/yr | 25 | 10 | 3 |
+| **Growth** | AED 974.50/mo | AED 9,367.50/yr | 100 | 20 | 10 |
+| **Network** | AED 2,624.50/mo | AED 25,117.50/yr | 250 (halved — see below) | 30 | 50 |
 
-**Confirmed no tier sells at a loss at this rate.** Starter nets ~63%
-margin even at 50% off (AED 374.50 revenue vs. AED 138 AI cost), Growth
-~43.5% (AED 974.50 vs. AED 551). Network is the one tier where a flat
-50% cut at the full 500-story quota *would* price below cost (AED
-2,624.50 revenue vs. AED 2,753 AI cost — a real ≈AED 129/mo loss) —
-fixed by halving Network's quota to 250 stories/mo for these 3 months
-only, which holds its margin at the same ~48% as standard pricing
-(price and cost scale by the same factor). Full 500/mo resumes
-automatically once standard pricing starts in month 4. This quota
-halving is a manual step today (set
-`quotas.stories_included_this_period` to 250 for that tenant alongside
-the Stripe coupon, both already set up by hand for the first 10
-nurseries anyway), not something `sync_quota_to_plan` does
-automatically yet.
+**How long the discount lasts depends on billing interval — this is
+the real mechanic, not just a marketing line:**
+
+- **Annual**: the discounted rate applies to the *entire* first annual
+  invoice, and holds for the full 12-month term the nursery signed up
+  for — a nursery that goes annual in October 2026 keeps paying the
+  discounted rate through October 2027, then renews at the standard
+  annual rate. The 1 January 2027 cutoff only gates whether a nursery
+  can *start* the offer, not how long an already-signed annual term
+  lasts.
+- **Monthly**: the discount applies invoice-by-invoice until the
+  calendar cutoff itself (1 January 2027), not for a fixed number of
+  months — a nursery signing up in October gets ~3 discounted invoices
+  (Oct/Nov/Dec), one signing up in December gets ~1 (Dec only), and
+  every monthly subscriber reverts to standard pricing on the same
+  date rather than after a fixed count.
+- Built as `computeFoundingPartnerCouponParams` in
+  `src/lib/domain/coupons.ts` (unit-tested), which computes the right
+  Stripe coupon shape (`duration: 'once'` for annual, `duration:
+  'repeating'` with calendar-months-remaining for monthly) fresh at
+  checkout time — see `docs/DECISIONS.md` "Founding Partner discount
+  duration by billing interval" for the full mechanism, including why
+  a single static Stripe coupon object couldn't express this.
+- Live coupon code: `FOUNDING10` (50% off, `max_redemptions: 10`,
+  expires 1 January 2027) — seeded directly in the `coupons` table.
+  Inert until Stripe is actually connected (every plan's
+  `stripe_price_id_monthly`/`_annual` is still null).
+
+**Confirmed no tier sells at a loss at this rate, monthly or annual.**
+Starter nets ~63% margin monthly / ~54% annually even at 50% off,
+Growth ~43.5% / ~29.4%. Network is the one tier where a flat 50% cut at
+the *full* 500-story quota *would* price below cost on either billing
+interval — fixed by halving Network's quota to 250 stories/mo for the
+whole discounted period (not just a 3-month window), which holds its
+margin at ~48% monthly / ~34% annually (price and cost scale by the
+same factor). Full 500/mo resumes automatically once standard pricing
+starts. This quota halving is a manual step today (set
+`quotas.stories_included_this_period` to 250 for that tenant when
+processing a Founding Partner Network signup), not something
+`sync_quota_to_plan` does automatically yet.
 
 Founding Partner nurseries that also commit to an annual plan get **5
 free printed copies** (AED 81 standalone value each, AED 225 total
@@ -176,8 +202,11 @@ even with the added labour.
   for it — see the Founding Partner table above for what a nursery
   pays once it converts.
 - **Founding partner** — the discounted launch-phase pricing in the
-  table above, for the first 10 nurseries who sign, locked into a
-  12-month term.
+  table above, for the first 10 nurseries who sign before 1 January
+  2027. Annual signups keep the discounted rate for their full 12-month
+  term; monthly signups revert to standard pricing at the 1 January
+  2027 cutoff regardless of signup month — see the table above for the
+  mechanism.
 - **Referral credit** — a manual sales concession: a nursery that
   refers another paying nursery gets 1 month free, applied by hand.
   Distinct from the automated "Invite & earn free stories" mechanic
@@ -322,25 +351,25 @@ likely to commit annually (a 500-story/mo operation is the segment most
 likely to want to lock in a year), consider a shallower annual discount
 on Network specifically rather than the same ~20% every tier gets.
 
-### Founding-partner coupon is monthly-only, by design
+### Founding-partner coupon duration depends on billing interval
 
-The Founding Partner "50% off for 3 months" offer is implemented as a
-Stripe coupon with `duration: 'repeating', duration_in_months: 3` —
-that only means "3 months" against **monthly** billing (3 invoices).
-Applied to an **annual** subscription (one invoice per 12 months),
-Stripe still counts the 3-month window in calendar time, not billing
-cycles: the coupon would discount the entire first annual invoice by
-the full 50% (the first and only invoice to land inside that 3-month
-window) rather than "3 months' worth" — a founder-sized revenue gap if
-it had ever been allowed to happen, not a rounding quirk. Fixed by
-blocking the combination outright: `/api/billing/checkout` now rejects
-a coupon code when `billingInterval === 'annual'`, and the billing UI
-disables the coupon field with an explanatory hint the moment Annual is
-selected, so this is caught before a submit, not after a Stripe
-invoice. See `docs/DECISIONS.md` "Founding-partner coupon blocked on
-annual billing". No coupon has actually been created in Stripe yet
-(`coupons` table is empty, Stripe isn't connected) — this was a design
-gap to close before it could ever matter, not an active bug.
+Superseded an earlier version of this offer that blocked coupons on
+annual billing outright, because a single Stripe coupon with a fixed
+`duration_in_months` can't mean "3 invoices" on monthly and also "the
+whole first annual invoice, once" on annual without a real revenue gap
+on one side or the other. Rebuilt so the actual duration is computed
+per checkout from billing interval + signup date + the campaign's own
+cutoff (`computeFoundingPartnerCouponParams` in
+`src/lib/domain/coupons.ts`) — **annual** gets `duration: 'once'`
+(discounts the full first annual invoice, renewal reverts
+automatically); **monthly** gets `duration: 'repeating'` for however
+many calendar months remain until the cutoff. See "Founding Partner
+launch pricing" above for the resulting prices and
+`docs/DECISIONS.md` "Founding Partner discount duration by billing
+interval" for the full mechanism. A live coupon (`FOUNDING10`) exists
+in the `coupons` table now, but is inert until Stripe is actually
+connected (every plan's `stripe_price_id_monthly`/`_annual` is still
+null).
 
 ## Printed copies (add-on, nursery and family alike)
 

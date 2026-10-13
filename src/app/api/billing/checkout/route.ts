@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { getCurrentTenantContext } from '@/lib/domain/session';
 import { getStripeClient } from '@/lib/billing/stripe';
-import { validateCoupon, couponRejectionMessage } from '@/lib/domain/coupons';
+import { validateCoupon, couponRejectionMessage, computeFoundingPartnerCouponParams } from '@/lib/domain/coupons';
 import { planIsAvailableForTenant } from '@/lib/domain/billing';
 import { flags } from '@/lib/flags';
 
@@ -53,31 +53,11 @@ export async function POST(request: Request) {
     );
   }
 
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000';
+  const stripe = getStripeClient();
+
   let stripeCouponId: string | undefined;
   if (couponCode) {
-    // Every coupon this platform has (e.g. the Founding Partner "50% off
-    // for 3 months") is a Stripe `duration: 'repeating', duration_in_months`
-    // discount -- that only means what it says against monthly billing,
-    // where "3 months" is 3 invoices. Applied to an annual subscription
-    // (one invoice per 12 months), Stripe still counts in months, not
-    // billing cycles: the coupon's 3-month window closes long before the
-    // next annual invoice ever arrives, so it silently discounts the
-    // ENTIRE first annual payment by the full percentage instead of "3
-    // months' worth" -- a founding partner on annual billing would get
-    // the whole first year at 50% off, not 3 months, which is a real
-    // revenue gap, not a rounding quirk. Block the combination outright
-    // rather than let it happen once and find out from a Stripe invoice
-    // — see docs/DECISIONS.md "Founding-partner coupon blocked on annual
-    // billing".
-    if (billingInterval === 'annual') {
-      return NextResponse.json(
-        {
-          error:
-            'This coupon is designed for monthly billing (a fixed number of discounted months). Switch to monthly billing to use it, or ask about an annual-specific offer instead.',
-        },
-        { status: 409 },
-      );
-    }
     const { data: coupon } = await supabase.from('coupons').select('*').eq('code', couponCode).maybeSingle();
     if (!coupon) {
       return NextResponse.json({ error: 'Coupon code not found.' }, { status: 404 });
@@ -86,11 +66,38 @@ export async function POST(request: Request) {
     if (!validation.valid) {
       return NextResponse.json({ error: couponRejectionMessage(validation.reason) }, { status: 409 });
     }
-    stripeCouponId = coupon.stripe_coupon_id ?? undefined;
-  }
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000';
-  const stripe = getStripeClient();
+    if (coupon.stripe_coupon_id) {
+      // A pre-created, fixed-shape Stripe coupon — used as-is regardless
+      // of billing interval.
+      stripeCouponId = coupon.stripe_coupon_id;
+    } else if (coupon.percent_off) {
+      // A Founding Partner-style coupon: no pre-created Stripe coupon
+      // object, because its actual duration depends on BOTH billing
+      // interval and how much of the campaign window is left at signup
+      // time (see computeFoundingPartnerCouponParams) — something a
+      // single static Stripe coupon object can't express. Created fresh,
+      // scoped to this one checkout, every time. coupon.expires_at doubles
+      // as the campaign's own cutoff date (the same date that gates
+      // whether this coupon can be redeemed at all, via validateCoupon
+      // above) — see docs/DECISIONS.md "Founding Partner discount
+      // duration by billing interval".
+      if (!coupon.expires_at) {
+        return NextResponse.json(
+          { error: 'This coupon is misconfigured (missing its campaign cutoff date).' },
+          { status: 500 },
+        );
+      }
+      const params = computeFoundingPartnerCouponParams(
+        billingInterval,
+        coupon.percent_off,
+        new Date(),
+        new Date(coupon.expires_at),
+      );
+      const stripeCoupon = await stripe.coupons.create(params);
+      stripeCouponId = stripeCoupon.id;
+    }
+  }
 
   const { data: existingSub } = await supabase
     .from('subscriptions')
@@ -104,7 +111,12 @@ export async function POST(request: Request) {
     ...(stripeCouponId ? { discounts: [{ coupon: stripeCouponId }] } : {}),
     ...(existingSub?.stripe_customer_id ? { customer: existingSub.stripe_customer_id } : {}),
     client_reference_id: context.tenantId,
-    metadata: { tenant_id: context.tenantId, plan_id: plan.id },
+    // coupon_code (not the Stripe coupon id) rides along so the webhook can
+    // increment OUR OWN coupons.times_redeemed on successful checkout —
+    // see docs/DECISIONS.md "Coupon redemption count was never
+    // incremented". A dynamic per-session Stripe coupon (the Founding
+    // Partner path above) has no stable id to look anything up by anyway.
+    metadata: { tenant_id: context.tenantId, plan_id: plan.id, ...(couponCode ? { coupon_code: couponCode } : {}) },
     subscription_data: { metadata: { tenant_id: context.tenantId, plan_id: plan.id } },
     // Billing lives on its own dashboard tab now, not inside Settings --
     // see docs/DECISIONS.md "Billing moved out of Settings into its own

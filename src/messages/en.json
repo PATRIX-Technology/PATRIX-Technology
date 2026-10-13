@@ -210,7 +210,6 @@
       "currentPlan": "Current plan",
       "subscribe": "Subscribe",
       "couponLabel": "Coupon code (optional)",
-      "couponAnnualHint": "Coupon codes are for monthly billing only — switch to monthly to use one.",
       "currencyLabel": "Currency"
     },
     "orders": {

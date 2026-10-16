@@ -2,7 +2,12 @@ import { NextResponse } from 'next/server';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { getCurrentTenantContext } from '@/lib/domain/session';
 import { getStripeClient } from '@/lib/billing/stripe';
-import { validateCoupon, couponRejectionMessage, computeFoundingPartnerCouponParams } from '@/lib/domain/coupons';
+import {
+  validateCoupon,
+  couponRejectionMessage,
+  computeFoundingPartnerCouponParams,
+  computeFoundingPartnerTrialEnd,
+} from '@/lib/domain/coupons';
 import { planIsAvailableForTenant } from '@/lib/domain/billing';
 import { flags } from '@/lib/flags';
 
@@ -57,6 +62,11 @@ export async function POST(request: Request) {
   const stripe = getStripeClient();
 
   let stripeCouponId: string | undefined;
+  // Only set for an annual Founding Partner checkout happening before real
+  // launch (see computeFoundingPartnerTrialEnd) -- a nursery converting
+  // during the free-pilot months gets their paid 12-month term anchored to
+  // launch day rather than to whatever day they happened to check out.
+  let trialEndUnix: number | undefined;
   if (couponCode) {
     const { data: coupon } = await supabase.from('coupons').select('*').eq('code', couponCode).maybeSingle();
     if (!coupon) {
@@ -96,6 +106,10 @@ export async function POST(request: Request) {
       );
       const stripeCoupon = await stripe.coupons.create(params);
       stripeCouponId = stripeCoupon.id;
+
+      if (billingInterval === 'annual') {
+        trialEndUnix = computeFoundingPartnerTrialEnd(new Date());
+      }
     }
   }
 
@@ -117,7 +131,10 @@ export async function POST(request: Request) {
     // incremented". A dynamic per-session Stripe coupon (the Founding
     // Partner path above) has no stable id to look anything up by anyway.
     metadata: { tenant_id: context.tenantId, plan_id: plan.id, ...(couponCode ? { coupon_code: couponCode } : {}) },
-    subscription_data: { metadata: { tenant_id: context.tenantId, plan_id: plan.id } },
+    subscription_data: {
+      metadata: { tenant_id: context.tenantId, plan_id: plan.id },
+      ...(trialEndUnix ? { trial_end: trialEndUnix } : {}),
+    },
     // Billing lives on its own dashboard tab now, not inside Settings --
     // see docs/DECISIONS.md "Billing moved out of Settings into its own
     // tab". Found this pointing at the old /settings path while adding

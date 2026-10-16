@@ -118,6 +118,22 @@ the real mechanic, not just a marketing line:**
   annual rate. The 1 January 2028 cutoff only gates whether a nursery
   can *start* the offer, not how long an already-signed annual term
   lasts.
+  - **Pilot nurseries converting to an annual plan before real launch
+    (1 January 2027) get that paid term anchored to launch day, not
+    to whenever they happened to check out.** A nursery that converts
+    during its free-pilot month in, say, November 2026 doesn't start
+    being charged in November — Stripe is told (via `trial_end` on the
+    subscription) to hold the first invoice until 1 January 2027, so
+    the discounted 12-month term runs 1 Jan 2027 → 1 Jan 2028 for
+    every early-converting pilot nursery alike, then renews at
+    standard pricing from 1 Jan 2028. They keep using the app through
+    that trial window — only the first charge is delayed, not access.
+    A nursery that converts on or after 1 January 2027 is billed
+    immediately as normal; this delay only applies before launch.
+    Built as `computeFoundingPartnerTrialEnd` in
+    `src/lib/domain/coupons.ts` (unit-tested) — see
+    `docs/DECISIONS.md` "Founding Partner annual billing anchored to
+    real launch".
 - **Monthly**: the discount applies invoice-by-invoice until the
   calendar cutoff itself (1 January 2028), not for a fixed number of
   months — a nursery signing up in October 2027 gets ~3 discounted

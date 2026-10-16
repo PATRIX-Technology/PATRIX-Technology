@@ -7311,3 +7311,45 @@ for the founder's own record of which 10 nurseries hold founding
 status, and so the actual redeeming tenants can be checked against
 that list after the fact. No code or DB change needed for this part;
 revisit once the founder sends the actual list.
+
+## Founding Partner annual billing anchored to real launch
+
+Follow-up to "Founding Partner cutoff moved to 2028" above — founder
+clarified, 16 Oct 2026: the nurseries doing the free pilot right now
+(these ~2 months) should get an annual Founding Partner subscription
+whose *paid* 12-month term starts on real launch day itself (1 January
+2027), not on whatever day during the pilot they happen to convert.
+The term then runs the full 12 months to 1 January 2028, when it
+renews at standard pricing — matching the campaign cutoff set in the
+previous entry.
+
+Before this change, `mode: 'subscription'` Stripe Checkout starts
+billing the instant checkout completes — a nursery converting in
+November 2026 would have been charged immediately and renewed in
+November 2027, not aligned to launch at all.
+
+**Fix**: added `computeFoundingPartnerTrialEnd(now, billingStart)` to
+`src/lib/domain/coupons.ts` (unit-tested) — a pure function returning a
+Stripe `trial_end` Unix timestamp anchored to
+`FOUNDING_PARTNER_BILLING_START` (1 January 2027) when `now` is before
+that date, or `undefined` once that date has passed (checkout on or
+after real launch bills immediately, same as any ordinary
+subscription — no artificial delay). Wired into
+`src/app/api/billing/checkout/route.ts`: only for the dynamic Founding
+Partner coupon path (`coupon.percent_off`, no pre-created
+`stripe_coupon_id`) **and** `billingInterval === 'annual'` — monthly
+billing doesn't need this, since `computeFoundingPartnerCouponParams`
+already anchors the monthly discount's own reversion to the same
+cutoff date by a different, already-correct mechanism (calendar months
+remaining). When set, `trial_end` is passed on `subscription_data` in
+the Checkout Session.
+
+A subscription with a future `trial_end` still gets `status:
+'trialing'` immediately — the existing webhook handling
+(`subscriptionFromStripe` in `src/lib/domain/billing.ts`, and
+`sync_quota_to_plan` on `checkout.session.completed`) already maps
+`'trialing'` correctly and grants the plan's full quota right away, so
+a pilot nursery converting early keeps using the app without
+interruption through the trial window — only the first *charge* is
+delayed, not product access. This needed no change to the webhook or
+quota-sync logic, only the checkout route's trial_end plumbing above.

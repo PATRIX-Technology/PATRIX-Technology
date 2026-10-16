@@ -91,3 +91,31 @@ export function computeFoundingPartnerCouponParams(
     duration_in_months: Math.max(1, monthsRemaining),
   };
 }
+
+/**
+ * Real launch date — see docs/DECISIONS.md "Founding Partner annual
+ * billing anchored to real launch". A nursery that converts to an annual
+ * Founding Partner plan during the free-pilot months (before this date)
+ * gets their paid 12-month term anchored to start HERE, not on whatever
+ * day they happened to click "Subscribe" — so the discounted term always
+ * runs this launch date through the same date next year, then renews at
+ * standard pricing, regardless of how early in the pilot they converted.
+ */
+export const FOUNDING_PARTNER_BILLING_START = new Date('2027-01-01T00:00:00Z');
+
+/**
+ * Stripe `trial_end` (Unix seconds) to anchor an annual Founding Partner
+ * subscription's first paid invoice to FOUNDING_PARTNER_BILLING_START,
+ * or `undefined` if that date has already passed (checkout happening on
+ * or after real launch starts billing immediately, same as any other
+ * subscription — no artificial delay needed). Stripe rejects a trial_end
+ * that isn't in the future, so returning undefined past the anchor is
+ * the correct behaviour, not a fallback.
+ */
+export function computeFoundingPartnerTrialEnd(
+  now: Date,
+  billingStart: Date = FOUNDING_PARTNER_BILLING_START,
+): number | undefined {
+  if (now.getTime() >= billingStart.getTime()) return undefined;
+  return Math.floor(billingStart.getTime() / 1000);
+}

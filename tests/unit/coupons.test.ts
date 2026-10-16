@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   computeFoundingPartnerCouponParams,
+  computeFoundingPartnerTrialEnd,
   couponRejectionMessage,
   validateCoupon,
   type CouponRecord,
@@ -115,6 +116,26 @@ describe('computeFoundingPartnerCouponParams', () => {
     expect(computeFoundingPartnerCouponParams('monthly', 50, earlyInMonth, cutoff)).toEqual(
       computeFoundingPartnerCouponParams('monthly', 50, lateInMonth, cutoff),
     );
+  });
+});
+
+describe('computeFoundingPartnerTrialEnd', () => {
+  const billingStart = new Date('2027-01-01T00:00:00Z');
+
+  it('anchors to the billing start date when checking out before it, during the pilot', () => {
+    const now = new Date('2026-11-10T00:00:00Z');
+    expect(computeFoundingPartnerTrialEnd(now, billingStart)).toBe(
+      Math.floor(billingStart.getTime() / 1000),
+    );
+  });
+
+  it('returns undefined once real launch has already happened — no artificial delay needed', () => {
+    const now = new Date('2027-03-01T00:00:00Z');
+    expect(computeFoundingPartnerTrialEnd(now, billingStart)).toBeUndefined();
+  });
+
+  it('returns undefined exactly at the billing start instant itself', () => {
+    expect(computeFoundingPartnerTrialEnd(billingStart, billingStart)).toBeUndefined();
   });
 });
 

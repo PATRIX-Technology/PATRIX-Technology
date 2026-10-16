@@ -7223,3 +7223,44 @@ AR Sunshine Kids sample decks' fixed content was handed to the founder
 as local files to upload manually, rather than pushed live
 automatically. Confirm with the founder that all four have been
 re-uploaded before treating this item as fully closed.
+
+## Print vendor cost updated to a real per-unit quote, replacing the flat AED 45/book assumption
+
+The founder supplied a firmer vendor quote for the A4, 8-page-including-
+cover print run: AED 40 for a single book, AED 10/book at 10-49, AED
+8/book at 50-99, AED 6/book at 100+, plus a delivery charge the vendor
+has not yet specified. This replaces the old flat AED 45/book cost used
+at every quantity in `docs/en/pricing.md` and `docs/en/budget.md` — the
+real cost falls sharply with order size instead of staying constant,
+which the previous math didn't capture.
+
+Scope of this change, per the founder's own instruction: **costs/
+expenses only**. The customer-facing sell prices (AED 81 standalone,
+AED 69/10-49, AED 63/50-99, AED 58/100+) are unchanged — this update
+recomputes the margin those prices now produce against the real cost,
+it does not re-decide the prices themselves. The resulting margin shift
+is large: standalone margin rises from ~42% to ~48%, and every bulk
+tier's margin jumps far more (10-49: ~83%, 50-99: ~84%, 100+: ~86% of
+revenue — all well above whatever the old flat-cost figures implied),
+because the vendor's real cost at volume (AED 6-10/book) is much lower
+than the old flat AED 45 assumption. This opens a genuine pricing
+question — at these margins the bulk tiers could be priced more
+aggressively and still be very profitable — but that's a founder
+decision, not made here.
+
+Also still open: the vendor's **delivery charge to us** is a distinct,
+unconfirmed number from the AED 30 delivery *fee* the app already
+charges customers (`getPrintOrderDeliveryFeeMinor`) — don't treat that
+AED 30 figure as validated against the new cost basis until the
+vendor's actual delivery cost is known; it was set against the old
+flat-cost assumption like everything else here.
+
+Updated: `docs/en/pricing.md` ("Printed copies" section's cost-basis
+paragraph, both duplicate B2B/B2C pricing-ladder tables' markup
+columns, and the Founding Partner printed-copy bonus cost note); and
+`docs/en/budget.md`'s founding-partner printed-copy bonus line (AED
+2,250 cap → AED 2,000, using 5 × AED 40 instead of 5 × AED 45). Not yet
+propagated to the Google Drive pricing docs or pitch decks — those
+still show the old AED 45 cost basis and should be updated the same way
+once the founder confirms this is final (the vendor still isn't under
+signed contract, per `docs/NEEDS_FROM_ME.md`).

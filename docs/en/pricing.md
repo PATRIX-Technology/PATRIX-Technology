@@ -146,9 +146,10 @@ tier — no manual `quotas.stories_included_this_period` override or
 month-4 reset needed any more.
 
 Founding Partner nurseries that also commit to an annual plan get **5
-free printed copies** (AED 81 standalone value each, AED 225 total
-print cost to us) as a trust-builder for a first customer who hasn't
-seen a physical book yet.
+free printed copies** (AED 81 standalone value each, AED 200 total
+print cost to us at the AED 40/book single-copy rate — down from AED
+225 under the old flat AED 45/book assumption) as a trust-builder for a
+first customer who hasn't seen a physical book yet.
 
 ### Standard pricing (month 4 onward, and every nursery not on the Founding Partner offer)
 
@@ -183,15 +184,17 @@ subscription tier the nursery is on.
 
 | Quantity | Price / book | Delivery fee (UAE) | Markup on cost | Notes |
 |---|---|---|---|---|
-| 1 (standalone) | **AED 81** (≈$22) | AED 30 flat | 80% | Default checkout price — replaces the earlier AED 69/$19 price |
-| 10-49 | **AED 69** | AED 30 flat | 53% | Nursery class-set pricing |
-| 50-99 | **AED 63** | AED 30 flat | 40% | Nursery multi-class pricing |
-| 100+ | **AED 58** | **Free** | 29% | A full graduation/term-end print run for a nursery |
+| 1 (standalone) | **AED 81** (≈$22) | AED 30 flat | 103% | Default checkout price |
+| 10-49 | **AED 69** | AED 30 flat | 590% | Nursery class-set pricing |
+| 50-99 | **AED 63** | AED 30 flat | 688% | Nursery multi-class pricing |
+| 100+ | **AED 58** | **Free** | 867% | A full graduation/term-end print run for a nursery |
 
 Full cost basis, margin math, and fulfillment status in "Printed
 copies" below — this is the same ladder, repeated here so it's visible
 alongside the subscription prices rather than only further down the
-doc.
+doc. Sell prices here are unchanged by the October 2026 per-unit cost
+update; the much higher markup is because real cost now falls sharply
+with order size instead of staying flat — see "Printed copies" below.
 
 ### Self-serve vs. managed
 
@@ -265,10 +268,10 @@ only one pricing table, not two.
 
 | Quantity | Price / book | Delivery fee (UAE) | Markup on cost | Notes |
 |---|---|---|---|---|
-| 1 (standalone) | **AED 81** (≈$22) | AED 30 flat | 80% | Default checkout price |
-| 10-49 | **AED 69** | AED 30 flat | 53% | A family ordering for a class gift or school event |
-| 50-99 | **AED 63** | AED 30 flat | 40% | Larger group order |
-| 100+ | **AED 58** | **Free** | 29% | Rare for a single family, but the same ladder applies |
+| 1 (standalone) | **AED 81** (≈$22) | AED 30 flat | 103% | Default checkout price |
+| 10-49 | **AED 69** | AED 30 flat | 590% | A family ordering for a class gift or school event |
+| 50-99 | **AED 63** | AED 30 flat | 688% | Larger group order |
+| 100+ | **AED 58** | **Free** | 867% | Rare for a single family, but the same ladder applies |
 
 Full cost basis, margin math, and fulfillment status in "Printed
 copies" below.
@@ -387,42 +390,66 @@ order reaches 100+ copies — see the bulk table below.
 A physical printed copy of an already-approved digital story, ordered
 and paid via Stripe checkout (`print_orders` table, covered in
 `docs/DECISIONS.md`) — **UAE delivery only**; there is no international
-fulfillment path today. Real cost basis: **AED 45/book for an 8-page
-print run**, a founder-sourced vendor quote (not yet a signed contract
-— see `docs/NEEDS_FROM_ME.md`), landed cost unconfirmed (flag whether
-that figure already includes delivery before relying on it for
-margin). **The ordering and pricing mechanism is live; fulfillment is
+fulfillment path today. Real cost basis, updated to a firmer per-unit
+vendor quote (A4, 8 pages including cover; print vendor still not
+under signed contract — see `docs/NEEDS_FROM_ME.md`):
+
+| Quantity ordered | Print cost / book |
+|---|---|
+| 1 | AED 40 |
+| 10-49 | AED 10 |
+| 50-99 | AED 8 |
+| 100+ | AED 6 |
+
+Replaces the earlier flat AED 45/book assumption used at every
+quantity — the real vendor cost drops sharply at volume instead of
+staying flat, which the sell-price table below did not previously
+reflect. **The vendor's own delivery charge to us is still unconfirmed**
+— don't confuse it with the AED 30 delivery *fee* we charge the
+customer below, which is a separate, already-decided number; get a
+real delivery-cost figure from the vendor before treating margin below
+as final. **The ordering and pricing mechanism is live; fulfillment is
 not** — don't accept or promise a real customer's print order until a
 print vendor is actually under signed contract, not just quoted. Digital
 generation cost is already covered by the underlying subscription — a
 printed copy's own price only needs to clear the print cost itself plus
 payment fees, not re-absorb the AI cost too.
 
-Standalone price set at an **80% markup** on the AED 45 cost (founder
-decision): AED 45 × 1.8 = **AED 81**. Bulk tiers below keep the same
-relative discount curve the old AED 59/54/49 tiers had off the old
-AED 69 standalone price, just rescaled onto the new AED 81 base.
+**Sell prices below are unchanged by this cost update** — they were
+set at an 80% markup on the old flat AED 45 cost and have not been
+re-decided against the new per-tier costs; that is an open pricing
+question for the founder, not something this update resolves on its
+own.
 
 | Quantity | Price / book | Delivery fee (UAE) | Markup on cost | Notes |
 |---|---|---|---|---|
-| 1 (standalone) | **AED 81** (≈$22) | AED 30 flat | 80% | Default checkout price — replaces the earlier AED 69/$19 price |
-| 10-49 | **AED 69** | AED 30 flat | 53% | Nursery class-set pricing |
-| 50-99 | **AED 63** | AED 30 flat | 40% | Nursery multi-class pricing |
-| 100+ | **AED 58** | **Free** | 29% | A full graduation/term-end print run for a nursery |
+| 1 (standalone) | **AED 81** (≈$22) | AED 30 flat | 103% | Default checkout price |
+| 10-49 | **AED 69** | AED 30 flat | 590% | Nursery class-set pricing |
+| 50-99 | **AED 63** | AED 30 flat | 688% | Nursery multi-class pricing |
+| 100+ | **AED 58** | **Free** | 867% | A full graduation/term-end print run for a nursery |
 
-Margin check at the standard AED 81 price: 81 − 45 (print) − ~2 (card
-fees) ≈ **AED 34/book (~42% gross margin)**, before the separate AED 30
-delivery charge below — healthy, and better than the old AED 69 price's
-~32%. At the AED 58 bulk-100+ tier it's ~AED 13/book (up from ~AED
-4/book at the old AED 49 tier), which is why free delivery is viable
-there (a single bulk shipment's per-unit delivery cost collapses at
-100+ copies) but would not be below that — so every order under 100
-copies is charged a flat **AED 30 delivery fee** instead (built, not
-just documented — see `getPrintOrderDeliveryFeeMinor` in
-`src/lib/domain/print-orders.ts`), a standard Dubai local-courier
-express rate for a parcel this size (a few bound storybooks, well under
-a typical 20kg local-parcel limit) rather than an unrecovered cost or
-an unrealistic extension of the 100+ free-delivery tier to every order.
+Margin check at the standard AED 81 price: 81 − 40 (print) − ~2 (card
+fees) ≈ **AED 39/book (~48% gross margin)**, before the separate AED 30
+delivery charge below — up from ~AED 34/~42% under the old flat-cost
+assumption. The bulk tiers shift far more: at AED 69/10-49 the real
+margin is now ≈ **AED 57/book (~83%)**, at AED 63/50-99 ≈ **AED 53/book
+(~84%)**, and at the AED 58/100+ tier ≈ **AED 50/book (~86%)** — all
+sharply higher than the old flat-cost math implied, since the vendor's
+real per-unit cost falls much faster with volume than the sell-price
+ladder does. This is the open pricing question flagged above: at these
+margins the bulk tiers could plausibly be priced lower to be more
+competitive while staying very profitable, but that's a founder call,
+not made here. Free delivery above 100 copies is still justified (a
+bulk shipment's per-unit delivery cost collapses at that volume); every
+order under 100 copies is charged a flat **AED 30 delivery fee**
+instead (built, not just documented — see
+`getPrintOrderDeliveryFeeMinor` in `src/lib/domain/print-orders.ts`), a
+standard Dubai local-courier express rate for a parcel this size (a few
+bound storybooks, well under a typical 20kg local-parcel limit) rather
+than an unrecovered cost or an unrealistic extension of the 100+
+free-delivery tier to every order — though this AED 30 figure was set
+against the old flat print-cost assumption too and hasn't been
+re-checked against the vendor's real (still-unconfirmed) delivery cost.
 
 **Now automated**: the Stripe checkout flow applies this ladder itself
 based on how many copies are in the checkout (`getPrintOrderUnitPriceMinor`

@@ -82,25 +82,19 @@ restore pre-8-page margins" for the full numbers and the live
 
 Every nursery runs through two pricing phases: a 100%-free pilot class
 (no price — see "Launch offers" below), then the discounted
-**Founding Partner launch rate** for the first 10 nurseries who sign
-before the campaign cutoff of **1 January 2028**, then the **standard
-rate**. How long the discount itself lasts depends on billing
-interval, not a fixed number of months — see below. Shown as two
-separate tables so a rep never conflates launch-phase pricing with the
-standard rate a nursery eventually settles into.
+**Founding Partner launch rate** for the first 10 nurseries who decide
+before real launch (**1 January 2027**), then the **standard rate**.
+Shown as two separate tables so a rep never conflates launch-phase
+pricing with the standard rate a nursery eventually settles into.
 
 Founder decision, 16 Oct 2026: this offer is **not publicly
 advertised** — the standard rate is what every pricing surface (app,
 decks, docs) shows by default. `FOUNDING10` stays a real, working
 Stripe coupon (self-limiting to its first 10 redemptions regardless),
 but it's handed personally to the specific nurseries the founder signs
-early, not printed as a public CTA. The cutoff moved from the
-originally-planned 1 January 2027 to 1 January 2028 because real
-launch itself is now expected around January 2027, not several months
-earlier — see `docs/DECISIONS.md` "Founding Partner cutoff moved to
-2028".
+during the current free-pilot months, not printed as a public CTA.
 
-### Founding Partner launch pricing (first 10 nurseries, signed up before 1 January 2028)
+### Founding Partner launch pricing (first 10 nurseries, decided before 1 January 2027)
 
 | Plan | Founding Partner price (mo) | Founding Partner price (yr) | Digital stories / month | Story suggestions / month | Seats included |
 |---|---|---|---|---|---|
@@ -108,47 +102,35 @@ earlier — see `docs/DECISIONS.md` "Founding Partner cutoff moved to
 | **Growth** | AED 974.50/mo | AED 9,367.50/yr | 100 | 20 | 10 |
 | **Network** | AED 2,624.50/mo | AED 25,117.50/yr | 250 | 30 | 50 |
 
-**How long the discount lasts depends on billing interval — this is
-the real mechanic, not just a marketing line:**
+**The real mechanic, not just a marketing line — simplified 16 Oct
+2026 to a flat, same-for-everyone rule:**
 
-- **Annual**: the discounted rate applies to the *entire* first annual
-  invoice, and holds for the full 12-month term the nursery signed up
-  for — a nursery that goes annual in early 2027 keeps paying the
-  discounted rate for that full term, then renews at the standard
-  annual rate. The 1 January 2028 cutoff only gates whether a nursery
-  can *start* the offer, not how long an already-signed annual term
-  lasts.
-  - **Pilot nurseries converting to an annual plan before real launch
-    (1 January 2027) get that paid term anchored to launch day, not
-    to whenever they happened to check out.** A nursery that converts
-    during its free-pilot month in, say, November 2026 doesn't start
-    being charged in November — Stripe is told (via `trial_end` on the
-    subscription) to hold the first invoice until 1 January 2027, so
-    the discounted 12-month term runs 1 Jan 2027 → 1 Jan 2028 for
-    every early-converting pilot nursery alike, then renews at
-    standard pricing from 1 Jan 2028. They keep using the app through
-    that trial window — only the first charge is delayed, not access.
-    A nursery that converts on or after 1 January 2027 is billed
-    immediately as normal; this delay only applies before launch.
-    Built as `computeFoundingPartnerTrialEnd` in
-    `src/lib/domain/coupons.ts` (unit-tested) — see
-    `docs/DECISIONS.md` "Founding Partner annual billing anchored to
-    real launch".
-- **Monthly**: the discount applies invoice-by-invoice until the
-  calendar cutoff itself (1 January 2028), not for a fixed number of
-  months — a nursery signing up in October 2027 gets ~3 discounted
-  invoices (Oct/Nov/Dec 2027), one signing up in December 2027 gets ~1
-  (Dec only), and every monthly subscriber reverts to standard pricing
-  on the same date rather than after a fixed count.
-- Built as `computeFoundingPartnerCouponParams` in
-  `src/lib/domain/coupons.ts` (unit-tested), which computes the right
-  Stripe coupon shape (`duration: 'once'` for annual, `duration:
-  'repeating'` with calendar-months-remaining for monthly) fresh at
-  checkout time — see `docs/DECISIONS.md` "Founding Partner discount
-  duration by billing interval" for the full mechanism, including why
-  a single static Stripe coupon object couldn't express this.
+- **Decide (sign up) before 1 January 2027**: the discount is a flat
+  **12 months, 1 January 2027 → 1 January 2028**, for every nursery
+  alike — monthly or annual, no matter which month during the
+  free-pilot they actually convert. A nursery converting in November
+  2026 doesn't start being charged in November — Stripe is told (via
+  `trial_end` on the subscription) to hold the *first* invoice until 1
+  January 2027. They keep using the app through that waiting period;
+  only the first *charge* is delayed, not product access. Annual uses
+  `duration: 'once'` on that first (now-anchored) invoice; monthly uses
+  `duration: 'repeating', duration_in_months: 12` — both land on
+  exactly the same Jan 2027 → Jan 2028 window because both are
+  anchored to the same `trial_end`. Then both revert to standard
+  pricing from 1 January 2028.
+- **Decide on or after 1 January 2027**: no discount at all, not even
+  a reduced one — standard pricing applies immediately, billed from
+  checkout as normal, same as any other subscription. `FOUNDING10`'s
+  own `expires_at` is set to 1 January 2027, so `validateCoupon`
+  rejects any attempt to redeem it after that date.
+- Built as `computeFoundingPartnerCouponParams` +
+  `computeFoundingPartnerTrialEnd` in `src/lib/domain/coupons.ts`
+  (unit-tested) — see `docs/DECISIONS.md` "Founding Partner discount
+  simplified to a flat 12 months" for the full mechanism and why an
+  earlier, more complicated "months remaining until cutoff" version of
+  this was replaced.
 - Live coupon code: `FOUNDING10` (50% off, `max_redemptions: 10`,
-  expires 1 January 2028) — seeded directly in the `coupons` table.
+  expires 1 January 2027) — seeded directly in the `coupons` table.
   Redemption-ready as soon as every plan's
   `stripe_price_id_monthly`/`_annual` is populated — see
   `scripts/setup-stripe-plans.mjs`.
@@ -240,12 +222,13 @@ even with the added labour.
   for it — see the Founding Partner table above for what a nursery
   pays once it converts.
 - **Founding partner** — the discounted launch-phase pricing in the
-  table above, for the first 10 nurseries who sign before 1 January
-  2028 (not publicly advertised — handed personally, see above). Annual
-  signups keep the discounted rate for their full 12-month term;
-  monthly signups revert to standard pricing at the 1 January 2028
-  cutoff regardless of signup month — see the table above for the
-  mechanism.
+  table above, for the first 10 nurseries who decide before real
+  launch on 1 January 2027 (not publicly advertised — handed
+  personally, see above). A flat 12 months discounted, 1 Jan 2027 → 1
+  Jan 2028, monthly or annual alike, billing anchored to launch day
+  regardless of which pilot month they actually convert in — deciding
+  on or after 1 January 2027 gets no discount at all. See the table
+  above for the mechanism.
 - **Referral credit** — a manual sales concession: a nursery that
   refers another paying nursery gets 1 month free, applied by hand.
   Distinct from the automated "Invite & earn free stories" mechanic

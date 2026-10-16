@@ -62,10 +62,11 @@ export async function POST(request: Request) {
   const stripe = getStripeClient();
 
   let stripeCouponId: string | undefined;
-  // Only set for an annual Founding Partner checkout happening before real
-  // launch (see computeFoundingPartnerTrialEnd) -- a nursery converting
-  // during the free-pilot months gets their paid 12-month term anchored to
-  // launch day rather than to whatever day they happened to check out.
+  // Only set for a Founding Partner checkout happening before real launch
+  // (see computeFoundingPartnerTrialEnd) -- a nursery converting during
+  // the free-pilot months gets their paid term anchored to launch day
+  // rather than to whatever day they happened to check out, monthly or
+  // annual alike.
   let trialEndUnix: number | undefined;
   if (couponCode) {
     const { data: coupon } = await supabase.from('coupons').select('*').eq('code', couponCode).maybeSingle();
@@ -83,33 +84,18 @@ export async function POST(request: Request) {
       stripeCouponId = coupon.stripe_coupon_id;
     } else if (coupon.percent_off) {
       // A Founding Partner-style coupon: no pre-created Stripe coupon
-      // object, because its actual duration depends on BOTH billing
-      // interval and how much of the campaign window is left at signup
-      // time (see computeFoundingPartnerCouponParams) — something a
-      // single static Stripe coupon object can't express. Created fresh,
-      // scoped to this one checkout, every time. coupon.expires_at doubles
-      // as the campaign's own cutoff date (the same date that gates
-      // whether this coupon can be redeemed at all, via validateCoupon
-      // above) — see docs/DECISIONS.md "Founding Partner discount
-      // duration by billing interval".
-      if (!coupon.expires_at) {
-        return NextResponse.json(
-          { error: 'This coupon is misconfigured (missing its campaign cutoff date).' },
-          { status: 500 },
-        );
-      }
-      const params = computeFoundingPartnerCouponParams(
-        billingInterval,
-        coupon.percent_off,
-        new Date(),
-        new Date(coupon.expires_at),
-      );
+      // object, because its shape depends on billing interval (see
+      // computeFoundingPartnerCouponParams) — something a single static
+      // Stripe coupon object can't express. Created fresh, scoped to this
+      // one checkout, every time. coupon.expires_at is also the real
+      // launch date (FOUNDING_PARTNER_BILLING_START) — redeeming on or
+      // after it gets no discount at all, by design — see
+      // docs/DECISIONS.md "Founding Partner discount simplified to a flat
+      // 12 months".
+      const params = computeFoundingPartnerCouponParams(billingInterval, coupon.percent_off);
       const stripeCoupon = await stripe.coupons.create(params);
       stripeCouponId = stripeCoupon.id;
-
-      if (billingInterval === 'annual') {
-        trialEndUnix = computeFoundingPartnerTrialEnd(new Date());
-      }
+      trialEndUnix = computeFoundingPartnerTrialEnd(new Date());
     }
   }
 

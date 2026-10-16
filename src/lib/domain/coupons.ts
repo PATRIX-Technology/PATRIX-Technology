@@ -51,66 +51,62 @@ export interface FoundingPartnerCouponParams {
 }
 
 /**
- * The Founding Partner discount's Stripe coupon shape depends on billing
- * interval, not just a flat "N months off" — see docs/DECISIONS.md
- * "Founding Partner discount duration by billing interval".
+ * The Founding Partner discount is always a flat 12 months — Jan 2027
+ * through Jan 2028 — for every eligible nursery alike, regardless of
+ * which month during the pilot they actually sign up. See
+ * docs/DECISIONS.md "Founding Partner discount simplified to a flat 12
+ * months": every eligible subscription's billing is anchored to start on
+ * FOUNDING_PARTNER_BILLING_START via computeFoundingPartnerTrialEnd (same
+ * real launch date for everyone), so the discount window is fixed rather
+ * than computed from "months remaining until some cutoff."
  *
- * Annual: one invoice covers the whole signed-up term, so `duration:
- * 'once'` discounts that entire first invoice at the full rate, and the
- * renewal a year later is automatically full price — "locked for the term
- * you signed up for, back to standard after."
+ * Annual: one invoice covers the whole 12-month term, so `duration:
+ * 'once'` discounts that entire first invoice, and the renewal a year
+ * later is automatically full price.
  *
- * Monthly: `duration: 'repeating'` for however many whole calendar months
- * remain between signup and the campaign's own cutoff date (not a fixed
- * count) — a nursery signing up in October gets more discounted invoices
- * than one signing up in December, but every monthly subscriber reverts to
- * standard pricing at the same calendar date rather than after a fixed
- * number of invoices. `cutoff` is the SAME date used as the coupon's own
- * `expires_at` (eligibility to redeem at all) — reused here rather than a
- * second config value, since "last day to sign up for the offer" and
- * "first month no longer discounted" are the same date by design.
+ * Monthly: `duration: 'repeating'` for exactly 12 months — since every
+ * eligible monthly signup's first invoice lands on the same anchored
+ * date (via trial_end), 12 repeating discounted invoices covers Jan 2027
+ * through Jan 2028 for all of them equally; no per-signup-month math
+ * needed any more.
  */
 export function computeFoundingPartnerCouponParams(
   billingInterval: 'monthly' | 'annual',
   percentOff: number,
-  now: Date,
-  cutoff: Date,
 ): FoundingPartnerCouponParams {
   if (billingInterval === 'annual') {
     return { percent_off: percentOff, duration: 'once' };
   }
-  const monthsRemaining =
-    (cutoff.getFullYear() - now.getFullYear()) * 12 + (cutoff.getMonth() - now.getMonth());
-  return {
-    percent_off: percentOff,
-    duration: 'repeating',
-    // Floor at 1: validateCoupon's own expiry check is what actually keeps
-    // a signup past the cutoff from reaching this function at all, but
-    // Stripe itself rejects a repeating coupon with duration_in_months < 1
-    // outright, so this is a defensive floor, not the real gate.
-    duration_in_months: Math.max(1, monthsRemaining),
-  };
+  return { percent_off: percentOff, duration: 'repeating', duration_in_months: 12 };
 }
 
 /**
- * Real launch date — see docs/DECISIONS.md "Founding Partner annual
- * billing anchored to real launch". A nursery that converts to an annual
- * Founding Partner plan during the free-pilot months (before this date)
- * gets their paid 12-month term anchored to start HERE, not on whatever
- * day they happened to click "Subscribe" — so the discounted term always
- * runs this launch date through the same date next year, then renews at
- * standard pricing, regardless of how early in the pilot they converted.
+ * Real launch date — see docs/DECISIONS.md "Founding Partner discount
+ * simplified to a flat 12 months". A nursery that redeems the Founding
+ * Partner coupon during the free-pilot months (before this date) gets
+ * their paid term anchored to start HERE, not on whatever day they
+ * happened to click "Subscribe" — so every eligible nursery's discounted
+ * term runs this same launch date through the same date one year later,
+ * then reverts to standard pricing, regardless of how early in the pilot
+ * they converted. This is also the coupon's own `expires_at` — redeeming
+ * on or after this date gets no discount at all, full stop (not a
+ * reduced one); see `validateCoupon`.
  */
 export const FOUNDING_PARTNER_BILLING_START = new Date('2027-01-01T00:00:00Z');
 
 /**
- * Stripe `trial_end` (Unix seconds) to anchor an annual Founding Partner
+ * Stripe `trial_end` (Unix seconds) to anchor a Founding Partner
  * subscription's first paid invoice to FOUNDING_PARTNER_BILLING_START,
  * or `undefined` if that date has already passed (checkout happening on
  * or after real launch starts billing immediately, same as any other
- * subscription — no artificial delay needed). Stripe rejects a trial_end
- * that isn't in the future, so returning undefined past the anchor is
- * the correct behaviour, not a fallback.
+ * subscription — no artificial delay needed; this case shouldn't actually
+ * be reachable in practice, since the coupon itself expires at the same
+ * date, but this function stays correct either way). Stripe rejects a
+ * trial_end that isn't in the future, so returning undefined past the
+ * anchor is the correct behaviour, not a fallback. Applies to BOTH
+ * billing intervals — monthly and annual alike need the same anchored
+ * start for the flat-12-months discount above to land on the right
+ * dates.
  */
 export function computeFoundingPartnerTrialEnd(
   now: Date,

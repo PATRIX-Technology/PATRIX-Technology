@@ -7353,3 +7353,57 @@ a pilot nursery converting early keeps using the app without
 interruption through the trial window — only the first *charge* is
 delayed, not product access. This needed no change to the webhook or
 quota-sync logic, only the checkout route's trial_end plumbing above.
+
+## Founding Partner discount simplified to a flat 12 months
+
+Corrects the two entries directly above ("Founding Partner cutoff
+moved to 2028" and "Founding Partner annual billing anchored to real
+launch") — founder clarified further, 16 Oct 2026: the earlier "cutoff
+moved to 1 January 2028" was wrong. The actual rule is simpler and the
+same for every nursery:
+
+- **Decide (redeem the coupon) before 1 January 2027** → a flat 12
+  months discounted, 1 January 2027 → 1 January 2028, monthly or
+  annual alike — not a variable "months remaining until some cutoff."
+- **Decide on or after 1 January 2027** → no discount at all, not a
+  reduced one. Standard pricing, billed immediately, same as any
+  ordinary subscription.
+
+So `coupons.expires_at` for `FOUNDING10` moved back to **1 January
+2027** (reverting the previous entry's move to 2028 — that was based
+on a misreading of "keep the discount running through 2028" as "push
+the eligibility deadline to 2028"; eligibility and the discount's *end*
+are different dates, 1 Jan 2027 and 1 Jan 2028 respectively). Updated
+again directly in the live `coupons` table and in both pricing docs.
+
+**Code simplified accordingly**, since the previous "calendar months
+remaining until cutoff" math for monthly billing no longer makes sense
+once every eligible subscription's billing start is anchored to the
+same `FOUNDING_PARTNER_BILLING_START` date via
+`computeFoundingPartnerTrialEnd` (added in the entry above this one) —
+the start is now fixed for everyone, so the duration can be a flat
+constant instead of a per-signup-date calculation:
+
+- `computeFoundingPartnerCouponParams(billingInterval, percentOff)` in
+  `src/lib/domain/coupons.ts` dropped its `now`/`cutoff` parameters
+  entirely. Annual still returns `duration: 'once'`. Monthly now always
+  returns `duration: 'repeating', duration_in_months: 12` — a flat
+  constant, not `(cutoff.getFullYear() - now.getFullYear()) * 12 +
+  ...`.
+- `computeFoundingPartnerTrialEnd` (unchanged signature) is now called
+  for **both** billing intervals in
+  `src/app/api/billing/checkout/route.ts`, not just annual — monthly
+  needs the same anchored start for its flat 12 months to land on the
+  right dates.
+- `tests/unit/coupons.test.ts` updated: the old parametrized
+  "months remaining" test cases (signing up in October vs December,
+  flooring at 1 month, day-of-month invariance) are gone, replaced with
+  two simple cases (`annual` → `once`; `monthly` → `repeating`/`12`),
+  since the function no longer takes a date to vary on.
+
+Net effect: every one of the first 10 nurseries who redeem
+`FOUNDING10` before real launch gets the *exact same* deal — 50% off,
+1 Jan 2027 through 1 Jan 2028, whichever billing interval they pick —
+with no month-by-month variation depending on when during the pilot
+they happened to sign. Anyone who waits until on/after 1 Jan 2027 gets
+nothing, full price from day one.

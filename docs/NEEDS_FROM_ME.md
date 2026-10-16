@@ -219,7 +219,10 @@ else has already been built and is documented in `docs/HANDOFF.md`.
      `STRIPE_WEBHOOK_SECRET`
    - Price objects created in Stripe for each plan (Starter/Growth/
      Network, monthly + annual), with their IDs added to the `plans`
-     table (`stripe_price_id_monthly` / `stripe_price_id_annual`)
+     table (`stripe_price_id_monthly` / `stripe_price_id_annual`) —
+     once you have test keys, run `scripts/setup-stripe-plans.mjs`
+     (see its header comment) to create these automatically and save
+     the IDs for you; it's safe to re-run
 
    The checkout session creation, customer portal redirect, and webhook
    handler (with signature verification and idempotency) are fully

@@ -1,7 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import { adminSetTenantSubscriptionAction, adminSetFoundingPartnerFlagAction } from '@/lib/actions/owner-subscriptions';
+import {
+  adminSetTenantSubscriptionAction,
+  adminSetFoundingPartnerFlagAction,
+  adminSetSpecialDiscountAction,
+} from '@/lib/actions/owner-subscriptions';
 import { Badge } from '@/components/ui/Badge';
 import type { SubscriptionStatus } from '@/types/database';
 
@@ -43,6 +47,7 @@ export function TenantSubscriptionControl({
   planOptions,
   foundingPartnerDiscount,
   foundingPartnerPercentOff,
+  specialDiscountPercent,
 }: {
   tenantId: string;
   planId: string | null;
@@ -63,6 +68,8 @@ export function TenantSubscriptionControl({
   /** FOUNDING10's live percent_off, e.g. 50 — read from the coupons table
    * so this display never drifts from what checkout actually applies. */
   foundingPartnerPercentOff: number;
+  /** Ad hoc, founder-set percent-off for this tenant specifically, or null. */
+  specialDiscountPercent: number | null;
 }) {
   const [current, setCurrent] = useState({ planId, status, cancelAtPeriodEnd, storiesUsed, storiesIncluded, periodEnd });
   const [selectedPlanId, setSelectedPlanId] = useState(planId ?? planOptions[0]?.id ?? '');
@@ -87,6 +94,33 @@ export function TenantSubscriptionControl({
     }
     setFoundingPartner(result.enabled);
   }
+
+  const [specialDiscountInput, setSpecialDiscountInput] = useState(
+    specialDiscountPercent != null ? String(specialDiscountPercent) : '',
+  );
+  const [savedSpecialDiscount, setSavedSpecialDiscount] = useState(specialDiscountPercent);
+  const [specialDiscountPending, setSpecialDiscountPending] = useState(false);
+  const [specialDiscountError, setSpecialDiscountError] = useState<string | null>(null);
+
+  async function handleSpecialDiscountSave() {
+    const trimmed = specialDiscountInput.trim();
+    const percent = trimmed === '' ? null : Number(trimmed);
+    setSpecialDiscountPending(true);
+    setSpecialDiscountError(null);
+    const result = await adminSetSpecialDiscountAction(tenantId, percent);
+    setSpecialDiscountPending(false);
+    if ('error' in result) {
+      setSpecialDiscountError(result.error);
+      return;
+    }
+    setSavedSpecialDiscount(result.percent);
+  }
+
+  // A special discount, when set, takes priority over Founding Partner in
+  // what's actually shown and what checkout actually applies — see the
+  // same precedence in src/app/api/billing/checkout/route.ts.
+  const effectiveDiscountPercent = savedSpecialDiscount ?? (foundingPartner ? foundingPartnerPercentOff : null);
+  const effectiveDiscountLabel = savedSpecialDiscount ? 'Special discount' : 'Founding Partner';
 
   const dirty =
     selectedPlanId !== (current.planId ?? planOptions[0]?.id ?? '') ||
@@ -137,6 +171,29 @@ export function TenantSubscriptionControl({
           Founding Partner
         </label>
         {foundingPartnerError && <p className="mt-1 text-xs text-coral-400">{foundingPartnerError}</p>}
+
+        <div className="mt-2 flex items-center gap-1 text-xs text-ink-600">
+          <input
+            type="number"
+            min={1}
+            max={99}
+            placeholder="%"
+            value={specialDiscountInput}
+            disabled={specialDiscountPending}
+            onChange={(event) => setSpecialDiscountInput(event.target.value)}
+            className="focus-ring w-14 rounded-lg border border-[rgb(var(--color-border))] bg-transparent px-2 py-1 text-xs text-ink-700"
+          />
+          <button
+            type="button"
+            disabled={specialDiscountPending}
+            onClick={handleSpecialDiscountSave}
+            className="focus-ring rounded-lg border border-[rgb(var(--color-border))] px-2 py-1 text-xs text-ink-600 disabled:opacity-40"
+            title="One-off special discount for this tenant specifically, independent of Founding Partner and not capped at 10. Leave blank and save to clear it."
+          >
+            {specialDiscountPending ? '…' : savedSpecialDiscount ? `${savedSpecialDiscount}% set` : 'Special %'}
+          </button>
+        </div>
+        {specialDiscountError && <p className="mt-1 text-xs text-coral-400">{specialDiscountError}</p>}
       </td>
       <td className="py-3 pe-4">
         <p className="text-ink-800">{currentPlan ? currentPlan.name : 'No plan'}</p>
@@ -144,18 +201,18 @@ export function TenantSubscriptionControl({
           <p className="mt-0.5 text-xs text-ink-500">
             {formatMoney(currentPlan.priceMonthlyCents, currentPlan.currency)}/mo ·{' '}
             {formatMoney(currentPlan.priceAnnualCents, currentPlan.currency)}/yr
-            {foundingPartner && (
+            {effectiveDiscountPercent != null && (
               <>
                 {' '}
                 <span className="text-lagoon-400">
-                  (Founding Partner:{' '}
+                  ({effectiveDiscountLabel}:{' '}
                   {formatMoney(
-                    Math.round((currentPlan.priceMonthlyCents * (100 - foundingPartnerPercentOff)) / 100),
+                    Math.round((currentPlan.priceMonthlyCents * (100 - effectiveDiscountPercent)) / 100),
                     currentPlan.currency,
                   )}
                   /mo ·{' '}
                   {formatMoney(
-                    Math.round((currentPlan.priceAnnualCents * (100 - foundingPartnerPercentOff)) / 100),
+                    Math.round((currentPlan.priceAnnualCents * (100 - effectiveDiscountPercent)) / 100),
                     currentPlan.currency,
                   )}
                   /yr)
@@ -196,15 +253,15 @@ export function TenantSubscriptionControl({
                 </option>
               ))}
             </select>
-            {selectedPlan && foundingPartner && (
+            {selectedPlan && effectiveDiscountPercent != null && (
               <p className="mt-1 text-xs text-lagoon-400">
-                Founding Partner: {formatMoney(
-                  Math.round((selectedPlan.priceMonthlyCents * (100 - foundingPartnerPercentOff)) / 100),
+                {effectiveDiscountLabel}: {formatMoney(
+                  Math.round((selectedPlan.priceMonthlyCents * (100 - effectiveDiscountPercent)) / 100),
                   selectedPlan.currency,
                 )}
                 /mo ·{' '}
                 {formatMoney(
-                  Math.round((selectedPlan.priceAnnualCents * (100 - foundingPartnerPercentOff)) / 100),
+                  Math.round((selectedPlan.priceAnnualCents * (100 - effectiveDiscountPercent)) / 100),
                   selectedPlan.currency,
                 )}
                 /yr — invoice this amount for bank transfer

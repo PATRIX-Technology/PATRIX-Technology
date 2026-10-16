@@ -71,6 +71,10 @@ export interface Tenant {
    * automatically at checkout — see docs/DECISIONS.md "Founding Partner
    * flag replaces self-serve coupon code". */
   founding_partner_discount: boolean;
+  /** Ad hoc, founder-set percent-off for this tenant specifically — see
+   * docs/DECISIONS.md "Special discount percent, independent of Founding
+   * Partner". Null means no special discount. */
+  special_discount_percent: number | null;
   created_at: string;
   updated_at: string;
 }

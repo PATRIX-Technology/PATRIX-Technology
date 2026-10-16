@@ -37,7 +37,7 @@ export default async function OwnerSubscriptionsPage({ params }: { params: { loc
     supabase
       .from('tenants')
       .select(
-        `id, name, tenant_type, status, created_at, founding_partner_discount,
+        `id, name, tenant_type, status, created_at, founding_partner_discount, special_discount_percent,
          subscriptions(plan_id, status, current_period_end, cancel_at_period_end, trial_story_used, stripe_customer_id),
          quotas(stories_included_this_period, stories_used_this_period, period_end)`,
       )
@@ -133,6 +133,7 @@ export default async function OwnerSubscriptionsPage({ params }: { params: { loc
                         planOptions={planOptions}
                         foundingPartnerDiscount={tenant.founding_partner_discount}
                         foundingPartnerPercentOff={foundingPartnerPercentOff}
+                        specialDiscountPercent={tenant.special_discount_percent}
                       />
                     ) : (
                       <td className="py-3 pe-4 text-xs text-ink-400" colSpan={5}>

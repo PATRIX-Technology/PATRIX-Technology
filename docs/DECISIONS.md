@@ -7484,3 +7484,39 @@ rather than whenever the transfer actually arrives, matching what
 - Reading the coupon's percent_off live (rather than hardcoding 50)
   means this display can't drift from what Stripe checkout actually
   applies if the discount rate ever changes.
+
+## Special discount percent, independent of Founding Partner
+
+Founder asked, 16 Oct 2026, to "have it for future": a way to give any
+tenant a one-off special price, not limited to the structured Founding
+Partner campaign (fixed at FOUNDING10's own rate, capped at 10).
+
+- **Migration 0045**: `tenants.special_discount_percent smallint`,
+  check constraint 1-99, null = none.
+- **`adminSetSpecialDiscountAction`** (owner-subscriptions.ts):
+  validates the range, no cap (unlike Founding Partner's 10-tenant
+  limit — this is a deliberate one-off, not a campaign).
+- **Checkout**: applies as a fresh one-time (`duration: 'once'`)
+  Stripe coupon, with no `trial_end` anchor (that's a
+  Founding-Partner-specific mechanic for aligning to real launch, not
+  part of this simpler override). Precedence, enforced in
+  `src/app/api/billing/checkout/route.ts`: an explicitly typed coupon
+  code wins over everything; otherwise the special discount wins over
+  Founding Partner if both happen to be set on the same tenant.
+- **UI**: a percent input + button next to the Founding Partner
+  checkbox on `/owner/subscriptions`. The price-reference display
+  (both the current-plan line and the plan-picker preview) shows
+  whichever discount is actually in effect, labelled accordingly
+  ("Special discount" or "Founding Partner").
+
+**Also closed while touching this code**: FOUNDING10 itself now only
+ever applies to a tenant the founder has explicitly flagged — even if
+someone types the code directly into the billing coupon box, checkout
+rejects it unless `founding_partner_discount` is also true on that
+tenant. Before this fix, the self-serve coupon-code path (still
+present in the billing UI for coupons generally) could still grant the
+discount to anyone who guessed or was given the code, regardless of
+the flag — undermining the "not publicly advertised, handed out
+personally" decision and the test-tenant concern raised earlier the
+same day. The flag is now the sole gate for FOUNDING10 specifically;
+other coupon codes, if any are added later, are unaffected.

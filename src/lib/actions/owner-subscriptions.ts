@@ -161,3 +161,41 @@ export async function adminSetFoundingPartnerFlagAction(
 
   return { message: 'updated', enabled };
 }
+
+export type SetSpecialDiscountResult = { error: string } | { message: 'updated'; percent: number | null };
+
+/**
+ * An ad hoc, one-off percent-off for a specific tenant's next Stripe
+ * checkout — for a negotiated special price outside the structured
+ * Founding Partner campaign (which is capped at 10 and fixed at
+ * FOUNDING10's own rate). Not counted against that cap. `percent: null`
+ * clears it. See docs/DECISIONS.md "Special discount percent,
+ * independent of Founding Partner".
+ */
+export async function adminSetSpecialDiscountAction(
+  tenantId: string,
+  percent: number | null,
+): Promise<SetSpecialDiscountResult> {
+  const supabase = await createSupabaseServerClient();
+  const { data: userData } = await supabase.auth.getUser();
+  if (!userData.user) return { error: 'Sign in first.' };
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('is_platform_owner')
+    .eq('id', userData.user.id)
+    .maybeSingle();
+  if (!profile?.is_platform_owner) return { error: 'Not authorized.' };
+
+  if (percent !== null && (!Number.isInteger(percent) || percent < 1 || percent > 99)) {
+    return { error: 'Discount must be a whole number between 1 and 99, or cleared.' };
+  }
+
+  const { error } = await supabase
+    .from('tenants')
+    .update({ special_discount_percent: percent })
+    .eq('id', tenantId);
+  if (error) return { error: error.message };
+
+  return { message: 'updated', percent };
+}

@@ -39,22 +39,36 @@ export async function POST(request: Request) {
   const billingInterval = body.billingInterval === 'annual' ? 'annual' : 'monthly';
   let couponCode = typeof body.couponCode === 'string' ? body.couponCode.trim() : undefined;
 
-  // A nursery the founder has flagged as a Founding Partner (from
-  // /owner/subscriptions) gets the discount automatically -- they never
-  // need to know or type the FOUNDING10 code themselves. An explicitly
-  // typed code still wins if somehow both are present. See
-  // docs/DECISIONS.md "Founding Partner flag replaces self-serve coupon
-  // code".
-  if (!couponCode) {
-    const { data: tenantRow } = await supabase
-      .from('tenants')
-      .select('founding_partner_discount')
-      .eq('id', context.tenantId)
-      .maybeSingle();
-    if (tenantRow?.founding_partner_discount) {
-      couponCode = 'FOUNDING10';
-    }
+  const { data: tenantRow } = await supabase
+    .from('tenants')
+    .select('founding_partner_discount, special_discount_percent')
+    .eq('id', context.tenantId)
+    .maybeSingle();
+
+  // FOUNDING10 only ever applies to a tenant the founder has explicitly
+  // flagged from /owner/subscriptions -- even if someone types the code
+  // themselves, it's rejected below unless the flag is also set. This is
+  // what actually keeps the "not publicly advertised" decision safe: the
+  // code alone was never meant to be sufficient. See docs/DECISIONS.md
+  // "Founding Partner flag replaces self-serve coupon code".
+  const requestedFoundingPartnerByCode = couponCode?.toUpperCase() === 'FOUNDING10';
+
+  // A flagged nursery gets the discount automatically -- they never need
+  // to know or type the code themselves.
+  if (!couponCode && tenantRow?.founding_partner_discount) {
+    couponCode = 'FOUNDING10';
   }
+
+  if ((requestedFoundingPartnerByCode || couponCode === 'FOUNDING10') && !tenantRow?.founding_partner_discount) {
+    return NextResponse.json({ error: 'This coupon is not valid for your account.' }, { status: 409 });
+  }
+
+  // An ad hoc, founder-set special discount (independent of Founding
+  // Partner, not capped at 10) -- only applies when no coupon code is in
+  // play at all, so it never silently overrides an explicit code. See
+  // docs/DECISIONS.md "Special discount percent, independent of Founding
+  // Partner".
+  const specialDiscountPercent = !couponCode ? tenantRow?.special_discount_percent ?? null : null;
 
   const { data: plan } = await supabase.from('plans').select('*').eq('key', planKey).eq('is_active', true).maybeSingle();
   if (!plan) {
@@ -114,6 +128,13 @@ export async function POST(request: Request) {
       stripeCouponId = stripeCoupon.id;
       trialEndUnix = computeFoundingPartnerTrialEnd(new Date());
     }
+  } else if (specialDiscountPercent) {
+    // Ad hoc, founder-set discount for this tenant specifically -- a
+    // fresh one-time Stripe coupon, billed from checkout as normal (no
+    // trial_end anchor; that's a Founding-Partner-specific mechanic, not
+    // part of this simpler one-off override).
+    const stripeCoupon = await stripe.coupons.create({ percent_off: specialDiscountPercent, duration: 'once' });
+    stripeCouponId = stripeCoupon.id;
   }
 
   const { data: existingSub } = await supabase

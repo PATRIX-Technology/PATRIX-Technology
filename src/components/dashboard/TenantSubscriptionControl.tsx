@@ -15,6 +15,15 @@ const STATUS_TONE: Record<SubscriptionStatus, 'success' | 'warning' | 'danger' |
   incomplete: 'neutral',
 };
 
+function formatMoney(cents: number, currency: string) {
+  return `${currency} ${(cents / 100).toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
+}
+
+// Defaults to today, formatted for a date input's value (YYYY-MM-DD).
+function todayDateInputValue() {
+  return new Date().toISOString().slice(0, 10);
+}
+
 /**
  * Renders the Plan/Usage/Renews/Manage cells of one subscriptions-table
  * row as a single client component (see the owner subscriptions page),
@@ -33,6 +42,7 @@ export function TenantSubscriptionControl({
   periodEnd,
   planOptions,
   foundingPartnerDiscount,
+  foundingPartnerPercentOff,
 }: {
   tenantId: string;
   planId: string | null;
@@ -41,13 +51,24 @@ export function TenantSubscriptionControl({
   storiesUsed: number;
   storiesIncluded: number;
   periodEnd: string | null;
-  planOptions: { id: string; name: string; label: string }[];
+  planOptions: {
+    id: string;
+    name: string;
+    label: string;
+    priceMonthlyCents: number;
+    priceAnnualCents: number;
+    currency: string;
+  }[];
   foundingPartnerDiscount: boolean;
+  /** FOUNDING10's live percent_off, e.g. 50 — read from the coupons table
+   * so this display never drifts from what checkout actually applies. */
+  foundingPartnerPercentOff: number;
 }) {
   const [current, setCurrent] = useState({ planId, status, cancelAtPeriodEnd, storiesUsed, storiesIncluded, periodEnd });
   const [selectedPlanId, setSelectedPlanId] = useState(planId ?? planOptions[0]?.id ?? '');
   const [selectedStatus, setSelectedStatus] = useState(status);
   const [cancelAtEnd, setCancelAtEnd] = useState(cancelAtPeriodEnd);
+  const [periodStartDate, setPeriodStartDate] = useState(todayDateInputValue());
   const [pending, setPending] = useState(false);
   const [feedback, setFeedback] = useState<{ tone: 'ok' | 'error'; text: string } | null>(null);
 
@@ -70,15 +91,23 @@ export function TenantSubscriptionControl({
   const dirty =
     selectedPlanId !== (current.planId ?? planOptions[0]?.id ?? '') ||
     selectedStatus !== current.status ||
-    cancelAtEnd !== current.cancelAtPeriodEnd;
+    cancelAtEnd !== current.cancelAtPeriodEnd ||
+    periodStartDate !== todayDateInputValue();
 
   const currentPlan = planOptions.find((p) => p.id === current.planId);
+  const selectedPlan = planOptions.find((p) => p.id === selectedPlanId);
 
   async function handleSave() {
     if (!selectedPlanId) return;
     setPending(true);
     setFeedback(null);
-    const result = await adminSetTenantSubscriptionAction(tenantId, selectedPlanId, selectedStatus, cancelAtEnd);
+    const result = await adminSetTenantSubscriptionAction(
+      tenantId,
+      selectedPlanId,
+      selectedStatus,
+      cancelAtEnd,
+      periodStartDate ? new Date(`${periodStartDate}T00:00:00Z`).toISOString() : undefined,
+    );
     setPending(false);
     if ('error' in result) {
       setFeedback({ tone: 'error', text: result.error });
@@ -111,6 +140,30 @@ export function TenantSubscriptionControl({
       </td>
       <td className="py-3 pe-4">
         <p className="text-ink-800">{currentPlan ? currentPlan.name : 'No plan'}</p>
+        {currentPlan && (
+          <p className="mt-0.5 text-xs text-ink-500">
+            {formatMoney(currentPlan.priceMonthlyCents, currentPlan.currency)}/mo ·{' '}
+            {formatMoney(currentPlan.priceAnnualCents, currentPlan.currency)}/yr
+            {foundingPartner && (
+              <>
+                {' '}
+                <span className="text-lagoon-400">
+                  (Founding Partner:{' '}
+                  {formatMoney(
+                    Math.round((currentPlan.priceMonthlyCents * (100 - foundingPartnerPercentOff)) / 100),
+                    currentPlan.currency,
+                  )}
+                  /mo ·{' '}
+                  {formatMoney(
+                    Math.round((currentPlan.priceAnnualCents * (100 - foundingPartnerPercentOff)) / 100),
+                    currentPlan.currency,
+                  )}
+                  /yr)
+                </span>
+              </>
+            )}
+          </p>
+        )}
         <Badge tone={STATUS_TONE[current.status]} className="mt-1">
           {current.status}
         </Badge>
@@ -130,18 +183,34 @@ export function TenantSubscriptionControl({
       </td>
       <td className="py-3 pe-4">
         <div className="flex flex-wrap items-center gap-2">
-          <select
-            value={selectedPlanId}
-            disabled={pending}
-            onChange={(event) => setSelectedPlanId(event.target.value)}
-            className="focus-ring rounded-lg border border-[rgb(var(--color-border))] bg-transparent px-2 py-1 text-xs text-ink-700"
-          >
-            {planOptions.map((option) => (
-              <option key={option.id} value={option.id}>
-                {option.label}
-              </option>
-            ))}
-          </select>
+          <div>
+            <select
+              value={selectedPlanId}
+              disabled={pending}
+              onChange={(event) => setSelectedPlanId(event.target.value)}
+              className="focus-ring rounded-lg border border-[rgb(var(--color-border))] bg-transparent px-2 py-1 text-xs text-ink-700"
+            >
+              {planOptions.map((option) => (
+                <option key={option.id} value={option.id}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+            {selectedPlan && foundingPartner && (
+              <p className="mt-1 text-xs text-lagoon-400">
+                Founding Partner: {formatMoney(
+                  Math.round((selectedPlan.priceMonthlyCents * (100 - foundingPartnerPercentOff)) / 100),
+                  selectedPlan.currency,
+                )}
+                /mo ·{' '}
+                {formatMoney(
+                  Math.round((selectedPlan.priceAnnualCents * (100 - foundingPartnerPercentOff)) / 100),
+                  selectedPlan.currency,
+                )}
+                /yr — invoice this amount for bank transfer
+              </p>
+            )}
+          </div>
 
           <select
             value={selectedStatus}
@@ -155,6 +224,27 @@ export function TenantSubscriptionControl({
               </option>
             ))}
           </select>
+
+          <label className="flex items-center gap-1.5 text-xs text-ink-600">
+            Starts
+            <input
+              type="date"
+              value={periodStartDate}
+              disabled={pending}
+              onChange={(event) => setPeriodStartDate(event.target.value)}
+              className="focus-ring rounded-lg border border-[rgb(var(--color-border))] bg-transparent px-2 py-1 text-xs text-ink-700"
+            />
+          </label>
+
+          <button
+            type="button"
+            disabled={pending}
+            onClick={() => setPeriodStartDate('2027-01-01')}
+            className="focus-ring rounded-lg border border-[rgb(var(--color-border))] px-2 py-1 text-xs text-ink-600 disabled:opacity-40"
+            title="Set the start date to real launch (1 Jan 2027) — for a bank-transfer Founding Partner paying before launch."
+          >
+            1 Jan 2027
+          </button>
 
           <label className="flex items-center gap-1.5 text-xs text-ink-600">
             <input

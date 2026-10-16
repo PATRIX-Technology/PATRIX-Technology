@@ -33,7 +33,7 @@ export default async function OwnerSubscriptionsPage({ params }: { params: { loc
     redirect(`/${params.locale}/owner/mfa-challenge`);
   }
 
-  const [{ data: tenants }, { data: plans }, { count: newSuggestionCount }] = await Promise.all([
+  const [{ data: tenants }, { data: plans }, { count: newSuggestionCount }, { data: foundingCoupon }] = await Promise.all([
     supabase
       .from('tenants')
       .select(
@@ -44,10 +44,14 @@ export default async function OwnerSubscriptionsPage({ params }: { params: { loc
       .order('created_at', { ascending: false }),
     supabase
       .from('plans')
-      .select('id, key, name, price_monthly_cents, currency, stories_per_month, audience, is_active')
+      .select('id, key, name, price_monthly_cents, price_annual_cents, currency, stories_per_month, audience, is_active')
       .order('price_monthly_cents', { ascending: true }),
     supabase.from('story_template_suggestions').select('id', { count: 'exact', head: true }).eq('status', 'new'),
+    // Read live, rather than hardcoding 50 here, so this display never
+    // drifts from what checkout actually applies if the rate ever changes.
+    supabase.from('coupons').select('percent_off').eq('code', 'FOUNDING10').maybeSingle(),
   ]);
+  const foundingPartnerPercentOff = foundingCoupon?.percent_off ?? 0;
 
   return (
     <div className="mx-auto max-w-6xl space-y-6 p-6 md:p-10">
@@ -103,6 +107,9 @@ export default async function OwnerSubscriptionsPage({ params }: { params: { loc
                     id: p.id,
                     name: p.name,
                     label: `${p.name} — ${formatPrice(p.price_monthly_cents, p.currency)}/mo`,
+                    priceMonthlyCents: p.price_monthly_cents,
+                    priceAnnualCents: p.price_annual_cents,
+                    currency: p.currency,
                   }));
 
                 return (
@@ -125,6 +132,7 @@ export default async function OwnerSubscriptionsPage({ params }: { params: { loc
                         periodEnd={subscription.current_period_end}
                         planOptions={planOptions}
                         foundingPartnerDiscount={tenant.founding_partner_discount}
+                        foundingPartnerPercentOff={foundingPartnerPercentOff}
                       />
                     ) : (
                       <td className="py-3 pe-4 text-xs text-ink-400" colSpan={5}>

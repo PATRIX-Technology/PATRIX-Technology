@@ -7452,3 +7452,35 @@ nurseries (he does that himself from the UI once he has them) and
 propagating the Jan 2027/2028 dates to the Drive pitch decks (separate
 open item, see "Founding Partner discount simplified to a flat 12
 months" above).
+
+## Manual grant period start can be overridden; price reference shown on /owner/subscriptions
+
+Follow-up to the Founding Partner flag above — founder clarified the
+actual two-customer flow: (1) a card-paying nursery just needs the
+Founding Partner box checked, picks their own tier at their own Stripe
+checkout, nothing else from the founder; (2) a bank-transfer nursery
+never touches Stripe at all — the founder picks their tier and
+activates them directly via the existing manual override, and wants
+that activation (quota-wise) to start on real launch day (1 Jan 2027)
+rather than whenever the transfer actually arrives, matching what
+`trial_end` already does automatically for card payers.
+
+- **`adminSetTenantSubscriptionAction`** gained an optional
+  `periodStartOverride` param — defaults to "now" exactly as before,
+  but the founder can pass any date. `/owner/subscriptions` exposes
+  this as a `Starts` date input next to the Plan/Status selects, plus a
+  one-click "1 Jan 2027" button.
+- **Price reference, not previously shown anywhere**: the page now
+  reads `FOUNDING10`'s live `percent_off` and each plan's
+  `price_annual_cents` (previously only `price_monthly_cents` was
+  selected) to show, per tenant, the current plan's standard price AND
+  — if Founding Partner is checked — the discounted price, both
+  monthly and annual. The plan `<select>` also previews the discounted
+  price for whichever tier is about to be picked, before Save, labelled
+  "invoice this amount for bank transfer" — directly answers the
+  founder's "how do I know the tier/price" question for the
+  bank-transfer path, where there's no Stripe receipt to read the
+  amount off of.
+- Reading the coupon's percent_off live (rather than hardcoding 50)
+  means this display can't drift from what Stripe checkout actually
+  applies if the discount rate ever changes.

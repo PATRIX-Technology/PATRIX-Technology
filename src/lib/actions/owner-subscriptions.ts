@@ -34,17 +34,21 @@ export type SetTenantSubscriptionResult =
  * than a new RPC — is_platform_owner() is checked explicitly here too, for
  * a clear error message instead of a raw Postgres RLS one.
  *
- * Sets a fresh 30-day period starting now and gives the tenant the new
- * plan's full story allowance immediately (mirrors what
- * sync_quota_to_plan does for a real Stripe checkout, migration 0016) —
- * a manual grant should behave exactly like a paid one from the tenant's
- * point of view.
+ * Gives the tenant the new plan's full story allowance immediately
+ * (mirrors what sync_quota_to_plan does for a real Stripe checkout,
+ * migration 0016). Defaults the period to start now, same as before —
+ * `periodStartOverride` lets the founder back- or forward-date it instead,
+ * for a bank-transfer-paid Founding Partner nursery whose term should
+ * start on real launch (1 Jan 2027) rather than whenever the money
+ * actually arrived — see docs/DECISIONS.md "Manual grant period start can
+ * be overridden".
  */
 export async function adminSetTenantSubscriptionAction(
   tenantId: string,
   planId: string,
   status: SubscriptionStatus,
   cancelAtPeriodEnd: boolean,
+  periodStartOverride?: string,
 ): Promise<SetTenantSubscriptionResult> {
   const supabase = await createSupabaseServerClient();
   const { data: userData } = await supabase.auth.getUser();
@@ -67,7 +71,8 @@ export async function adminSetTenantSubscriptionAction(
     return { error: `That plan is priced for ${plan.audience} accounts, not ${tenant.tenant_type} ones.` };
   }
 
-  const periodStart = new Date();
+  const periodStart = periodStartOverride ? new Date(periodStartOverride) : new Date();
+  if (Number.isNaN(periodStart.getTime())) return { error: 'Invalid start date.' };
   const periodEnd = new Date(periodStart.getTime() + 30 * 24 * 60 * 60 * 1000);
 
   const { error: subscriptionError } = await supabase

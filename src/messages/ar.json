@@ -442,6 +442,10 @@
   "ownerOrders": {
     "title": "{count, plural, zero {لا طلبات} one {طلب واحد} two {طلبان} few {# طلبات} many {# طلبا} other {# طلب}}",
     "subtitle": "كل طلب طباعة مدفوع أو قيد الطباعة أو تم شحنه أو ألغي عبر جميع المستأجرين، الطلبات المدفوعة الأحدث أولا. تقديم الحالة هنا يُخطر العميل تلقائيا.",
+    "pricingReferenceTitle": "أسعار النسخ المطبوعة (مرجع)",
+    "pricingReferenceSubtitle": "لتسعير طلب تحويل بنكي أو يدوي — نفس الأسعار التي يفرضها الدفع عبر Stripe فعليًا، مقروءة مباشرة من الكود حتى لا تتباعد عنها.",
+    "pricingReferenceTier": "{label}: {price}/نسخة + توصيل {delivery}",
+    "pricingReferenceFreeDelivery": "مجاني",
     "paidAwaitingAction": "{count, plural, zero {لا شيء} one {طلب واحد مدفوع بانتظار الإجراء} two {طلبان مدفوعان بانتظار الإجراء} few {# طلبات مدفوعة بانتظار الإجراء} many {# طلبا مدفوعا بانتظار الإجراء} other {# طلب مدفوع بانتظار الإجراء}}",
     "copiesCount": "{count, plural, zero {لا نسخ} one {نسخة واحدة} two {نسختان} few {# نسخ} many {# نسخة} other {# نسخة}}",
     "shipTo": "الشحن إلى: {name} — {address}",

@@ -442,6 +442,10 @@
   "ownerOrders": {
     "title": "{count, plural, one {# order} other {# orders}}",
     "subtitle": "Every paid, printing, shipped or cancelled print order across all tenants, newest paid orders first. Advance a status here to notify the customer automatically.",
+    "pricingReferenceTitle": "Printed-copy pricing (reference)",
+    "pricingReferenceSubtitle": "For quoting a bank-transfer or manual order — same prices Stripe checkout actually charges, read live from the code so this can't drift.",
+    "pricingReferenceTier": "{label}: {price}/copy + {delivery} delivery",
+    "pricingReferenceFreeDelivery": "free",
     "paidAwaitingAction": "{count, plural, one {# paid, awaiting action} other {# paid, awaiting action}}",
     "copiesCount": "{count, plural, one {# copy} other {# copies}}",
     "shipTo": "Ship to: {name} — {address}",

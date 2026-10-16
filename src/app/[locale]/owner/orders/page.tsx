@@ -5,8 +5,17 @@ import { Card, CardTitle } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { OwnerTabs } from '@/components/dashboard/OwnerTabs';
 import { PrintOrderStatusControl } from '@/components/dashboard/PrintOrderStatusControl';
-import { getPrintOrderExpectedDeliveryDate } from '@/lib/domain/print-orders';
+import {
+  getPrintOrderExpectedDeliveryDate,
+  getPrintOrderUnitPriceMinor,
+  getPrintOrderDeliveryFeeMinor,
+  PRINT_ORDER_BULK_TIERS,
+} from '@/lib/domain/print-orders';
 import { getTranslations } from 'next-intl/server';
+
+function formatMoneyMinor(minor: number, currency: 'aed' | 'usd') {
+  return `${currency.toUpperCase()} ${(minor / 100).toFixed(2)}`;
+}
 
 const STATUS_TONE: Record<string, 'neutral' | 'warning' | 'success' | 'danger' | 'info'> = {
   pending: 'neutral',
@@ -110,6 +119,27 @@ export default async function OwnerOrdersPage({ params }: { params: { locale: st
 
   const paidCount = sorted.filter((b) => b.status === 'paid').length;
 
+  // Reference ladder for quoting a bank-transfer/manual order — one row
+  // for the standalone (1-9) price, then one per real bulk tier, each
+  // read live from the same functions checkout uses, so this can't drift.
+  const currency: 'aed' | 'usd' = 'aed';
+  const standaloneLabel = params.locale === 'ar' ? 'منفردة (١-٩ نسخ)' : 'Standalone (1-9 copies)';
+  const pricingTiers = [
+    { label: standaloneLabel, quantity: 1 },
+    ...PRINT_ORDER_BULK_TIERS.map((tier) => ({
+      label: params.locale === 'ar' ? tier.label.ar : tier.label.en,
+      quantity: tier.minQty,
+    })),
+  ].map(({ label, quantity }) => {
+    const unitPriceMinor = getPrintOrderUnitPriceMinor(quantity, currency);
+    const deliveryFeeMinor = getPrintOrderDeliveryFeeMinor(quantity, currency);
+    return {
+      label,
+      price: formatMoneyMinor(unitPriceMinor, currency),
+      delivery: deliveryFeeMinor === 0 ? t('pricingReferenceFreeDelivery') : formatMoneyMinor(deliveryFeeMinor, currency),
+    };
+  });
+
   return (
     <div className="mx-auto max-w-5xl space-y-6 p-6 md:p-10">
       <div className="flex items-center justify-between">
@@ -118,6 +148,18 @@ export default async function OwnerOrdersPage({ params }: { params: { locale: st
       </div>
 
       <OwnerTabs locale={params.locale} newSuggestionCount={suggestionCount ?? 0} newOrderCount={paidCount} />
+
+      <Card>
+        <CardTitle>{t('pricingReferenceTitle')}</CardTitle>
+        <p className="mt-2 text-sm text-ink-500">{t('pricingReferenceSubtitle')}</p>
+        <ul className="mt-3 space-y-1 text-sm text-ink-700">
+          {pricingTiers.map((tier) => (
+            <li key={tier.label}>
+              {t('pricingReferenceTier', { label: tier.label, price: tier.price, delivery: tier.delivery })}
+            </li>
+          ))}
+        </ul>
+      </Card>
 
       <Card>
         <div className="flex items-center justify-between">

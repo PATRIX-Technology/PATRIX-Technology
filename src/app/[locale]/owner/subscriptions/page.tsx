@@ -37,7 +37,7 @@ export default async function OwnerSubscriptionsPage({ params }: { params: { loc
     supabase
       .from('tenants')
       .select(
-        `id, name, tenant_type, status, created_at,
+        `id, name, tenant_type, status, created_at, founding_partner_discount,
          subscriptions(plan_id, status, current_period_end, cancel_at_period_end, trial_story_used, stripe_customer_id),
          quotas(stories_included_this_period, stories_used_this_period, period_end)`,
       )
@@ -63,14 +63,17 @@ export default async function OwnerSubscriptionsPage({ params }: { params: { loc
         <p className="mt-2 text-sm text-ink-500">
           Every tenant&apos;s plan, billing status, and usage this period. Changing the plan or status here
           takes effect immediately and resets their quota to the new plan&apos;s full allowance — the same
-          thing a real Stripe checkout does, for tenants who don&apos;t have one yet.
+          thing a real Stripe checkout does, for tenants who don&apos;t have one yet. Check &quot;Founding
+          Partner&quot; to grant up to 10 nurseries the launch discount automatically at their own checkout —
+          see <code>docs/en/pricing.md</code> for the mechanics.
         </p>
 
         <div className="mt-4 overflow-x-auto">
-          <table className="w-full min-w-[860px] text-sm">
+          <table className="w-full min-w-[960px] text-sm">
             <thead>
               <tr className="border-b border-[rgb(var(--color-border))] text-left text-xs uppercase tracking-wide text-ink-500">
                 <th className="py-2 pe-4">Tenant</th>
+                <th className="py-2 pe-4">Founding Partner</th>
                 <th className="py-2 pe-4">Plan</th>
                 <th className="py-2 pe-4">Usage this period</th>
                 <th className="py-2 pe-4">Renews / ends</th>
@@ -121,9 +124,10 @@ export default async function OwnerSubscriptionsPage({ params }: { params: { loc
                         storiesIncluded={quota?.stories_included_this_period ?? 0}
                         periodEnd={subscription.current_period_end}
                         planOptions={planOptions}
+                        foundingPartnerDiscount={tenant.founding_partner_discount}
                       />
                     ) : (
-                      <td className="py-3 pe-4 text-xs text-ink-400" colSpan={4}>
+                      <td className="py-3 pe-4 text-xs text-ink-400" colSpan={5}>
                         No matching plans
                       </td>
                     )}
@@ -132,7 +136,7 @@ export default async function OwnerSubscriptionsPage({ params }: { params: { loc
               })}
               {(tenants ?? []).length === 0 && (
                 <tr>
-                  <td colSpan={5} className="py-3 text-sm text-ink-500">
+                  <td colSpan={6} className="py-3 text-sm text-ink-500">
                     No tenants yet.
                   </td>
                 </tr>

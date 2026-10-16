@@ -105,3 +105,54 @@ export async function adminSetTenantSubscriptionAction(
     periodEnd: periodEnd.toISOString(),
   };
 }
+
+export type SetFoundingPartnerFlagResult = { error: string } | { message: 'updated'; enabled: boolean };
+
+/**
+ * Lets the founder flag a specific tenant as a Founding Partner from
+ * /owner/subscriptions, instead of handing out the FOUNDING10 coupon code
+ * for the nursery to type in themselves — see docs/DECISIONS.md
+ * "Founding Partner flag replaces self-serve coupon code". Checkout
+ * (src/app/api/billing/checkout/route.ts) auto-applies the coupon for any
+ * flagged tenant; this action only toggles the flag, with the same
+ * explicit is_platform_owner() check as adminSetTenantSubscriptionAction
+ * above for a clear error instead of a raw RLS one.
+ *
+ * Capped at 10 flagged tenants at once — matches FOUNDING10's own
+ * max_redemptions, so a founder who flags an 11th nursery gets a clear
+ * message here rather than a confusing failure at their checkout later.
+ * Un-flagging always succeeds (never blocked by the cap).
+ */
+export async function adminSetFoundingPartnerFlagAction(
+  tenantId: string,
+  enabled: boolean,
+): Promise<SetFoundingPartnerFlagResult> {
+  const supabase = await createSupabaseServerClient();
+  const { data: userData } = await supabase.auth.getUser();
+  if (!userData.user) return { error: 'Sign in first.' };
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('is_platform_owner')
+    .eq('id', userData.user.id)
+    .maybeSingle();
+  if (!profile?.is_platform_owner) return { error: 'Not authorized.' };
+
+  if (enabled) {
+    const { count } = await supabase
+      .from('tenants')
+      .select('id', { count: 'exact', head: true })
+      .eq('founding_partner_discount', true);
+    if ((count ?? 0) >= 10) {
+      return { error: 'Already 10 tenants are flagged as Founding Partners — that matches the coupon\'s own limit. Un-flag one first.' };
+    }
+  }
+
+  const { error } = await supabase
+    .from('tenants')
+    .update({ founding_partner_discount: enabled })
+    .eq('id', tenantId);
+  if (error) return { error: error.message };
+
+  return { message: 'updated', enabled };
+}

@@ -67,6 +67,10 @@ export interface Tenant {
   /** Shareable code this tenant can hand out to invite others — see
    * docs/DECISIONS.md "Referral program replaces gifting". */
   referral_code: string | null;
+  /** Platform-owner-set flag granting the Founding Partner discount
+   * automatically at checkout — see docs/DECISIONS.md "Founding Partner
+   * flag replaces self-serve coupon code". */
+  founding_partner_discount: boolean;
   created_at: string;
   updated_at: string;
 }

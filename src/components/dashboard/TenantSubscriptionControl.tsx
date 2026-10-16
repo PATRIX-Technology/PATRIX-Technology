@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { adminSetTenantSubscriptionAction } from '@/lib/actions/owner-subscriptions';
+import { adminSetTenantSubscriptionAction, adminSetFoundingPartnerFlagAction } from '@/lib/actions/owner-subscriptions';
 import { Badge } from '@/components/ui/Badge';
 import type { SubscriptionStatus } from '@/types/database';
 
@@ -32,6 +32,7 @@ export function TenantSubscriptionControl({
   storiesIncluded,
   periodEnd,
   planOptions,
+  foundingPartnerDiscount,
 }: {
   tenantId: string;
   planId: string | null;
@@ -41,6 +42,7 @@ export function TenantSubscriptionControl({
   storiesIncluded: number;
   periodEnd: string | null;
   planOptions: { id: string; name: string; label: string }[];
+  foundingPartnerDiscount: boolean;
 }) {
   const [current, setCurrent] = useState({ planId, status, cancelAtPeriodEnd, storiesUsed, storiesIncluded, periodEnd });
   const [selectedPlanId, setSelectedPlanId] = useState(planId ?? planOptions[0]?.id ?? '');
@@ -48,6 +50,22 @@ export function TenantSubscriptionControl({
   const [cancelAtEnd, setCancelAtEnd] = useState(cancelAtPeriodEnd);
   const [pending, setPending] = useState(false);
   const [feedback, setFeedback] = useState<{ tone: 'ok' | 'error'; text: string } | null>(null);
+
+  const [foundingPartner, setFoundingPartner] = useState(foundingPartnerDiscount);
+  const [foundingPartnerPending, setFoundingPartnerPending] = useState(false);
+  const [foundingPartnerError, setFoundingPartnerError] = useState<string | null>(null);
+
+  async function handleFoundingPartnerToggle(next: boolean) {
+    setFoundingPartnerPending(true);
+    setFoundingPartnerError(null);
+    const result = await adminSetFoundingPartnerFlagAction(tenantId, next);
+    setFoundingPartnerPending(false);
+    if ('error' in result) {
+      setFoundingPartnerError(result.error);
+      return;
+    }
+    setFoundingPartner(result.enabled);
+  }
 
   const dirty =
     selectedPlanId !== (current.planId ?? planOptions[0]?.id ?? '') ||
@@ -79,6 +97,18 @@ export function TenantSubscriptionControl({
 
   return (
     <>
+      <td className="py-3 pe-4">
+        <label className="flex items-center gap-1.5 text-xs text-ink-700">
+          <input
+            type="checkbox"
+            checked={foundingPartner}
+            disabled={foundingPartnerPending}
+            onChange={(event) => handleFoundingPartnerToggle(event.target.checked)}
+          />
+          Founding Partner
+        </label>
+        {foundingPartnerError && <p className="mt-1 text-xs text-coral-400">{foundingPartnerError}</p>}
+      </td>
       <td className="py-3 pe-4">
         <p className="text-ink-800">{currentPlan ? currentPlan.name : 'No plan'}</p>
         <Badge tone={STATUS_TONE[current.status]} className="mt-1">

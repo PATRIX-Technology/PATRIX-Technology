@@ -7407,3 +7407,48 @@ Net effect: every one of the first 10 nurseries who redeem
 with no month-by-month variation depending on when during the pilot
 they happened to sign. Anyone who waits until on/after 1 Jan 2027 gets
 nothing, full price from day one.
+
+## Founding Partner flag replaces self-serve coupon code
+
+Founder request, 16 Oct 2026: a flag on the owner dashboard to assign
+the Founding Partner discount to specific pilot nurseries himself,
+rather than relying on the nursery owner knowing/typing the
+`FOUNDING10` coupon code at checkout. Directly addresses the
+test-tenant risk flagged earlier the same day (real test accounts
+already exist in the live `tenants` table — one literally named
+"test" — any of which could otherwise redeem the code once Stripe goes
+live) by making eligibility opt-in per tenant rather than "anyone who
+knows the code."
+
+- **Migration 0044**: `tenants.founding_partner_discount boolean not
+  null default false`. No new RLS policy needed —
+  `tenants_owner_update` (migration 0001) already lets
+  `is_platform_owner()` update any tenant row.
+- **`adminSetFoundingPartnerFlagAction`** (`src/lib/actions/owner-
+  subscriptions.ts`): toggles the flag, with the same explicit
+  `is_platform_owner()` check as `adminSetTenantSubscriptionAction` for
+  a clear error instead of a raw RLS one. Capped at 10 flagged tenants
+  at once — mirrors `FOUNDING10`'s own `max_redemptions: 10`, so
+  flagging an 11th nursery fails here with a clear message rather than
+  confusingly at that nursery's own checkout later. Un-flagging is
+  never blocked by the cap.
+- **Checkout** (`src/app/api/billing/checkout/route.ts`): if the
+  signed-in tenant's `founding_partner_discount` is true and no
+  `couponCode` was explicitly supplied, the route defaults
+  `couponCode` to `'FOUNDING10'` itself — the nursery never needs to
+  know or type anything. An explicitly typed code (if the billing UI
+  ever exposes one) still takes priority if somehow both are present.
+  Every existing safeguard still applies unchanged on top of this: the
+  coupon's own `expires_at`/`max_redemptions` via `validateCoupon`, and
+  `computeFoundingPartnerTrialEnd` anchoring billing to real launch.
+- **UI**: a "Founding Partner" checkbox column added to
+  `/owner/subscriptions` (`TenantSubscriptionControl.tsx`), saving
+  immediately on toggle rather than batched with the plan/status
+  "Save" button, since granting/revoking the discount is a distinct,
+  immediate decision from changing someone's plan.
+
+Not done in this pass: actually flagging the founder's real 10
+nurseries (he does that himself from the UI once he has them) and
+propagating the Jan 2027/2028 dates to the Drive pitch decks (separate
+open item, see "Founding Partner discount simplified to a flat 12
+months" above).

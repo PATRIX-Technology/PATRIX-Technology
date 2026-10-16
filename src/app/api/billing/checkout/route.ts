@@ -37,7 +37,24 @@ export async function POST(request: Request) {
   const body = await request.json().catch(() => ({}));
   const planKey = String(body.planKey ?? '');
   const billingInterval = body.billingInterval === 'annual' ? 'annual' : 'monthly';
-  const couponCode = typeof body.couponCode === 'string' ? body.couponCode.trim() : undefined;
+  let couponCode = typeof body.couponCode === 'string' ? body.couponCode.trim() : undefined;
+
+  // A nursery the founder has flagged as a Founding Partner (from
+  // /owner/subscriptions) gets the discount automatically -- they never
+  // need to know or type the FOUNDING10 code themselves. An explicitly
+  // typed code still wins if somehow both are present. See
+  // docs/DECISIONS.md "Founding Partner flag replaces self-serve coupon
+  // code".
+  if (!couponCode) {
+    const { data: tenantRow } = await supabase
+      .from('tenants')
+      .select('founding_partner_discount')
+      .eq('id', context.tenantId)
+      .maybeSingle();
+    if (tenantRow?.founding_partner_discount) {
+      couponCode = 'FOUNDING10';
+    }
+  }
 
   const { data: plan } = await supabase.from('plans').select('*').eq('key', planKey).eq('is_active', true).maybeSingle();
   if (!plan) {

@@ -83,13 +83,24 @@ restore pre-8-page margins" for the full numbers and the live
 Every nursery runs through two pricing phases: a 100%-free pilot class
 (no price — see "Launch offers" below), then the discounted
 **Founding Partner launch rate** for the first 10 nurseries who sign
-before the campaign cutoff of **1 January 2027**, then the **standard
+before the campaign cutoff of **1 January 2028**, then the **standard
 rate**. How long the discount itself lasts depends on billing
 interval, not a fixed number of months — see below. Shown as two
 separate tables so a rep never conflates launch-phase pricing with the
 standard rate a nursery eventually settles into.
 
-### Founding Partner launch pricing (first 10 nurseries, signed up before 1 January 2027)
+Founder decision, 16 Oct 2026: this offer is **not publicly
+advertised** — the standard rate is what every pricing surface (app,
+decks, docs) shows by default. `FOUNDING10` stays a real, working
+Stripe coupon (self-limiting to its first 10 redemptions regardless),
+but it's handed personally to the specific nurseries the founder signs
+early, not printed as a public CTA. The cutoff moved from the
+originally-planned 1 January 2027 to 1 January 2028 because real
+launch itself is now expected around January 2027, not several months
+earlier — see `docs/DECISIONS.md` "Founding Partner cutoff moved to
+2028".
+
+### Founding Partner launch pricing (first 10 nurseries, signed up before 1 January 2028)
 
 | Plan | Founding Partner price (mo) | Founding Partner price (yr) | Digital stories / month | Story suggestions / month | Seats included |
 |---|---|---|---|---|---|
@@ -102,17 +113,17 @@ the real mechanic, not just a marketing line:**
 
 - **Annual**: the discounted rate applies to the *entire* first annual
   invoice, and holds for the full 12-month term the nursery signed up
-  for — a nursery that goes annual in October 2026 keeps paying the
-  discounted rate through October 2027, then renews at the standard
-  annual rate. The 1 January 2027 cutoff only gates whether a nursery
+  for — a nursery that goes annual in early 2027 keeps paying the
+  discounted rate for that full term, then renews at the standard
+  annual rate. The 1 January 2028 cutoff only gates whether a nursery
   can *start* the offer, not how long an already-signed annual term
   lasts.
 - **Monthly**: the discount applies invoice-by-invoice until the
-  calendar cutoff itself (1 January 2027), not for a fixed number of
-  months — a nursery signing up in October gets ~3 discounted invoices
-  (Oct/Nov/Dec), one signing up in December gets ~1 (Dec only), and
-  every monthly subscriber reverts to standard pricing on the same
-  date rather than after a fixed count.
+  calendar cutoff itself (1 January 2028), not for a fixed number of
+  months — a nursery signing up in October 2027 gets ~3 discounted
+  invoices (Oct/Nov/Dec 2027), one signing up in December 2027 gets ~1
+  (Dec only), and every monthly subscriber reverts to standard pricing
+  on the same date rather than after a fixed count.
 - Built as `computeFoundingPartnerCouponParams` in
   `src/lib/domain/coupons.ts` (unit-tested), which computes the right
   Stripe coupon shape (`duration: 'once'` for annual, `duration:
@@ -121,9 +132,10 @@ the real mechanic, not just a marketing line:**
   duration by billing interval" for the full mechanism, including why
   a single static Stripe coupon object couldn't express this.
 - Live coupon code: `FOUNDING10` (50% off, `max_redemptions: 10`,
-  expires 1 January 2027) — seeded directly in the `coupons` table.
-  Inert until Stripe is actually connected (every plan's
-  `stripe_price_id_monthly`/`_annual` is still null).
+  expires 1 January 2028) — seeded directly in the `coupons` table.
+  Redemption-ready as soon as every plan's
+  `stripe_price_id_monthly`/`_annual` is populated — see
+  `scripts/setup-stripe-plans.mjs`.
 
 **Confirmed no tier sells at a loss at this rate, monthly or annual.**
 Starter nets ~63% margin monthly / ~54% annually even at 50% off,
@@ -213,9 +225,10 @@ even with the added labour.
   pays once it converts.
 - **Founding partner** — the discounted launch-phase pricing in the
   table above, for the first 10 nurseries who sign before 1 January
-  2027. Annual signups keep the discounted rate for their full 12-month
-  term; monthly signups revert to standard pricing at the 1 January
-  2027 cutoff regardless of signup month — see the table above for the
+  2028 (not publicly advertised — handed personally, see above). Annual
+  signups keep the discounted rate for their full 12-month term;
+  monthly signups revert to standard pricing at the 1 January 2028
+  cutoff regardless of signup month — see the table above for the
   mechanism.
 - **Referral credit** — a manual sales concession: a nursery that
   refers another paying nursery gets 1 month free, applied by hand.

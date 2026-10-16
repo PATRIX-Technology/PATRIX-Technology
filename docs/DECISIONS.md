@@ -7264,3 +7264,50 @@ propagated to the Google Drive pricing docs or pitch decks — those
 still show the old AED 45 cost basis and should be updated the same way
 once the founder confirms this is final (the vendor still isn't under
 signed contract, per `docs/NEEDS_FROM_ME.md`).
+
+## Founding Partner cutoff moved to 2028, and the offer is no longer publicly advertised
+
+Founder decision, 16 Oct 2026: real launch is now expected around
+January 2027 itself, not several months earlier as the original
+campaign was planned around. Two changes follow from that:
+
+1. **Cutoff moved a year out.** The Founding Partner campaign's cutoff
+   date (`coupons.expires_at` for the live `FOUNDING10` row, and every
+   place `docs/en/pricing.md`/`docs/ar/pricing.md` cite "1 January
+   2027") moved to **1 January 2028**. This date does double duty per
+   `computeFoundingPartnerCouponParams` (see "Founding Partner discount
+   duration by billing interval" above) — it's both the last day a
+   nursery can redeem the offer at all, and the calendar date a monthly
+   subscriber's invoices revert to standard pricing. Updated directly
+   in the live `coupons` table (Supabase project `euvatttmismzvfhpleqn`)
+   via SQL, and in both pricing docs. **Not yet updated** in the Google
+   Drive pricing doc or any of the pitch decks, which still say January
+   2027 — those still need the same propagation pass once the founder
+   confirms the decks should reflect it (see open items below).
+2. **No longer publicly advertised.** The founder will personally hand
+   the `FOUNDING10` code to the specific nurseries he signs early,
+   rather than displaying "50% off, first 10 nurseries" as a public
+   pitch-deck/pricing-page headline. Nothing in the live app ever
+   displayed this publicly in the first place (`FOUNDING10` only
+   surfaces through a free-text coupon-code field on the billing
+   checkout screen — see `src/components/dashboard/BillingSection.tsx`
+   — never on any public marketing page in the codebase), so no app
+   change was needed for this half of the decision. It only affects
+   what the *marketing materials* should say going forward: standard
+   pricing is the one headline number, not a visible "launch discount."
+   The coupon itself still fully works exactly as before (max 10
+   redemptions, same discount mechanics) — this is a messaging change,
+   not a mechanism change.
+
+**Open, not done in this pass:** the founder is also planning to send
+over the specific org names of the up to 10 nurseries he intends to
+give this code to (matching `tenants.name`, captured at signup via the
+`orgName` field on `SignUpForm.tsx`/`PhoneNurserySignUpForm.tsx` — no
+separate "admin username" exists; a nursery owner logs in by email or
+phone). The coupon's own `max_redemptions: 10` already caps real usage
+to exactly 10 redemptions regardless of who holds the code, so sending
+names isn't required for the system to enforce the limit — it's useful
+for the founder's own record of which 10 nurseries hold founding
+status, and so the actual redeeming tenants can be checked against
+that list after the fact. No code or DB change needed for this part;
+revisit once the founder sends the actual list.

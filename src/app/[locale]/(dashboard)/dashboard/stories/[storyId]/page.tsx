@@ -187,7 +187,18 @@ export default async function StoryDetailPage({
               <Badge tone={page.image_status === 'GENERATED' ? 'success' : 'warning'}>
                 {page.image_status}
               </Badge>
-              {page.last_error && <p className="mt-2 text-xs text-coral-600">{page.last_error}</p>}
+              {/* Never show the raw last_error text here -- it can carry
+                  internal detail never meant for a nursery/family to see
+                  (vendor names, moderation-rejection reasoning, etc., see
+                  src/lib/providers/image/safety.ts). A generic retry prompt
+                  is all any tenant user needs; the real reason stays in the
+                  database for the founder to check directly if a pattern of
+                  failures needs investigating. See docs/DECISIONS.md
+                  "Generation failure reasons stay internal, never
+                  customer-facing". */}
+              {page.image_status === 'FAILED' && (
+                <p className="mt-2 text-xs text-coral-600">{t('pageGenerationFailedGeneric')}</p>
+              )}
               {status !== 'APPROVED' && (
                 <div className="mt-3">
                   <RegeneratePageButton

@@ -7588,3 +7588,25 @@ specifically (not previously covered at all). Added as two layers:
 No existing template currently produces this content (verified — only
 the dress phrasing needed changing), so this is a forward guardrail for
 any future template, not a fix to today's content.
+
+## Generation failure reasons stay internal, never customer-facing
+
+Founder directive while testing the nationality/Islamic-content-safety
+work: a page's `last_error` (raw text, including a moderation
+checker's own `reason` string — see `MODERATION_PROMPT` in
+`src/lib/providers/image/safety.ts`) was being rendered verbatim to the
+tenant on `/dashboard/stories/[storyId]`. That's a real exposure risk
+specifically for the Islamic-content-safety category just added: a
+rejected image's reason could literally read something like "contains
+Christmas imagery, not appropriate for an Islamic-values audience" —
+internal product policy framing with no business showing up in front
+of a nursery or family, regardless of how true or defensible it is.
+
+Fixed by replacing the raw `{page.last_error}` render with a generic,
+translated "this page couldn't be generated, try regenerating or
+contact support" message whenever `image_status === 'FAILED'`, for
+every failure reason, not just safety-check rejections (vendor outages,
+spend caps, and any other failure were equally inappropriate to show
+raw). The real `last_error` text is untouched in the database — still
+there for the founder to inspect directly via Supabase if a pattern of
+failures needs investigating, just never rendered in the app itself.

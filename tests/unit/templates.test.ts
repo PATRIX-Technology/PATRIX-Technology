@@ -31,27 +31,40 @@ describe('renderTokens', () => {
       organisation: 'Little Explorers',
       mascot: 'Marya the Fox',
       locale: 'en',
+      familyDress: 'simple, modest, modern everyday clothing',
     });
     expect(out).toBe('Maya at Little Explorers with Marya the Fox');
+  });
+
+  it('substitutes the family_dress token', () => {
+    const ctx = {
+      childName: 'X',
+      pronoun: 'she' as const,
+      organisation: 'Y',
+      mascot: 'Z',
+      locale: 'en' as const,
+      familyDress: 'traditional Emirati dress',
+    };
+    expect(renderTokens('a grandmother in {family_dress}', ctx)).toBe('a grandmother in traditional Emirati dress');
   });
 
   it.each([
     ['she', 'she', 'her', 'her'],
     ['he', 'he', 'his', 'him'],
   ] as const)('resolves English pronoun forms for %s', (pronoun, subject, possessive, object) => {
-    const ctx = { childName: 'X', pronoun, organisation: 'Y', mascot: 'Z', locale: 'en' as const };
+    const ctx = { childName: 'X', pronoun, organisation: 'Y', mascot: 'Z', locale: 'en' as const, familyDress: 'D' };
     expect(renderTokens('{pronoun:subject}', ctx)).toBe(subject);
     expect(renderTokens('{pronoun:possessive}', ctx)).toBe(possessive);
     expect(renderTokens('{pronoun:object}', ctx)).toBe(object);
   });
 
   it('capitalizes pronoun tokens with the _cap suffix', () => {
-    const ctx = { childName: 'X', pronoun: 'she' as const, organisation: 'Y', mascot: 'Z', locale: 'en' as const };
+    const ctx = { childName: 'X', pronoun: 'she' as const, organisation: 'Y', mascot: 'Z', locale: 'en' as const, familyDress: 'D' };
     expect(renderTokens('{pronoun:subject_cap} laughed.', ctx)).toBe('She laughed.');
   });
 
   it('resolves Arabic verb-slot tokens by pronoun gender', () => {
-    const ctx = { childName: 'مايا', pronoun: 'she' as const, organisation: 'الحضانة', mascot: 'الثعلبة', locale: 'ar' as const };
+    const ctx = { childName: 'مايا', pronoun: 'she' as const, organisation: 'الحضانة', mascot: 'الثعلبة', locale: 'ar' as const, familyDress: 'ملابس عصرية بسيطة ومحتشمة' };
     expect(renderTokens('{child_name} {v:felt_happy}', ctx)).toBe('مايا شعرت بالسعادة');
 
     const ctxHe = { ...ctx, pronoun: 'he' as const };
@@ -59,7 +72,7 @@ describe('renderTokens', () => {
   });
 
   it('leaves unknown {v:...} tokens untouched rather than crashing', () => {
-    const ctx = { childName: 'X', pronoun: 'he' as const, organisation: 'Y', mascot: 'Z', locale: 'ar' as const };
+    const ctx = { childName: 'X', pronoun: 'he' as const, organisation: 'Y', mascot: 'Z', locale: 'ar' as const, familyDress: 'D' };
     expect(renderTokens('{v:not_a_real_key}', ctx)).toBe('{v:not_a_real_key}');
   });
 });
@@ -95,16 +108,36 @@ describe('renderTemplate', () => {
       childName: 'Maya',
       pronoun: 'she',
       organisation: 'Little Explorers',
+      familyDress: 'simple, modest, modern everyday clothing',
     });
     expect(pages).toHaveLength(2);
     expect(pages[0]!.text).toBe('Maya loves Little Explorers.');
     expect(pages[1]!.text).toBe('She smiled at her friend Marya the Fox.');
   });
 
+  it('resolves family_dress inside an image_prompt', () => {
+    const template: StoryThemeTemplate = {
+      ...baseTemplate,
+      pages: [{ order: 1, text: 'x', image_prompt: '{mascot} wearing {family_dress}' }],
+    };
+    const pages = renderTemplate(template, {
+      childName: 'Maya',
+      pronoun: 'she',
+      organisation: 'Little Explorers',
+      familyDress: 'traditional Gulf dress',
+    });
+    expect(pages[0]!.image_prompt).toBe('Marya the Fox wearing traditional Gulf dress');
+  });
+
   it('refuses to render a draft Arabic template even if called directly', () => {
     const draftAr: StoryThemeTemplate = { ...baseTemplate, locale: 'ar', native_review_status: 'draft' };
     expect(() =>
-      renderTemplate(draftAr, { childName: 'مايا', pronoun: 'she', organisation: 'الحضانة' }),
+      renderTemplate(draftAr, {
+        childName: 'مايا',
+        pronoun: 'she',
+        organisation: 'الحضانة',
+        familyDress: 'ملابس عصرية بسيطة ومحتشمة',
+      }),
     ).toThrow(TemplateNotReviewedError);
   });
 });

@@ -47,6 +47,23 @@ const NO_ORGANISATION_NAME_INSTRUCTION =
   'name like that appears anywhere in this prompt or the caption text below, treat it as ' +
   'forbidden and omit it entirely; it must never appear as pixels in the image.';
 
+/** Founder directive from a real nursery call: regardless of a child's
+ * nationality (see {family_dress} in templates.ts, which only ever
+ * varies surface-level dress, never this), every generated illustration
+ * must stay appropriate for an Islamic-values UAE nursery/family
+ * audience. Unconditional and applied to every prompt, not tied to any
+ * specific template or nationality — see docs/DECISIONS.md "Nationality
+ * drives culturally-appropriate illustration, not separate templates".
+ * Backed up, not duplicated, by an explicit rejection category in the
+ * post-generation moderation check (safety.ts). */
+const ISLAMIC_CONTENT_SAFETY_INSTRUCTION =
+  'This illustration is for a children\'s storybook used by nurseries and families in the UAE, ' +
+  'for every nationality and background represented on the roster. Regardless of the scene or any ' +
+  'character\'s nationality, never depict: nudity, romantic or sexual content of any kind; ' +
+  'Christmas (no Christmas tree, Santa, or related imagery), Halloween (no costumes, pumpkins, or ' +
+  'jack-o-lanterns), or any other non-Islamic religious holiday or symbol; alcohol, gambling, or ' +
+  'dating. Keep all clothing modest and all content appropriate for an Islamic-values audience.';
+
 export interface IllustrationPromptInput {
   sceneDescription: string;
   avatarConfig: { hair?: string; skinTone?: string; outfitColor?: string; accessory?: string };
@@ -74,7 +91,12 @@ const GENDER_DESCRIPTOR: Record<'she' | 'he', string> = {
 };
 
 export function buildIllustrationPrompt(input: IllustrationPromptInput): string {
-  const parts = [BRAND_STYLE_PROMPT, NO_ORGANISATION_NAME_INSTRUCTION, `Scene: ${input.sceneDescription}`];
+  const parts = [
+    BRAND_STYLE_PROMPT,
+    NO_ORGANISATION_NAME_INSTRUCTION,
+    ISLAMIC_CONTENT_SAFETY_INSTRUCTION,
+    `Scene: ${input.sceneDescription}`,
+  ];
 
   if (input.hasReferencePhoto) {
     parts.push(

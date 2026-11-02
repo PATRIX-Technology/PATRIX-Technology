@@ -43,6 +43,12 @@ export interface TokenContext {
   organisation: string;
   mascot: string;
   locale: Locale;
+  /** Resolved via getFamilyDressDescription(child.nationality, locale)
+   * -- see src/lib/domain/nationality.ts. A pre-resolved string, not a
+   * raw Nationality, because the correct wording is locale-dependent
+   * (English vs Arabic) and this module has no locale-specific text of
+   * its own. */
+  familyDress: string;
 }
 
 /**
@@ -66,7 +72,7 @@ export function assertTemplateUsable(template: StoryThemeTemplate): void {
   }
 }
 
-const SIMPLE_TOKEN = /\{(child_name|organisation|mascot)\}/g;
+const SIMPLE_TOKEN = /\{(child_name|organisation|mascot|family_dress)\}/g;
 const PRONOUN_TOKEN = /\{pronoun:(subject|possessive|object)(_cap)?\}/g;
 const ARABIC_VERB_TOKEN = /\{v:([a-z_]+)\}/g;
 // Fuses directly onto a preceding Arabic word stem with no space (e.g.
@@ -83,11 +89,15 @@ function capitalize(value: string): string {
  * database. See tests/unit/templates.test.ts.
  */
 export function renderTokens(input: string, ctx: TokenContext): string {
-  let output = input.replace(SIMPLE_TOKEN, (_match, key: 'child_name' | 'organisation' | 'mascot') => {
-    if (key === 'child_name') return ctx.childName;
-    if (key === 'organisation') return ctx.organisation;
-    return ctx.mascot;
-  });
+  let output = input.replace(
+    SIMPLE_TOKEN,
+    (_match, key: 'child_name' | 'organisation' | 'mascot' | 'family_dress') => {
+      if (key === 'child_name') return ctx.childName;
+      if (key === 'organisation') return ctx.organisation;
+      if (key === 'family_dress') return ctx.familyDress;
+      return ctx.mascot;
+    },
+  );
 
   output = output.replace(
     PRONOUN_TOKEN,

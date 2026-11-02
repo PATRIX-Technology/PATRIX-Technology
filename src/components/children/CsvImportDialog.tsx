@@ -88,6 +88,17 @@ export function CsvImportDialog({ locale }: { locale: string }) {
                   </tr>
                   <tr>
                     <td className="pr-2 py-0.5">
+                      <code>nationality</code>
+                    </td>
+                    <td className="pr-2 py-0.5">Yes</td>
+                    <td className="py-0.5">
+                      e.g. emirati, indian, british, american, filipino, other (also accepts common
+                      names like &quot;UAE&quot;, &quot;USA&quot;, &quot;UK&quot;) — drives
+                      culturally-appropriate illustration, e.g. a UAE National Day story
+                    </td>
+                  </tr>
+                  <tr>
+                    <td className="pr-2 py-0.5">
                       <code>class_name</code>
                     </td>
                     <td className="pr-2 py-0.5">Yes</td>
@@ -110,13 +121,14 @@ export function CsvImportDialog({ locale }: { locale: string }) {
                 </tbody>
               </table>
               <p className="mt-2">
-                The <code>first_name</code>, <code>pronoun</code>, <code>class_name</code> and{' '}
-                <code>preferred_language</code> columns must all be present in the header row, but
-                individual cells can be left blank for an optional field. A blank or unrecognized{' '}
-                <code>pronoun</code> cell is a row error (it must be &quot;she&quot; or
-                &quot;he&quot;), a blank <code>preferred_language</code> defaults to
-                &quot;en&quot;, and a blank or unrecognized <code>bilingual</code> defaults to
-                &quot;no&quot;.
+                The <code>first_name</code>, <code>pronoun</code>, <code>nationality</code>,{' '}
+                <code>class_name</code> and <code>preferred_language</code> columns must all be
+                present in the header row, but individual cells can be left blank for an optional
+                field. A blank or unrecognized <code>pronoun</code> cell is a row error (it must be
+                &quot;she&quot; or &quot;he&quot;), a blank or unrecognized{' '}
+                <code>nationality</code> cell is also a row error (use &quot;other&quot; if not
+                listed), a blank <code>preferred_language</code> defaults to &quot;en&quot;, and a
+                blank or unrecognized <code>bilingual</code> defaults to &quot;no&quot;.
               </p>
               <p className="mt-2">
                 Avatar and photo consent aren&apos;t set by the import — every child gets a

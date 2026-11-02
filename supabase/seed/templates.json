@@ -590,7 +590,7 @@
       {
         "order": 2,
         "text": "\"Today we say thank you — for our home, our family, and our community,\" said {mascot}, waving a small flag.",
-        "image_prompt": "{mascot}, a warm grandmother in traditional Emirati dress, waving a small UAE flag beside {child_name}'s avatar, warm community gathering in the background, storybook illustration style."
+        "image_prompt": "{mascot}, a warm grandmother in {family_dress}, waving a small UAE flag beside {child_name}'s avatar, warm community gathering in the background, storybook illustration style."
       },
       {
         "order": 3,
@@ -605,7 +605,7 @@
       {
         "order": 5,
         "text": "The next morning, {mascot} invited {child_name} to help bake traditional sweets for the neighbours, filling the kitchen with the smell of cardamom and rosewater.",
-        "image_prompt": "{mascot}, a warm grandmother in traditional Emirati dress, baking traditional sweets together with {child_name}'s avatar in a cosy kitchen, cardamom and rosewater nearby, storybook illustration style."
+        "image_prompt": "{mascot}, a warm grandmother in {family_dress}, baking traditional sweets together with {child_name}'s avatar in a cosy kitchen, cardamom and rosewater nearby, storybook illustration style."
       },
       {
         "order": 6,
@@ -631,7 +631,7 @@
       {
         "order": 2,
         "text": "قالت {mascot} وهي تلوح بعلم صغير: «اليوم نقول شكرا لوطننا، وعائلتنا، ومجتمعنا!»",
-        "image_prompt": "{mascot}، جدة ترتدي اللباس التقليدي الإماراتي، تلوح بعلم إماراتي صغير بجانب شخصية {child_name}، تجمع مجتمعي دافئ في الخلفية، أسلوب رسوم كتاب قصص."
+        "image_prompt": "{mascot}، جدة ترتدي {family_dress}، تلوح بعلم إماراتي صغير بجانب شخصية {child_name}، تجمع مجتمعي دافئ في الخلفية، أسلوب رسوم كتاب قصص."
       },
       {
         "order": 3,
@@ -646,7 +646,7 @@
       {
         "order": 5,
         "text": "في صباح اليوم التالي، دعت {mascot} {child_name} لمساعدتها في خبز الحلويات التقليدية للجيران، فامتلأ المطبخ برائحة الهيل وماء الورد.",
-        "image_prompt": "{mascot}، جدة ترتدي اللباس التقليدي الإماراتي، تخبز حلويات تقليدية مع شخصية {child_name} في مطبخ دافئ ومريح، رائحة الهيل وماء الورد قريبة، أسلوب رسوم كتاب قصص."
+        "image_prompt": "{mascot}، جدة ترتدي {family_dress}، تخبز حلويات تقليدية مع شخصية {child_name} في مطبخ دافئ ومريح، رائحة الهيل وماء الورد قريبة، أسلوب رسوم كتاب قصص."
       },
       {
         "order": 6,
@@ -754,7 +754,7 @@
       {
         "order": 2,
         "text": "\"During Ramadan, families slow down and share more — kind words, kind hands, and kind hearts,\" said {mascot}, lighting a small lantern.",
-        "image_prompt": "{mascot}, a warm grandmother in traditional Emirati dress, lighting a small decorative lantern beside {child_name}'s avatar, warm indoor glow, storybook illustration style."
+        "image_prompt": "{mascot}, a warm grandmother in {family_dress}, lighting a small decorative lantern beside {child_name}'s avatar, warm indoor glow, storybook illustration style."
       },
       {
         "order": 3,
@@ -795,7 +795,7 @@
       {
         "order": 2,
         "text": "قالت {mascot} وهي تضيء فانوسا صغيرا: «في رمضان، تهدأ العائلات وتتشارك أكثر: كلمات طيبة، وأيادي كريمة، وقلوب محبة.»",
-        "image_prompt": "{mascot}، جدة ترتدي اللباس التقليدي الإماراتي، تضيء فانوسا زخرفيا صغيرا بجانب شخصية {child_name}، إضاءة دافئة داخل المنزل، أسلوب رسوم كتاب قصص."
+        "image_prompt": "{mascot}، جدة ترتدي {family_dress}، تضيء فانوسا زخرفيا صغيرا بجانب شخصية {child_name}، إضاءة دافئة داخل المنزل، أسلوب رسوم كتاب قصص."
       },
       {
         "order": 3,
@@ -836,7 +836,7 @@
       {
         "order": 2,
         "text": "The whole family gathered at Grandma's house. \"Eid Mubarak!\" {mascot} said, wrapping {child_name} in the warmest hug.",
-        "image_prompt": "{mascot}, a warm grandmother in traditional Emirati dress, hugging {child_name}'s avatar warmly in a decorated living room, family gathered around, storybook illustration style."
+        "image_prompt": "{mascot}, a warm grandmother in {family_dress}, hugging {child_name}'s avatar warmly in a decorated living room, family gathered around, storybook illustration style."
       },
       {
         "order": 3,
@@ -877,7 +877,7 @@
       {
         "order": 2,
         "text": "اجتمعت العائلة كلها في بيت الجدة. قالت {mascot} وهي تحتضن {child_name} بأدفأ عناق: «عيد مبارك!»",
-        "image_prompt": "{mascot}، جدة ترتدي اللباس التقليدي الإماراتي، تحتضن شخصية {child_name} بحرارة في غرفة معيشة مزينة، العائلة مجتمعة حولهما، أسلوب رسوم كتاب قصص."
+        "image_prompt": "{mascot}، جدة ترتدي {family_dress}، تحتضن شخصية {child_name} بحرارة في غرفة معيشة مزينة، العائلة مجتمعة حولهما، أسلوب رسوم كتاب قصص."
       },
       {
         "order": 3,

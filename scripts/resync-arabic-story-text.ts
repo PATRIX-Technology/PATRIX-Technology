@@ -105,7 +105,9 @@ async function main() {
     const organisation = tenant?.name ?? 'Organisation';
     const pronoun: Pronoun = story.pronoun_snapshot;
 
-    const rendered = renderTemplate(template, { childName, pronoun, organisation });
+    // familyDress only affects image_prompt, which this script never reads
+    // (it only resyncs story_pages.text) -- any value satisfies the type.
+    const rendered = renderTemplate(template, { childName, pronoun, organisation, familyDress: '' });
 
     const { data: pages, error: pagesError } = await supabase
       .from('story_pages')

@@ -89,6 +89,7 @@ describe('seed template fixtures (supabase/seed/templates.json)', () => {
           childName: 'Maya',
           pronoun,
           organisation: 'Little Explorers Nursery',
+          familyDress: 'traditional Emirati dress',
         });
         for (const page of pages) {
           expect(page.text, `${parsed.theme_key}/${pronoun} page ${page.order}`).not.toMatch(
@@ -112,6 +113,7 @@ describe('seed template fixtures (supabase/seed/templates.json)', () => {
           childName: 'مايا',
           pronoun,
           organisation: 'حضانة المستكشفين الصغار',
+          familyDress: 'اللباس التقليدي الإماراتي',
         });
         for (const page of pages) {
           expect(page.text, `${parsed.theme_key}/${pronoun} page ${page.order}`).not.toMatch(
@@ -134,7 +136,7 @@ describe('seed template fixtures (supabase/seed/templates.json)', () => {
       if (row.locale !== 'ar') continue;
       const parsed = StoryThemeTemplateSchema.parse({ ...row, native_review_status: 'draft' });
       expect(() =>
-        renderTemplate(parsed, { childName: 'مايا', pronoun: 'she', organisation: 'X' }),
+        renderTemplate(parsed, { childName: 'مايا', pronoun: 'she', organisation: 'X', familyDress: 'Y' }),
       ).toThrow(/native review/);
     }
   });

@@ -7520,3 +7520,71 @@ the flag — undermining the "not publicly advertised, handed out
 personally" decision and the test-tenant concern raised earlier the
 same day. The flag is now the sole gate for FOUNDING10 specifically;
 other coupon codes, if any are added later, are unaffected.
+
+## Nationality drives culturally-appropriate illustration, not separate templates
+
+A real nursery call surfaced a genuine product gap: the UAE National Day
+template's grandmother mascot was hard-coded in "traditional Emirati
+dress" in every illustration, regardless of which child the story was
+for — visibly wrong for a non-Gulf child (the founder's example: a
+hijab-wearing grandmother doesn't fit a European child's family).
+
+**Nationality is now a mandatory field on every child** (`children.nationality`,
+migration 0047, a top-level `nationality_type` enum following the same
+pattern as `pronoun_type`/`app_locale` — not a free-text column — so it's
+enforced at the database level, not just in application validation). It
+is collected on both the add/edit child form and CSV bulk import (now a
+required column, same treatment as `pronoun`: no default, an
+unrecognized/blank cell is a row error, not a silent guess). The 19
+existing children in the live project were backfilled to `other` — real
+values need to be set per-child from their profile page.
+
+**Deliberately not** N full template variants per nationality (15
+templates × 23 nationalities would be an unmaintainable content burden,
+and most of it would be unnecessary — nationality only changes a
+template's *mascot dress*, never its narrative). Instead, the four
+"traditional Emirati dress" scene-description phrases that existed
+(`national_day_gratitude` ×2, `ramadan_reflection` ×1, `eid_celebration`
+×1, in both English and Arabic = 8 total strings in both
+`supabase/seed/templates.json` and the live `story_theme_templates`
+table) were replaced with a new `{family_dress}` template token (see
+`SIMPLE_TOKEN`/`TokenContext.familyDress` in
+`src/lib/domain/templates.ts`), resolved per-story by
+`getFamilyDressDescription(nationality, locale)` in the new
+`src/lib/domain/nationality.ts`.
+
+That resolver is deliberately three-tiered, not one description per
+nationality: `emirati` keeps the platform's original, most common
+depiction ("traditional Emirati dress"); the other five Gulf
+nationalities (`saudi`, `kuwaiti`, `qatari`, `bahraini`, `omani`) get a
+respectful *regional*, not country-specific, description ("traditional
+Gulf dress") rather than guessing at a country's dress that may not
+actually be theirs; every other nationality (including `other`) falls
+back to the same neutral "simple, modest, modern everyday clothing"
+wording `BRAND_STYLE_PROMPT` already uses as its default everywhere else
+in the app (see that constant's own comment in
+`src/lib/providers/image/prompts.ts` — it already documents a prior
+incident where over-applying regional dress leaked into an unrelated
+birthday template). This is what actually fixes the reported problem,
+without inventing "traditional dress" for 20+ countries.
+
+**Islamic-content safety, unconditional and nationality-independent.**
+The founder was explicit that representing other cultures/nationalities
+must never extend to producing content outside Islamic values for a UAE
+audience — no sexual/romantic content (already covered), and no
+Christmas, Halloween, or other non-Islamic religious holiday imagery
+specifically (not previously covered at all). Added as two layers:
+1. `ISLAMIC_CONTENT_SAFETY_INSTRUCTION`, a new unconditional clause in
+   `buildIllustrationPrompt` (prompts.ts), appended to every single
+   generation prompt regardless of template or nationality — the
+   primary control, same pattern as the existing
+   `NO_ORGANISATION_NAME_INSTRUCTION`.
+2. The post-generation moderation prompt (`MODERATION_PROMPT` in
+   safety.ts) now also rejects Christmas/Halloween/other non-Islamic
+   religious imagery, alcohol, gambling, and dating content, alongside
+   its existing nudity/violence/hate-symbol categories — defense in
+   depth, not the primary control.
+
+No existing template currently produces this content (verified — only
+the dress phrasing needed changing), so this is a forward guardrail for
+any future template, not a fix to today's content.

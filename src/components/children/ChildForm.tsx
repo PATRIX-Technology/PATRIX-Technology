@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { useFormState } from 'react-dom';
 import type { ActionResult } from '@/lib/actions/auth';
 import { useSafeFormReducer } from '@/lib/actions/use-safe-form-reducer';
@@ -10,7 +10,8 @@ import { SubmitButton } from '@/components/ui/SubmitButton';
 import { TextField } from '@/components/ui/Input';
 import { AvatarPicker } from './AvatarPicker';
 import { DEFAULT_AVATAR_CONFIG, type AvatarConfig } from '@/lib/domain/avatar';
-import type { Pronoun, AppLocale } from '@/types/database';
+import { NATIONALITY_OPTIONS } from '@/lib/domain/nationality';
+import type { Pronoun, AppLocale, Nationality } from '@/types/database';
 
 export interface ChildFormDefaults {
   firstName?: string;
@@ -18,6 +19,7 @@ export interface ChildFormDefaults {
   arabicFirstName?: string | null;
   arabicLastName?: string | null;
   pronoun?: Pronoun;
+  nationality?: Nationality;
   className?: string | null;
   preferredLanguage?: AppLocale;
   bilingualStories?: boolean;
@@ -43,6 +45,7 @@ export function ChildForm({
   onSuccess: () => void;
 }) {
   const tForm = useTranslations('children.form');
+  const locale = useLocale();
   const [avatar, setAvatar] = useState<AvatarConfig>(defaultValues?.avatarConfig ?? DEFAULT_AVATAR_CONFIG);
   const [state, formAction] = useFormState<ActionResult, FormData>(
     useSafeFormReducer(async (_prev, formData) => {
@@ -103,6 +106,31 @@ export function ChildForm({
           </option>
           <option value="she">{tForm('pronounOptions.she')}</option>
           <option value="he">{tForm('pronounOptions.he')}</option>
+        </select>
+      </div>
+      <div>
+        <label htmlFor="nationality" className="mb-1.5 block text-sm font-medium text-ink-700">
+          {tForm('nationality')}
+        </label>
+        <select
+          id="nationality"
+          name="nationality"
+          required
+          defaultValue={defaultValues?.nationality ?? ''}
+          className="focus-ring w-full rounded-lg border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] px-3 py-2"
+        >
+          {/* No pre-selected nationality -- same reasoning as pronoun above:
+              this drives which culturally-appropriate illustration the
+              child gets (see src/lib/domain/nationality.ts), so it forces
+              an explicit choice rather than silently defaulting to one. */}
+          <option value="" disabled>
+            {tForm('nationalityOptions.placeholder')}
+          </option>
+          {NATIONALITY_OPTIONS.map((option) => (
+            <option key={option.value} value={option.value}>
+              {locale === 'ar' ? option.labelAr : option.labelEn}
+            </option>
+          ))}
         </select>
       </div>
       <TextField name="className" label={tForm('class')} defaultValue={defaultValues?.className ?? ''} />

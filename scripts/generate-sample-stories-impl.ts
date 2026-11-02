@@ -94,7 +94,7 @@ async function getOrCreateChild(tenantId: string, opts: {
   firstName: string;
   arabicFirstName?: string;
   pronoun: 'she' | 'he';
-}): Promise<{ id: string; first_name: string; arabic_first_name: string | null; pronoun: string; consent_status: string; avatar_config: unknown }> {
+}): Promise<{ id: string; first_name: string; arabic_first_name: string | null; pronoun: string; nationality: string; consent_status: string; avatar_config: unknown }> {
   const { data: existing } = await supabase
     .from('children')
     .select('*')
@@ -110,6 +110,7 @@ async function getOrCreateChild(tenantId: string, opts: {
       first_name: opts.firstName,
       arabic_first_name: opts.arabicFirstName ?? null,
       pronoun: opts.pronoun,
+      nationality: 'other',
       class_name: 'Sample Class',
       preferred_language: opts.arabicFirstName ? 'ar' : 'en',
       avatar_config: { hair: 'curly_black', skinTone: 'medium', outfitColor: '#e5850c', accessory: 'none' },
@@ -146,6 +147,7 @@ async function generateOne(
     childId: child.id,
     childName,
     pronoun: child.pronoun as 'she' | 'he',
+    nationality: child.nationality as never,
     consentStatus: child.consent_status as string,
     avatarConfig: child.avatar_config as never,
     organisationName: 'Ownly Nursery (Sample)',

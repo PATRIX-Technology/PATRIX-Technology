@@ -19,6 +19,17 @@ export type StorySuggestionStatus = 'new' | 'reviewed' | 'added' | 'declined';
  * drop an enum value without recreating the type), but nothing in the
  * app will ever read or write it again. */
 export type Pronoun = 'she' | 'he';
+/** Drives culturally-appropriate illustration only (see
+ * src/lib/domain/nationality.ts) -- not used for any legal/compliance
+ * purpose. 'other' is a deliberate catch-all, not an omission; see
+ * docs/DECISIONS.md "Nationality drives culturally-appropriate
+ * illustration, not separate templates". */
+export type Nationality =
+  | 'emirati' | 'saudi' | 'kuwaiti' | 'qatari' | 'bahraini' | 'omani'
+  | 'egyptian' | 'jordanian' | 'lebanese' | 'syrian' | 'palestinian' | 'sudanese' | 'yemeni'
+  | 'indian' | 'pakistani' | 'bangladeshi' | 'filipino'
+  | 'british' | 'american' | 'canadian' | 'french' | 'german' | 'south_african'
+  | 'other';
 export type AppLocale = 'en' | 'ar';
 export type ConsentStatus = 'not_requested' | 'pending' | 'granted' | 'declined' | 'withdrawn';
 export type NativeReviewStatus = 'draft' | 'reviewed';
@@ -129,6 +140,7 @@ export interface Child {
   /** Optional Arabic spelling of the family name — record-keeping only. */
   arabic_last_name: string | null;
   pronoun: Pronoun;
+  nationality: Nationality;
   class_name: string | null;
   preferred_language: AppLocale;
   /** Whether this child's stories should default to being generated in

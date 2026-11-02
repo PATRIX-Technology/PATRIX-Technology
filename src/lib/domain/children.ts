@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { AvatarConfigSchema, DEFAULT_AVATAR_CONFIG } from './avatar';
+import { NATIONALITY_OPTIONS, normalizeNationality } from './nationality';
 
 /**
  * Identifies an image file by its actual leading bytes rather than the
@@ -73,6 +74,11 @@ export const ChildFormSchema = z.object({
   /** Optional Arabic spelling of the family name — record-keeping only. */
   arabicLastName: optionalNameField('Arabic family name'),
   pronoun: z.enum(['she', 'he']),
+  /** Mandatory — drives the {family_dress} illustration token only (see
+   * src/lib/domain/nationality.ts), never a legal/compliance field. See
+   * docs/DECISIONS.md "Nationality drives culturally-appropriate
+   * illustration, not separate templates". */
+  nationality: z.enum(NATIONALITY_OPTIONS.map((o) => o.value) as [string, ...string[]]),
   className: z.string().trim().max(80).optional().or(z.literal('')),
   preferredLanguage: z.enum(['en', 'ar']),
   /** Whether this child's stories should default to being generated in
@@ -86,7 +92,7 @@ export type ChildFormInput = z.infer<typeof ChildFormSchema>;
 
 /**
  * CSV import schema for bulk class-list uploads. Required columns:
- * first_name,pronoun,class_name,preferred_language — optional
+ * first_name,pronoun,nationality,class_name,preferred_language — optional
  * last_name/arabic_first_name/arabic_last_name/bilingual columns are also
  * read when present (see docs/DECISIONS.md "Bilingual name fields for
  * children" and "Bilingual-in-one-book generation"), but their absence
@@ -97,11 +103,15 @@ export type ChildFormInput = z.infer<typeof ChildFormSchema>;
  * (her/female/f, him/male/m), but has no default -- see
  * docs/DECISIONS.md "Pronoun is binary only (no 'they')": a missing or
  * unrecognized value is now a row error rather than a silent guess.
+ * nationality is the same shape as pronoun -- case-insensitive, accepts
+ * common aliases (see normalizeNationality in nationality.ts), no
+ * default, a missing/unrecognized cell is a row error. Use "other" for
+ * any nationality not in the recognized list.
  * bilingual is also case-insensitive and defaults to "no"/false when
  * blank or unrecognized -- this is a convenience default, never an error,
  * since most nurseries only want some children's stories bilingual.
  */
-const CSV_HEADER = ['first_name', 'pronoun', 'class_name', 'preferred_language'];
+const CSV_HEADER = ['first_name', 'pronoun', 'nationality', 'class_name', 'preferred_language'];
 
 export interface CsvRowResult {
   row: number;
@@ -222,6 +232,7 @@ export function parseChildrenCsv(content: string): { results: CsvRowResult[]; he
     const arabicFirstName = (cells[colIndex('arabic_first_name')] ?? '').trim();
     const arabicLastName = (cells[colIndex('arabic_last_name')] ?? '').trim();
     const pronounRaw = cells[colIndex('pronoun')] ?? '';
+    const nationalityRaw = cells[colIndex('nationality')] ?? '';
     const className = (cells[colIndex('class_name')] ?? '').trim();
     const languageRaw = cells[colIndex('preferred_language')] ?? 'en';
     const bilingualRaw = cells[colIndex('bilingual')] ?? '';
@@ -235,12 +246,24 @@ export function parseChildrenCsv(content: string): { results: CsvRowResult[]; he
       continue;
     }
 
+    const nationality = normalizeNationality(nationalityRaw);
+    if (nationality === null) {
+      results.push({
+        row: i + 1,
+        errors: [
+          `Nationality must be one of: ${NATIONALITY_OPTIONS.map((o) => o.value).join(', ')} (also accepts common names like "UAE", "USA", "UK") -- got "${nationalityRaw || '(empty)'}". Use "other" if not listed.`,
+        ],
+      });
+      continue;
+    }
+
     const parsed = ChildFormSchema.safeParse({
       firstName,
       lastName: lastName || undefined,
       arabicFirstName: arabicFirstName || undefined,
       arabicLastName: arabicLastName || undefined,
       pronoun,
+      nationality,
       className: className || undefined,
       preferredLanguage: normalizeLanguage(languageRaw),
       bilingualStories: normalizeBilingual(bilingualRaw),

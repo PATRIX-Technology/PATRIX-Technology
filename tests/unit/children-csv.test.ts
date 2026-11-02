@@ -34,25 +34,38 @@ describe('parseChildrenCsv', () => {
     expect(headerError).toMatch(/first_name/);
   });
 
+  it('reports a header error when nationality is missing', () => {
+    const { headerError } = parseChildrenCsv(
+      'first_name,pronoun,class_name,preferred_language\nMaya,she,Sunflower,en',
+    );
+    expect(headerError).toMatch(/nationality/);
+  });
+
   it('parses a well-formed row', () => {
     const { results, headerError } = parseChildrenCsv(
-      'first_name,pronoun,class_name,preferred_language\nMaya,she,Sunflower,en',
+      'first_name,pronoun,nationality,class_name,preferred_language\nMaya,she,emirati,Sunflower,en',
     );
     expect(headerError).toBeUndefined();
     expect(results).toHaveLength(1);
-    expect(results[0]!.data).toMatchObject({ firstName: 'Maya', pronoun: 'she', className: 'Sunflower', preferredLanguage: 'en' });
+    expect(results[0]!.data).toMatchObject({
+      firstName: 'Maya',
+      pronoun: 'she',
+      nationality: 'emirati',
+      className: 'Sunflower',
+      preferredLanguage: 'en',
+    });
   });
 
-  it('normalizes loose pronoun and language spellings', () => {
+  it('normalizes loose pronoun, nationality, and language spellings', () => {
     const { results } = parseChildrenCsv(
-      'first_name,pronoun,class_name,preferred_language\nZayd,Male,Starfish,Arabic',
+      'first_name,pronoun,nationality,class_name,preferred_language\nZayd,Male,UAE,Starfish,Arabic',
     );
-    expect(results[0]!.data).toMatchObject({ pronoun: 'he', preferredLanguage: 'ar' });
+    expect(results[0]!.data).toMatchObject({ pronoun: 'he', nationality: 'emirati', preferredLanguage: 'ar' });
   });
 
   it('flags a row with an unrecognized pronoun as an error rather than guessing', () => {
     const { results } = parseChildrenCsv(
-      'first_name,pronoun,class_name,preferred_language\nRami,unspecified,,en',
+      'first_name,pronoun,nationality,class_name,preferred_language\nRami,unspecified,other,,en',
     );
     expect(results[0]!.data).toBeUndefined();
     expect(results[0]!.errors).toBeDefined();
@@ -61,15 +74,40 @@ describe('parseChildrenCsv', () => {
 
   it('flags a row with a blank pronoun cell as an error', () => {
     const { results } = parseChildrenCsv(
-      'first_name,pronoun,class_name,preferred_language\nRami,,,en',
+      'first_name,pronoun,nationality,class_name,preferred_language\nRami,,other,,en',
     );
     expect(results[0]!.data).toBeUndefined();
     expect(results[0]!.errors).toBeDefined();
   });
 
+  it('flags a row with an unrecognized nationality as an error rather than guessing', () => {
+    const { results } = parseChildrenCsv(
+      'first_name,pronoun,nationality,class_name,preferred_language\nRami,he,Atlantean,,en',
+    );
+    expect(results[0]!.data).toBeUndefined();
+    expect(results[0]!.errors).toBeDefined();
+    expect(results[0]!.errors![0]).toMatch(/nationality/i);
+  });
+
+  it('flags a row with a blank nationality cell as an error', () => {
+    const { results } = parseChildrenCsv(
+      'first_name,pronoun,nationality,class_name,preferred_language\nRami,he,,,en',
+    );
+    expect(results[0]!.data).toBeUndefined();
+    expect(results[0]!.errors).toBeDefined();
+    expect(results[0]!.errors![0]).toMatch(/nationality/i);
+  });
+
+  it('accepts "other" for a nationality not in the recognized list', () => {
+    const { results } = parseChildrenCsv(
+      'first_name,pronoun,nationality,class_name,preferred_language\nRami,he,other,,en',
+    );
+    expect(results[0]!.data).toMatchObject({ nationality: 'other' });
+  });
+
   it('flags a row with an empty first name', () => {
     const { results } = parseChildrenCsv(
-      'first_name,pronoun,class_name,preferred_language\n,she,Sunflower,en',
+      'first_name,pronoun,nationality,class_name,preferred_language\n,she,emirati,Sunflower,en',
     );
     expect(results[0]!.errors).toBeDefined();
     expect(results[0]!.data).toBeUndefined();
@@ -77,7 +115,7 @@ describe('parseChildrenCsv', () => {
 
   it('flags a first name containing digits', () => {
     const { results } = parseChildrenCsv(
-      'first_name,pronoun,class_name,preferred_language\nMaya2,she,,en',
+      'first_name,pronoun,nationality,class_name,preferred_language\nMaya2,she,emirati,,en',
     );
     expect(results[0]!.errors?.[0]).toMatch(/numbers/);
   });
@@ -89,14 +127,14 @@ describe('parseChildrenCsv', () => {
 
   it('defaults bilingual to false when the optional column is absent', () => {
     const { results } = parseChildrenCsv(
-      'first_name,pronoun,class_name,preferred_language\nMaya,she,Sunflower,en',
+      'first_name,pronoun,nationality,class_name,preferred_language\nMaya,she,emirati,Sunflower,en',
     );
     expect(results[0]!.data).toMatchObject({ bilingualStories: false });
   });
 
   it('reads the optional bilingual column with loose yes/true/both spellings', () => {
     const { results } = parseChildrenCsv(
-      'first_name,pronoun,class_name,preferred_language,bilingual\nMaya,she,Sunflower,en,yes\nZayd,he,Starfish,en,Both\nRami,he,Starfish,en,no',
+      'first_name,pronoun,nationality,class_name,preferred_language,bilingual\nMaya,she,emirati,Sunflower,en,yes\nZayd,he,emirati,Starfish,en,Both\nRami,he,emirati,Starfish,en,no',
     );
     expect(results[0]!.data).toMatchObject({ bilingualStories: true });
     expect(results[1]!.data).toMatchObject({ bilingualStories: true });
@@ -105,7 +143,7 @@ describe('parseChildrenCsv', () => {
 
   it('reads optional last_name/arabic_first_name/arabic_last_name columns when present', () => {
     const { results, headerError } = parseChildrenCsv(
-      'first_name,last_name,arabic_first_name,arabic_last_name,pronoun,class_name,preferred_language\nHala,Al Mansoori,هالة,المنصوري,she,Sunflower,ar',
+      'first_name,last_name,arabic_first_name,arabic_last_name,pronoun,nationality,class_name,preferred_language\nHala,Al Mansoori,هالة,المنصوري,she,emirati,Sunflower,ar',
     );
     expect(headerError).toBeUndefined();
     expect(results[0]!.data).toMatchObject({
@@ -118,7 +156,7 @@ describe('parseChildrenCsv', () => {
 
   it('does not require last_name/arabic_first_name/arabic_last_name columns at all', () => {
     const { results, headerError } = parseChildrenCsv(
-      'first_name,pronoun,class_name,preferred_language\nMaya,she,Sunflower,en',
+      'first_name,pronoun,nationality,class_name,preferred_language\nMaya,she,emirati,Sunflower,en',
     );
     expect(headerError).toBeUndefined();
     expect(results[0]!.data?.lastName).toBeUndefined();
@@ -127,16 +165,16 @@ describe('parseChildrenCsv', () => {
   });
 
   it('rejects a file with more rows than MAX_CSV_IMPORT_ROWS, before inserting anything', () => {
-    const header = 'first_name,pronoun,class_name,preferred_language';
-    const rows = Array.from({ length: MAX_CSV_IMPORT_ROWS + 1 }, (_, i) => `Child${i},she,Room,en`);
+    const header = 'first_name,pronoun,nationality,class_name,preferred_language';
+    const rows = Array.from({ length: MAX_CSV_IMPORT_ROWS + 1 }, (_, i) => `Child${i},she,emirati,Room,en`);
     const { results, headerError } = parseChildrenCsv([header, ...rows].join('\n'));
     expect(headerError).toMatch(new RegExp(`${MAX_CSV_IMPORT_ROWS}-row limit`));
     expect(results).toHaveLength(0);
   });
 
   it('accepts a file with exactly MAX_CSV_IMPORT_ROWS rows', () => {
-    const header = 'first_name,pronoun,class_name,preferred_language';
-    const rows = Array.from({ length: MAX_CSV_IMPORT_ROWS }, (_, i) => `Child${i},she,Room,en`);
+    const header = 'first_name,pronoun,nationality,class_name,preferred_language';
+    const rows = Array.from({ length: MAX_CSV_IMPORT_ROWS }, (_, i) => `Child${i},she,emirati,Room,en`);
     const { results, headerError } = parseChildrenCsv([header, ...rows].join('\n'));
     expect(headerError).toBeUndefined();
     expect(results).toHaveLength(MAX_CSV_IMPORT_ROWS);

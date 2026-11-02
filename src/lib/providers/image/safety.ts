@@ -65,13 +65,25 @@ const MODERATION_MODEL = 'gemini-3.1-flash-lite';
  * in, a few words of JSON out, not a full illustration). */
 const MODERATION_REQUEST_TIMEOUT_MS = 15_000;
 
+// The Christmas/Halloween/alcohol/dating categories below are a
+// deliberate, founder-directed addition (real nursery call, see
+// docs/DECISIONS.md "Nationality drives culturally-appropriate
+// illustration, not separate templates") — this app serves children of
+// every nationality and background, but all content must stay
+// appropriate for an Islamic-values UAE audience regardless. This is
+// defense-in-depth, not the primary control: the generation prompt
+// itself (ISLAMIC_CONTENT_SAFETY_INSTRUCTION in prompts.ts) already
+// instructs the model never to produce this content in the first place.
 const MODERATION_PROMPT =
   "You are a strict content-safety reviewer for a children's storybook app used by nurseries " +
-  'and schools. Review the attached illustration, generated for a young child’s personalised ' +
-  'story. Reject it (safe=false) if it contains: nudity or sexual content, graphic violence or ' +
-  'gore, hate symbols, realistically depicted weapons, self-harm imagery, or anything otherwise ' +
-  'inappropriate for a nursery/school audience. Ordinary cartoon storybook illustrations of ' +
-  'children, animals, food, classrooms, and everyday scenes are expected and safe (safe=true). ' +
+  'and schools in the UAE, for children of every nationality and background. Review the attached ' +
+  'illustration, generated for a young child’s personalised story. Reject it (safe=false) if it ' +
+  'contains: nudity or sexual content, graphic violence or gore, hate symbols, realistically ' +
+  'depicted weapons, self-harm imagery, Christmas imagery (Christmas tree, Santa, etc.), Halloween ' +
+  'imagery (costumes, pumpkins, jack-o-lanterns), any other non-Islamic religious holiday or ' +
+  'symbol, alcohol, gambling, dating/romantic content, or anything otherwise inappropriate for an ' +
+  'Islamic-values nursery/school audience. Ordinary cartoon storybook illustrations of children, ' +
+  'animals, food, classrooms, and everyday scenes are expected and safe (safe=true). ' +
   'Respond with ONLY a JSON object of the exact shape {"safe": boolean, "reason": string} — ' +
   '"reason" holds a short explanation when unsafe, or an empty string when safe.';
 

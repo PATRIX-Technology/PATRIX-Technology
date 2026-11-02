@@ -1,6 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { renderTemplate, type StoryThemeTemplate } from './templates';
-import type { AppLocale, AvatarConfig, Pronoun } from '@/types/database';
+import { getFamilyDressDescription } from './nationality';
+import type { AppLocale, AvatarConfig, Nationality, Pronoun } from '@/types/database';
 
 /** How many times a human can manually click "regenerate this page" —
  * total, across every page of one story, for every subscription tier —
@@ -34,6 +35,9 @@ export interface CreateStoryInput {
   childId: string;
   childName: string;
   pronoun: Pronoun;
+  /** Drives the {family_dress} template token only -- see
+   * src/lib/domain/nationality.ts. */
+  nationality: Nationality;
   consentStatus: string;
   avatarConfig: AvatarConfig;
   organisationName: string;
@@ -82,6 +86,7 @@ export async function createStory(supabase: SupabaseClient, input: CreateStoryIn
     childName: input.childName,
     pronoun: input.pronoun,
     organisation: input.organisationName,
+    familyDress: getFamilyDressDescription(input.nationality, input.template.locale),
   });
 
   const { data: story, error: storyError } = await supabase
@@ -163,17 +168,19 @@ interface BilingualPageRow {
 function renderBilingualPages(
   enTemplate: StoryThemeTemplate,
   arTemplate: StoryThemeTemplate,
-  ctx: { childNameEn: string; childNameAr: string; pronoun: Pronoun; organisation: string },
+  ctx: { childNameEn: string; childNameAr: string; pronoun: Pronoun; organisation: string; nationality: Nationality },
 ): BilingualPageRow[] {
   const enPages = renderTemplate(enTemplate, {
     childName: ctx.childNameEn,
     pronoun: ctx.pronoun,
     organisation: ctx.organisation,
+    familyDress: getFamilyDressDescription(ctx.nationality, 'en'),
   });
   const arPages = renderTemplate(arTemplate, {
     childName: ctx.childNameAr,
     pronoun: ctx.pronoun,
     organisation: ctx.organisation,
+    familyDress: getFamilyDressDescription(ctx.nationality, 'ar'),
   });
   const arTextByOrder = new Map(arPages.map((p) => [p.order, p.text]));
 
@@ -198,6 +205,7 @@ export async function createStoryForTenant(supabase: SupabaseClient, input: Crea
       childNameAr: input.childNameAr ?? input.childName,
       pronoun: input.pronoun,
       organisation: input.organisationName,
+      nationality: input.nationality,
     });
   } else {
     // renderTemplate() itself throws TemplateNotReviewedError for an
@@ -206,6 +214,7 @@ export async function createStoryForTenant(supabase: SupabaseClient, input: Crea
       childName: input.childName,
       pronoun: input.pronoun,
       organisation: input.organisationName,
+      familyDress: getFamilyDressDescription(input.nationality, input.template.locale),
     });
     rpcPages = pages.map((page) => ({ page_number: page.order, text: page.text, image_prompt: page.image_prompt }));
   }

@@ -12,6 +12,7 @@ import {
   MAX_MANUAL_REGENERATIONS_PER_STORY,
 } from '@/lib/domain/stories';
 import { renderTemplate, StoryThemeTemplateSchema, type StoryThemeTemplate } from '@/lib/domain/templates';
+import { getFamilyDressDescription } from '@/lib/domain/nationality';
 import { parseAvatarConfig } from '@/lib/domain/avatar';
 import { MAX_CSV_IMPORT_ROWS } from '@/lib/domain/children';
 import { enforceRateLimit, RateLimitExceededError } from '@/lib/rate-limit';
@@ -120,6 +121,7 @@ export async function createStoryAction(
       childId: child.id,
       childName,
       pronoun: child.pronoun,
+      nationality: child.nationality,
       consentStatus: child.consent_status,
       avatarConfig: parseAvatarConfig(child.avatar_config),
       organisationName: context.tenantName,
@@ -232,7 +234,7 @@ export async function regeneratePageAction(locale: string, storyId: string, page
       .eq('theme_key', story.theme_key)
       .eq('locale', story.locale)
       .maybeSingle(),
-    supabase.from('children').select('first_name, arabic_first_name').eq('id', story.child_id).maybeSingle(),
+    supabase.from('children').select('first_name, arabic_first_name, nationality').eq('id', story.child_id).maybeSingle(),
     supabase.from('tenants').select('name').eq('id', story.tenant_id).maybeSingle(),
   ]);
   if (templateRow && child) {
@@ -244,6 +246,7 @@ export async function regeneratePageAction(locale: string, storyId: string, page
         childName,
         pronoun: story.pronoun_snapshot,
         organisation: tenant?.name ?? context.tenantName,
+        familyDress: getFamilyDressDescription(child.nationality, template.locale),
       });
       refreshedText = rendered.find((p) => p.order === page.page_number)?.text;
     } catch {
@@ -501,6 +504,7 @@ export async function generateStoriesBulkAction(
         childId: child.id,
         childName,
         pronoun: child.pronoun,
+        nationality: child.nationality,
         consentStatus: child.consent_status,
         avatarConfig: parseAvatarConfig(child.avatar_config),
         organisationName: context.tenantName,

@@ -279,6 +279,10 @@
         "she": "She / her",
         "he": "He / him"
       },
+      "nationality": "Nationality",
+      "nationalityOptions": {
+        "placeholder": "Select..."
+      },
       "class": "Class or group",
       "language": "Preferred language",
       "bilingualStories": "Generate stories in both languages",

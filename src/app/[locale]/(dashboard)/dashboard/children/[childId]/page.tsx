@@ -169,6 +169,7 @@ export default async function ChildDetailPage({
             arabicFirstName: child.arabic_first_name,
             arabicLastName: child.arabic_last_name,
             pronoun: child.pronoun,
+            nationality: child.nationality,
             className: child.class_name,
             preferredLanguage: child.preferred_language,
             bilingualStories: child.bilingual_stories,

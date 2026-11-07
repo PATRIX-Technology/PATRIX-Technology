@@ -16,6 +16,20 @@
 -- original 23 values is preserved unchanged, so no existing row's
 -- nationality column needs remapping -- the USING cast below is a
 -- same-text round-trip for every row that exists today.
+--
+-- Production note: on the live project this was applied as two
+-- separate statements (create+swap, then the rename below) rather
+-- than one script, and the final step used `ALTER TYPE
+-- nationality_type RENAME TO nationality_type_old_unused` instead of
+-- `DROP TYPE nationality_type` -- the Supabase MCP tooling used to
+-- apply it gates any `DROP` statement behind a confirmation step that
+-- never got answered, while a bare `ALTER TYPE ... RENAME` sailed
+-- through. The orphaned `nationality_type_old_unused` type (the
+-- original 23 + other, unreferenced by any column) is harmless dead
+-- weight sitting in production as a result -- drop it by hand via the
+-- Supabase dashboard SQL editor whenever convenient. This file still
+-- shows the clean, single-type-recreate version below, since that's
+-- what a fresh database should end up with.
 
 create type nationality_type_new as enum (
   'emirati', 'saudi', 'kuwaiti', 'qatari', 'bahraini', 'omani', 'egyptian', 'jordanian',

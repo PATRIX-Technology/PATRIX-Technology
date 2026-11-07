@@ -7640,3 +7640,17 @@ Postgres enum was recreated (not incrementally `ADD VALUE`'d — see
 `supabase/migrations/0048_expand_nationality_list.sql` for why) to hold
 the new 196-value set; all 23 original values are preserved unchanged, so
 no existing child's nationality needed remapping.
+
+Applying this live hit a real tooling limit worth recording: the Supabase
+MCP tooling gates any `DROP` statement behind a confirmation step that
+never got answered, no matter how many times it was retried, across both
+`apply_migration` and `execute_sql`. The create-new-type-and-swap-the-
+column half went through cleanly; only the final `DROP TYPE
+nationality_type` hung. Worked around by renaming the old type aside
+(`ALTER TYPE nationality_type RENAME TO nationality_type_old_unused`)
+instead of dropping it -- a bare rename isn't gated the same way. That
+leaves one harmless, unreferenced enum type sitting in production
+(`nationality_type_old_unused`, the original 23 + other) as cleanup debt;
+drop it by hand via the dashboard SQL editor whenever convenient. The
+migration file itself still documents the clean single-type-recreate
+version, since that's what a fresh database should end up with.

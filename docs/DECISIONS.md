@@ -7610,3 +7610,33 @@ spend caps, and any other failure were equally inappropriate to show
 raw). The real `last_error` text is untouched in the database — still
 there for the founder to inspect directly via Supabase if a pattern of
 failures needs investigating, just never rendered in the app itself.
+
+## Nationality list expanded to (nearly) every country
+
+The first nationality pass (see "Nationality drives culturally-appropriate
+illustration, not separate templates" above) shipped a 23-country dropdown
+covering the Gulf, Levant, North Africa, South/Southeast Asia, and a
+handful of Western countries — enough to unblock the nursery's immediate
+ask, but founder feedback was direct: "I dont see all countries..please
+include all except Israel."
+
+`NATIONALITY_OPTIONS` (`src/lib/domain/nationality.ts`) now lists 196
+values: essentially every UN member state, plus Taiwan, Kosovo, and
+Palestine, plus `other` — with Israel the one deliberate, explicit
+exclusion, per direct founder instruction (not an oversight or a
+geopolitical stance implied by any other logic in the codebase — just
+this one explicit carve-out). `normalizeNationality()` was extended with
+a large country-name/alias map (e.g. `nigeria` → `nigerian`, `uk` →
+`british`) plus a label-text fallback match, so CSV import keeps
+accepting common country names and alt spellings, not just the exact
+enum value.
+
+This did not change the underlying illustration logic: the three-tier
+`getFamilyDressDescription()` resolution (exact Emirati / other-five-Gulf
+regional / neutral default for everyone else) is unchanged — the
+expansion only gives families more precise, dignified nationality
+options to pick from, not more illustration tiers. The `nationality_type`
+Postgres enum was recreated (not incrementally `ADD VALUE`'d — see
+`supabase/migrations/0048_expand_nationality_list.sql` for why) to hold
+the new 196-value set; all 23 original values are preserved unchanged, so
+no existing child's nationality needed remapping.

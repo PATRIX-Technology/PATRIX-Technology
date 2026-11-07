@@ -26,10 +26,38 @@ export type Pronoun = 'she' | 'he';
  * illustration, not separate templates". */
 export type Nationality =
   | 'emirati' | 'saudi' | 'kuwaiti' | 'qatari' | 'bahraini' | 'omani'
-  | 'egyptian' | 'jordanian' | 'lebanese' | 'syrian' | 'palestinian' | 'sudanese' | 'yemeni'
-  | 'indian' | 'pakistani' | 'bangladeshi' | 'filipino'
-  | 'british' | 'american' | 'canadian' | 'french' | 'german' | 'south_african'
-  | 'other';
+  | 'egyptian' | 'jordanian' | 'lebanese' | 'syrian' | 'palestinian' | 'iraqi'
+  | 'iranian' | 'turkish' | 'yemeni' | 'moroccan' | 'algerian' | 'tunisian'
+  | 'libyan' | 'sudanese' | 'mauritanian' | 'indian' | 'pakistani' | 'bangladeshi'
+  | 'afghan' | 'sri_lankan' | 'nepali' | 'bhutanese' | 'maldivian' | 'kazakh'
+  | 'uzbek' | 'turkmen' | 'kyrgyz' | 'tajik' | 'azerbaijani' | 'georgian'
+  | 'armenian' | 'filipino' | 'chinese' | 'taiwanese' | 'japanese' | 'south_korean'
+  | 'north_korean' | 'mongolian' | 'thai' | 'vietnamese' | 'cambodian' | 'laotian'
+  | 'burmese' | 'malaysian' | 'singaporean' | 'indonesian' | 'bruneian' | 'east_timorese'
+  | 'british' | 'irish' | 'french' | 'german' | 'spanish' | 'portuguese'
+  | 'italian' | 'dutch' | 'belgian' | 'swiss' | 'austrian' | 'swedish'
+  | 'norwegian' | 'danish' | 'finnish' | 'icelandic' | 'polish' | 'czech'
+  | 'slovak' | 'hungarian' | 'romanian' | 'bulgarian' | 'greek' | 'croatian'
+  | 'serbian' | 'bosnian' | 'slovenian' | 'albanian' | 'macedonian' | 'montenegrin'
+  | 'kosovar' | 'moldovan' | 'ukrainian' | 'belarusian' | 'russian' | 'lithuanian'
+  | 'latvian' | 'estonian' | 'luxembourgish' | 'maltese' | 'cypriot' | 'monacan'
+  | 'liechtensteiner' | 'san_marinese' | 'andorran' | 'nigerian' | 'nigerien' | 'chadian'
+  | 'senegalese' | 'gambian' | 'guinean' | 'guinea_bissauan' | 'sierra_leonean' | 'liberian'
+  | 'ivorian' | 'ghanaian' | 'togolese' | 'beninese' | 'cameroonian' | 'central_african'
+  | 'equatorial_guinean' | 'gabonese' | 'congolese_brazzaville' | 'congolese_kinshasa' | 'angolan' | 'zambian'
+  | 'malawian' | 'mozambican' | 'zimbabwean' | 'botswanan' | 'namibian' | 'basotho'
+  | 'swazi' | 'kenyan' | 'ugandan' | 'tanzanian' | 'rwandan' | 'burundian'
+  | 'somali' | 'djiboutian' | 'eritrean' | 'ethiopian' | 'south_sudanese' | 'cape_verdean'
+  | 'sao_tomean' | 'comorian' | 'mauritian' | 'seychellois' | 'malagasy' | 'burkinabe'
+  | 'malian' | 'south_african' | 'american' | 'canadian' | 'mexican' | 'guatemalan'
+  | 'belizean' | 'honduran' | 'salvadoran' | 'nicaraguan' | 'costa_rican' | 'panamanian'
+  | 'cuban' | 'jamaican' | 'haitian' | 'dominican_republic' | 'dominica_island' | 'bahamian'
+  | 'barbadian' | 'trinidadian' | 'grenadian' | 'vincentian' | 'saint_lucian' | 'antiguan'
+  | 'kittitian' | 'brazilian' | 'argentine' | 'chilean' | 'uruguayan' | 'paraguayan'
+  | 'bolivian' | 'peruvian' | 'ecuadorian' | 'colombian' | 'venezuelan' | 'guyanese'
+  | 'surinamese' | 'australian' | 'new_zealander' | 'fijian' | 'papua_new_guinean' | 'solomon_islander'
+  | 'vanuatuan' | 'samoan' | 'tongan' | 'kiribati' | 'tuvaluan' | 'nauruan'
+  | 'palauan' | 'marshallese' | 'micronesian' | 'other';
 export type AppLocale = 'en' | 'ar';
 export type ConsentStatus = 'not_requested' | 'pending' | 'granted' | 'declined' | 'withdrawn';
 export type NativeReviewStatus = 'draft' | 'reviewed';
